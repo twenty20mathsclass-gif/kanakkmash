@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
@@ -88,7 +88,9 @@ export default function AppLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
+      <Suspense fallback={null}>
+        <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
+      </Suspense>
       <main className="flex-grow p-4 pt-16 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
     </div>
   );

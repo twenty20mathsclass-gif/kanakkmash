@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
@@ -16,7 +17,9 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
+      <Suspense fallback={null}>
+        <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
+      </Suspense>
       <main className="flex flex-1 items-center justify-center pt-16 pb-20 md:pt-20 md:pb-0">
         <section className="relative overflow-hidden">
           <AnimatedMathIcons />
