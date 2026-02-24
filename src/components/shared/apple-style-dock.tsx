@@ -114,9 +114,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <div className="fixed top-4 left-4 z-50 md:hidden">
         <Link 
-            href={homeHref}
+            href="/"
             className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-full border bg-secondary/80 backdrop-blur-md transition-all duration-300'
+              'flex h-10 w-10 items-center justify-center transition-all duration-300'
             )}
         >
           <Image src="/logoo_1@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
@@ -133,9 +133,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             key="logo" 
             className="hidden md:flex"
           >
-              <Link href={homeHref}>
+              <Link href="/">
                   <div
-                      className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+                      className="relative flex h-12 w-12 items-center justify-center transition-colors"
                   >
                       <Image src="/logoo_1@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
                   </div>
