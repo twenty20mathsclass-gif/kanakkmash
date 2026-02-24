@@ -113,33 +113,43 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   return (
     <>
       <div className="fixed top-4 left-4 z-50 md:hidden">
-        <Link 
-            href="/"
-            className={cn(
-              'flex h-14 w-14 items-center justify-center transition-all duration-300'
-            )}
+        <Link
+          href="/"
+          className={cn(
+            'flex h-16 w-16 items-center justify-center p-1 transition-all duration-300'
+          )}
         >
-          <Image src="/logoo_1@4x.webp" alt="Logo" width={48} height={48} className="h-12 w-12 object-contain" />
+          <Image
+            src="/logoo_1@4x.webp"
+            alt="Logo"
+            width={64}
+            height={64}
+            className="h-16 w-16 object-contain"
+          />
         </Link>
       </div>
 
-      <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
-        <motion.nav 
-          className="flex items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
+        <motion.nav
+          className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
-            key="logo" 
+            transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+            key="logo"
             className="hidden md:flex"
           >
-              <Link href="/">
-                  <div
-                      className="relative flex h-14 w-14 items-center justify-center transition-colors"
-                  >
-                      <Image src="/logoo_1@4x.webp" alt="Logo" width={48} height={48} className="h-12 w-12 object-contain" />
-                  </div>
-              </Link>
+            <Link href="/">
+              <div className="relative flex h-16 w-16 items-center justify-center transition-colors">
+                <Image
+                  src="/logoo_1@4x.webp"
+                  alt="Logo"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 object-contain"
+                />
+              </div>
+            </Link>
           </motion.div>
           
           {items.map((item) => {
