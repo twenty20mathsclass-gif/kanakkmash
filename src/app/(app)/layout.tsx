@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
-import { Dock } from '@/components/shared/dock';
-import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Home, School, Newspaper, Library, CheckSquare } from 'lucide-react';
+import { AppHeader } from '@/components/shared/app-header';
+import { BookOpen, FlaskConical, LayoutDashboard, Home, Newspaper, Library, Users } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 
 export default function AppLayout({
@@ -33,12 +33,11 @@ export default function AppLayout({
   }
 
   const studentNav = [
-    { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/dashboard', label: 'Class', icon: School },
-    { href: '/blog', label: 'Blog', icon: Newspaper },
-    { href: '/materials', label: 'Material', icon: Library },
-    { href: '/courses', label: 'Class Selection', icon: CheckSquare },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
+    { href: '/blog', label: 'Blog', icon: Newspaper },
+    { href: '/materials', label: 'Materials', icon: Library },
   ];
 
   const teacherNav = [
@@ -62,11 +61,9 @@ export default function AppLayout({
       : studentNav;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Dock items={navItems} user={user} onSignOut={handleSignOut} />
-      <div className="flex min-h-screen flex-col pl-28">
-        <main className="flex-grow p-4 md:p-6 lg:p-8">{children}</main>
-      </div>
+    <div className="flex min-h-screen flex-col bg-background">
+      <AppHeader items={navItems} user={user} onSignOut={handleSignOut} />
+      <main className="flex-grow p-4 md:p-6 lg:p-8">{children}</main>
     </div>
   );
 }

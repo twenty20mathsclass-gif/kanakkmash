@@ -40,7 +40,7 @@ export const Dock = ({ items, user, onSignOut }: { items: DockItemData[], user: 
     <TooltipProvider>
       <div className="fixed inset-y-0 left-6 z-50 flex w-20 items-center justify-center">
         <div 
-          className="flex h-full max-h-[700px] w-full flex-col items-center justify-between rounded-2xl bg-card p-3"
+          className="flex h-full max-h-[700px] w-full flex-col items-center justify-between rounded-2xl bg-white p-3"
           style={{
             boxShadow:
               '0 0 0 1px hsl(var(--border)/.5), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
@@ -99,7 +99,7 @@ const DockItem = ({ href, label, icon: Icon, mouseY }: DockItemProps) => {
           <Link
             href={href}
             className={cn(
-              'flex h-full w-full items-center justify-center rounded-full bg-muted text-primary shadow-md transition-colors hover:bg-border'
+              'flex h-full w-full items-center justify-center rounded-full bg-secondary text-primary shadow-md transition-colors hover:bg-border'
             )}
           >
             <Icon className="h-5 w-5" />
