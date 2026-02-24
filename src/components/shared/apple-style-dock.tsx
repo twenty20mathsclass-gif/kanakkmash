@@ -114,7 +114,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-center bg-background/80 backdrop-blur-md transition-all duration-300 md:hidden',
+          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-background/80 px-4 backdrop-blur-md transition-all duration-300 md:hidden',
+          scrolled ? 'shadow-md' : ''
         )}
       >
         <Link
@@ -141,7 +142,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
             transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             key="logo"
-            className="hidden md:flex mx-2"
+            className="hidden md:flex mx-4"
           >
             <Link href="/">
               <div className="relative flex h-14 w-auto items-center justify-center transition-colors">

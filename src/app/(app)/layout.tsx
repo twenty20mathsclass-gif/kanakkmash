@@ -91,7 +91,7 @@ export default function AppLayout({
       <Suspense fallback={null}>
         <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
       </Suspense>
-      <main className="flex-grow p-4 pt-16 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
+      <main className="flex-grow p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
     </div>
   );
 }
