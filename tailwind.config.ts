@@ -20,7 +20,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
-        serif: ['Georgia', 'serif'],
+        serif: ['Playfair Display', 'serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
