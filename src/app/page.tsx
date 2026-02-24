@@ -1,26 +1,14 @@
-'use client';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
-import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { House, BookOpen, Newspaper, Library, Users } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
+import { HomePageDock } from '@/components/shared/home-page-dock';
 
 export default function Home() {
-  const navItems = [
-    { href: '/', label: 'Home', icon: House },
-    { href: '/courses', label: 'Courses', icon: BookOpen },
-    { href: '/blog', label: 'Blog', icon: Newspaper },
-    { href: '/materials', label: 'Materials', icon: Library },
-    { href: '/community', label: 'Community', icon: Users },
-  ];
-
   return (
     <div className="flex min-h-screen flex-col">
       <Suspense fallback={null}>
-        <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
+        <HomePageDock />
       </Suspense>
       <main className="flex flex-1 items-center justify-center pt-16 pb-20 md:pt-20 md:pb-0">
         <section className="relative overflow-hidden">
