@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <AppleStyleDock items={[]} user={null} />
-      <main className="flex-1 pt-24">
+      <main className="flex-1 pt-20">
         <section className="relative overflow-hidden py-20 md:py-32">
           <AnimatedMathIcons />
           <div

@@ -1,12 +1,8 @@
 'use client';
 
-import {
-  Dock,
-  DockIcon,
-  DockItem,
-  DockLabel,
-} from '@/components/ui/dock';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,9 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, Calculator, LogIn, UserPlus } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus } from 'lucide-react';
 import type { User } from '@/lib/definitions';
-
+import { cn } from '@/lib/utils';
 
 type NavItem = {
   href: string;
@@ -31,30 +27,32 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-         <div className="h-full w-full flex items-center justify-center cursor-pointer">
-            <Avatar className="h-full w-full">
+         <motion.button 
+            className="flex items-center justify-center rounded-full h-8 w-8 bg-neutral-800/80 hover:bg-neutral-700/80 transition-colors"
+         >
+            <Avatar className="h-7 w-7">
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
-         </div>
+         </motion.button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mb-2" side="bottom" align="start">
+      <DropdownMenuContent className="w-56 mt-2 bg-neutral-900/80 border-neutral-700/60 text-neutral-300 backdrop-blur-md" side="bottom" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-medium leading-none text-neutral-100">{user.name}</p>
+            <p className="text-xs leading-none text-neutral-400">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-neutral-700/60" />
+        <DropdownMenuItem className="focus:bg-neutral-700 focus:text-neutral-100 cursor-pointer">
             <UserCircle className="mr-2 h-4 w-4"/>
             Profile
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-neutral-700/60"/>
         <DropdownMenuItem asChild>
-            <button onClick={onSignOut} className="w-full cursor-pointer">
+            <button onClick={onSignOut} className="w-full cursor-pointer focus:bg-neutral-700 focus:text-neutral-100">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </button>
@@ -65,56 +63,81 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
 }
 
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
+  const pathname = usePathname();
+
+  const navItems = user ? items : [];
+  
+  // The base "home" link should point to the dashboard for logged-in users, and the landing page for signed-out users.
+  const homeHref = user ? (user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') : '/';
+  
+  // Check if home is active. It's active if the current path is the home path, OR if the current path
+  // doesn't match any of the more specific nav items. This prevents "Home" from staying active on other pages.
+  const isHomeActive = pathname === homeHref || (user && !navItems.some(item => pathname.startsWith(item.href)));
+
   return (
-    <div className='fixed top-4 left-4 z-50'>
-      <Dock magnification={64} distance={80} panelHeight={60}>
-         <DockItem className='rounded-full bg-primary text-primary-foreground'>
-            <DockLabel alwaysVisible>kanakkmash</DockLabel>
-            <DockIcon>
-              <Link href={user ? "/dashboard" : "/"} className="flex h-full w-full items-center justify-center">
-                  <Calculator className='h-full w-full' />
-              </Link>
-            </DockIcon>
-          </DockItem>
-        {items.map((item) => (
-          <DockItem key={item.label} className='rounded-full bg-background'>
-            <DockLabel>{item.label}</DockLabel>
-            <DockIcon>
-              <Link href={item.href} className="flex h-full w-full items-center justify-center">
-                  <item.icon className='h-full w-full text-foreground/90' />
-              </Link>
-            </DockIcon>
-          </DockItem>
+    <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
+      <nav className="flex items-center gap-1 rounded-full border border-neutral-700/60 bg-neutral-900/80 p-1.5 text-sm font-medium text-neutral-400 backdrop-blur-md">
+        
+        <Link
+            href={homeHref}
+            className={cn(
+                "relative rounded-full px-4 py-1.5 transition-colors hover:text-neutral-100",
+                {'text-neutral-100': isHomeActive}
+            )}
+        >
+            <span className="relative z-10">Home</span>
+            {isHomeActive && (
+                <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 z-0 rounded-full bg-neutral-700/80"
+                    transition={{ type: "spring", duration: 0.6 }}
+                />
+            )}
+        </Link>
+        
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+                "relative rounded-full px-4 py-1.5 transition-colors hover:text-neutral-100",
+                {'text-neutral-100': pathname.startsWith(item.href)}
+            )}
+          >
+            <span className="relative z-10">{item.label}</span>
+            {pathname.startsWith(item.href) && (
+              <motion.div
+                layoutId="active-pill"
+                className="absolute inset-0 z-0 rounded-full bg-neutral-700/80"
+                transition={{ type: "spring", duration: 0.6 }}
+              />
+            )}
+          </Link>
         ))}
-         
+
+        <div className="h-5 w-px bg-neutral-700/60 mx-1" />
+
         {user && onSignOut ? (
-            <DockItem className='rounded-full'>
-                <DockLabel>Account</DockLabel>
-                <DockIcon>
-                    <UserNav user={user} onSignOut={onSignOut} />
-                </DockIcon>
-            </DockItem>
+            <div className="flex items-center justify-center h-8 w-8">
+                <UserNav user={user} onSignOut={onSignOut} />
+            </div>
         ) : (
-            <>
-                <DockItem className='rounded-full bg-background'>
-                    <DockLabel>Sign In</DockLabel>
-                    <DockIcon>
-                        <Link href="/sign-in" className="flex h-full w-full items-center justify-center">
-                            <LogIn className='h-full w-full text-foreground/90' />
-                        </Link>
-                    </DockIcon>
-                </DockItem>
-                <DockItem className='rounded-full bg-background'>
-                    <DockLabel>Sign Up</DockLabel>
-                    <DockIcon>
-                        <Link href="/sign-up" className="flex h-full w-full items-center justify-center">
-                            <UserPlus className='h-full w-full text-foreground/90' />
-                        </Link>
-                    </DockIcon>
-                </DockItem>
-            </>
+           <>
+            <Link href="/sign-in" className={cn(
+                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-neutral-700/80",
+                {'bg-neutral-700/80': pathname === '/sign-in'}
+                )}>
+                <LogIn className='h-4 w-4 text-neutral-300' />
+            </Link>
+            <Link href="/sign-up" className={cn(
+                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-neutral-700/80",
+                {'bg-neutral-700/80': pathname === '/sign-up'}
+                )}>
+                <UserPlus className='h-4 w-4 text-neutral-300' />
+            </Link>
+           </>
         )}
-      </Dock>
+      </nav>
     </div>
   );
 }
