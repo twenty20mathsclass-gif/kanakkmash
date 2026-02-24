@@ -114,8 +114,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-background/80 px-4 backdrop-blur-md transition-all duration-300 md:hidden',
-          scrolled ? 'shadow-md' : ''
+          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-transparent px-4 backdrop-blur-md transition-all duration-300 md:hidden',
+          scrolled ? 'bg-background/80 shadow-md' : ''
         )}
       >
         <Link
@@ -127,8 +127,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <Image
             src="/logoo_1@4x.webp"
             alt="Logo"
-            width={120}
-            height={37}
+            width={80}
+            height={25}
             className="h-full w-auto object-contain"
           />
         </Link>
@@ -142,15 +142,15 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
             transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             key="logo"
-            className="hidden md:flex mx-4"
+            className="hidden md:flex mx-2"
           >
             <Link href="/">
               <div className="relative flex h-14 w-auto items-center justify-center transition-colors">
                 <Image
                   src="/logoo_1@4x.webp"
                   alt="Logo"
-                  width={200}
-                  height={62}
+                  width={280}
+                  height={87}
                   className="h-full w-auto object-contain"
                 />
               </div>
@@ -166,8 +166,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <motion.div 
                     key={item.href}
                     animate={{
-                      scale: isActive ? 1.15 : 1,
-                      y: isActive && !isMobile ? -6 : 0,
+                      scale: 1,
+                      y: 0,
                     }}
                     whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
