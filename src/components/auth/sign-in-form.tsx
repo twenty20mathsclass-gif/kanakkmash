@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,8 +21,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function SignInForm() {
-  const router = useRouter();
-  const { auth, firestore } = useFirebase();
+  const { auth } = useFirebase();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,28 +37,8 @@ export function SignInForm() {
     setLoading(true);
     setError(null);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      const user = userCredential.user;
-
-      // Check user role
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      let role = 'student'; // default role
-      if (userDoc.exists()) {
-        role = userDoc.data().role;
-      } else if (data.email === 'mathsadmin@gmail.com') {
-        // This case is handled in the useUser hook to create the admin profile on first login
-        role = 'admin';
-      }
-
-      if (role === 'admin') {
-        router.push('/admin');
-      } else if (role === 'teacher') {
-        router.push('/teacher');
-      } else {
-        router.push('/dashboard');
-      }
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      // On success, the useUser hook will update, and the sign-in page will handle the redirect.
     } catch (error: any) {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setError('Invalid email or password. Please try again.');

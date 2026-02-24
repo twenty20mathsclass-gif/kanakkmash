@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   Card,
@@ -8,8 +10,33 @@ import {
 } from '@/components/ui/card';
 import { SignUpForm } from '@/components/auth/sign-up-form';
 import { Logo } from '@/components/shared/logo';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export default function SignUpPage() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      const targetPath =
+        user.role === 'teacher'
+          ? '/teacher'
+          : '/dashboard';
+      router.replace(targetPath);
+    }
+  }, [user, loading, router]);
+
+  if (loading || (!loading && user)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
       <div className="absolute top-8 left-8">

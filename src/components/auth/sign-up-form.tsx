@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,7 +41,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function SignUpForm() {
-  const router = useRouter();
   const { auth, firestore } = useFirebase();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -86,11 +84,7 @@ export function SignUpForm() {
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 
-      if (data.role === 'teacher') {
-        router.push('/teacher');
-      } else {
-        router.push('/dashboard');
-      }
+      // On success, the useUser hook will update, and the sign-up page will handle the redirect.
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setError('An account with this email already exists.');
