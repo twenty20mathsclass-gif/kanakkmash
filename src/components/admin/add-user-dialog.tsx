@@ -37,7 +37,7 @@ function SubmitButton() {
   );
 }
 
-export function AddUserDialog() {
+export function AddUserDialog({ creatorRole = 'admin' }: { creatorRole?: 'admin' | 'teacher' }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const initialState = { message: null, errors: {}, success: false };
@@ -98,7 +98,9 @@ export function AddUserDialog() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="student">Student</SelectItem>
-                <SelectItem value="teacher">Teacher</SelectItem>
+                {creatorRole === 'admin' && (
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                )}
               </SelectContent>
             </Select>
             {state.errors?.role && (

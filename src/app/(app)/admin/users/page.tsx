@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
                 <h1 className="text-3xl font-bold font-headline">User Management</h1>
                 <p className="text-muted-foreground">View and manage all user accounts.</p>
             </div>
-            <AddUserDialog />
+            <AddUserDialog creatorRole="admin" />
         </div>
       <Card>
         <CardHeader>

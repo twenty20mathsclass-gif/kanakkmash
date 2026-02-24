@@ -1,6 +1,6 @@
 'use client'; // <-- Make it a client component
 
-import { redirect } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, auth } from '@/firebase'; // <-- Use the hook
 import { signOut as firebaseSignOut } from 'firebase/auth';
@@ -30,7 +30,6 @@ import {
 import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2 } from 'lucide-react';
 import { Logo } from '@/components/shared/logo';
 import type { User } from '@/lib/definitions';
-import { useRouter } from 'next/navigation';
 
 export default function AppLayout({
   children,
@@ -94,7 +93,8 @@ function AppNavigation({ role }: { role: User['role'] }) {
   ];
 
   const teacherNav = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/teacher/students', label: 'Students', icon: Users },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];

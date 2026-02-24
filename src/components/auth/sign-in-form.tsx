@@ -57,6 +57,8 @@ export function SignInForm() {
 
       if (role === 'admin') {
         router.push('/admin');
+      } else if (role === 'teacher') {
+        router.push('/teacher');
       } else {
         router.push('/dashboard');
       }
