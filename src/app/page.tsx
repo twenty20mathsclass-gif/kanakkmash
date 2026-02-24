@@ -21,7 +21,7 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                 Unlock Your <span className="font-serif italic">Math Potential</span> with{' '}
-                <span className="text-primary">
+                <span className="animate-gradient-pan bg-gradient-to-r from-amber-400 via-primary to-amber-400 bg-[length:200%_auto] bg-clip-text text-transparent">
                   kanakkmash
                 </span>
               </h1>
