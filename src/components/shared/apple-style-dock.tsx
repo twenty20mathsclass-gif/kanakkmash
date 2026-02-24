@@ -75,7 +75,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24"
+      viewBox="0 0 24 24"
       fill="currentColor"
       {...props}
     >
@@ -191,7 +191,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:text-foreground md:w-auto md:px-4",
+                              "relative flex h-12 w-12 items-center justify-center rounded-full transition-colors md:w-auto md:px-4",
                           )}
                       >
                           <div className={cn(
