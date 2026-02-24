@@ -34,7 +34,7 @@ export const Dock = ({ items }: { items: DockItemData[] }) => {
             }
           }}
           onMouseLeave={() => mouseX.set(Infinity)}
-          className="flex h-full items-end gap-3 rounded-2xl bg-card/50 px-3 pb-3 backdrop-blur-md"
+          className="flex h-full items-end gap-3 rounded-2xl bg-card px-3 pb-3"
           style={{
             boxShadow:
               '0 0 0 1px hsl(var(--border)/.5), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
@@ -75,7 +75,7 @@ const DockItem = ({ href, label, icon: Icon, mouseX }: DockItemProps) => {
           <Link
             href={href}
             className={cn(
-              'flex h-full w-full items-center justify-center rounded-full bg-secondary text-secondary-foreground/80 shadow-md transition-colors hover:bg-accent hover:text-accent-foreground'
+              'flex h-full w-full items-center justify-center rounded-full bg-muted text-primary shadow-md transition-colors hover:bg-border'
             )}
           >
             <Icon className="h-5 w-5" />
