@@ -78,13 +78,15 @@ export default function AppLayout({
       : studentNav;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-        <Logo />
-        <UserNav user={user} onSignOut={handleSignOut} />
-      </header>
-      <main className="flex-1 p-4 md:p-6 lg:p-8 pb-32">{children}</main>
+    <div className="min-h-screen bg-background">
       <Dock items={navItems} />
+      <div className="flex min-h-screen flex-col pl-28">
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+          <Logo />
+          <UserNav user={user} onSignOut={handleSignOut} />
+        </header>
+        <main className="flex-grow p-4 md:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }
