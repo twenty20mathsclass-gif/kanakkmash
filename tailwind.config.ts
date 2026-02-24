@@ -17,8 +17,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['Manjari', 'sans-serif'],
+        headline: ['Manjari', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
