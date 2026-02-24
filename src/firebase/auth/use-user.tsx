@@ -25,7 +25,7 @@ export function useUser() {
           
           if (userDoc.exists()) {
             setUser({ id: userDoc.id, ...userDoc.data() } as User);
-          } else if (authUser.email === 'mathsadmin@gmail.com') {
+          } else if (authUser.email === 'kanakkmash@gmail.com') {
             // Special case for the hardcoded admin user. Create their profile on first login.
             const adminProfile: User = {
               id: authUser.uid,
