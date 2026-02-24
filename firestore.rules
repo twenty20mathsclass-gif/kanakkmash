@@ -20,8 +20,8 @@ service cloud.firestore {
       // Admins can list all users. Non-admins cannot.
       allow list: if isAdmin();
       
-      // A user can create their own profile document.
-      allow create: if isOwner(userId);
+      // A user can create their own profile, and an admin can create any user profile.
+      allow create: if isOwner(userId) || isAdmin();
 
       // Admins can update any profile. Users can only update their own.
       // A user cannot change their own role.
