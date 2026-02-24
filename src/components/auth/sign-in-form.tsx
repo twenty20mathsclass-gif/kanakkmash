@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { signIn } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ function SubmitButton() {
 
 export function SignInForm() {
   const initialState = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(signIn, initialState);
+  const [state, dispatch] = useActionState(signIn, initialState);
 
   return (
     <form action={dispatch} className="space-y-4">
@@ -29,7 +30,7 @@ export function SignInForm() {
           id="email"
           name="email"
           type="email"
-          defaultValue="mathsadmin@gmail.com"
+          placeholder="name@example.com"
           required
           aria-describedby="email-error"
         />
@@ -44,9 +45,13 @@ export function SignInForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" required 
-        defaultValue="admin@twenty20"
-        aria-describedby="password-error"/>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          required
+          aria-describedby="password-error"
+        />
          <div id="password-error" aria-live="polite" aria-atomic="true">
           {state.errors?.password &&
             state.errors.password.map((error: string) => (

@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { signUp } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ function SubmitButton() {
 
 export function SignUpForm() {
   const initialState = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(signUp, initialState);
+  const [state, dispatch] = useActionState(signUp, initialState);
 
   return (
     <form action={dispatch} className="space-y-4">
