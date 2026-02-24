@@ -27,14 +27,14 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-         <motion.button 
-            className="flex items-center justify-center rounded-full h-8 w-8 bg-secondary/80 hover:bg-secondary transition-colors"
+         <button 
+            className="flex items-center justify-center rounded-full h-10 w-10 bg-secondary/80 hover:bg-secondary transition-colors"
          >
-            <Avatar className="h-7 w-7">
+            <Avatar className="h-9 w-9">
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
-         </motion.button>
+         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 mt-2 bg-popover/80 border-border text-popover-foreground backdrop-blur-md" side="bottom" align="end">
         <DropdownMenuLabel className="font-normal">
@@ -67,81 +67,85 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   const navItems = user ? items : [];
   
-  // The base "home" link should point to the dashboard for logged-in users, and the landing page for signed-out users.
   const homeHref = user ? (user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') : '/';
   
-  // Check if home is active. It's active if the current path is the home path, OR if the current path
-  // doesn't match any of the more specific nav items. This prevents "Home" from staying active on other pages.
   const isHomeActive = pathname === homeHref || (user && !navItems.some(item => pathname.startsWith(item.href)));
+
+  const animationProps = {
+    whileHover: { scale: 1.15, y: -6 },
+    transition: { type: "spring", stiffness: 400, damping: 12 },
+  };
 
   return (
     <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
       <motion.nav 
-        className="flex items-center gap-1 rounded-full border bg-background/80 p-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md"
-        whileHover={{
-            padding: '0.6rem',
-            gap: '0.5rem',
-        }}
-        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+        className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[52px]"
       >
         
-        <Link
-            href={homeHref}
-            className={cn(
-                "relative rounded-full px-4 py-1.5 transition-colors hover:text-foreground",
-                {'text-foreground': isHomeActive}
-            )}
-        >
-            <span className="relative z-10">Home</span>
-            {isHomeActive && (
-                <motion.div
-                    layoutId="active-pill"
-                    className="absolute inset-0 z-0 rounded-full bg-secondary"
-                    transition={{ type: "spring", duration: 0.6 }}
-                />
-            )}
-        </Link>
+        <motion.div {...animationProps}>
+            <Link
+                href={homeHref}
+                className={cn(
+                    "relative block rounded-full px-4 py-2 transition-colors hover:text-foreground",
+                    {'text-foreground': isHomeActive}
+                )}
+            >
+                <span className="relative z-10">Home</span>
+                {isHomeActive && (
+                    <motion.div
+                        layoutId="active-pill"
+                        className="absolute inset-0 z-0 rounded-full bg-secondary"
+                        transition={{ type: "spring", duration: 0.6 }}
+                    />
+                )}
+            </Link>
+        </motion.div>
         
         {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-                "relative rounded-full px-4 py-1.5 transition-colors hover:text-foreground",
-                {'text-foreground': pathname.startsWith(item.href)}
-            )}
-          >
-            <span className="relative z-10">{item.label}</span>
-            {pathname.startsWith(item.href) && (
-              <motion.div
-                layoutId="active-pill"
-                className="absolute inset-0 z-0 rounded-full bg-secondary"
-                transition={{ type: "spring", duration: 0.6 }}
-              />
-            )}
-          </Link>
+            <motion.div {...animationProps} key={item.href}>
+                <Link
+                    href={item.href}
+                    className={cn(
+                        "relative block rounded-full px-4 py-2 transition-colors hover:text-foreground",
+                        {'text-foreground': pathname.startsWith(item.href)}
+                    )}
+                >
+                    <span className="relative z-10">{item.label}</span>
+                    {pathname.startsWith(item.href) && (
+                    <motion.div
+                        layoutId="active-pill"
+                        className="absolute inset-0 z-0 rounded-full bg-secondary"
+                        transition={{ type: "spring", duration: 0.6 }}
+                    />
+                    )}
+                </Link>
+            </motion.div>
         ))}
 
-        <div className="h-5 w-px bg-border mx-1" />
+        <div className="h-6 w-px bg-border mx-1 self-center" />
 
         {user && onSignOut ? (
-            <div className="flex items-center justify-center h-8 w-8">
+            <motion.div {...animationProps}>
                 <UserNav user={user} onSignOut={onSignOut} />
-            </div>
+            </motion.div>
         ) : (
            <>
-            <Link href="/sign-in" className={cn(
-                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-secondary",
-                {'bg-secondary': pathname === '/sign-in'}
-                )}>
-                <LogIn className='h-4 w-4 text-muted-foreground' />
-            </Link>
-            <Link href="/sign-up" className={cn(
-                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-secondary",
-                {'bg-secondary': pathname === '/sign-up'}
-                )}>
-                <UserPlus className='h-4 w-4 text-muted-foreground' />
-            </Link>
+            <motion.div {...animationProps}>
+                <Link href="/sign-in" className={cn(
+                    "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-secondary",
+                    {'bg-secondary': pathname === '/sign-in'}
+                    )}>
+                    <LogIn className='h-5 w-5 text-muted-foreground' />
+                </Link>
+            </motion.div>
+            <motion.div {...animationProps}>
+                <Link href="/sign-up" className={cn(
+                    "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-secondary",
+                    {'bg-secondary': pathname === '/sign-up'}
+                    )}>
+                    <UserPlus className='h-5 w-5 text-muted-foreground' />
+                </Link>
+            </motion.div>
            </>
         )}
       </motion.nav>
