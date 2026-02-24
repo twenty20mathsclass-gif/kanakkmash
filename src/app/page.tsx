@@ -1,20 +1,20 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, FlaskConical, GraduationCap, UserCog } from 'lucide-react';
+import { BookCheck, CheckCircle2, FlaskConical, LayoutDashboard } from 'lucide-react';
 import { Logo } from '@/components/shared/logo';
 
 export default function Home() {
   const features = [
     {
-      icon: <GraduationCap className="h-10 w-10 text-primary" />,
-      title: 'Student Dashboard',
-      description: 'Personalized space to track progress and access lessons.',
+      icon: <LayoutDashboard className="h-10 w-10 text-primary" />,
+      title: 'Personalized Dashboard',
+      description: 'Track your progress and continue lessons right where you left off.',
     },
     {
-      icon: <UserCog className="h-10 w-10 text-primary" />,
-      title: 'Admin Panel',
-      description: 'Manage users, courses, and platform activity with ease.',
+      icon: <BookCheck className="h-10 w-10 text-primary" />,
+      title: 'Interactive Lessons',
+      description: 'Engage with course materials that make learning math intuitive and fun.',
     },
     {
       icon: <FlaskConical className="h-10 w-10 text-primary" />,
