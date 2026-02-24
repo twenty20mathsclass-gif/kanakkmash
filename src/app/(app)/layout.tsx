@@ -1,6 +1,7 @@
 'use client'; // <-- Make it a client component
 
-import { redirect, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, auth } from '@/firebase'; // <-- Use the hook
 import { signOut as firebaseSignOut } from 'firebase/auth';
@@ -44,16 +45,18 @@ export default function AppLayout({
     router.push('/sign-in');
   };
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/sign-in');
+    }
+  }, [loading, user, router]);
+
+  if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  if (!user) {
-    redirect('/sign-in');
   }
 
   return (
