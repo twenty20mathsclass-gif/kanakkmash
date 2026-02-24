@@ -29,6 +29,13 @@ export const users: User[] = [
     role: 'student',
     avatarUrl: 'https://picsum.photos/seed/avatar4/100/100',
   },
+  {
+    id: '5',
+    name: 'Teacher User',
+    email: 'teacher@example.com',
+    role: 'teacher',
+    avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
+  },
 ];
 
 export const courses: Course[] = [

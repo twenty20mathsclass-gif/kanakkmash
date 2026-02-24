@@ -1,14 +1,18 @@
 import { users } from "@/lib/data";
 import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AddUserDialog } from "@/components/admin/add-user-dialog";
 
 export default function AdminUsersPage() {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold font-headline">User Management</h1>
-        <p className="text-muted-foreground">View and manage all user accounts.</p>
-      </div>
+        <div className="flex items-center justify-between">
+            <div>
+                <h1 className="text-3xl font-bold font-headline">User Management</h1>
+                <p className="text-muted-foreground">View and manage all user accounts.</p>
+            </div>
+            <AddUserDialog />
+        </div>
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>

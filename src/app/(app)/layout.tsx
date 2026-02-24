@@ -75,13 +75,23 @@ function AppNavigation({ role }: { role: User['role'] }) {
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];
 
+  const teacherNav = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/practice', label: 'AI Practice', icon: FlaskConical },
+  ];
+
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   ];
 
-  const navItems = role === 'admin' ? adminNav : studentNav;
+  const navItems =
+    role === 'admin'
+      ? adminNav
+      : role === 'teacher'
+      ? teacherNav
+      : studentNav;
 
   return (
     <>

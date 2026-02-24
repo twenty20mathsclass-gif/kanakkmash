@@ -6,6 +6,7 @@ import { users } from './data';
 import { createSession, deleteSession } from './session';
 import { generateCustomMathPractice } from '@/ai/flows/generate-custom-math-practice';
 import type { GenerateCustomMathPracticeOutput } from '@/ai/flows/generate-custom-math-practice';
+import { revalidatePath } from 'next/cache';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,9 +24,8 @@ export async function signIn(prevState: any, formData: FormData) {
     };
   }
 
-  const { email } = validatedFields.data;
+  const { email, password } = validatedFields.data;
 
-  // In a real app, you would check the password against a hashed version in the DB.
   const user = users.find((u) => u.email === email);
 
   if (!user) {
@@ -33,6 +33,16 @@ export async function signIn(prevState: any, formData: FormData) {
       message: 'Invalid credentials. Please try again.',
     };
   }
+
+  // Mock password check for admin
+  if (user.role === 'admin' && password !== 'admin@twenty20') {
+    return {
+      message: 'Invalid credentials. Please try again.',
+    };
+  }
+
+  // For other users in this mock app, we can assume password is correct if user is found.
+  // In a real app, you would hash and compare the password.
 
   await createSession(user.id);
 
@@ -61,14 +71,12 @@ export async function signUp(prevState: any, formData: FormData) {
 
   const { email, name } = validatedFields.data;
 
-  // Check if user already exists
   if (users.some((u) => u.email === email)) {
     return {
       message: 'A user with this email already exists.',
     };
   }
 
-  // Create a new mock user. In a real app, this would be a DB insert.
   const newUser = {
     id: String(users.length + 1),
     name,
@@ -86,6 +94,52 @@ export async function signOut() {
   await deleteSession();
   redirect('/sign-in');
 }
+
+const createUserSchema = z.object({
+    name: z.string().min(2, 'Name is required'),
+    email: z.string().email('Invalid email'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    role: z.enum(['student', 'teacher']),
+});
+
+export async function createUser(prevState: any, formData: FormData) {
+    const validatedFields = createUserSchema.safeParse(
+        Object.fromEntries(formData.entries())
+    );
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: null,
+        };
+    }
+
+    const { email, name, role } = validatedFields.data;
+
+    if (users.some((u) => u.email === email)) {
+        return {
+            errors: {},
+            message: 'A user with this email already exists.',
+        };
+    }
+
+    const newUser = {
+        id: String(users.length + 1),
+        name,
+        email,
+        role: role,
+        avatarUrl: `https://picsum.photos/seed/avatar${users.length + 1}/100/100`,
+    };
+    users.push(newUser);
+    
+    revalidatePath('/admin/users');
+    return {
+        errors: {},
+        message: `Successfully created ${role}: ${name}`,
+        success: true,
+    };
+}
+
 
 export async function generatePractice(
   topic: string,

@@ -58,7 +58,11 @@ export function UsersTable({ users }: { users: User[] }) {
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>
-              <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
+              <Badge variant={
+                user.role === 'admin' ? 'destructive' : 
+                user.role === 'teacher' ? 'default' : 
+                'secondary'
+              }>
                 {user.role}
               </Badge>
             </TableCell>
