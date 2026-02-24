@@ -14,6 +14,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { PageLoader } from '@/components/shared/page-loader';
 
+export const dynamic = 'force-dynamic';
+
 export default function SignInPage() {
   const { user, loading } = useUser();
   const router = useRouter();
