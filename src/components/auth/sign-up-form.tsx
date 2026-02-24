@@ -11,7 +11,21 @@ import { useFirebase } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/definitions';
@@ -20,10 +34,12 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  role: z.enum(['student', 'teacher'], {
+    required_error: 'Please select a role.',
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
 
 export function SignUpForm() {
   const router = useRouter();
@@ -37,6 +53,7 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
+      role: 'student',
     },
   });
 
@@ -44,28 +61,36 @@ export function SignUpForm() {
     setLoading(true);
     setError(null);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
       const user = userCredential.user;
-      
+
       const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
 
       await updateProfile(user, {
         displayName: data.name,
         photoURL: avatarUrl,
       });
-      
+
       // Create user profile in Firestore
       const userProfile: User = {
         id: user.uid,
         name: data.name,
         email: data.email,
-        role: 'student',
+        role: data.role as 'student' | 'teacher',
         avatarUrl: avatarUrl,
       };
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 
-      router.push('/dashboard');
+      if (data.role === 'teacher') {
+        router.push('/teacher');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setError('An account with this email already exists.');
@@ -77,54 +102,81 @@ export function SignUpForm() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
-          type="text"
-          placeholder="John Doe"
-          {...form.register('name')}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="John Doe" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.name && (
-          <p className="mt-1 text-sm text-destructive">{form.formState.errors.name.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="john.doe@example.com"
-          {...form.register('email')}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="john.doe@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.email && (
-            <p className="mt-1 text-sm text-destructive">{form.formState.errors.email.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          {...form.register('password')}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.password && (
-            <p className="mt-1 text-sm text-destructive">{form.formState.errors.password.message}</p>
-        )}
-      </div>
-      
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>I am a...</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? <Loader2 className="animate-spin" /> : 'Create Account'}
-      </Button>
-    </form>
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" /> : 'Create Account'}
+        </Button>
+      </form>
+    </Form>
   );
 }
