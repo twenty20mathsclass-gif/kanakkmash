@@ -1,7 +1,10 @@
+'use client'; // <-- Make it a client component
+
 import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/session';
-import { signOut } from '@/lib/actions';
 import Link from 'next/link';
+import { useUser, auth } from '@/firebase'; // <-- Use the hook
+import { signOut as firebaseSignOut } from 'firebase/auth';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,16 +27,32 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle } from 'lucide-react';
+import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2 } from 'lucide-react';
 import { Logo } from '@/components/shared/logo';
 import type { User } from '@/lib/definitions';
+import { useRouter } from 'next/navigation';
 
-export default async function AppLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await getSession();
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await firebaseSignOut(auth);
+    router.push('/sign-in');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   if (!user) {
     redirect('/sign-in');
   }
@@ -50,18 +69,16 @@ export default async function AppLayout({
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <form action={signOut} className='w-full'>
-            <Button variant="ghost" className="w-full justify-start gap-2 px-2">
+            <Button variant="ghost" className="w-full justify-start gap-2 px-2" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>
-          </form>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:justify-end">
           <SidebarTrigger className="md:hidden" />
-          <UserNav user={user} />
+          <UserNav user={user} onSignOut={handleSignOut} />
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
@@ -109,7 +126,7 @@ function AppNavigation({ role }: { role: User['role'] }) {
   );
 }
 
-function UserNav({ user }: { user: User }) {
+function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -135,14 +152,12 @@ function UserNav({ user }: { user: User }) {
             Profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={signOut} className="w-full">
-          <DropdownMenuItem asChild>
-            <button type='submit' className="w-full cursor-pointer">
+        <DropdownMenuItem asChild>
+            <button onClick={onSignOut} className="w-full cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </button>
-          </DropdownMenuItem>
-        </form>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

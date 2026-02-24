@@ -1,99 +1,13 @@
 'use server';
 
 import { z } from 'zod';
-import { redirect } from 'next/navigation';
-import { users } from './data';
-import { createSession, deleteSession } from './session';
 import { generateCustomMathPractice } from '@/ai/flows/generate-custom-math-practice';
 import type { GenerateCustomMathPracticeOutput } from '@/ai/flows/generate-custom-math-practice';
 import { revalidatePath } from 'next/cache';
 
-const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-export async function signIn(prevState: any, formData: FormData) {
-  const validatedFields = signInSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  const { email, password } = validatedFields.data;
-
-  const user = users.find((u) => u.email === email);
-
-  if (!user) {
-    return {
-      message: 'Invalid credentials. Please try again.',
-    };
-  }
-
-  // Mock password check for admin
-  if (user.role === 'admin' && password !== 'admin@twenty20') {
-    return {
-      message: 'Invalid credentials. Please try again.',
-    };
-  }
-
-  // For other users in this mock app, we can assume password is correct if user is found.
-  // In a real app, you would hash and compare the password.
-
-  await createSession(user.id);
-
-  if (user.role === 'admin') {
-    redirect('/admin');
-  }
-  redirect('/dashboard');
-}
-
-const signUpSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
-
-export async function signUp(prevState: any, formData: FormData) {
-  const validatedFields = signUpSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  const { email, name } = validatedFields.data;
-
-  if (users.some((u) => u.email === email)) {
-    return {
-      message: 'A user with this email already exists.',
-    };
-  }
-
-  const newUser = {
-    id: String(users.length + 1),
-    name,
-    email,
-    role: 'student' as const,
-    avatarUrl: `https://picsum.photos/seed/avatar${users.length + 1}/100/100`,
-  };
-  users.push(newUser);
-
-  await createSession(newUser.id);
-  redirect('/dashboard');
-}
-
-export async function signOut() {
-  await deleteSession();
-  redirect('/sign-in');
-}
+// signIn, signUp, and signOut actions have been removed.
+// Authentication is now handled on the client-side using the Firebase SDK.
+// See src/components/auth/ for the new implementation.
 
 const createUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -103,6 +17,11 @@ const createUserSchema = z.object({
 });
 
 export async function createUser(prevState: any, formData: FormData) {
+    // NOTE: This function is now a placeholder.
+    // Securely creating users on behalf of an admin requires the Firebase Admin SDK,
+    // which can only be run in a secure server-side environment (like a Cloud Function or a custom backend).
+    // The client-side SDK used in this app cannot create users for other users.
+    
     const validatedFields = createUserSchema.safeParse(
         Object.fromEntries(formData.entries())
     );
@@ -110,33 +29,17 @@ export async function createUser(prevState: any, formData: FormData) {
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
-            message: null,
+            message: 'Validation failed.',
+            success: false,
         };
     }
-
-    const { email, name, role } = validatedFields.data;
-
-    if (users.some((u) => u.email === email)) {
-        return {
-            errors: {},
-            message: 'A user with this email already exists.',
-        };
-    }
-
-    const newUser = {
-        id: String(users.length + 1),
-        name,
-        email,
-        role: role,
-        avatarUrl: `https://picsum.photos/seed/avatar${users.length + 1}/100/100`,
-    };
-    users.push(newUser);
     
+    // This will show an error in the dialog.
     revalidatePath('/admin/users');
     return {
         errors: {},
-        message: `Successfully created ${role}: ${name}`,
-        success: true,
+        message: 'User creation by an admin is not supported in this version of the app. This feature requires a backend with the Firebase Admin SDK.',
+        success: false,
     };
 }
 

@@ -1,76 +1,112 @@
 'use client';
 
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { signIn } from '@/lib/actions';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useFirebase } from '@/firebase';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Signing In...' : 'Sign In'}
-    </Button>
-  );
-}
+const formSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export function SignInForm() {
-  const initialState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(signIn, initialState);
+  const router = useRouter();
+  const { auth, firestore } = useFirebase();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: FormValues) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+
+      // Check user role
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      let role = 'student'; // default role
+      if (userDoc.exists()) {
+        role = userDoc.data().role;
+      } else if (data.email === 'mathsadmin@gmail.com') {
+        // This case is handled in the useUser hook to create the admin profile on first login
+        role = 'admin';
+      }
+
+      if (role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please try again.');
+      } else {
+        setError(error.message);
+      }
+      setLoading(false);
+    }
+  };
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
-          name="email"
           type="email"
           placeholder="name@example.com"
-          required
-          aria-describedby="email-error"
+          {...form.register('email')}
         />
-        <div id="email-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.email &&
-            state.errors.email.map((error: string) => (
-              <p className="mt-1 text-sm text-destructive" key={error}>
-                {error}
-              </p>
-            ))}
-        </div>
+        {form.formState.errors.email && (
+          <p className="mt-1 text-sm text-destructive">{form.formState.errors.email.message}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
-          name="password"
           type="password"
-          required
-          aria-describedby="password-error"
+          {...form.register('password')}
         />
-         <div id="password-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.password &&
-            state.errors.password.map((error: string) => (
-              <p className="mt-1 text-sm text-destructive" key={error}>
-                {error}
-              </p>
-            ))}
-        </div>
+        {form.formState.errors.password && (
+            <p className="mt-1 text-sm text-destructive">{form.formState.errors.password.message}</p>
+        )}
       </div>
 
-       {state.message && (
+       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <SubmitButton />
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? <Loader2 className="animate-spin" /> : 'Sign In'}
+      </Button>
     </form>
   );
 }

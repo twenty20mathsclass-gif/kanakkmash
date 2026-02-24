@@ -1,42 +1,9 @@
 import type { Course, StudentProgress, User, PracticeTopic } from './definitions';
 
-export const users: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'mathsadmin@gmail.com',
-    role: 'admin',
-    avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
-  },
-  {
-    id: '2',
-    name: 'Student User',
-    email: 'student@example.com',
-    role: 'student',
-    avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
-  },
-  {
-    id: '3',
-    name: 'Alice Johnson',
-    email: 'alice@example.com',
-    role: 'student',
-    avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
-  },
-  {
-    id: '4',
-    name: 'Bob Williams',
-    email: 'bob@example.com',
-    role: 'student',
-    avatarUrl: 'https://picsum.photos/seed/avatar4/100/100',
-  },
-  {
-    id: '5',
-    name: 'Teacher User',
-    email: 'teacher@example.com',
-    role: 'teacher',
-    avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
-  },
-];
+// The hardcoded users array has been removed. User data is now managed by Firebase Authentication and Firestore.
+// You can find user data in your Firebase project's console.
+// The `mathsadmin@gmail.com` user with password `admin@twenty20` will be created in Firestore on first login.
+export const users: User[] = [];
 
 export const courses: Course[] = [
   {

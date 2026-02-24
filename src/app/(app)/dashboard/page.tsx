@@ -1,4 +1,6 @@
-import { getSession } from '@/lib/session';
+'use client'; // Make client component
+
+import { useUser } from '@/firebase';
 import { courses, studentProgress } from '@/lib/data';
 import type { Course } from '@/lib/definitions';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -7,14 +9,26 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 
-export default async function DashboardPage() {
-  const { user } = await getSession();
+export default function DashboardPage() {
+  const { user, loading } = useUser();
   const progressData = studentProgress; // In a real app, this would be fetched for the specific user
 
   const getTotalLessons = (course: Course) =>
     course.modules.reduce((acc, module) => acc + module.lessons.length, 0);
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <div>Please sign in to view your dashboard.</div>;
+  }
 
   return (
     <div className="space-y-8">
