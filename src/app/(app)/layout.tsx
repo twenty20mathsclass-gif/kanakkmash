@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useUser, auth } from '@/firebase';
+import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
@@ -32,6 +32,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useUser();
+  const { auth } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -57,7 +58,9 @@ export default function AppLayout({
   }
 
   const handleSignOut = async () => {
-    await firebaseSignOut(auth);
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
     router.push('/sign-in');
   };
 
