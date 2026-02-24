@@ -69,7 +69,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <div className='fixed top-4 left-4 z-50'>
       <Dock magnification={64} distance={80} panelHeight={60}>
          <DockItem className='rounded-full bg-primary text-primary-foreground'>
-            <DockLabel>kanakkmash</DockLabel>
+            <DockLabel alwaysVisible>kanakkmash</DockLabel>
             <DockIcon>
               <Link href={user ? "/dashboard" : "/"} className="flex h-full w-full items-center justify-center">
                   <Calculator className='h-full w-full' />
@@ -90,7 +90,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         {user && onSignOut ? (
             <DockItem className='rounded-full'>
                 <DockLabel>Account</DockLabel>
-                <UserNav user={user} onSignOut={onSignOut} />
+                <DockIcon>
+                    <UserNav user={user} onSignOut={onSignOut} />
+                </DockIcon>
             </DockItem>
         ) : (
             <>

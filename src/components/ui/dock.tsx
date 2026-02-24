@@ -20,9 +20,9 @@ import {
 import { cn } from '@/lib/utils';
 
 const DOCK_HEIGHT = 128;
-const DEFAULT_MAGNIFICATION = 80;
-const DEFAULT_DISTANCE = 150;
-const DEFAULT_PANEL_HEIGHT = 64;
+const DEFAULT_MAGNIFICATION = 64;
+const DEFAULT_DISTANCE = 80;
+const DEFAULT_PANEL_HEIGHT = 60;
 
 type DockProps = {
   children: React.ReactNode;
@@ -39,6 +39,7 @@ type DockItemProps = {
 type DockLabelProps = {
   className?: string;
   children: React.ReactNode;
+  alwaysVisible?: boolean;
 };
 type DockIconProps = {
   className?: string;
@@ -91,7 +92,7 @@ function useDockItem() {
 function Dock({
   children,
   className,
-  spring = { mass: 0.1, stiffness: 150, damping: 12 },
+  spring = { mass: 0.2, stiffness: 300, damping: 17 },
   magnification = DEFAULT_MAGNIFICATION,
   distance = DEFAULT_DISTANCE,
   panelHeight = DEFAULT_PANEL_HEIGHT,
@@ -124,7 +125,7 @@ function Dock({
           mouseX.set(Infinity);
         }}
         className={cn(
-          'mx-auto flex h-full w-fit items-end gap-2 rounded-full border bg-card p-2 shadow-lg',
+          'mx-auto flex h-full w-fit items-end gap-2 rounded-[2.5rem] border bg-card p-2 shadow-lg',
           className
         )}
         role='toolbar'
@@ -180,32 +181,36 @@ function DockItem({ children, className }: DockItemProps) {
   );
 }
 
-function DockLabel({ children, className }: DockLabelProps) {
+function DockLabel({
+  children,
+  className,
+  alwaysVisible = false,
+}: DockLabelProps) {
   const { isHovered } = useDockItem();
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(alwaysVisible);
 
   useEffect(() => {
+    if (alwaysVisible) return;
     const unsubscribe = isHovered.on('change', (latest) => {
       setIsVisible(latest === 1);
     });
 
     return () => unsubscribe();
-  }, [isHovered]);
+  }, [isHovered, alwaysVisible]);
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: 1, y: -10 }}
-          exit={{ opacity: 0, y: 0 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            'absolute -top-6 left-1/2 w-fit whitespace-pre rounded-md border bg-popover px-2 py-0.5 text-xs text-popover-foreground',
+            'absolute bottom-full mb-2 w-fit whitespace-pre rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground',
             className
           )}
           role='tooltip'
-          style={{ x: '-50%' }}
         >
           {children}
         </motion.div>
