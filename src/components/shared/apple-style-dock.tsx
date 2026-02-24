@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Home } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 
@@ -86,11 +86,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <Link
                 href={homeHref}
                 className={cn(
-                    "relative block rounded-full px-4 py-2 transition-colors hover:text-foreground",
+                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
                     {'text-foreground': isHomeActive}
                 )}
             >
-                <span className="relative z-10">Home</span>
+                <Home className="h-5 w-5" />
+                <span className="relative z-10 hidden md:ml-2 md:block">Home</span>
                 {isHomeActive && (
                     <motion.div
                         layoutId="active-pill"
@@ -101,26 +102,30 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
         </motion.div>
         
-        {navItems.map((item) => (
-            <motion.div {...animationProps} key={item.href}>
-                <Link
-                    href={item.href}
-                    className={cn(
-                        "relative block rounded-full px-4 py-2 transition-colors hover:text-foreground",
-                        {'text-foreground': pathname.startsWith(item.href)}
-                    )}
-                >
-                    <span className="relative z-10">{item.label}</span>
-                    {pathname.startsWith(item.href) && (
-                    <motion.div
-                        layoutId="active-pill"
-                        className="absolute inset-0 z-0 rounded-full bg-secondary"
-                        transition={{ type: "spring", duration: 0.6 }}
-                    />
-                    )}
-                </Link>
-            </motion.div>
-        ))}
+        {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+                <motion.div {...animationProps} key={item.href}>
+                    <Link
+                        href={item.href}
+                        className={cn(
+                            "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
+                            {'text-foreground': pathname.startsWith(item.href)}
+                        )}
+                    >
+                        <Icon className="h-5 w-5" />
+                        <span className="relative z-10 hidden md:ml-2 md:block">{item.label}</span>
+                        {pathname.startsWith(item.href) && (
+                        <motion.div
+                            layoutId="active-pill"
+                            className="absolute inset-0 z-0 rounded-full bg-secondary"
+                            transition={{ type: "spring", duration: 0.6 }}
+                        />
+                        )}
+                    </Link>
+                </motion.div>
+            )
+        })}
 
         <div className="h-6 w-px bg-border mx-1 self-center" />
 
@@ -132,18 +137,34 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
            <>
             <motion.div {...animationProps}>
                 <Link href="/sign-in" className={cn(
-                    "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-secondary",
-                    {'bg-secondary': pathname === '/sign-in'}
+                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
+                    {'text-foreground': pathname === '/sign-in'}
                     )}>
-                    <LogIn className='h-5 w-5 text-muted-foreground' />
+                    <LogIn className='h-5 w-5' />
+                    <span className="relative z-10 hidden md:ml-2 md:block">Sign In</span>
+                    {pathname === '/sign-in' && (
+                        <motion.div
+                            layoutId="active-pill"
+                            className="absolute inset-0 z-0 rounded-full bg-secondary"
+                            transition={{ type: "spring", duration: 0.6 }}
+                        />
+                    )}
                 </Link>
             </motion.div>
             <motion.div {...animationProps}>
                 <Link href="/sign-up" className={cn(
-                    "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-secondary",
-                    {'bg-secondary': pathname === '/sign-up'}
+                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
+                    {'text-foreground': pathname === '/sign-up'}
                     )}>
-                    <UserPlus className='h-5 w-5 text-muted-foreground' />
+                    <UserPlus className='h-5 w-5' />
+                    <span className="relative z-10 hidden md:ml-2 md:block">Sign Up</span>
+                     {pathname === '/sign-up' && (
+                        <motion.div
+                            layoutId="active-pill"
+                            className="absolute inset-0 z-0 rounded-full bg-secondary"
+                            transition={{ type: "spring", duration: 0.6 }}
+                        />
+                    )}
                 </Link>
             </motion.div>
            </>
