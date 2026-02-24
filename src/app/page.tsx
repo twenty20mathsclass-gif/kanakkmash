@@ -31,7 +31,9 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                 Unlock Your Math Potential with{' '}
-                <span className="text-primary">kanakkmash</span>
+                <span className="bg-gradient-to-r from-yellow-500 to-orange-600 bg-clip-text text-transparent">
+                  kanakkmash
+                </span>
               </h1>
               <p className="mx-auto mt-6 max-w-xl text-lg text-foreground/80">
                 Engaging lessons, AI-powered practice, and a path to mathematical mastery. Your journey to excellence starts here.
