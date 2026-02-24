@@ -28,7 +28,7 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
          <motion.button 
-            className="flex items-center justify-center rounded-full h-8 w-8 bg-neutral-800/80 hover:bg-neutral-700/80 transition-colors"
+            className="flex items-center justify-center rounded-full h-8 w-8 bg-secondary/80 hover:bg-secondary transition-colors"
          >
             <Avatar className="h-7 w-7">
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
@@ -36,23 +36,23 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
             </Avatar>
          </motion.button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mt-2 bg-neutral-900/80 border-neutral-700/60 text-neutral-300 backdrop-blur-md" side="bottom" align="end">
+      <DropdownMenuContent className="w-56 mt-2 bg-popover/80 border-border text-popover-foreground backdrop-blur-md" side="bottom" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none text-neutral-100">{user.name}</p>
-            <p className="text-xs leading-none text-neutral-400">
+            <p className="text-sm font-medium leading-none text-popover-foreground">{user.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-neutral-700/60" />
-        <DropdownMenuItem className="focus:bg-neutral-700 focus:text-neutral-100 cursor-pointer">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="cursor-pointer">
             <UserCircle className="mr-2 h-4 w-4"/>
             Profile
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-neutral-700/60"/>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-            <button onClick={onSignOut} className="w-full cursor-pointer focus:bg-neutral-700 focus:text-neutral-100">
+            <button onClick={onSignOut} className="w-full cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </button>
@@ -76,20 +76,20 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
-      <nav className="flex items-center gap-1 rounded-full border border-neutral-700/60 bg-neutral-900/80 p-1.5 text-sm font-medium text-neutral-400 backdrop-blur-md">
+      <nav className="flex items-center gap-1 rounded-full border bg-background/80 p-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md">
         
         <Link
             href={homeHref}
             className={cn(
-                "relative rounded-full px-4 py-1.5 transition-colors hover:text-neutral-100",
-                {'text-neutral-100': isHomeActive}
+                "relative rounded-full px-4 py-1.5 transition-colors hover:text-foreground",
+                {'text-foreground': isHomeActive}
             )}
         >
             <span className="relative z-10">Home</span>
             {isHomeActive && (
                 <motion.div
                     layoutId="active-pill"
-                    className="absolute inset-0 z-0 rounded-full bg-neutral-700/80"
+                    className="absolute inset-0 z-0 rounded-full bg-secondary"
                     transition={{ type: "spring", duration: 0.6 }}
                 />
             )}
@@ -100,22 +100,22 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             key={item.href}
             href={item.href}
             className={cn(
-                "relative rounded-full px-4 py-1.5 transition-colors hover:text-neutral-100",
-                {'text-neutral-100': pathname.startsWith(item.href)}
+                "relative rounded-full px-4 py-1.5 transition-colors hover:text-foreground",
+                {'text-foreground': pathname.startsWith(item.href)}
             )}
           >
             <span className="relative z-10">{item.label}</span>
             {pathname.startsWith(item.href) && (
               <motion.div
                 layoutId="active-pill"
-                className="absolute inset-0 z-0 rounded-full bg-neutral-700/80"
+                className="absolute inset-0 z-0 rounded-full bg-secondary"
                 transition={{ type: "spring", duration: 0.6 }}
               />
             )}
           </Link>
         ))}
 
-        <div className="h-5 w-px bg-neutral-700/60 mx-1" />
+        <div className="h-5 w-px bg-border mx-1" />
 
         {user && onSignOut ? (
             <div className="flex items-center justify-center h-8 w-8">
@@ -124,16 +124,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         ) : (
            <>
             <Link href="/sign-in" className={cn(
-                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-neutral-700/80",
-                {'bg-neutral-700/80': pathname === '/sign-in'}
+                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-secondary",
+                {'bg-secondary': pathname === '/sign-in'}
                 )}>
-                <LogIn className='h-4 w-4 text-neutral-300' />
+                <LogIn className='h-4 w-4 text-muted-foreground' />
             </Link>
             <Link href="/sign-up" className={cn(
-                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-neutral-700/80",
-                {'bg-neutral-700/80': pathname === '/sign-up'}
+                "relative flex items-center justify-center rounded-full h-8 w-8 transition-colors hover:bg-secondary",
+                {'bg-secondary': pathname === '/sign-up'}
                 )}>
-                <UserPlus className='h-4 w-4 text-neutral-300' />
+                <UserPlus className='h-4 w-4 text-muted-foreground' />
             </Link>
            </>
         )}
