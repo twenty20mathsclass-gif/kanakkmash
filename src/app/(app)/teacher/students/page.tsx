@@ -1,3 +1,5 @@
+'use client';
+
 import nextDynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
