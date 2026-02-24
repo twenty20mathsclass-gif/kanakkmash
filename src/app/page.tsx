@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
+import { Logo } from '@/components/shared/logo';
 
 export default function Home() {
   const navItems = [
@@ -14,7 +15,10 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AppleStyleDock items={navItems} user={null} />
+      <div className="absolute top-8 left-8 z-50">
+        <Logo />
+      </div>
+      <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
       <main className="flex-1 pt-20">
         <section className="relative overflow-hidden py-20 md:py-32">
           <AnimatedMathIcons />
