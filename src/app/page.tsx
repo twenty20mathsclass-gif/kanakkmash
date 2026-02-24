@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
-      <main className="flex flex-1 items-center justify-center pb-20 md:pt-20 md:pb-0">
+      <main className="flex flex-1 items-center justify-center pt-16 pb-20 md:pt-20 md:pb-0">
         <section className="relative overflow-hidden">
           <AnimatedMathIcons />
           <div

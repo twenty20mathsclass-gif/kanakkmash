@@ -73,72 +73,100 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const isMobile = useIsMobile();
 
   const animationProps = {
-    whileHover: { scale: 1.15, y: -6 },
+    whileHover: { scale: 1.15, y: isMobile ? 6 : -6 },
     transition: { type: "spring", stiffness: 400, damping: 12 },
   };
+  
+  const getHomeHref = () => {
+      if (!user) return '/';
+      switch(user.role) {
+          case 'admin': return '/admin';
+          case 'teacher': return '/teacher';
+          default: return '/dashboard';
+      }
+  }
+  const homeHref = getHomeHref();
+
 
   const activePath = items.reduce((closest, item) => {
-    if (pathname.startsWith(item.href) && item.href.length > closest.length) {
+    // Special handling for root/dashboard links
+    if (item.href === homeHref || (item.href === '/' && homeHref.startsWith('/'))) {
+        if (pathname === homeHref || pathname === '/') {
+            return homeHref;
+        }
+    }
+    if (pathname.startsWith(item.href) && item.href.length > closest.length && item.href !== '/') {
         return item.href;
     }
     return closest;
-  }, (pathname === '/' || pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/teacher')) ? pathname : '');
-
+  }, '');
 
   return (
-    <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
-      <motion.nav 
-        className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
-      >
-        <motion.div {...animationProps} key="logo">
-            <div
-                className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
-            >
-                <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
-            </div>
-        </motion.div>
-        
-        {items.map((item) => {
-            const Icon = item.icon;
-            
-            const isActive = item.href === '/' 
-              ? pathname === '/' 
-              : pathname.startsWith(item.href) && item.href === activePath;
+    <>
+      <div className="fixed top-4 left-4 z-50 md:hidden">
+        <Link href={homeHref}>
+          <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
+        </Link>
+      </div>
 
-            return (
-                <motion.div {...animationProps} key={item.href}>
-                    <Link
-                        href={item.href}
-                        className={cn(
-                            "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12 md:w-auto md:px-4",
-                            {'text-foreground': isActive}
-                        )}
-                    >
-                        <div className="relative z-10 flex items-center">
-                            <Icon className="h-5 w-5" />
-                            <span className="hidden md:ml-2 md:block">{item.label}</span>
-                        </div>
-                        {isActive && (
-                        <motion.div
-                            layoutId="active-pill"
-                            className="absolute inset-0 z-0 rounded-full bg-accent"
-                            transition={{ type: "spring", duration: 0.6 }}
-                        />
-                        )}
-                    </Link>
-                </motion.div>
-            )
-        })}
+      <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
+        <motion.nav 
+          className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
+        >
+          <motion.div {...animationProps} key="logo" className="hidden md:flex">
+              <Link href={homeHref}>
+                  <div
+                      className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+                  >
+                      <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
+                  </div>
+              </Link>
+          </motion.div>
+          
+          {items.map((item) => {
+              const Icon = item.icon;
+              
+              const isActive = activePath === item.href;
 
-        {user && onSignOut && (
-          <>
-            <div className="h-6 w-px bg-border mx-1 self-center" />
-            <motion.div {...animationProps}>
-                <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />
-            </motion.div>
-          </>
-        )}
-      </motion.nav>
-    </div>
+              return (
+                  <motion.div {...animationProps} key={item.href}>
+                      <Link
+                          href={item.href}
+                          className={cn(
+                              "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12 md:w-auto md:px-4",
+                          )}
+                      >
+                          <div className={cn(
+                              "relative z-10 flex items-center",
+                              isActive ? 'text-foreground' : ''
+                              )}
+                          >
+                              <Icon className="h-5 w-5" />
+                              <span className="hidden md:ml-2 md:block">{item.label}</span>
+                          </div>
+                          
+                          {isActive && (
+                          <motion.div
+                              layoutId="active-pill"
+                              className="absolute inset-0 z-0 rounded-full bg-accent"
+                              transition={{ type: "spring", duration: 0.6 }}
+                          />
+                          )}
+                      </Link>
+                  </motion.div>
+              )
+          })}
+
+          {user && onSignOut && (
+            <>
+              <div className="h-6 w-px bg-border mx-1 self-center" />
+              <motion.div {...animationProps}>
+                  <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />
+              </motion.div>
+            </>
+          )}
+        </motion.nav>
+      </div>
+    </>
   );
 }
