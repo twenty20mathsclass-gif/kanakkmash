@@ -31,7 +31,7 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                 Unlock Your Math Potential with{' '}
-                <span className="bg-gradient-to-r from-yellow-500 to-orange-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text text-transparent">
                   kanakkmash
                 </span>
               </h1>
