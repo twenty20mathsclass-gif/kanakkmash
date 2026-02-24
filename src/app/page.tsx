@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { BookOpen, Newspaper, Library, Users, UserPlus } from 'lucide-react';
+import { House, BookOpen, Newspaper, Library, Users } from 'lucide-react';
 
 export default function Home() {
   const navItems = [
+    { href: '/', label: 'Home', icon: House },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/materials', label: 'Materials', icon: Library },
     { href: '/community', label: 'Community', icon: Users },
-    { href: '/sign-up', label: 'Sign Up', icon: UserPlus },
   ];
 
   return (

@@ -77,12 +77,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     transition: { type: "spring", stiffness: 400, damping: 12 },
   };
 
-  const homeHref = user 
-    ? (user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') 
-    : '/';
-  
-  const otherNavItemsActive = items.some(item => item.href !== '/' && pathname.startsWith(item.href));
-  const isLogoActive = (pathname === homeHref) || (homeHref !== '/' && pathname.startsWith(homeHref) && !otherNavItemsActive);
+  const activePath = items.reduce((closest, item) => {
+    if (pathname.startsWith(item.href) && item.href.length > closest.length) {
+        return item.href;
+    }
+    return closest;
+  }, (pathname === '/' || pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/teacher')) ? pathname : '');
 
 
   return (
@@ -91,27 +91,22 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
       >
         <motion.div {...animationProps} key="logo">
-            <Link
-                href={homeHref}
-                className={cn(
-                    "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12",
-                    {'text-foreground': isLogoActive}
-                )}
+            <div
+                className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
             >
                 <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
-                {isLogoActive && (
-                <motion.div
-                    layoutId="active-pill"
-                    className="absolute inset-0 z-0 rounded-full bg-accent"
-                    transition={{ type: "spring", duration: 0.6 }}
-                />
-                )}
-            </Link>
+            </div>
         </motion.div>
         
         {items.map((item) => {
             const Icon = item.icon;
-            const isActive = item.href !== '/' && pathname.startsWith(item.href);
+            
+            // Logic to determine if the current item is active.
+            // It's active if its href is the longest matching prefix of the current path.
+            // For the root path, it must be an exact match.
+            const isActive = item.href === '/' 
+              ? pathname === '/' 
+              : pathname.startsWith(item.href) && item.href === activePath;
 
             return (
                 <motion.div {...animationProps} key={item.href}>
