@@ -30,9 +30,9 @@ function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => v
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
          <button 
-            className="flex items-center justify-center rounded-full h-10 w-10 bg-secondary/80 hover:bg-secondary transition-colors"
+            className="flex items-center justify-center rounded-full h-12 w-12 bg-secondary/80 hover:bg-secondary transition-colors"
          >
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-11 w-11">
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
@@ -88,21 +88,21 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   return (
     <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
       <motion.nav 
-        className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[52px]"
+        className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
       >
         <motion.div {...animationProps} key="logo">
             <Link
                 href={homeHref}
                 className={cn(
-                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10",
+                    "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12",
                     {'text-foreground': isLogoActive}
                 )}
             >
-                <Image src="/lgo ico@4x.webp" alt="Logo" width={28} height={28} className="h-7 w-7" />
+                <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
                 {isLogoActive && (
                 <motion.div
                     layoutId="active-pill"
-                    className="absolute inset-0 z-0 rounded-full bg-secondary"
+                    className="absolute inset-0 z-0 rounded-full bg-accent"
                     transition={{ type: "spring", duration: 0.6 }}
                 />
                 )}
@@ -118,7 +118,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     <Link
                         href={item.href}
                         className={cn(
-                            "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
+                            "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12 md:w-auto md:px-4",
                             {'text-foreground': isActive}
                         )}
                     >
@@ -127,7 +127,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                         {isActive && (
                         <motion.div
                             layoutId="active-pill"
-                            className="absolute inset-0 z-0 rounded-full bg-secondary"
+                            className="absolute inset-0 z-0 rounded-full bg-accent"
                             transition={{ type: "spring", duration: 0.6 }}
                         />
                         )}
