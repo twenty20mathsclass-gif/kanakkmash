@@ -112,11 +112,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-50 md:hidden">
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 flex h-24 items-center justify-center transition-all duration-300 md:hidden',
+          scrolled && 'h-20 border-b bg-background/80 backdrop-blur-md'
+        )}
+      >
         <Link
           href="/"
           className={cn(
-            'flex h-40 w-40 items-center justify-center p-1 transition-all duration-300'
+            'flex h-full items-center justify-center p-1 transition-all duration-300'
           )}
         >
           <Image
@@ -124,10 +129,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             alt="Logo"
             width={160}
             height={160}
-            className="h-40 w-40 object-contain"
+            className="h-full w-auto object-contain"
           />
         </Link>
-      </div>
+      </header>
 
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
