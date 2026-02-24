@@ -88,17 +88,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const getHomeHref = () => {
       if (!user) return '/';
@@ -130,28 +119,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <>
-      <header
-        className={cn(
-          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-transparent px-4 backdrop-blur-md transition-all duration-300',
-          scrolled ? 'bg-background/80 shadow-md' : ''
-        )}
-      >
-        <Link
-          href="/"
-          className={cn(
-            'flex h-auto items-center justify-center p-1 transition-all duration-300'
-          )}
-        >
-          <Image
-            src="/logoo_1@4x.webp"
-            alt="Logo"
-            width={120}
-            height={37}
-            className="object-contain"
-          />
-        </Link>
-      </header>
-
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
