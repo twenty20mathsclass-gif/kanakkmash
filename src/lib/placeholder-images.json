@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "algebra-basics",
+      "description": "A blackboard with algebraic equations.",
+      "imageUrl": "https://images.unsplash.com/photo-1758685848663-784d2f7051d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhbGdlYnJhJTIwYmxhY2tib2FyZHxlbnwwfHx8fDE3NzE5MTgwMjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "algebra blackboard"
+    },
+    {
+      "id": "geometry-fundamentals",
+      "description": "Geometric shapes and tools on a desk.",
+      "imageUrl": "https://images.unsplash.com/photo-1628002580365-f3c0a322d577?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZW9tZXRyeSUyMHRvb2xzfGVufDB8fHx8MTc3MTkxODAyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "geometry tools"
+    },
+    {
+      "id": "calculus-essentials",
+      "description": "Graphs and functions related to calculus.",
+      "imageUrl": "https://images.unsplash.com/photo-1727522974735-44251dfe61b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYWxjdWx1cyUyMGdyYXBofGVufDB8fHx8MTc3MTkxODAyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "calculus graph"
+    },
+    {
+      "id": "statistics-intro",
+      "description": "Charts and graphs representing statistical data.",
+      "imageUrl": "https://images.unsplash.com/photo-1762279389020-eeeb69c25813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGF0aXN0aWNzJTIwY2hhcnRzfGVufDB8fHx8MTc3MTkxODAyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "statistics charts"
+    }
+  ]
 }
