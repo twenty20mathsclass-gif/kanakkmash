@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'MathSprint 20/20',
-  description: 'An online learning platform for twenty20 maths class.',
+  title: 'kanakkmash',
+  description: 'An online learning platform for maths.',
 };
 
 export default function RootLayout({

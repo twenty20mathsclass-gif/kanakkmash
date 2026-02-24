@@ -46,7 +46,7 @@ export default function SignUpPage() {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
           <CardDescription>
-            Join MathSprint 20/20 and start your learning adventure.
+            Join kanakkmash and start your learning adventure.
           </CardDescription>
         </CardHeader>
         <CardContent>

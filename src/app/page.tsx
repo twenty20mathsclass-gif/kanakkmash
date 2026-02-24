@@ -54,7 +54,7 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                 Unlock Your Math Potential with{' '}
-                <span className="text-primary">MathSprint 20/20</span>
+                <span className="text-primary">kanakkmash</span>
               </h1>
               <p className="mx-auto mt-6 max-w-xl text-lg text-foreground/80">
                 Engaging lessons, AI-powered practice, and a path to mathematical mastery. Your journey to excellence starts here.
@@ -105,7 +105,7 @@ export default function Home() {
         <div className="container mx-auto flex items-center justify-between px-4 md:px-6">
           <Logo />
           <p className="text-sm text-foreground/60">
-            © {new Date().getFullYear()} MathSprint 20/20. All rights reserved.
+            © {new Date().getFullYear()} kanakkmash. All rights reserved.
           </p>
         </div>
       </footer>

@@ -48,7 +48,7 @@ export default function SignInPage() {
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Welcome Back!</CardTitle>
           <CardDescription>
-            Sign in to continue your journey with MathSprint 20/20.
+            Sign in to continue your journey with kanakkmash.
           </CardDescription>
         </CardHeader>
         <CardContent>
