@@ -37,6 +37,7 @@ export default function AppLayout({
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/materials', label: 'Materials', icon: Library },
+    { href: '/community', label: 'Community', icon: Users },
   ];
 
   const teacherNav = [

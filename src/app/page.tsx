@@ -3,19 +3,22 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { LogIn, UserPlus } from 'lucide-react';
+import { BookOpen, Newspaper, Library, Users, UserPlus } from 'lucide-react';
 
 export default function Home() {
   const navItems = [
-    { href: '/sign-in', label: 'Sign In', icon: LogIn },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
+    { href: '/blog', label: 'Blog', icon: Newspaper },
+    { href: '/materials', label: 'Materials', icon: Library },
+    { href: '/community', label: 'Community', icon: Users },
     { href: '/sign-up', label: 'Sign Up', icon: UserPlus },
   ];
 
   return (
     <div className="flex min-h-screen flex-col">
       <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
-      <main className="flex-1 pt-20">
-        <section className="relative overflow-hidden py-20 md:py-32">
+      <main className="flex flex-1 items-center justify-center pt-20 pb-20 md:pt-20 md:pb-0">
+        <section className="relative overflow-hidden">
           <AnimatedMathIcons />
           <div
             aria-hidden="true"
@@ -40,8 +43,8 @@ export default function Home() {
               <Button size="lg" asChild>
                 <Link href="/sign-up">Get Started for Free</Link>
               </Button>
-              <Button size="lg" variant="outline">
-                Learn More
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/sign-in">Sign In</Link>
               </Button>
             </div>
           </div>
