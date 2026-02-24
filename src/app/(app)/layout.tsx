@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
-import { AppHeader } from '@/components/shared/app-header';
+import { Dock } from '@/components/shared/dock';
 import { BookOpen, FlaskConical, LayoutDashboard, Home, Newspaper, Library, Users } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 
@@ -61,9 +61,9 @@ export default function AppLayout({
       : studentNav;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader items={navItems} user={user} onSignOut={handleSignOut} />
-      <main className="flex-grow p-4 md:p-6 lg:p-8">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <Dock items={navItems} user={user} onSignOut={handleSignOut} />
+      <main className="flex-grow p-4 md:p-6 lg:p-8 pl-32">{children}</main>
     </div>
   );
 }
