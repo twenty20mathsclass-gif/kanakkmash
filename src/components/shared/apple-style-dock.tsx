@@ -126,7 +126,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <motion.div
             transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             key="logo"
-            className="flex mx-2"
+            className="flex"
           >
             <Link href="/">
               <div className="relative flex h-12 w-28 items-center justify-center transition-colors md:h-14 md:w-auto">
