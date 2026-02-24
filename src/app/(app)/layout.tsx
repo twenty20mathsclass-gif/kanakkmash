@@ -80,7 +80,7 @@ export default function AppLayout({
         <Logo />
         <UserNav user={user} onSignOut={handleSignOut} />
       </header>
-      <main className="flex-1 p-4 pb-24 md:p-6 lg:p-8">{children}</main>
+      <main className="flex-1 p-4 pl-24 md:p-6 md:pl-24 lg:p-8 lg:pl-24">{children}</main>
       <Dock items={navItems} />
     </div>
   );
