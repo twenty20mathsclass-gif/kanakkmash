@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Home } from 'lucide-react';
+import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 
@@ -65,16 +65,14 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
 
-  const navItems = user ? items : [];
-  
-  const homeHref = user ? (user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') : '/';
-  
-  const isHomeActive = pathname === homeHref || (user && !navItems.some(item => pathname.startsWith(item.href)));
-
   const animationProps = {
     whileHover: { scale: 1.15, y: -6 },
     transition: { type: "spring", stiffness: 400, damping: 12 },
   };
+
+  const primaryLink = user 
+    ? items.find(item => ['/dashboard', '/admin', '/teacher'].includes(item.href))
+    : items.find(item => item.href === '/');
 
   return (
     <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
@@ -82,40 +80,32 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[52px]"
       >
         
-        <motion.div {...animationProps}>
-            <Link
-                href={homeHref}
-                className={cn(
-                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
-                    {'text-foreground': isHomeActive}
-                )}
-            >
-                <Home className="h-5 w-5" />
-                <span className="relative z-10 hidden md:ml-2 md:block">Home</span>
-                {isHomeActive && (
-                    <motion.div
-                        layoutId="active-pill"
-                        className="absolute inset-0 z-0 rounded-full bg-secondary"
-                        transition={{ type: "spring", duration: 0.6 }}
-                    />
-                )}
-            </Link>
-        </motion.div>
-        
-        {navItems.map((item) => {
+        {items.map((item) => {
             const Icon = item.icon;
+            let isActive = false;
+            
+            if (primaryLink && item.href === primaryLink.href) {
+                const otherItems = items.filter(i => i.href !== primaryLink.href);
+                isActive = !otherItems.some(other => pathname.startsWith(other.href) && other.href !== '/');
+                if (item.href === '/') {
+                    isActive = pathname === '/';
+                }
+            } else {
+                isActive = item.href !== '/' && pathname.startsWith(item.href);
+            }
+
             return (
                 <motion.div {...animationProps} key={item.href}>
                     <Link
                         href={item.href}
                         className={cn(
                             "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
-                            {'text-foreground': pathname.startsWith(item.href)}
+                            {'text-foreground': isActive}
                         )}
                     >
                         <Icon className="h-5 w-5" />
                         <span className="relative z-10 hidden md:ml-2 md:block">{item.label}</span>
-                        {pathname.startsWith(item.href) && (
+                        {isActive && (
                         <motion.div
                             layoutId="active-pill"
                             className="absolute inset-0 z-0 rounded-full bg-secondary"
@@ -127,47 +117,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             )
         })}
 
-        <div className="h-6 w-px bg-border mx-1 self-center" />
-
-        {user && onSignOut ? (
+        {user && onSignOut && (
+          <>
+            <div className="h-6 w-px bg-border mx-1 self-center" />
             <motion.div {...animationProps}>
                 <UserNav user={user} onSignOut={onSignOut} />
             </motion.div>
-        ) : (
-           <>
-            <motion.div {...animationProps}>
-                <Link href="/sign-in" className={cn(
-                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
-                    {'text-foreground': pathname === '/sign-in'}
-                    )}>
-                    <LogIn className='h-5 w-5' />
-                    <span className="relative z-10 hidden md:ml-2 md:block">Sign In</span>
-                    {pathname === '/sign-in' && (
-                        <motion.div
-                            layoutId="active-pill"
-                            className="absolute inset-0 z-0 rounded-full bg-secondary"
-                            transition={{ type: "spring", duration: 0.6 }}
-                        />
-                    )}
-                </Link>
-            </motion.div>
-            <motion.div {...animationProps}>
-                <Link href="/sign-up" className={cn(
-                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10 md:w-auto md:px-4",
-                    {'text-foreground': pathname === '/sign-up'}
-                    )}>
-                    <UserPlus className='h-5 w-5' />
-                    <span className="relative z-10 hidden md:ml-2 md:block">Sign Up</span>
-                     {pathname === '/sign-up' && (
-                        <motion.div
-                            layoutId="active-pill"
-                            className="absolute inset-0 z-0 rounded-full bg-secondary"
-                            transition={{ type: "spring", duration: 0.6 }}
-                        />
-                    )}
-                </Link>
-            </motion.div>
-           </>
+          </>
         )}
       </motion.nav>
     </div>

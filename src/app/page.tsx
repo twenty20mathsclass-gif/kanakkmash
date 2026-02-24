@@ -1,12 +1,20 @@
+'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
+import { Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
 
 export default function Home() {
+  const navItems = [
+    { href: '/', label: 'Home', icon: HomeIcon },
+    { href: '/sign-in', label: 'Sign In', icon: LogIn },
+    { href: '/sign-up', label: 'Sign Up', icon: UserPlus },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col">
-      <AppleStyleDock items={[]} user={null} />
+      <AppleStyleDock items={navItems} user={null} />
       <main className="flex-1 pt-20">
         <section className="relative overflow-hidden py-20 md:py-32">
           <AnimatedMathIcons />
