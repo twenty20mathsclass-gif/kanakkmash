@@ -18,8 +18,9 @@ export default {
     extend: {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        headline: ['Fredoka', 'sans-serif'],
         code: ['monospace'],
+        serif: ['Georgia', 'serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

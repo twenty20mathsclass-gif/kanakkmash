@@ -76,7 +76,14 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
-      <nav className="flex items-center gap-1 rounded-full border bg-background/80 p-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md">
+      <motion.nav 
+        className="flex items-center gap-1 rounded-full border bg-background/80 p-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md"
+        whileHover={{
+            padding: '0.6rem',
+            gap: '0.5rem',
+        }}
+        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+      >
         
         <Link
             href={homeHref}
@@ -137,7 +144,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
            </>
         )}
-      </nav>
+      </motion.nav>
     </div>
   );
 }
