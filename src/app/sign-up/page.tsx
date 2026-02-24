@@ -13,6 +13,8 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { PageLoader } from '@/components/shared/page-loader';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +38,12 @@ export default function SignUpPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
+      <Button variant="ghost" asChild className="absolute top-4 left-4">
+        <Link href="/">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Link>
+      </Button>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>

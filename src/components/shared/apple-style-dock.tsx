@@ -121,15 +121,15 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <Link
           href="/"
           className={cn(
-            'flex h-full items-center justify-center p-1 transition-all duration-300'
+            'flex h-auto items-center justify-center p-1 transition-all duration-300'
           )}
         >
           <Image
             src="/logoo_1@4x.webp"
             alt="Logo"
-            width={80}
-            height={25}
-            className="h-full w-auto object-contain"
+            width={60}
+            height={19}
+            className="object-contain"
           />
         </Link>
       </header>
@@ -149,8 +149,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                 <Image
                   src="/logoo_1@4x.webp"
                   alt="Logo"
-                  width={280}
-                  height={87}
+                  width={80}
+                  height={25}
                   className="h-full w-auto object-contain"
                 />
               </div>
