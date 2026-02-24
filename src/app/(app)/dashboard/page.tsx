@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { PageLoader } from '@/components/shared/page-loader';
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
@@ -21,7 +22,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <PageLoader fullScreen={false} />
       </div>
     );
   }

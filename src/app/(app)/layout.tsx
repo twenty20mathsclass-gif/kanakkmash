@@ -17,9 +17,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dock } from '@/components/shared/dock';
-import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2, Home, School, Newspaper, Library, CheckSquare } from 'lucide-react';
+import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Home, School, Newspaper, Library, CheckSquare } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { Logo } from '@/components/shared/logo';
+import { PageLoader } from '@/components/shared/page-loader';
 
 export default function AppLayout({
   children,
@@ -41,11 +42,7 @@ export default function AppLayout({
   }, [loading, user, router]);
 
   if (loading || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const studentNav = [

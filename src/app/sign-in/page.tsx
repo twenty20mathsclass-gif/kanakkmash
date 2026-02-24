@@ -13,7 +13,7 @@ import { Logo } from '@/components/shared/logo';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { PageLoader } from '@/components/shared/page-loader';
 
 export default function SignInPage() {
   const { user, loading } = useUser();
@@ -32,11 +32,7 @@ export default function SignInPage() {
   }, [user, loading, router]);
 
   if (loading || (!loading && user)) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
