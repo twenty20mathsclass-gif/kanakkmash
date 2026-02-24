@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type NavItem = {
   href: string;
@@ -23,7 +24,7 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
+function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => void, isMobile: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,7 +37,11 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
             </Avatar>
          </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mt-2 bg-popover/80 border-border text-popover-foreground backdrop-blur-md" side="bottom" align="end">
+      <DropdownMenuContent 
+        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2 md:mt-2 md:mb-0" 
+        side={isMobile ? 'top' : 'bottom'} 
+        align="end"
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none text-popover-foreground">{user.name}</p>
@@ -64,6 +69,7 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
 
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
 
   const animationProps = {
     whileHover: { scale: 1.15, y: -6 },
@@ -75,7 +81,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     : items.find(item => item.href === '/');
 
   return (
-    <div className='fixed top-4 left-1/2 -translate-x-1/2 z-50'>
+    <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
       <motion.nav 
         className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[52px]"
       >
@@ -121,7 +127,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <>
             <div className="h-6 w-px bg-border mx-1 self-center" />
             <motion.div {...animationProps}>
-                <UserNav user={user} onSignOut={onSignOut} />
+                <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />
             </motion.div>
           </>
         )}
