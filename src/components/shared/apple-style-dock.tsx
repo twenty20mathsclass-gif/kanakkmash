@@ -120,13 +120,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               scrolled && 'border bg-background/80 backdrop-blur-md'
             )}
         >
-          <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
+          <Image src="/logoo@logoo@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
         </Link>
       </div>
 
       <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
         <motion.nav 
-          className="flex items-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
+          className="flex items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
         >
           <motion.div 
             whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
@@ -138,7 +138,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <div
                       className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
                   >
-                      <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
+                      <Image src="/logoo@logoo@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
                   </div>
               </Link>
           </motion.div>
@@ -187,7 +187,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           {user && onSignOut && (
             <>
-              <div className="h-6 w-px bg-border mx-1" />
+              <div className="h-6 w-px bg-border mx-1 self-center" />
               <motion.div 
                 whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
