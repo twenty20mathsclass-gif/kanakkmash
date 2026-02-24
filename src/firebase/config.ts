@@ -1,6 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  enableMultiTabIndexedDbPersistence,
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -21,8 +24,27 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 if (typeof window !== 'undefined') {
+  // Enable multi-tab persistence
+  enableMultiTabIndexedDbPersistence(firestore).catch((err) => {
+    if (err.code == 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled
+      // in one tab at a time.
+      console.warn(
+        'Firebase persistence failed to initialize. This is normal if you have multiple tabs open.'
+      );
+    } else if (err.code == 'unimplemented') {
+      // The current browser does not support all of the
+      // features required to enable persistence
+      console.warn('Firebase persistence is not supported in this browser.');
+    }
+  });
+
   // Initialize Analytics only on the client side
-  getAnalytics(app);
+  try {
+    getAnalytics(app);
+  } catch (error) {
+    console.warn("Couldn't initialize analytics", error);
+  }
 }
 
 export { app, firestore, auth, storage, firebaseConfig };
