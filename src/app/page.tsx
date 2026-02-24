@@ -20,8 +20,8 @@ export default function Home() {
           <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                Unlock Your <span className="italic">Math Potential</span> with{' '}
-                <span className="bg-gradient-to-r from-violet-500 to-blue-500 bg-clip-text text-transparent">
+                Unlock Your <span className="font-serif italic">Math Potential</span> with{' '}
+                <span className="text-primary">
                   kanakkmash
                 </span>
               </h1>
