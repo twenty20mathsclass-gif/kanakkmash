@@ -116,8 +116,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <Link 
             href={homeHref}
             className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300',
-              scrolled && 'border bg-background/80 backdrop-blur-md'
+              'flex h-10 w-10 items-center justify-center rounded-full border bg-background/80 backdrop-blur-md transition-all duration-300'
             )}
         >
           <Image src="/logoo@logoo@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
@@ -187,7 +186,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           {user && onSignOut && (
             <>
-              <div className="h-6 w-px bg-border mx-1 self-center" />
+              <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
                 whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
