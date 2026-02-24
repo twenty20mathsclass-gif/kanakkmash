@@ -18,6 +18,7 @@ import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useState, useEffect } from 'react';
 
 type NavItem = {
   href: string;
@@ -71,12 +72,18 @@ function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => v
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const [scrolled, setScrolled] = useState(false);
 
-  const animationProps = {
-    whileHover: { scale: 1.15, y: isMobile ? 6 : -6 },
-    transition: { type: "spring", stiffness: 400, damping: 12 },
-  };
-  
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const getHomeHref = () => {
       if (!user) return '/';
       switch(user.role) {
@@ -104,7 +111,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   return (
     <>
       <div className="fixed top-4 left-4 z-50 md:hidden">
-        <Link href={homeHref}>
+        <Link 
+            href={homeHref}
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300',
+              scrolled && 'border bg-background/80 backdrop-blur-md'
+            )}
+        >
           <Image src="/lgo ico@4x.webp" alt="Logo" width={32} height={32} className="h-8 w-8 object-contain" />
         </Link>
       </div>
@@ -113,7 +126,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav 
           className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[60px]"
         >
-          <motion.div {...animationProps} key="logo" className="hidden md:flex">
+          <motion.div 
+            whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
+            transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            key="logo" 
+            className="hidden md:flex"
+          >
               <Link href={homeHref}>
                   <div
                       className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors"
@@ -129,16 +147,24 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               const isActive = activePath === item.href;
 
               return (
-                  <motion.div {...animationProps} key={item.href}>
+                  <motion.div 
+                    key={item.href}
+                    animate={{
+                      scale: isActive ? 1.1 : 1,
+                      y: isActive && !isMobile ? -4 : 0,
+                    }}
+                    whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                  >
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-12 items-center justify-center rounded-full transition-colors hover:text-foreground w-12 md:w-auto md:px-4",
+                              "relative flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:text-foreground md:w-auto md:px-4",
                           )}
                       >
                           <div className={cn(
                               "relative z-10 flex items-center",
-                              isActive ? 'text-foreground' : ''
+                              isActive ? 'text-primary-foreground' : ''
                               )}
                           >
                               <Icon className="h-5 w-5" />
@@ -148,7 +174,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                           {isActive && (
                           <motion.div
                               layoutId="active-pill"
-                              className="absolute inset-0 z-0 rounded-full bg-accent"
+                              className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-amber-400 via-primary to-amber-400 bg-[length:200%_auto] animate-gradient-pan"
                               transition={{ type: "spring", duration: 0.6 }}
                           />
                           )}
@@ -160,7 +186,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           {user && onSignOut && (
             <>
               <div className="h-6 w-px bg-border mx-1 self-center" />
-              <motion.div {...animationProps}>
+              <motion.div 
+                whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
+                transition={{ type: "spring", stiffness: 400, damping: 12 }}
+              >
                   <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />
               </motion.div>
             </>
