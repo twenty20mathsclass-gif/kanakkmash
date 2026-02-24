@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
@@ -24,6 +24,7 @@ import {
     LayoutDashboard 
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
+import { HomePageDock } from '@/components/shared/home-page-dock';
 
 export default function AppLayout({
   children,
@@ -32,6 +33,28 @@ export default function AppLayout({
 }) {
   const { user, loading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const publicPaths = ['/courses', '/blog', '/materials', '/community'];
+  const isPublicPath = publicPaths.includes(pathname);
+
+  if (isPublicPath) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <Suspense fallback={null}>
+          <HomePageDock />
+        </Suspense>
+        <main className="flex-grow p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
+        <footer className="bg-background py-6">
+          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
+            <p className="text-sm text-foreground/60">
+              © {new Date().getFullYear()} kanakkmash. All rights reserved.
+            </p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
 
   const handleSignOut = async () => {
     await firebaseSignOut(auth);
