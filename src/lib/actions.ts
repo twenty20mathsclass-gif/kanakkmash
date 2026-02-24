@@ -4,10 +4,12 @@ import { z } from 'zod';
 import { generateCustomMathPractice } from '@/ai/flows/generate-custom-math-practice';
 import type { GenerateCustomMathPracticeOutput } from '@/ai/flows/generate-custom-math-practice';
 import { revalidatePath } from 'next/cache';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { firebaseConfig, firestore } from '@/firebase/config';
+import type { User } from './definitions';
 
-// signIn, signUp, and signOut actions have been removed.
-// Authentication is now handled on the client-side using the Firebase SDK.
-// See src/components/auth/ for the new implementation.
 
 const createUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -17,11 +19,6 @@ const createUserSchema = z.object({
 });
 
 export async function createUser(prevState: any, formData: FormData) {
-    // NOTE: This function is now a placeholder.
-    // Securely creating users on behalf of an admin requires the Firebase Admin SDK,
-    // which can only be run in a secure server-side environment (like a Cloud Function or a custom backend).
-    // The client-side SDK used in this app cannot create users for other users.
-    
     const validatedFields = createUserSchema.safeParse(
         Object.fromEntries(formData.entries())
     );
@@ -33,14 +30,59 @@ export async function createUser(prevState: any, formData: FormData) {
             success: false,
         };
     }
+
+    const { name, email, password, role } = validatedFields.data;
     
-    // This will show an error in the dialog.
-    revalidatePath('/admin/users');
-    return {
-        errors: {},
-        message: 'User creation by an admin is not supported in this version of the app. This feature requires a backend with the Firebase Admin SDK.',
-        success: false,
-    };
+    // Create a temporary app to create the user without signing the admin out
+    const tempAppName = `temp-user-creation-${Date.now()}`;
+    const tempApp = initializeApp(firebaseConfig, tempAppName);
+    const tempAuth = getAuth(tempApp);
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(
+            tempAuth,
+            email,
+            password
+        );
+        const user = userCredential.user;
+
+        const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
+
+        const userProfile: User = {
+            id: user.uid,
+            name: name,
+            email: email,
+            role: role,
+            avatarUrl: avatarUrl,
+        };
+
+        // Use the main firestore instance to create the document
+        await setDoc(doc(firestore, 'users', user.uid), userProfile);
+        
+        revalidatePath('/admin/users');
+        
+        return {
+            errors: {},
+            message: `Successfully created user ${name}.`,
+            success: true,
+        };
+
+    } catch (error: any) {
+        let message = 'An unknown error occurred.';
+        if (error.code === 'auth/email-already-in-use') {
+            message = 'A user with this email already exists.';
+        } else if (error.message) {
+            message = error.message;
+        }
+
+        return {
+            errors: {},
+            message: message,
+            success: false,
+        };
+    } finally {
+        await deleteApp(tempApp);
+    }
 }
 
 
