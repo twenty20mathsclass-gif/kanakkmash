@@ -58,22 +58,6 @@ export function FloatingActionButtons() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
-      {!isMobile && (
-        <Link
-          href="https://wa.me/919995315893"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Chat on WhatsApp"
-        >
-          <Button
-            size="icon"
-            className="rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] w-14 h-14 shadow-lg"
-          >
-            <WhatsAppIcon className="h-7 w-7" />
-          </Button>
-        </Link>
-      )}
-      
       <div
         className={cn(
           'transition-opacity duration-300',
@@ -89,6 +73,21 @@ export function FloatingActionButtons() {
           <ArrowUp className="h-6 w-6" />
         </Button>
       </div>
+      {!isMobile && (
+        <Link
+          href="https://wa.me/919995315893"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat on WhatsApp"
+        >
+          <Button
+            size="icon"
+            className="rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] w-14 h-14 shadow-lg"
+          >
+            <WhatsAppIcon className="h-7 w-7" />
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }

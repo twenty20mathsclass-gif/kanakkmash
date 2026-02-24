@@ -75,7 +75,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
+      viewBox="0 0 24"
       fill="currentColor"
       {...props}
     >
@@ -132,7 +132,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-transparent px-4 backdrop-blur-md transition-all duration-300 md:hidden',
+          'fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-start bg-transparent px-4 backdrop-blur-md transition-all duration-300',
           scrolled ? 'bg-background/80 shadow-md' : ''
         )}
       >
@@ -157,7 +157,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
           <motion.div
-            whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
             transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             key="logo"
             className="hidden md:flex mx-2"
@@ -187,7 +186,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                       scale: 1,
                       y: 0,
                     }}
-                    whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
                   >
                       <Link
@@ -223,7 +221,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                 scale: 1,
                 y: 0,
               }}
-              whileHover={{ scale: 1.15, y: 6 }}
               transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             >
               <Link
@@ -242,7 +239,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.15, y: isMobile ? 6 : -6 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
                   <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />

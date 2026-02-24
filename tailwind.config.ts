@@ -18,7 +18,7 @@ export default {
     extend: {
       fontFamily: {
         body: ['Manjari', 'sans-serif'],
-        headline: ['Manjari', 'sans-serif'],
+        headline: ['Poppins', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
