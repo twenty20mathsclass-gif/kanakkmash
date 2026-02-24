@@ -29,7 +29,7 @@ export function useUser() {
             // Special case for the hardcoded admin user. Create their profile on first login.
             const adminProfile: User = {
               id: authUser.uid,
-              name: authUser.displayName || 'Admin User',
+              name: authUser.displayName || 'Kanakkmash Admin',
               email: authUser.email!,
               role: 'admin',
               avatarUrl: authUser.photoURL || `https://picsum.photos/seed/${authUser.uid}/100/100`,
