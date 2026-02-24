@@ -17,8 +17,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['"Bricolage Grotesque"', 'sans-serif'],
-        headline: ['"Bricolage Grotesque"', 'serif'],
+        body: ['"Bricolage Grotesque"', 'Inter', 'sans-serif'],
+        headline: ['"Bricolage Grotesque"', 'Inter', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
