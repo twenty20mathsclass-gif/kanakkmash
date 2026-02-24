@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
