@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
@@ -76,29 +77,41 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     transition: { type: "spring", stiffness: 400, damping: 12 },
   };
 
-  const primaryLink = user 
-    ? items.find(item => ['/dashboard', '/admin', '/teacher'].includes(item.href))
-    : items.find(item => item.href === '/');
+  const homeHref = user 
+    ? (user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') 
+    : '/';
+  
+  const otherNavItemsActive = items.some(item => item.href !== '/' && pathname.startsWith(item.href));
+  const isLogoActive = (pathname === homeHref) || (homeHref !== '/' && pathname.startsWith(homeHref) && !otherNavItemsActive);
+
 
   return (
     <div className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:top-4 md:bottom-auto'>
       <motion.nav 
         className="flex items-end gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md h-[52px]"
       >
+        <motion.div {...animationProps} key="logo">
+            <Link
+                href={homeHref}
+                className={cn(
+                    "relative flex h-10 items-center justify-center rounded-full transition-colors hover:text-foreground w-10",
+                    {'text-foreground': isLogoActive}
+                )}
+            >
+                <Image src="/lgo ico@4x.webp" alt="Logo" width={28} height={28} className="h-7 w-7" />
+                {isLogoActive && (
+                <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 z-0 rounded-full bg-secondary"
+                    transition={{ type: "spring", duration: 0.6 }}
+                />
+                )}
+            </Link>
+        </motion.div>
         
         {items.map((item) => {
             const Icon = item.icon;
-            let isActive = false;
-            
-            if (primaryLink && item.href === primaryLink.href) {
-                const otherItems = items.filter(i => i.href !== primaryLink.href);
-                isActive = !otherItems.some(other => pathname.startsWith(other.href) && other.href !== '/');
-                if (item.href === '/') {
-                    isActive = pathname === '/';
-                }
-            } else {
-                isActive = item.href !== '/' && pathname.startsWith(item.href);
-            }
+            const isActive = item.href !== '/' && pathname.startsWith(item.href);
 
             return (
                 <motion.div {...animationProps} key={item.href}>

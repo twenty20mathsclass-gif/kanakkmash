@@ -6,7 +6,7 @@ import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { BookOpen, FlaskConical, LayoutDashboard, Newspaper, Library, Users } from 'lucide-react';
+import { BookOpen, FlaskConical, Newspaper, Library, Users } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 
 export default function AppLayout({
@@ -33,7 +33,6 @@ export default function AppLayout({
   }
 
   const studentNav = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
     { href: '/blog', label: 'Blog', icon: Newspaper },
@@ -41,14 +40,12 @@ export default function AppLayout({
   ];
 
   const teacherNav = [
-    { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/teacher/students', label: 'Students', icon: Users },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];
 
   const adminNav = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   ];

@@ -3,11 +3,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 
 export default function Home() {
   const navItems = [
-    { href: '/', label: 'Home', icon: HomeIcon },
     { href: '/sign-in', label: 'Sign In', icon: LogIn },
     { href: '/sign-up', label: 'Sign Up', icon: UserPlus },
   ];
