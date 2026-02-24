@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, Calculator } from 'lucide-react';
+import { LogOut, UserCircle, Calculator, LogIn, UserPlus } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 
 
@@ -38,7 +38,7 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
             </Avatar>
          </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mb-2" side="top" align="center">
+      <DropdownMenuContent className="w-56 mb-2" side="bottom" align="start">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
@@ -64,14 +64,14 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
   );
 }
 
-export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User, onSignOut: () => void }) {
+export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   return (
-    <div className='fixed bottom-4 left-1/2 z-50 -translate-x-1/2'>
+    <div className='fixed top-4 left-4 z-50'>
       <Dock magnification={64} distance={80} panelHeight={60}>
          <DockItem className='rounded-full bg-primary text-primary-foreground'>
             <DockLabel>kanakkmash</DockLabel>
             <DockIcon>
-              <Link href="/" className="flex h-full w-full items-center justify-center">
+              <Link href={user ? "/dashboard" : "/"} className="flex h-full w-full items-center justify-center">
                   <Calculator className='h-full w-full' />
               </Link>
             </DockIcon>
@@ -86,10 +86,32 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </DockIcon>
           </DockItem>
         ))}
-         <DockItem className='rounded-full'>
-            <DockLabel>Account</DockLabel>
-             <UserNav user={user} onSignOut={onSignOut} />
-          </DockItem>
+         
+        {user && onSignOut ? (
+            <DockItem className='rounded-full'>
+                <DockLabel>Account</DockLabel>
+                <UserNav user={user} onSignOut={onSignOut} />
+            </DockItem>
+        ) : (
+            <>
+                <DockItem className='rounded-full bg-background'>
+                    <DockLabel>Sign In</DockLabel>
+                    <DockIcon>
+                        <Link href="/sign-in" className="flex h-full w-full items-center justify-center">
+                            <LogIn className='h-full w-full text-foreground/90' />
+                        </Link>
+                    </DockIcon>
+                </DockItem>
+                <DockItem className='rounded-full bg-background'>
+                    <DockLabel>Sign Up</DockLabel>
+                    <DockIcon>
+                        <Link href="/sign-up" className="flex h-full w-full items-center justify-center">
+                            <UserPlus className='h-full w-full text-foreground/90' />
+                        </Link>
+                    </DockIcon>
+                </DockItem>
+            </>
+        )}
       </Dock>
     </div>
   );

@@ -1,23 +1,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/shared/logo';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
+import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-        <Logo />
-        <nav className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link href="/sign-in">Sign In</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/sign-up">Sign Up</Link>
-          </Button>
-        </nav>
-      </header>
-      <main className="flex-1">
+      <AppleStyleDock items={[]} user={null} />
+      <main className="flex-1 pt-24">
         <section className="relative overflow-hidden py-20 md:py-32">
           <AnimatedMathIcons />
           <div
@@ -51,8 +41,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="bg-background py-6">
-        <div className="container mx-auto flex items-center justify-between px-4 md:px-6">
-          <Logo />
+        <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
           <p className="text-sm text-foreground/60">
             © {new Date().getFullYear()} kanakkmash. All rights reserved.
           </p>
