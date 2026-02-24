@@ -70,20 +70,20 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <Dock magnification={64} distance={80} panelHeight={60}>
          <DockItem className='rounded-full bg-primary text-primary-foreground'>
             <DockLabel>kanakkmash</DockLabel>
-            <Link href="/" className="flex h-full w-full items-center justify-center">
-                <DockIcon>
-                    <Calculator className='h-full w-full' />
-                </DockIcon>
-            </Link>
+            <DockIcon>
+              <Link href="/" className="flex h-full w-full items-center justify-center">
+                  <Calculator className='h-full w-full' />
+              </Link>
+            </DockIcon>
           </DockItem>
         {items.map((item) => (
           <DockItem key={item.label} className='rounded-full bg-background'>
             <DockLabel>{item.label}</DockLabel>
-            <Link href={item.href} className="flex h-full w-full items-center justify-center">
-                <DockIcon>
-                    <item.icon className='h-full w-full text-foreground/90' />
-                </DockIcon>
-            </Link>
+            <DockIcon>
+              <Link href={item.href} className="flex h-full w-full items-center justify-center">
+                  <item.icon className='h-full w-full text-foreground/90' />
+              </Link>
+            </DockIcon>
           </DockItem>
         ))}
          <DockItem className='rounded-full'>
