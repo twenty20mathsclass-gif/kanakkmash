@@ -68,8 +68,8 @@ function UserNav({ user, onSignOut }: { user: User, onSignOut: () => void }) {
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User, onSignOut: () => void }) {
   return (
     <div className='fixed bottom-4 left-1/2 z-50 -translate-x-1/2'>
-      <Dock magnification={60} distance={100} panelHeight={56}>
-         <DockItem className='aspect-square rounded-full bg-card/80 backdrop-blur-md border'>
+      <Dock magnification={64} distance={80} panelHeight={60}>
+         <DockItem className='rounded-full bg-background'>
             <DockLabel>kanakkmash</DockLabel>
             <Link href="/" className="flex h-full w-full items-center justify-center">
                 <DockIcon>
@@ -78,16 +78,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
           </DockItem>
         {items.map((item) => (
-          <DockItem key={item.label} className='aspect-square rounded-full bg-card/80 backdrop-blur-md border'>
+          <DockItem key={item.label} className='rounded-full'>
             <DockLabel>{item.label}</DockLabel>
             <Link href={item.href} className="flex h-full w-full items-center justify-center">
                 <DockIcon>
-                    <item.icon className='h-3/5 w-3/5 text-foreground/90' />
+                    <item.icon className='h-full w-full text-foreground/90' />
                 </DockIcon>
             </Link>
           </DockItem>
         ))}
-         <DockItem className='aspect-square rounded-full bg-card/80 backdrop-blur-md border'>
+         <DockItem className='rounded-full'>
             <DockLabel>Account</DockLabel>
              <UserNav user={user} onSignOut={onSignOut} />
           </DockItem>

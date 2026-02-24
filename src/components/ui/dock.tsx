@@ -72,7 +72,7 @@ function useDock() {
 
 // New DockItem Context
 type DockItemContextType = {
-  width: MotionValue<number>;
+  size: MotionValue<number>;
   isHovered: MotionValue<number>;
 };
 
@@ -124,10 +124,9 @@ function Dock({
           mouseX.set(Infinity);
         }}
         className={cn(
-          'mx-auto flex w-fit items-center gap-2 rounded-2xl bg-card/80 px-2 backdrop-blur-md border',
+          'mx-auto flex h-full w-fit items-end gap-2 rounded-full border bg-card p-2',
           className
         )}
-        style={{ height: panelHeight }}
         role='toolbar'
         aria-label='Application dock'
       >
@@ -151,26 +150,24 @@ function DockItem({ children, className }: DockItemProps) {
     return val - domRect.x - domRect.width / 2;
   });
 
-  const widthTransform = useTransform(
-    mouseDistance,
-    [-distance, 0, distance],
-    [40, magnification, 40]
+  const size = useSpring(
+    useTransform(mouseDistance, [-distance, 0, distance], [44, magnification, 44]),
+    spring
   );
 
-  const width = useSpring(widthTransform, spring);
-  const contextValue = useMemo(() => ({ width, isHovered }), [width, isHovered]);
+  const contextValue = useMemo(() => ({ size, isHovered }), [size, isHovered]);
 
   return (
     <DockItemContext.Provider value={contextValue}>
       <motion.div
         ref={ref}
-        style={{ width }}
+        style={{ width: size, height: size }}
         onHoverStart={() => isHovered.set(1)}
         onHoverEnd={() => isHovered.set(0)}
         onFocus={() => isHovered.set(1)}
         onBlur={() => isHovered.set(0)}
         className={cn(
-          'relative inline-flex items-center justify-center',
+          'relative flex items-center justify-center',
           className
         )}
         tabIndex={0}
@@ -218,13 +215,12 @@ function DockLabel({ children, className }: DockLabelProps) {
 }
 
 function DockIcon({ children, className }: DockIconProps) {
-  const { width } = useDockItem();
-
-  const widthTransform = useTransform(width, (val) => val / 2);
+  const { size } = useDockItem();
+  const iconSize = useTransform(size, (val) => val * 0.6);
 
   return (
     <motion.div
-      style={{ width: widthTransform }}
+      style={{ width: iconSize, height: iconSize }}
       className={cn('flex items-center justify-center', className)}
     >
       {children}
