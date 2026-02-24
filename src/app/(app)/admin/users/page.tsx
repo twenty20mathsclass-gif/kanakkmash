@@ -2,13 +2,28 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { collection, getDocs } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
 import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddUserDialog } from "@/components/admin/add-user-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+
+const AddUserDialog = dynamic(
+    () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog), 
+    { 
+        ssr: false,
+        loading: () => (
+            <Button disabled>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add User
+            </Button>
+        )
+    }
+);
 
 export default function AdminUsersPage() {
   const { firestore } = useFirebase();

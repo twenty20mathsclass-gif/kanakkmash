@@ -1,6 +1,21 @@
-import { AddUserDialog } from "@/components/admin/add-user-dialog";
+import dynamic from 'next/dynamic';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+const AddUserDialog = dynamic(
+    () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog),
+    {
+        ssr: false,
+        loading: () => (
+            <Button disabled>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add User
+            </Button>
+        )
+    }
+);
 
 export default function TeacherStudentsPage() {
   return (
