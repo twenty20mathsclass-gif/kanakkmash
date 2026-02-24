@@ -101,9 +101,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         {items.map((item) => {
             const Icon = item.icon;
             
-            // Logic to determine if the current item is active.
-            // It's active if its href is the longest matching prefix of the current path.
-            // For the root path, it must be an exact match.
             const isActive = item.href === '/' 
               ? pathname === '/' 
               : pathname.startsWith(item.href) && item.href === activePath;
@@ -117,8 +114,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                             {'text-foreground': isActive}
                         )}
                     >
-                        <Icon className="h-5 w-5" />
-                        <span className="relative z-10 hidden md:ml-2 md:block">{item.label}</span>
+                        <div className="relative z-10 flex items-center">
+                            <Icon className="h-5 w-5" />
+                            <span className="hidden md:ml-2 md:block">{item.label}</span>
+                        </div>
                         {isActive && (
                         <motion.div
                             layoutId="active-pill"
