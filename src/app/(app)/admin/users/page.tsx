@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
@@ -13,23 +13,24 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchUsers = useCallback(async () => {
     if (!firestore) return;
-    const fetchUsers = async () => {
-      try {
-        const usersCollection = collection(firestore, 'users');
-        const usersSnapshot = await getDocs(usersCollection);
-        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(usersList);
-      } catch (e) {
-        console.error("Failed to fetch users:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
+    setLoading(true);
+    try {
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(usersList);
+    } catch (e) {
+      console.error("Failed to fetch users:", e);
+    } finally {
+      setLoading(false);
+    }
   }, [firestore]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
     <div className="space-y-8">
@@ -38,7 +39,7 @@ export default function AdminUsersPage() {
                 <h1 className="text-3xl font-bold font-headline">User Management</h1>
                 <p className="text-muted-foreground">View and manage all user accounts.</p>
             </div>
-            <AddUserDialog creatorRole="admin" />
+            <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
         </div>
       <Card>
         <CardHeader>

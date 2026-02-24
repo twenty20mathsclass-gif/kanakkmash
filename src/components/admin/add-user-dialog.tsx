@@ -37,7 +37,7 @@ function SubmitButton() {
   );
 }
 
-export function AddUserDialog({ creatorRole = 'admin' }: { creatorRole?: 'admin' | 'teacher' }) {
+export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorRole?: 'admin' | 'teacher', onUserAdded?: () => void }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const initialState = { message: null, errors: {}, success: false };
@@ -50,8 +50,9 @@ export function AddUserDialog({ creatorRole = 'admin' }: { creatorRole?: 'admin'
         title: 'Success',
         description: state.message,
       });
+      onUserAdded?.();
     }
-  }, [state, toast]);
+  }, [state, toast, onUserAdded]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
