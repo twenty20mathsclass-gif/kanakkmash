@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -13,7 +14,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
+      viewBox="0 0 24"
       fill="currentColor"
       {...props}
     >
@@ -25,6 +26,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
 export function FloatingActionButtons() {
   const [showGoToTop, setShowGoToTop] = useState(false);
   const pathname = usePathname();
+  const isMobile = useIsMobile();
 
   const handleScroll = () => {
     if (window.scrollY > 200) {
@@ -56,19 +58,21 @@ export function FloatingActionButtons() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
-      <Link
-        href="https://wa.me/919995315893"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
-      >
-        <Button
-          size="icon"
-          className="rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] w-14 h-14 shadow-lg"
+      {!isMobile && (
+        <Link
+          href="https://wa.me/919995315893"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat on WhatsApp"
         >
-          <WhatsAppIcon className="h-7 w-7" />
-        </Button>
-      </Link>
+          <Button
+            size="icon"
+            className="rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] w-14 h-14 shadow-lg"
+          >
+            <WhatsAppIcon className="h-7 w-7" />
+          </Button>
+        </Link>
+      )}
       
       <div
         className={cn(
