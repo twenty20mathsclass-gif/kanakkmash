@@ -19,30 +19,30 @@ type DockItemData = {
 };
 
 export const Dock = ({ items }: { items: DockItemData[] }) => {
-  const mouseY = useMotionValue(Infinity);
+  const mouseX = useMotionValue(Infinity);
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
     <TooltipProvider>
       <div className="dark">
-        <div className="fixed inset-y-0 left-6 z-50 flex w-20 items-center justify-center">
+        <div className="fixed inset-x-0 bottom-6 z-50 flex h-20 items-center justify-center">
           <motion.div
             ref={containerRef}
             onMouseMove={(e) => {
               if (containerRef.current) {
                 const rect = containerRef.current.getBoundingClientRect();
-                mouseY.set(e.clientY - rect.top);
+                mouseX.set(e.clientX - rect.left);
               }
             }}
-            onMouseLeave={() => mouseY.set(Infinity)}
-            className="flex w-full flex-col items-center gap-3 rounded-2xl bg-background/50 px-3 py-3 backdrop-blur-md"
+            onMouseLeave={() => mouseX.set(Infinity)}
+            className="flex h-full items-end gap-3 rounded-2xl bg-background/50 px-3 pb-3 backdrop-blur-md"
             style={{
               boxShadow:
                 '0 0 0 1px hsl(var(--border)/.5), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
             }}
           >
             {items.map((item) => (
-              <DockItem key={item.href} mouseY={mouseY} {...item} />
+              <DockItem key={item.href} mouseX={mouseX} {...item} />
             ))}
           </motion.div>
         </div>
@@ -52,18 +52,18 @@ export const Dock = ({ items }: { items: DockItemData[] }) => {
 };
 
 type DockItemProps = DockItemData & {
-  mouseY: ReturnType<typeof useMotionValue>;
+  mouseX: ReturnType<typeof useMotionValue>;
 };
 
-const DockItem = ({ href, label, icon: Icon, mouseY }: DockItemProps) => {
+const DockItem = ({ href, label, icon: Icon, mouseX }: DockItemProps) => {
   const itemRef = useRef<HTMLDivElement>(null);
 
-  const distance = useTransform(mouseY, (val) => {
-    const bounds = itemRef.current?.getBoundingClientRect() ?? { y: 0, height: 0 };
-    return val - bounds.y - bounds.height / 2;
+  const distance = useTransform(mouseX, (val) => {
+    const bounds = itemRef.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return val - bounds.x - bounds.width / 2;
   });
 
-  const sizeSync = useTransform(distance, [-120, 0, 120], [44, 72, 44]);
+  const sizeSync = useTransform(distance, [-100, 0, 100], [44, 72, 44]);
   const size = useSpring(sizeSync, { mass: 0.1, stiffness: 150, damping: 12 });
 
   return (
@@ -85,7 +85,7 @@ const DockItem = ({ href, label, icon: Icon, mouseY }: DockItemProps) => {
           </Link>
         </motion.div>
       </TooltipTrigger>
-      <TooltipContent side="right">
+      <TooltipContent side="top">
         <p>{label}</p>
       </TooltipContent>
     </Tooltip>
