@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FloatingActionButtons } from '@/components/shared/floating-action-buttons';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />
+        <FloatingActionButtons />
       </body>
     </html>
   );

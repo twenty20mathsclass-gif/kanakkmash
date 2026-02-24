@@ -127,8 +127,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <Image
             src="/logoo_1@4x.webp"
             alt="Logo"
-            width={180}
-            height={56}
+            width={120}
+            height={37}
             className="object-contain"
           />
         </Link>
