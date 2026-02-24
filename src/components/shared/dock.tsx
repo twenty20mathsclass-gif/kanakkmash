@@ -24,28 +24,26 @@ export const Dock = ({ items }: { items: DockItemData[] }) => {
 
   return (
     <TooltipProvider>
-      <div className="dark">
-        <div className="fixed inset-x-0 bottom-6 z-50 flex h-20 items-center justify-center">
-          <motion.div
-            ref={containerRef}
-            onMouseMove={(e) => {
-              if (containerRef.current) {
-                const rect = containerRef.current.getBoundingClientRect();
-                mouseX.set(e.clientX - rect.left);
-              }
-            }}
-            onMouseLeave={() => mouseX.set(Infinity)}
-            className="flex h-full items-end gap-3 rounded-2xl bg-background/50 px-3 pb-3 backdrop-blur-md"
-            style={{
-              boxShadow:
-                '0 0 0 1px hsl(var(--border)/.5), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-            }}
-          >
-            {items.map((item) => (
-              <DockItem key={item.href} mouseX={mouseX} {...item} />
-            ))}
-          </motion.div>
-        </div>
+      <div className="fixed inset-x-0 bottom-6 z-50 flex h-20 items-center justify-center">
+        <motion.div
+          ref={containerRef}
+          onMouseMove={(e) => {
+            if (containerRef.current) {
+              const rect = containerRef.current.getBoundingClientRect();
+              mouseX.set(e.clientX - rect.left);
+            }
+          }}
+          onMouseLeave={() => mouseX.set(Infinity)}
+          className="flex h-full items-end gap-3 rounded-2xl bg-card/50 px-3 pb-3 backdrop-blur-md"
+          style={{
+            boxShadow:
+              '0 0 0 1px hsl(var(--border)/.5), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          }}
+        >
+          {items.map((item) => (
+            <DockItem key={item.href} mouseX={mouseX} {...item} />
+          ))}
+        </motion.div>
       </div>
     </TooltipProvider>
   );
