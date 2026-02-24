@@ -1,10 +1,10 @@
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-const AddUserDialog = dynamic(
+const AddUserDialog = nextDynamic(
     () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog),
     {
         ssr: false,

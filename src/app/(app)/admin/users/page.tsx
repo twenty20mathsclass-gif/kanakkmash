@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { collection, getDocs } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 
-const AddUserDialog = dynamic(
+const AddUserDialog = nextDynamic(
     () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog), 
     { 
         ssr: false,
