@@ -124,7 +124,7 @@ function Dock({
           mouseX.set(Infinity);
         }}
         className={cn(
-          'mx-auto flex h-full w-fit items-end gap-2 rounded-full border bg-card p-2',
+          'mx-auto flex h-full w-fit items-end gap-2 rounded-full border bg-card p-2 shadow-lg',
           className
         )}
         role='toolbar'
@@ -167,7 +167,7 @@ function DockItem({ children, className }: DockItemProps) {
         onFocus={() => isHovered.set(1)}
         onBlur={() => isHovered.set(0)}
         className={cn(
-          'relative flex items-center justify-center',
+          'relative flex items-center justify-center rounded-full',
           className
         )}
         tabIndex={0}

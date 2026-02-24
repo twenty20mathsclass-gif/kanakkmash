@@ -17,9 +17,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle } from 'lucide-react';
+import { LogOut, UserCircle, Calculator } from 'lucide-react';
 import type { User } from '@/lib/definitions';
-import { Logo } from './logo';
 
 
 type NavItem = {
@@ -69,16 +68,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   return (
     <div className='fixed bottom-4 left-1/2 z-50 -translate-x-1/2'>
       <Dock magnification={64} distance={80} panelHeight={60}>
-         <DockItem className='rounded-full bg-background'>
+         <DockItem className='rounded-full bg-primary text-primary-foreground'>
             <DockLabel>kanakkmash</DockLabel>
             <Link href="/" className="flex h-full w-full items-center justify-center">
                 <DockIcon>
-                    <Logo />
+                    <Calculator className='h-full w-full' />
                 </DockIcon>
             </Link>
           </DockItem>
         {items.map((item) => (
-          <DockItem key={item.label} className='rounded-full'>
+          <DockItem key={item.label} className='rounded-full bg-background'>
             <DockLabel>{item.label}</DockLabel>
             <Link href={item.href} className="flex h-full w-full items-center justify-center">
                 <DockIcon>
