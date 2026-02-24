@@ -1,5 +1,7 @@
 import { AddUserDialog } from "@/components/admin/add-user-dialog";
 
+export const dynamic = 'force-dynamic';
+
 export default function TeacherStudentsPage() {
   return (
     <div className="space-y-8">

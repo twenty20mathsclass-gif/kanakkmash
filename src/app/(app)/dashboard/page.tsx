@@ -1,4 +1,5 @@
 'use client'; // Make client component
+export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
 import { courses, studentProgress } from '@/lib/data';

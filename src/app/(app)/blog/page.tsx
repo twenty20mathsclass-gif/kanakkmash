@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 export default function BlogPage() {
   return (
     <div className="space-y-8">

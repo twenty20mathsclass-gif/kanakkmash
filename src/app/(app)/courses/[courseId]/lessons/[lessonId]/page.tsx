@@ -7,6 +7,8 @@ import { PracticeGenerator } from '@/components/practice/practice-generator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+export const dynamic = 'force-dynamic';
+
 type PageProps = {
   params: {
     courseId: string;

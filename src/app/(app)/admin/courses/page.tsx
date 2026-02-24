@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminCoursesPage() {
   return (
     <div className="space-y-8">

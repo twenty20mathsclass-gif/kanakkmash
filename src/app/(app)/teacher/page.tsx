@@ -2,6 +2,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { courses } from "@/lib/data";
 import { BookOpen, Users } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function TeacherDashboardPage() {
   const totalCourses = courses.length;
 
