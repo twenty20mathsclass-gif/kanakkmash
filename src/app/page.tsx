@@ -6,6 +6,8 @@ import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { House, BookOpen, Newspaper, Library, Users } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const navItems = [
     { href: '/', label: 'Home', icon: House },
