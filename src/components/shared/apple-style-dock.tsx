@@ -126,16 +126,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <motion.div
             transition={{ type: 'spring', stiffness: 400, damping: 12 }}
             key="logo"
-            className="hidden md:flex mx-2"
+            className="flex mx-2"
           >
             <Link href="/">
-              <div className="relative flex h-14 w-auto items-center justify-center transition-colors">
+              <div className="relative flex h-12 w-28 items-center justify-center transition-colors md:h-14 md:w-auto">
                 <Image
                   src="/logoo_1@4x.webp"
                   alt="Logo"
                   width={150}
                   height={47}
-                  className="h-full w-auto object-contain"
+                  className="h-auto w-full object-contain md:h-full md:w-auto"
+                  priority
                 />
               </div>
             </Link>
