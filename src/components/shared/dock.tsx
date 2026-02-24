@@ -41,7 +41,7 @@ export const Dock = ({ items }: { items: DockItemData[] }) => {
           }}
         >
           {items.map((item) => (
-            <DockItem key={item.href} mouseY={mouseY} {...item} />
+            <DockItem key={item.label} mouseY={mouseY} {...item} />
           ))}
         </motion.div>
       </div>
