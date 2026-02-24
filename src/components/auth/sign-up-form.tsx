@@ -11,13 +11,6 @@ import { useFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Form,
   FormControl,
   FormField,
@@ -33,9 +26,6 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['student', 'teacher'], {
-    required_error: 'Please select a role.',
-  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,7 +41,6 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
-      role: 'student',
     },
   });
 
@@ -78,7 +67,7 @@ export function SignUpForm() {
         id: user.uid,
         name: data.name,
         email: data.email,
-        role: data.role as 'student' | 'teacher',
+        role: 'student',
         avatarUrl: avatarUrl,
       };
 
@@ -133,27 +122,6 @@ export function SignUpForm() {
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>I am a...</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}
