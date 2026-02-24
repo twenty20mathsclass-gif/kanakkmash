@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/logo';
+import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 
 export default function Home() {
   return (
@@ -17,7 +18,8 @@ export default function Home() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="relative py-20 md:py-32">
+        <section className="relative overflow-hidden py-20 md:py-32">
+          <AnimatedMathIcons />
           <div
             aria-hidden="true"
             className="absolute inset-0 top-0 -z-10 h-1/2 w-full"
@@ -25,7 +27,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,transparent_60%,hsl(var(--background)))]"></div>
           </div>
-          <div className="container mx-auto px-4 text-center md:px-6">
+          <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
             <div className="mx-auto max-w-3xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                 Unlock Your Math Potential with{' '}

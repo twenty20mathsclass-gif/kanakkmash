@@ -80,3 +80,21 @@
     @apply rounded bg-muted px-1.5 py-1 font-code text-foreground;
   }
 }
+
+@layer components {
+  .math-icon {
+    @apply absolute block text-primary/20;
+    animation: move-up linear infinite;
+    will-change: transform;
+    bottom: -10vh; /* Start from below the viewport */
+  }
+
+  @keyframes move-up {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-120vh); /* Move up beyond the viewport */
+    }
+  }
+}
