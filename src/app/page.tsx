@@ -1,33 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookCheck, CheckCircle2, FlaskConical, LayoutDashboard } from 'lucide-react';
 import { Logo } from '@/components/shared/logo';
 
 export default function Home() {
-  const features = [
-    {
-      icon: <LayoutDashboard className="h-10 w-10 text-primary" />,
-      title: 'Personalized Dashboard',
-      description: 'Track your progress and continue lessons right where you left off.',
-    },
-    {
-      icon: <BookCheck className="h-10 w-10 text-primary" />,
-      title: 'Interactive Lessons',
-      description: 'Engage with course materials that make learning math intuitive and fun.',
-    },
-    {
-      icon: <FlaskConical className="h-10 w-10 text-primary" />,
-      title: 'AI Practice Generator',
-      description: 'Generate custom math problems to master any topic.',
-    },
-    {
-      icon: <CheckCircle2 className="h-10 w-10 text-primary" />,
-      title: 'Progress Tracking',
-      description: 'Monitor lesson and module completion to stay on track.',
-    },
-  ];
-
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
@@ -67,36 +42,6 @@ export default function Home() {
               <Button size="lg" variant="outline">
                 Learn More
               </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-secondary/50 py-20 md:py-24">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="mb-12 text-center">
-              <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">
-                Features for a Brighter Future
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-foreground/70">
-                Everything you need to succeed, all in one platform.
-              </p>
-            </div>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature) => (
-                <Card key={feature.title} className="text-center">
-                  <CardHeader>
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      {feature.icon}
-                    </div>
-                    <CardTitle className="font-headline text-xl">
-                      {feature.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-foreground/70">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
           </div>
         </section>
