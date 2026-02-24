@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -71,6 +71,7 @@ function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => v
 
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
 
@@ -95,6 +96,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const homeHref = getHomeHref();
 
 
+  const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   const activePath = items.reduce((closest, item) => {
     // Special handling for root/dashboard links
     if (item.href === homeHref || (item.href === '/' && homeHref.startsWith('/'))) {
@@ -102,7 +104,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             return homeHref;
         }
     }
-    if (pathname.startsWith(item.href) && item.href.length > closest.length && item.href !== '/') {
+    if (currentUrl.startsWith(item.href) && item.href.length > closest.length && item.href !== '/') {
         return item.href;
     }
     return closest;

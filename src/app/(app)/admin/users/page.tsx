@@ -2,8 +2,9 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
 import { UsersTable } from "@/components/admin/users-table";
@@ -27,15 +28,40 @@ const AddUserDialog = nextDynamic(
 
 export default function AdminUsersPage() {
   const { firestore } = useFirebase();
+  const searchParams = useSearchParams();
+  const roleFilter = searchParams.get('role');
+  
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState('User Management');
+  const [description, setDescription] = useState('View and manage all user accounts.');
 
   const fetchUsers = useCallback(async () => {
     if (!firestore) return;
     setLoading(true);
     try {
-      const usersCollection = collection(firestore, 'users');
-      const usersSnapshot = await getDocs(usersCollection);
+      let usersQuery;
+      let pageTitle = 'User Management';
+      let pageDescription = 'View and manage all user accounts.';
+
+      if (roleFilter === 'student') {
+        usersQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+        pageTitle = 'Student Data';
+        pageDescription = 'A list of all students in the system.';
+      } else if (roleFilter === 'teacher') {
+        usersQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
+        pageTitle = 'Teacher Data';
+        pageDescription = 'A list of all teachers in the system.';
+      } else {
+        usersQuery = collection(firestore, 'users');
+        pageTitle = 'All Users';
+        pageDescription = 'A list of all users in the system.';
+      }
+      
+      setTitle(pageTitle);
+      setDescription(pageDescription);
+
+      const usersSnapshot = await getDocs(usersQuery);
       const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersList);
     } catch (e) {
@@ -43,7 +69,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [firestore]);
+  }, [firestore, roleFilter]);
 
   useEffect(() => {
     fetchUsers();
@@ -53,15 +79,15 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
         <div className="flex items-center justify-between">
             <div>
-                <h1 className="text-3xl font-bold font-headline">User Management</h1>
-                <p className="text-muted-foreground">View and manage all user accounts.</p>
+                <h1 className="text-3xl font-bold font-headline">{title}</h1>
+                <p className="text-muted-foreground">{description}</p>
             </div>
             <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
         </div>
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users in the system.</CardDescription>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (

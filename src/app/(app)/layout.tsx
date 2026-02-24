@@ -6,7 +6,23 @@ import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { BookOpen, FlaskConical, Newspaper, Library, Users, LayoutDashboard } from 'lucide-react';
+import { 
+    BookPlus,
+    FilePlus2,
+    Upload,
+    PenSquare,
+    TrendingDown,
+    TrendingUp,
+    UserCheck,
+    PlusSquare,
+    DollarSign,
+    ShoppingCart, 
+    FileText, 
+    Video,
+    Library, 
+    Users, 
+    LayoutDashboard 
+} from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 
 export default function AppLayout({
@@ -32,26 +48,35 @@ export default function AppLayout({
     return <PageLoader />;
   }
 
+  // Student: "Home + Purchased Class(video) + Material + Mock test + Cart"
   const studentNav = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/courses', label: 'Courses', icon: BookOpen },
-    { href: '/practice', label: 'AI Practice', icon: FlaskConical },
-    { href: '/blog', label: 'Blog', icon: Newspaper },
-    { href: '/materials', label: 'Materials', icon: Library },
-    { href: '/community', label: 'Community', icon: Users },
+    { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+    { href: '/purchased-courses', label: 'Purchased Class', icon: Video },
+    { href: '/materials', label: 'Material', icon: Library },
+    { href: '/mock-tests', label: 'Mock Test', icon: FileText },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart },
   ];
 
+  // Teacher: "Home + Create Class+ Students' Attendance + Blog Creation + revenue + Study Material "
   const teacherNav = [
-    { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/teacher/students', label: 'Students', icon: Users },
-    { href: '/courses', label: 'Courses', icon: BookOpen },
-    { href: '/practice', label: 'AI Practice', icon: FlaskConical },
+    { href: '/teacher', label: 'Home', icon: LayoutDashboard },
+    { href: '/teacher/create-class', label: 'Create Class', icon: PlusSquare },
+    { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
+    { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
+    { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
+    { href: '/teacher/materials', label: 'Study Material', icon: Library },
   ];
 
+  // Admin: "student Datas + Teacher Datas + Revenue from Student + Revenue Paid to Teachers + Blog Creation + Study material Upload + Mocktest Creator + Course Creator"
   const adminNav = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/users?role=student', label: 'Student Data', icon: Users },
+    { href: '/admin/users?role=teacher', label: 'Teacher Data', icon: Users },
+    { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
+    { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
+    { href: '/admin/blog/create', label: 'Blog Creation', icon: PenSquare },
+    { href: '/admin/materials/upload', label: 'Material Upload', icon: Upload },
+    { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
+    { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
   ];
 
   const navItems =
