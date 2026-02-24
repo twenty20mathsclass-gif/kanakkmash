@@ -89,11 +89,13 @@ export default function AppLayout({
 function AppNavigation({ role }: { role: User['role'] }) {
   const studentNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];
 
   const teacherNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];
 
