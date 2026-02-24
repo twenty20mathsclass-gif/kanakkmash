@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dock } from '@/components/shared/dock';
-import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2 } from 'lucide-react';
+import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2, Home, School, Newspaper, Library, CheckSquare } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { Logo } from '@/components/shared/logo';
 
@@ -49,8 +49,11 @@ export default function AppLayout({
   }
 
   const studentNav = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/courses', label: 'Courses', icon: BookOpen },
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/dashboard', label: 'Class', icon: School },
+    { href: '/blog', label: 'Blog', icon: Newspaper },
+    { href: '/materials', label: 'Material', icon: Library },
+    { href: '/courses', label: 'Class Selection', icon: CheckSquare },
     { href: '/practice', label: 'AI Practice', icon: FlaskConical },
   ];
 
