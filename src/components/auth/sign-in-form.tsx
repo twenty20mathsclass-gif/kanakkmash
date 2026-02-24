@@ -29,7 +29,7 @@ export function SignInForm() {
           id="email"
           name="email"
           type="email"
-          placeholder="student@example.com"
+          defaultValue="mathsadmin@gmail.com"
           required
           aria-describedby="email-error"
         />
@@ -45,7 +45,7 @@ export function SignInForm() {
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input id="password" name="password" type="password" required 
-        defaultValue="password"
+        defaultValue="admin@twenty20"
         aria-describedby="password-error"/>
          <div id="password-error" aria-live="polite" aria-atomic="true">
           {state.errors?.password &&
