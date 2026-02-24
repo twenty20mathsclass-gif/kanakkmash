@@ -1,9 +1,9 @@
-'use client'; // <-- Make it a client component
+'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, auth } from '@/firebase'; // <-- Use the hook
+import { useRouter } from 'next/navigation';
+import { useUser, auth } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,21 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarTrigger,
-  SidebarInset,
-} from '@/components/ui/sidebar';
+import { Dock } from '@/components/shared/dock';
 import { BookOpen, FlaskConical, LayoutDashboard, LogOut, Users, UserCircle, Loader2 } from 'lucide-react';
-import { Logo } from '@/components/shared/logo';
 import type { User } from '@/lib/definitions';
+import { Logo } from '@/components/shared/logo';
 
 export default function AppLayout({
   children,
@@ -59,36 +48,6 @@ export default function AppLayout({
     );
   }
 
-  return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <AppNavigation role={user.role} />
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-            <Button variant="ghost" className="w-full justify-start gap-2 px-2" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:justify-end">
-          <SidebarTrigger className="md:hidden" />
-          <UserNav user={user} onSignOut={handleSignOut} />
-        </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
-}
-
-function AppNavigation({ role }: { role: User['role'] }) {
   const studentNav = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/courses', label: 'Courses', icon: BookOpen },
@@ -109,25 +68,21 @@ function AppNavigation({ role }: { role: User['role'] }) {
   ];
 
   const navItems =
-    role === 'admin'
+    user.role === 'admin'
       ? adminNav
-      : role === 'teacher'
+      : user.role === 'teacher'
       ? teacherNav
       : studentNav;
 
   return (
-    <>
-      {navItems.map((item) => (
-        <SidebarMenuItem key={item.label}>
-          <SidebarMenuButton asChild>
-            <Link href={item.href}>
-              <item.icon />
-              <span>{item.label}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+        <Logo />
+        <UserNav user={user} onSignOut={handleSignOut} />
+      </header>
+      <main className="flex-1 p-4 pb-24 md:p-6 lg:p-8">{children}</main>
+      <Dock items={navItems} />
+    </div>
   );
 }
 
