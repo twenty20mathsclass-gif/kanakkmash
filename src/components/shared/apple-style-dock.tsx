@@ -96,13 +96,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
             {showDesktopLogo && (
                 <>
-                    <div>
-                        <Link href={homeHref} className="flex h-10 w-28 items-center justify-center transition-colors">
+                    <div className='flex h-10 w-28 items-center justify-center'>
+                        <Link href={homeHref} className="transition-colors">
                             <Image
                                 src="/logoo_1@4x.webp"
                                 alt="kanakkmash logo"
                                 width={100}
-                                height={100}
+                                height={31}
                                 className="h-auto w-24 object-contain"
                                 priority
                             />
@@ -119,10 +119,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    animate={{
-                      scale: 1,
-                      y: 0,
-                    }}
+                    whileHover={{ scale: 1.2, y: -8 }}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
                   >
                       <Link
@@ -154,6 +151,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
+            whileHover={{ scale: 1.2, y: -8 }}
             transition={{ type: "spring", stiffness: 400, damping: 12 }}
           >
             <Link
@@ -171,6 +169,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
+                whileHover={{ scale: 1.2, y: -8 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
                   <UserNav 
