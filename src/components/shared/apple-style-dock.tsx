@@ -5,20 +5,11 @@ import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect } from 'react';
+import { UserNav } from './user-nav';
 
 type NavItem = {
   href: string;
@@ -38,49 +29,6 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
     >
       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.586-1.456l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.451-4.437-9.885-9.888-9.885-5.451 0-9.885 4.434-9.888 9.885.002 2.17.637 4.288 1.873 6.039l-.989 3.655 3.745-1.017z"/>
     </svg>
-  );
-}
-
-function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => void, isMobile: boolean }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-         <button 
-            className="flex items-center justify-center rounded-full h-12 w-12 bg-secondary/80 hover:bg-secondary transition-colors"
-         >
-            <Avatar className="h-11 w-11">
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2" 
-        side={isMobile ? 'top' : 'bottom'} 
-        align="end"
-      >
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none text-popover-foreground">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
-            <UserCircle className="mr-2 h-4 w-4"/>
-            Profile
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-            <button onClick={onSignOut} className="w-full cursor-pointer">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </button>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -215,13 +163,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
           </motion.div>
 
-          {user && onSignOut && (
+          {user && onSignOut && !isMobile && (
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
-                  <UserNav user={user} onSignOut={onSignOut} isMobile={isMobile} />
+                  <UserNav 
+                    user={user} 
+                    onSignOut={onSignOut} 
+                    triggerClassName="bg-secondary/80 hover:bg-secondary" 
+                  />
               </motion.div>
             </>
           )}

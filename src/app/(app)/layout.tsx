@@ -118,7 +118,7 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
-        <MobileLogo />
+        <MobileLogo onSignOut={handleSignOut} />
         <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
       </Suspense>
       <main className="flex-grow p-4 pt-20 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>

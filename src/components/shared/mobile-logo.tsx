@@ -5,8 +5,9 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from '@/firebase';
+import { UserNav } from './user-nav';
 
-export function MobileLogo() {
+export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
   const isMobile = useIsMobile();
   const { user } = useUser();
   const pathname = usePathname();
@@ -29,9 +30,11 @@ export function MobileLogo() {
   if (!isMobile) {
     return null;
   }
+  
+  const showUserNav = user && onSignOut;
 
   return (
-    <div className="fixed top-4 left-4 z-50 md:hidden">
+    <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between md:hidden">
       <Link href={homeHref}>
           <Image
               src="/logoo_1@4x.webp"
@@ -42,6 +45,9 @@ export function MobileLogo() {
               priority
           />
       </Link>
+      {showUserNav && (
+        <UserNav user={user} onSignOut={onSignOut} side="bottom" align="end" />
+      )}
     </div>
   );
 }
