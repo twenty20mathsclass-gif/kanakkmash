@@ -5,31 +5,31 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 240 20% 99%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 60 9.1% 97.8%;
+    --primary: 250 80% 60%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 30 95% 55%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 24.6 95% 53.1%;
-    --chart-1: 220 90% 60%;
-    --chart-2: 180 80% 60%;
-    --chart-3: 300 60% 50%;
+    --ring: 250 80% 60%;
+    --chart-1: 250 80% 60%;
+    --chart-2: 30 95% 55%;
+    --chart-3: 180 80% 60%;
     --chart-4: 45 90% 55%;
     --chart-5: 330 80% 60%;
-    --radius: 0.5rem;
+    --radius: 0.8rem;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -38,22 +38,22 @@
     --card-foreground: 60 9.1% 97.8%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 60 9.1% 97.8%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 60 9.1% 97.8%;
+    --primary: 250 80% 65%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 60 9.1% 97.8%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 5% 26%;
-    --accent-foreground: 60 9.1% 97.8%;
+    --accent: 30 95% 55%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 24.6 95% 53.1%;
-    --chart-1: 220 90% 60%;
-    --chart-2: 180 80% 60%;
-    --chart-3: 300 60% 50%;
+    --ring: 250 80% 65%;
+    --chart-1: 250 80% 65%;
+    --chart-2: 30 95% 55%;
+    --chart-3: 180 80% 60%;
     --chart-4: 45 90% 55%;
     --chart-5: 330 80% 60%;
   }
@@ -104,5 +104,15 @@
     100% {
       transform: translate(0px, 0px);
     }
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

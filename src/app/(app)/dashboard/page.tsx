@@ -1,25 +1,19 @@
-'use client'; // Make client component
+'use client';
 export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
-import { courses, studentProgress } from '@/lib/data';
-import type { Course } from '@/lib/definitions';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Bell, Search } from 'lucide-react';
+import { LearningProgress } from '@/components/dashboard/learning-progress';
+import { OngoingCourses } from '@/components/dashboard/ongoing-courses';
+import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
+
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
-  const progressData = studentProgress; // In a real app, this would be fetched for the specific user
-
-  const getTotalLessons = (course: Course) =>
-    course.modules.reduce((acc, module) => acc + module.lessons.length, 0);
 
   if (loading) {
     return (
@@ -30,70 +24,41 @@ export default function DashboardPage() {
   }
 
   if (!user) {
+    // This case should be handled by the layout, but as a fallback:
     return <div>Please sign in to view your dashboard.</div>;
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Reveal>
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Welcome back, {user?.name.split(' ')[0]}!</h1>
-          <p className="text-muted-foreground">Let&apos;s continue your learning journey.</p>
-        </div>
-      </Reveal>
-
-      <Reveal delay={0.2}>
-        <section>
-          <h2 className="text-2xl font-bold font-headline mb-4">My Courses</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {courses.map((course, index) => {
-              const totalLessons = getTotalLessons(course);
-              const completedLessons = progressData[course.id]?.completedLessons.length || 0;
-              const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
-              const courseImage = PlaceHolderImages.find(img => img.id === course.imageId);
-              const firstLesson = course.modules[0]?.lessons[0];
-
-              return (
-                <Reveal key={course.id} delay={index * 0.1}>
-                  <Card className="flex flex-col overflow-hidden h-full">
-                    {courseImage && (
-                        <div className="relative h-48 w-full">
-                            <Image
-                                src={courseImage.imageUrl}
-                                alt={course.title}
-                                fill
-                                className="object-cover"
-                                data-ai-hint={courseImage.imageHint}
-                            />
-                        </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="font-headline text-xl">{course.title}</CardTitle>
-                      <CardDescription className='line-clamp-2'>{course.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-1 flex-col justify-between">
-                        <div>
-                            <div className="mb-2 flex justify-between text-sm">
-                                <span className="text-muted-foreground">Progress</span>
-                                <span>{completedLessons} / {totalLessons} Lessons</span>
-                            </div>
-                            <Progress value={progress} className="mb-4 h-2" />
-                        </div>
-                        {firstLesson && (
-                            <Button asChild className="w-full mt-auto">
-                                <Link href={`/courses/${course.id}/lessons/${firstLesson.id}`}>
-                                    Continue Learning <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        )}
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              );
-            })}
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 border-2 border-primary">
+              <AvatarImage src={user.avatarUrl} alt={user.name} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-xl font-bold font-headline">{user.name}</h1>
+              <p className="text-sm text-muted-foreground">{user.role}</p>
+            </div>
           </div>
-        </section>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Search className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Bell className="h-5 w-5" />
+            </Button>
+          </div>
+        </header>
       </Reveal>
+
+      <LearningProgress />
+      
+      <OngoingCourses />
+
+      <StudyHoursChart />
+
     </div>
   );
 }

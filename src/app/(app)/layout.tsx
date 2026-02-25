@@ -16,12 +16,13 @@ import {
     UserCheck,
     PlusSquare,
     DollarSign,
-    ShoppingCart, 
-    FileText, 
-    Video,
-    Library, 
     Users, 
-    LayoutDashboard 
+    LayoutDashboard,
+    Home,
+    Calendar,
+    PlayCircle,
+    MessageSquare,
+    User
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -76,13 +77,13 @@ export default function AppLayout({
     return <PageLoader />;
   }
 
-  // Student: "Home + Purchased Class(video) + Material + Mock test + Cart"
+  // Student: "Home + Calendar + Courses + Community + Profile"
   const studentNav = [
-    { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-    { href: '/purchased-courses', label: 'Purchased Class', icon: Video },
-    { href: '/materials', label: 'Material', icon: Library },
-    { href: '/mock-tests', label: 'Mock Test', icon: FileText },
-    { href: '/cart', label: 'Cart', icon: ShoppingCart },
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/calendar', label: 'Calendar', icon: Calendar },
+    { href: '/courses', label: 'Courses', icon: PlayCircle },
+    { href: '/community', label: 'Community', icon: MessageSquare },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   // Teacher: "Home + Create Class+ Students' Attendance + Blog Creation + revenue + Study Material "
@@ -92,7 +93,7 @@ export default function AppLayout({
     { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
-    { href: '/teacher/materials', label: 'Study Material', icon: Library },
+    { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
   ];
 
   // Admin: "student Datas + Teacher Datas + Revenue from Student + Revenue Paid to Teachers + Blog Creation + Study material Upload + Mocktest Creator + Course Creator"
