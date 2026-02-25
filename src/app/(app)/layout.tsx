@@ -62,7 +62,7 @@ export default function AppLayout({
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Calendar', icon: Calendar },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
-    { href: '/purchased-courses', label: 'Purchases', icon: Receipt },
+    { href: '/purchased-courses', label: 'Payment History', icon: Receipt },
   ];
 
   const teacherNav = [
