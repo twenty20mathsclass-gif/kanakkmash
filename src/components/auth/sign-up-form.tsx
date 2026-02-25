@@ -72,7 +72,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
-const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSE', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 
 export function SignUpForm() {
   const { auth, firestore } = useFirebase();
