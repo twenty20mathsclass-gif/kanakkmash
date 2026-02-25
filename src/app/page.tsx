@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ export default function Home() {
                 />
               </h1>
               <p className="mx-auto mt-6 max-w-xl text-lg text-foreground/80">
-                Engaging lessons, AI-powered practice, and a path to mathematical mastery. Your journey to excellence starts here.
+                An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.
               </p>
             </div>
             <div className="mt-10 flex justify-center gap-4">
