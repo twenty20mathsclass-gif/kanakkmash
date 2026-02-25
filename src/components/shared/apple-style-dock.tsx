@@ -26,6 +26,12 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+};
+
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -54,16 +60,18 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   }
 
   const getHomeHref = () => {
-      const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-      const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
-  
-      if (!user || isPublicPath) return '/';
-      
-      switch(user.role) {
-          case 'admin': return '/admin';
-          case 'teacher': return '/teacher';
-          default: return '/dashboard';
-      }
+    const publicPaths = ['/', '/courses', '/blog', '/materials', '/community'];
+    const pathIsPublic = publicPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p)));
+
+    if (!user || pathIsPublic) {
+      return '/';
+    }
+
+    switch(user.role) {
+        case 'admin': return '/admin';
+        case 'teacher': return '/teacher';
+        default: return '/dashboard';
+    }
   }
   const homeHref = getHomeHref();
 
@@ -91,7 +99,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             {showDesktopLogo && (
                 <>
                     <div>
-                        <Link href={homeHref} className="flex h-28 w-28 items-center justify-center rounded-full transition-colors">
+                        <Link href={homeHref} className="flex h-28 w-28 items-center justify-center transition-colors">
                             <Image
                                 src="/logoo_1@4x.webp"
                                 alt="kanakkmash logo"
@@ -161,7 +169,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
           </motion.div>
 
-          {user && onSignOut && (
+          {user && onSignOut && !isMobile && (
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
