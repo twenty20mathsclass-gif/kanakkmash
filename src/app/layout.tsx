@@ -6,7 +6,31 @@ import { FloatingActionButtons } from '@/components/shared/floating-action-butto
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
-  description: 'An online learning platform for maths.',
+  description: 'An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.',
+  keywords: [
+    'online math classes',
+    'maths tuition',
+    'maths online tuition',
+    'one to one maths tuition',
+    'competitive exam preparation',
+    'Kerala State syllabus',
+    'CBSE kerala',
+    'CBSE UAE',
+    'CBSE KSA',
+    'ICSE',
+    'LSS',
+    'NuMATs',
+    'USS',
+    'NMMS',
+    'NTSE',
+    'PSC',
+    'MAT',
+    'KTET',
+    'CTET',
+    'NET',
+    'CSAT',
+    'kanakkmash'
+  ],
 };
 
 export default function RootLayout({
