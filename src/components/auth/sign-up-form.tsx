@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '../ui/checkbox';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -40,6 +42,9 @@ const formSchema = z.object({
   class: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
+  terms: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the terms and conditions to continue.',
+  }),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
         if (!data.class) {
@@ -88,6 +93,7 @@ export function SignUpForm() {
       courseModel: '',
       countryCode: '',
       mobile: '',
+      terms: false,
     },
   });
 
@@ -306,7 +312,7 @@ export function SignUpForm() {
               render={({ field }) => (
                 <FormItem className="w-1/3">
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder='+91' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -318,7 +324,7 @@ export function SignUpForm() {
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder='9876543210' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -326,6 +332,31 @@ export function SignUpForm() {
             />
           </div>
         </div>
+
+        <FormField
+            control={form.control}
+            name="terms"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    id="terms"
+                    />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <Label htmlFor="terms" className="font-normal">
+                    I agree to the{' '}
+                    <Link href="/terms-and-conditions" target="_blank" className="font-medium text-primary underline underline-offset-4 hover:text-primary/80">
+                        Terms and Conditions
+                    </Link>
+                    </Label>
+                    <FormMessage />
+                </div>
+                </FormItem>
+            )}
+        />
 
         {error && (
           <Alert variant="destructive">
