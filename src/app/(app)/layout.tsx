@@ -22,7 +22,7 @@ import {
     Calendar,
     PlayCircle,
     MessageSquare,
-    User as UserIcon
+    Settings,
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -39,7 +39,7 @@ export default function AppLayout({
   const pathname = usePathname();
 
   const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-  const isPublicPath = publicPaths.some(p => pathname.startsWith(p));
+  const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
 
   const handleSignOut = async () => {
     if (auth) {
@@ -52,7 +52,7 @@ export default function AppLayout({
     if (!isPublicPath && !loading && !user) {
       router.push('/sign-in');
     }
-  }, [isPublicPath, loading, user, router, pathname]);
+  }, [isPublicPath, loading, user, router]);
 
   if (isPublicPath) {
     return (
@@ -77,16 +77,14 @@ export default function AppLayout({
     return <PageLoader />;
   }
 
-  // Student: "Home + Calendar + Courses + Community + Profile"
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Calendar', icon: Calendar },
     { href: '/courses', label: 'Courses', icon: PlayCircle },
     { href: '/community', label: 'Community', icon: MessageSquare },
-    { href: '/profile', label: 'Profile', icon: UserIcon },
+    { href: '/profile', label: 'Settings', icon: Settings },
   ];
 
-  // Teacher: "Home + Create Class+ Students' Attendance + Blog Creation + revenue + Study Material "
   const teacherNav = [
     { href: '/teacher', label: 'Home', icon: LayoutDashboard },
     { href: '/teacher/create-class', label: 'Create Class', icon: PlusSquare },
@@ -96,7 +94,6 @@ export default function AppLayout({
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
   ];
 
-  // Admin: "student Datas + Teacher Datas + Revenue from Student + Revenue Paid to Teachers + Blog Creation + Study material Upload + Mocktest Creator + Course Creator"
   const adminNav = [
     { href: '/admin/users?role=student', label: 'Student Data', icon: Users },
     { href: '/admin/users?role=teacher', label: 'Teacher Data', icon: Users },

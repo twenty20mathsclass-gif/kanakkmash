@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -61,8 +61,8 @@ export function UserNav({
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link href="/profile">
-            <UserCircle className="mr-2 h-4 w-4" />
-            Profile
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
