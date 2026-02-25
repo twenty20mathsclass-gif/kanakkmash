@@ -22,7 +22,7 @@ import {
     Calendar,
     PlayCircle,
     MessageSquare,
-    User
+    User as UserIcon
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -39,13 +39,26 @@ export default function AppLayout({
   const pathname = usePathname();
 
   const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-  const isPublicPath = publicPaths.includes(pathname);
+  const isPublicPath = publicPaths.some(p => pathname.startsWith(p));
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
+    router.push('/sign-in');
+  };
+
+  useEffect(() => {
+    if (!isPublicPath && !loading && !user) {
+      router.push('/sign-in');
+    }
+  }, [isPublicPath, loading, user, router, pathname]);
 
   if (isPublicPath) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Suspense fallback={null}>
-          <MobileLogo />
+          <MobileLogo onSignOut={user ? handleSignOut : undefined} />
           <HomePageDock />
         </Suspense>
         <main className="flex-grow p-4 pt-20 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
@@ -60,19 +73,6 @@ export default function AppLayout({
     );
   }
 
-  const handleSignOut = async () => {
-    if (auth) {
-      await firebaseSignOut(auth);
-    }
-    router.push('/sign-in');
-  };
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/sign-in');
-    }
-  }, [loading, user, router]);
-
   if (loading || !user) {
     return <PageLoader />;
   }
@@ -83,7 +83,7 @@ export default function AppLayout({
     { href: '/calendar', label: 'Calendar', icon: Calendar },
     { href: '/courses', label: 'Courses', icon: PlayCircle },
     { href: '/community', label: 'Community', icon: MessageSquare },
-    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/profile', label: 'Profile', icon: UserIcon },
   ];
 
   // Teacher: "Home + Create Class+ Students' Attendance + Blog Creation + revenue + Study Material "

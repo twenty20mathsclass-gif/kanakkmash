@@ -14,7 +14,7 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
 
   const getHomeHref = () => {
     const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-    const isPublicPath = publicPaths.includes(pathname) || pathname === '/';
+    const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
 
     if (!user || isPublicPath) return '/';
 
