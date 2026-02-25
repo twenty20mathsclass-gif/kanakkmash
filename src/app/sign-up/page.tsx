@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -38,49 +39,57 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <AnimatedMathIcons />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10"
-      >
-        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
-      </div>
-      <Button variant="ghost" asChild className="absolute top-4 left-4 z-10">
-        <Link href="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">
+        <AnimatedMathIcons />
+        <Link href="/" className="absolute top-8 left-8 z-10">
+            <Image
+              src="/logoo_1@4x.webp"
+              alt="kanakkmash"
+              width={200}
+              height={62}
+              className="inline-block"
+              priority
+            />
         </Link>
-      </Button>
-
-      <main className="z-10 grid w-full max-w-6xl grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-16">
-        <div className="hidden flex-col justify-center text-left md:flex">
-          <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl">
-            Create an Account
-          </h1>
-          <p className="mt-4 text-lg text-foreground/80">
-            Join kanakkmash and start your learning adventure. One account for all your needs.
-          </p>
+        <div className='z-10 space-y-4'>
+            <Image 
+                src="https://picsum.photos/seed/signup-illustration/600/400"
+                width={600}
+                height={400}
+                alt="Illustration"
+                className="mx-auto rounded-lg shadow-lg"
+                data-ai-hint="online education teaching"
+            />
+            <h1 className="font-headline text-4xl font-bold mt-4">Welcome to Your Learning Journey</h1>
+            <p className="text-muted-foreground mt-2 max-w-md mx-auto">Unlock your potential with our expert-led math courses for all levels.</p>
         </div>
-
-        <Card className="w-full bg-background/80 backdrop-blur-sm">
-          <CardHeader className="md:hidden">
-            <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
+      </div>
+      <div className="flex items-center justify-center p-6 min-h-screen relative">
+         <Link href="/" className="absolute top-4 left-4 z-10 lg:hidden">
+            <Button variant="ghost">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+            </Button>
+        </Link>
+        <Card className="mx-auto w-full max-w-xl shadow-lg">
+          <CardHeader>
+            <CardTitle className="font-headline text-3xl">Create an account</CardTitle>
             <CardDescription>
-              Join kanakkmash and start your learning adventure.
+              Enter your details below to start your journey with kanakkmash.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <SignUpForm />
             <div className="mt-4 text-center text-sm">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link href="/sign-in" className="font-medium text-primary underline underline-offset-4 hover:text-primary/80">
                 Sign in
               </Link>
             </div>
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   );
 }
