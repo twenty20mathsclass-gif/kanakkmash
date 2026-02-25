@@ -34,7 +34,6 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  syllabus: z.string({ required_error: 'Please select your syllabus.' }),
   class: z.string({ required_error: 'Please select your class.' }),
   countryCode: z.string().min(1, 'Country code is required.'),
   mobile: z.string().min(1, 'Mobile number is required.'),
@@ -53,7 +52,6 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
-      syllabus: '',
       class: '',
       countryCode: '',
       mobile: '',
@@ -85,7 +83,6 @@ export function SignUpForm() {
         email: data.email,
         role: 'student',
         avatarUrl: avatarUrl,
-        syllabus: data.syllabus,
         class: data.class,
         countryCode: data.countryCode,
         mobile: data.mobile,
@@ -146,31 +143,7 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="syllabus"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Syllabus</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your syllabus" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="kerala-state">Kerala state</SelectItem>
-                  <SelectItem value="cbse-kerala">CBSE Kerala</SelectItem>
-                  <SelectItem value="cbse-uae">CBSE UAE</SelectItem>
-                  <SelectItem value="cbse-ksa">CBSE KSA</SelectItem>
-                  <SelectItem value="icse">ICSE</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        
         <FormField
           control={form.control}
           name="class"

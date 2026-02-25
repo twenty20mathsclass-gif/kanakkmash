@@ -4,7 +4,6 @@ export type User = {
   email: string;
   role: 'student' | 'admin' | 'teacher';
   avatarUrl: string;
-  syllabus?: string;
   class?: string;
   countryCode?: string;
   mobile?: string;
