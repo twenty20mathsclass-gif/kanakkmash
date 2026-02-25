@@ -56,7 +56,6 @@ export function SignInForm() {
         <Input
           id="email"
           type="email"
-          placeholder="name@example.com"
           {...form.register('email')}
         />
         {form.formState.errors.email && (
