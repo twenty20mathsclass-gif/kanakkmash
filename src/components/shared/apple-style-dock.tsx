@@ -89,6 +89,11 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const [showDesktopLogo, setShowDesktopLogo] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     // This ensures the logo is only shown on the client-side for desktop,
@@ -99,6 +104,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       setShowDesktopLogo(false);
     }
   }, [isMobile]);
+
+  if (!isClient) {
+    // Render a placeholder or null on the server to avoid hydration mismatch
+    // A simple div with height can prevent layout shift
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[72px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+  }
 
   const getHomeHref = () => {
       if (!user) return '/';
