@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import Image from 'next/image';
+import { MobileLogo } from '@/components/shared/mobile-logo';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +13,10 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Suspense fallback={null}>
+        <MobileLogo />
         <HomePageDock />
       </Suspense>
-      <main className="flex flex-1 items-center justify-center pt-8 pb-24 md:pt-24 md:pb-0">
+      <main className="flex flex-1 items-center justify-center pt-20 pb-24 md:pt-24 md:pb-0">
         <section className="relative overflow-hidden">
           <AnimatedMathIcons />
           <div
