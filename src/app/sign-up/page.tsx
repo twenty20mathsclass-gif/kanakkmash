@@ -37,14 +37,14 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-start bg-secondary/50 p-4 pt-20 sm:justify-center sm:pt-4">
       <Button variant="ghost" asChild className="absolute top-4 left-4">
         <Link href="/">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Link>
       </Button>
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
           <CardDescription>
