@@ -32,6 +32,7 @@ import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
+  courseModel: z.string({ required_error: 'Please select a course model.' }),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   class: z.string({ required_error: 'Please select your class.' }),
@@ -52,6 +53,7 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
+      courseModel: '',
       class: '',
       countryCode: '',
       mobile: '',
@@ -83,6 +85,7 @@ export function SignUpForm() {
         email: data.email,
         role: 'student',
         avatarUrl: avatarUrl,
+        courseModel: data.courseModel,
         class: data.class,
         countryCode: data.countryCode,
         mobile: data.mobile,
@@ -117,6 +120,30 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="courseModel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Course Model</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a course model" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
+                  <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
+                  <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="email"

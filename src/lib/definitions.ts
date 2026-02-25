@@ -7,6 +7,7 @@ export type User = {
   class?: string;
   countryCode?: string;
   mobile?: string;
+  courseModel?: string;
 };
 
 export type Lesson = {
