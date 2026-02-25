@@ -38,8 +38,15 @@ export default function AppLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicExactPaths = ['/', '/blog', '/materials', '/community'];
-  const isPublicPath = publicExactPaths.includes(pathname) || pathname.startsWith('/courses');
+  // Paths that can be viewed without being logged in.
+  const publiclyAccessiblePaths = ['/', '/blog', '/materials', '/community'];
+  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses');
+
+  // Paths that should show the public-facing "Home Page Dock" even for logged-in users.
+  // We exclude `/courses` here so that it shows the app dock for logged-in users.
+  const marketingPaths = ['/', '/blog', '/materials', '/community'];
+  const isMarketingPage = marketingPaths.includes(pathname);
+
 
   const handleSignOut = async () => {
     if (auth) {
@@ -49,12 +56,12 @@ export default function AppLayout({
   };
 
   useEffect(() => {
-    if (!loading && !user && !isPublicPath) {
+    if (!loading && !user && !isPubliclyAccessible) {
       router.push('/sign-in');
     }
-  }, [loading, user, router, isPublicPath]);
+  }, [loading, user, router, isPubliclyAccessible, pathname]);
 
-  if (loading || (!user && !isPublicPath)) {
+  if (loading || (!user && !isPubliclyAccessible)) {
     return <PageLoader />;
   }
 
@@ -95,7 +102,7 @@ export default function AppLayout({
         : studentNav
     : [];
     
-  const useAppDock = user && !isPublicPath;
+  const useAppDock = user && !isMarketingPage;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -108,7 +115,7 @@ export default function AppLayout({
         )}
       </Suspense>
       <main className="flex-grow p-4 pt-20 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
-      {isPublicPath && (
+      {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
