@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
 import { PageLoader } from '@/components/shared/page-loader';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Bell, Search } from 'lucide-react';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
@@ -33,10 +32,6 @@ export default function DashboardPage() {
       <Reveal>
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 border-2 border-primary">
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
             <div>
               <h1 className="text-xl font-bold font-headline">{user.name}</h1>
               <p className="text-sm text-muted-foreground">{user.role}</p>
