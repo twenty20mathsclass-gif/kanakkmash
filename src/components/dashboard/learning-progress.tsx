@@ -43,7 +43,7 @@ export function LearningProgress() {
           title="Retention" 
           value="88%" 
           icon={<BrainCircuit className="h-5 w-5" />}
-          color="hsl(45 90% 48%)"
+          color="hsl(270 80% 65%)"
           delay={0.2}
         />
         <ProgressCard 
