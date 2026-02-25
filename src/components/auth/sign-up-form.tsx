@@ -35,7 +35,6 @@ const formSchema = z.object({
   courseModel: z.string({ required_error: 'Please select a course model.' }),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  class: z.string({ required_error: 'Please select your class.' }),
   countryCode: z.string().min(1, 'Country code is required.'),
   mobile: z.string().min(1, 'Mobile number is required.'),
 });
@@ -54,7 +53,6 @@ export function SignUpForm() {
       email: '',
       password: '',
       courseModel: '',
-      class: '',
       countryCode: '',
       mobile: '',
     },
@@ -86,7 +84,6 @@ export function SignUpForm() {
         role: 'student',
         avatarUrl: avatarUrl,
         courseModel: data.courseModel,
-        class: data.class,
         countryCode: data.countryCode,
         mobile: data.mobile,
       };
@@ -171,31 +168,6 @@ export function SignUpForm() {
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="class"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Class</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your class" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((classNum) => (
-                    <SelectItem key={classNum} value={String(classNum)}>
-                      Class {classNum}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div>
           <Label>Mobile Number</Label>
           <div className="mt-2 flex flex-row gap-2">
