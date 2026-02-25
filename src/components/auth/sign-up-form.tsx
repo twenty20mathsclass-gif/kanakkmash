@@ -314,7 +314,7 @@ export function SignUpForm() {
               control={form.control}
               name="countryCode"
               render={({ field }) => (
-                <FormItem className="w-auto min-w-[180px]">
+                <FormItem className="w-auto">
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -326,7 +326,8 @@ export function SignUpForm() {
                         <SelectItem key={country.code} value={country.code}>
                           <div className="flex items-center gap-2">
                             <span>{country.flag}</span>
-                            <span>{country.name} ({country.phone})</span>
+                            <span className="sm:hidden">{country.phone}</span>
+                            <span className="hidden sm:inline">{country.name} ({country.phone})</span>
                           </div>
                         </SelectItem>
                       ))}
