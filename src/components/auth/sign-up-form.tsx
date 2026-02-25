@@ -342,7 +342,7 @@ export function SignUpForm() {
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                    <Input {...field} placeholder='9876543210' />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
