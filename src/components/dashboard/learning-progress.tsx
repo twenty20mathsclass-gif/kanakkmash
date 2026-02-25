@@ -20,7 +20,7 @@ function ProgressCard({ title, value, icon, color, delay = 0 }: ProgressCardProp
             {icon}
             <span className="text-sm font-medium">{title}</span>
           </div>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+          <p className="text-2xl font-bold mt-1">{value}</p>
         </CardContent>
       </Card>
     </Reveal>
