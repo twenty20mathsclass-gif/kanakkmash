@@ -55,7 +55,13 @@ export default function LessonPage({ params }: PageProps) {
                 <ArrowLeft className="mr-2 h-4 w-4" /> Previous
               </Link>
             </Button>
-          ) : <div />}
+          ) : (
+            <Button variant="outline" asChild>
+              <Link href={`/courses/${params.courseId}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Course
+              </Link>
+            </Button>
+          )}
           {nextLesson ? (
             <Button variant="outline" asChild>
               <Link href={`/courses/${course.id}/lessons/${nextLesson.id}`}>

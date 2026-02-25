@@ -21,7 +21,8 @@ import {
     Home,
     Calendar,
     ShoppingCart,
-    Receipt
+    Receipt,
+    BookOpen
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -37,8 +38,8 @@ export default function AppLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicExactPaths = ['/', '/courses', '/blog', '/materials', '/community'];
-  const isPublicPath = publicExactPaths.includes(pathname) || pathname.startsWith('/courses/');
+  const publicExactPaths = ['/', '/blog', '/materials', '/community'];
+  const isPublicPath = publicExactPaths.includes(pathname) || pathname.startsWith('/courses');
 
   const handleSignOut = async () => {
     if (auth) {
@@ -61,6 +62,7 @@ export default function AppLayout({
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Schedule', icon: Calendar },
+    { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
     { href: '/purchased-courses', label: 'Payment History', icon: Receipt },
   ];
