@@ -51,7 +51,7 @@ export default function AppLayout({
     if (!loading && !user && !isPublicPath) {
       router.push('/sign-in');
     }
-  }, [loading, user, router, isPublicPath, pathname]);
+  }, [loading, user, router, isPublicPath]);
 
   if (loading || (!user && !isPublicPath)) {
     return <PageLoader />;
@@ -60,7 +60,7 @@ export default function AppLayout({
   // Define nav items for logged-in users
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/calendar', label: 'Calendar', icon: Calendar },
+    { href: '/calendar', label: 'Schedule', icon: Calendar },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
     { href: '/purchased-courses', label: 'Payment History', icon: Receipt },
   ];
