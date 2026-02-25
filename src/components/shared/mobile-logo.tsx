@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from '@/firebase';
 import { UserNav } from './user-nav';
@@ -10,22 +9,6 @@ import { UserNav } from './user-nav';
 export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
   const isMobile = useIsMobile();
   const { user } = useUser();
-  const pathname = usePathname();
-
-  const getHomeHref = () => {
-    const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-    const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
-
-    if (!user || isPublicPath) return '/';
-
-    switch(user.role) {
-        case 'admin': return '/admin';
-        case 'teacher': return '/teacher';
-        default: return '/dashboard';
-    }
-  }
-  const homeHref = getHomeHref();
-
 
   if (!isMobile) {
     return null;
@@ -35,7 +18,7 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
 
   return (
     <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between md:hidden">
-      <Link href={homeHref}>
+      <Link href="/">
           <Image
               src="/logoo_1@4x.webp"
               alt="kanakkmash logo"

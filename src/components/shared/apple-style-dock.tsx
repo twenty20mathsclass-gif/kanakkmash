@@ -97,7 +97,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             {showDesktopLogo && (
                 <>
                     <div className='flex h-10 w-28 items-center justify-center'>
-                        <Link href={homeHref} className="transition-colors">
+                        <Link href="/" className="transition-colors">
                             <Image
                                 src="/logoo_1@4x.webp"
                                 alt="kanakkmash logo"
