@@ -92,7 +92,7 @@ export function SignUpForm() {
       email: '',
       password: '',
       courseModel: '',
-      countryCode: '+91',
+      countryCode: 'IN',
       mobile: '',
       terms: false,
     },
@@ -123,6 +123,9 @@ export function SignUpForm() {
         photoURL: avatarUrl,
       });
 
+      const selectedCountry = countries.find(c => c.code === data.countryCode);
+      const phoneCode = selectedCountry ? selectedCountry.phone : data.countryCode;
+
       // Create user profile in Firestore
       const userProfile: User = {
         id: user.uid,
@@ -131,7 +134,7 @@ export function SignUpForm() {
         role: 'student',
         avatarUrl: avatarUrl,
         courseModel: data.courseModel,
-        countryCode: data.countryCode,
+        countryCode: phoneCode,
         mobile: data.mobile,
       };
 
@@ -320,7 +323,7 @@ export function SignUpForm() {
                     </FormControl>
                     <SelectContent>
                       {countries.map((country) => (
-                        <SelectItem key={country.code} value={country.phone}>
+                        <SelectItem key={country.code} value={country.code}>
                           <div className="flex items-center gap-2">
                             <span>{country.flag}</span>
                             <span>{country.name} ({country.phone})</span>
