@@ -17,6 +17,7 @@ const icons = [
 ];
 
 type IconStyle = {
+  top: string;
   left: string;
   animationDuration: string;
   animationDelay: string;
@@ -30,10 +31,11 @@ export function AnimatedMathIcons() {
     const generateStyles = () => {
       const styles = Array.from({ length: 20 }).map(() => {
         return {
+          top: `${Math.random() * 100}%`,
           left: `${Math.random() * 100}%`,
-          animationDuration: `${Math.random() * 10 + 10}s`, // 10s to 20s
-          animationDelay: `${Math.random() * 15}s`, // 0s to 15s
-          size: Math.random() * 40 + 20, // 20px to 60px
+          animationDuration: `${Math.random() * 5 + 5}s`, // 5s to 10s
+          animationDelay: `${Math.random() * 5}s`, // 0s to 5s
+          size: Math.random() * 30 + 15, // 15px to 45px
         };
       });
       setIconStyles(styles);
@@ -57,6 +59,7 @@ export function AnimatedMathIcons() {
               key={i}
               className="math-icon"
               style={{
+                  top: style.top,
                   left: style.left,
                   animationDuration: style.animationDuration,
                   animationDelay: style.animationDelay,

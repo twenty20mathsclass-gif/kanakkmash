@@ -84,17 +84,19 @@
 @layer components {
   .math-icon {
     @apply absolute block text-primary/20;
-    animation: move-up linear infinite;
+    animation: gentle-float ease-in-out infinite;
     will-change: transform;
-    bottom: -10vh; /* Start from below the viewport */
   }
 
-  @keyframes move-up {
-    from {
-      transform: translateY(0);
+  @keyframes gentle-float {
+    0% {
+      transform: translateY(0px);
     }
-    to {
-      transform: translateY(-120vh); /* Move up beyond the viewport */
+    50% {
+      transform: translateY(-20px);
+    }
+    100% {
+      transform: translateY(0px);
     }
   }
 }
