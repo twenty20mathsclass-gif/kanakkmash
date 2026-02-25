@@ -22,7 +22,8 @@ import {
     Calendar,
     PlayCircle,
     MessageSquare,
-    Settings,
+    ShoppingCart,
+    Receipt
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -38,8 +39,8 @@ export default function AppLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-  const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
+  const publicExactPaths = ['/', '/courses', '/blog', '/materials', '/community'];
+  const isPublicPath = publicExactPaths.includes(pathname);
 
   const handleSignOut = async () => {
     if (auth) {
@@ -49,40 +50,23 @@ export default function AppLayout({
   };
 
   useEffect(() => {
-    if (!isPublicPath && !loading && !user) {
+    if (!loading && !user && !isPublicPath) {
       router.push('/sign-in');
     }
-  }, [isPublicPath, loading, user, router]);
+  }, [loading, user, router, isPublicPath, pathname]);
 
-  if (isPublicPath) {
-    return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <Suspense fallback={null}>
-          <MobileLogo onSignOut={user ? handleSignOut : undefined} />
-          <HomePageDock />
-        </Suspense>
-        <main className="flex-grow p-4 pt-20 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
-        <footer className="bg-background py-6">
-          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-            <p className="text-sm text-foreground/60">
-              © {new Date().getFullYear()} kanakkmash. All rights reserved.
-            </p>
-          </div>
-        </footer>
-      </div>
-    );
-  }
-
-  if (loading || !user) {
+  if (loading || (!user && !isPublicPath)) {
     return <PageLoader />;
   }
 
+  // Define nav items for logged-in users
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Calendar', icon: Calendar },
     { href: '/courses', label: 'Courses', icon: PlayCircle },
     { href: '/community', label: 'Community', icon: MessageSquare },
-    { href: '/profile', label: 'Settings', icon: Settings },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart },
+    { href: '/purchased-courses', label: 'Purchases', icon: Receipt },
   ];
 
   const teacherNav = [
@@ -105,20 +89,36 @@ export default function AppLayout({
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
   ];
 
-  const navItems =
-    user.role === 'admin'
-      ? adminNav
-      : user.role === 'teacher'
-      ? teacherNav
-      : studentNav;
+  const navItems = user 
+    ? user.role === 'admin'
+        ? adminNav
+        : user.role === 'teacher'
+        ? teacherNav
+        : studentNav
+    : [];
+    
+  const useAppDock = user && !isPublicPath;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
-        <MobileLogo onSignOut={handleSignOut} />
-        <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
+        <MobileLogo onSignOut={user ? handleSignOut : undefined} />
+        {useAppDock ? (
+           <AppleStyleDock items={navItems} user={user!} onSignOut={handleSignOut} />
+        ) : (
+          <HomePageDock />
+        )}
       </Suspense>
       <main className="flex-grow p-4 pt-20 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
+      {isPublicPath && (
+        <footer className="bg-background py-6">
+          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
+            <p className="text-sm text-foreground/60">
+              © {new Date().getFullYear()} kanakkmash. All rights reserved.
+            </p>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
