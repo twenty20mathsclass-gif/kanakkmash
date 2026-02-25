@@ -11,12 +11,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect } from 'react';
 import { UserNav } from './user-nav';
 
-type NavItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-};
-
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -56,11 +50,15 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[72px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[120px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
-      if (!user) return '/';
+      const publicPaths = ['/courses', '/blog', '/materials', '/community'];
+      const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
+  
+      if (!user || isPublicPath) return '/';
+      
       switch(user.role) {
           case 'admin': return '/admin';
           case 'teacher': return '/teacher';
@@ -88,18 +86,18 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
-          className="flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+          className="flex h-[120px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
             {showDesktopLogo && (
                 <>
                     <div>
-                        <Link href={homeHref} className="flex h-14 w-14 items-center justify-center rounded-full transition-colors">
+                        <Link href={homeHref} className="flex h-28 w-28 items-center justify-center rounded-full transition-colors">
                             <Image
                                 src="/logoo_1@4x.webp"
                                 alt="kanakkmash logo"
-                                width={50}
-                                height={50}
-                                className="h-auto w-12 object-contain"
+                                width={100}
+                                height={100}
+                                className="h-auto w-24 object-contain"
                                 priority
                             />
                         </Link>
@@ -163,7 +161,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             </Link>
           </motion.div>
 
-          {user && onSignOut && !isMobile && (
+          {user && onSignOut && (
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
