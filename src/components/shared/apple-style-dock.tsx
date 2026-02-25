@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
@@ -17,7 +18,6 @@ import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useState, useEffect } from 'react';
 
 type NavItem = {
   href: string;
@@ -119,6 +119,19 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
+          <motion.div transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+            <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-accent">
+                <Image
+                    src="/logoo_1@4x.webp"
+                    alt="kanakkmash logo"
+                    width={40}
+                    height={40}
+                    className="h-auto w-10 object-contain"
+                    priority
+                />
+            </Link>
+          </motion.div>
+          <div className="h-full w-px bg-border mx-1 self-center" />
           {items.map((item) => {
               const Icon = item.icon;
               
