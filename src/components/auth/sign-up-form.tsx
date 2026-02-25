@@ -31,6 +31,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '../ui/checkbox';
+import { countries } from '@/lib/countries';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -91,7 +92,7 @@ export function SignUpForm() {
       email: '',
       password: '',
       courseModel: '',
-      countryCode: '',
+      countryCode: '+91',
       mobile: '',
       terms: false,
     },
@@ -310,10 +311,24 @@ export function SignUpForm() {
               control={form.control}
               name="countryCode"
               render={({ field }) => (
-                <FormItem className="w-1/3">
-                  <FormControl>
-                    <Input {...field} placeholder='+91' />
-                  </FormControl>
+                <FormItem className="w-auto min-w-[180px]">
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.code} value={country.phone}>
+                          <div className="flex items-center gap-2">
+                            <span>{country.flag}</span>
+                            <span>{country.name} ({country.phone})</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
