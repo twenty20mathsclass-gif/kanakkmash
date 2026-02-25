@@ -14,7 +14,7 @@ export default function Home() {
       <Suspense fallback={null}>
         <HomePageDock />
       </Suspense>
-      <main className="flex flex-1 items-center justify-center pt-20 pb-20 md:pt-20 md:pb-0">
+      <main className="flex flex-1 items-center justify-center pt-24 pb-20 md:pt-24 md:pb-0">
         <section className="relative overflow-hidden">
           <AnimatedMathIcons />
           <div

@@ -45,7 +45,7 @@ export default function AppLayout({
         <Suspense fallback={null}>
           <HomePageDock />
         </Suspense>
-        <main className="flex-grow p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
+        <main className="flex-grow p-4 pt-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
@@ -117,7 +117,7 @@ export default function AppLayout({
       <Suspense fallback={null}>
         <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
       </Suspense>
-      <main className="flex-grow p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">{children}</main>
+      <main className="flex-grow p-4 pt-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
     </div>
   );
 }

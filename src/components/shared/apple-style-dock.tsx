@@ -54,8 +54,8 @@ function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => v
          </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2 md:mt-2 md:mb-0" 
-        side={isMobile ? 'top' : 'bottom'} 
+        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mt-2" 
+        side={'bottom'} 
         align="end"
       >
         <DropdownMenuLabel className="font-normal">
@@ -115,7 +115,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <>
-      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
+      <div className="fixed top-4 left-4 z-50 md:left-1/2 md:-translate-x-1/2">
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
