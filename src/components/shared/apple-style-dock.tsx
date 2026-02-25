@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
@@ -105,25 +104,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
-          <motion.div
-            transition={{ type: 'spring', stiffness: 400, damping: 12 }}
-            key="logo"
-            className="flex"
-          >
-            <Link href="/">
-              <div className="relative flex h-12 w-28 items-center justify-center transition-colors md:h-14 md:w-auto">
-                <Image
-                  src="/logoo_1@4x.webp"
-                  alt="Logo"
-                  width={150}
-                  height={47}
-                  className="h-auto w-full object-contain md:h-full md:w-auto"
-                  priority
-                />
-              </div>
-            </Link>
-          </motion.div>
-          
           {items.map((item) => {
               const Icon = item.icon;
               
