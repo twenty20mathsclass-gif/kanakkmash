@@ -34,8 +34,8 @@ export default function Home() {
                   <Image
                     src="/logoo_1@4x.webp"
                     alt="kanakkmash"
-                    width={400}
-                    height={123}
+                    width={200}
+                    height={62}
                     className="inline-block"
                     priority
                   />
