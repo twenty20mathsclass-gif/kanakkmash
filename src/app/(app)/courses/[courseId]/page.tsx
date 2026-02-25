@@ -23,19 +23,19 @@ export default function CourseDetailPage({ params }: PageProps) {
   const allLessons = course.modules.flatMap((m) => m.lessons);
   const firstLesson = allLessons[0];
   const totalModules = course.modules.length;
-  const totalHours = Math.round(allLessons.length * 0.4); // Estimate
+  const totalHours = (allLessons.length * 0.75).toFixed(1);
 
   return (
     <div className="bg-primary -m-4 md:-m-6 lg:-m-8 min-h-screen">
       <div className="max-w-lg mx-auto">
         <header className="p-4 flex justify-between items-center text-primary-foreground">
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10" asChild>
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary-foreground/10" asChild>
             <Link href="/courses">
               <ArrowLeft />
             </Link>
           </Button>
           <h1 className="text-xl font-bold">Course</h1>
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary-foreground/10">
             <MoreVertical />
           </Button>
         </header>
@@ -57,14 +57,14 @@ export default function CourseDetailPage({ params }: PageProps) {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold font-headline">{course.title}</h2>
-                <div className="flex items-center gap-4 text-muted-foreground mt-2">
+                <div className="flex items-center gap-4 text-muted-foreground mt-2 text-sm">
                   <div className="flex items-center gap-1.5">
                     <BookOpen className="h-4 w-4" />
                     <span>{totalModules} Modules</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4" />
-                    <span>~{totalHours} Hours</span>
+                    <span>{totalHours} Hours</span>
                   </div>
                 </div>
               </div>
@@ -81,32 +81,22 @@ export default function CourseDetailPage({ params }: PageProps) {
                 <TabsTrigger value="timetable" disabled>Time Table</TabsTrigger>
                 <TabsTrigger value="course-info" disabled>Course Info</TabsTrigger>
               </TabsList>
-              <TabsContent value="lessons" className="mt-6 space-y-4">
-                {course.modules.map((module, moduleIndex) => (
-                  <div key={module.id}>
-                    <h3 className="font-bold mb-2">Module {moduleIndex + 1}: {module.title}</h3>
-                    <div className="space-y-3">
-                      {module.lessons.map((lesson, lessonIndex) => {
-                         const lessonNumber = course.modules.slice(0, moduleIndex).reduce((acc, m) => acc + m.lessons.length, 0) + lessonIndex + 1;
-                         return (
-                            <Link href={`/courses/${course.id}/lessons/${lesson.id}`} key={lesson.id} className="block">
-                              <div className="p-4 rounded-lg border bg-card flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/10 text-primary font-bold">
-                                        {lessonNumber}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold">{lesson.title}</p>
-                                        <p className="text-sm text-muted-foreground">Video - 20 mins</p>
-                                    </div>
-                                  </div>
-                              </div>
-                            </Link>
-                         )
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <TabsContent value="lessons" className="mt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  {course.modules.flatMap((module, moduleIndex) =>
+                    module.lessons.map((lesson, lessonIndex) => {
+                      const lessonNumberLabel = `${moduleIndex + 1}.${lessonIndex + 1}`;
+                      return (
+                        <Link href={`/courses/${course.id}/lessons/${lesson.id}`} key={lesson.id} className="block">
+                          <div className="p-4 rounded-xl bg-primary/10 h-full min-h-[6rem] flex flex-col justify-center">
+                            <p className="font-bold text-lg text-primary">{lessonNumberLabel}</p>
+                            <p className="font-semibold text-sm mt-1 text-foreground leading-tight">{lesson.title}</p>
+                          </div>
+                        </Link>
+                      );
+                    })
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           </Reveal>
