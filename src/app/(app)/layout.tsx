@@ -20,8 +20,6 @@ import {
     LayoutDashboard,
     Home,
     Calendar,
-    PlayCircle,
-    MessageSquare,
     ShoppingCart,
     Receipt
 } from 'lucide-react';
@@ -40,7 +38,7 @@ export default function AppLayout({
   const pathname = usePathname();
 
   const publicExactPaths = ['/', '/courses', '/blog', '/materials', '/community'];
-  const isPublicPath = publicExactPaths.includes(pathname);
+  const isPublicPath = publicExactPaths.includes(pathname) || pathname.startsWith('/courses/');
 
   const handleSignOut = async () => {
     if (auth) {
@@ -63,8 +61,6 @@ export default function AppLayout({
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Calendar', icon: Calendar },
-    { href: '/courses', label: 'Courses', icon: PlayCircle },
-    { href: '/community', label: 'Community', icon: MessageSquare },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
     { href: '/purchased-courses', label: 'Purchases', icon: Receipt },
   ];
