@@ -129,22 +129,22 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     <>
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
-          className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+          className="flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
             {showDesktopLogo && (
                 <>
-                    <motion.div transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
-                        <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-accent">
+                    <div>
+                        <Link href={homeHref} className="flex h-14 w-14 items-center justify-center rounded-full transition-colors">
                             <Image
                                 src="/logoo_1@4x.webp"
                                 alt="kanakkmash logo"
-                                width={40}
-                                height={40}
-                                className="h-auto w-10 object-contain"
+                                width={50}
+                                height={50}
+                                className="h-auto w-12 object-contain"
                                 priority
                             />
                         </Link>
-                    </motion.div>
+                    </div>
                     <div className="h-full w-px bg-border mx-1 self-center" />
                 </>
             )}
