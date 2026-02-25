@@ -37,9 +37,42 @@ const formSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   countryCode: z.string().min(1, 'Country code is required.'),
   mobile: z.string().min(1, 'Mobile number is required.'),
+  class: z.string().optional(),
+  syllabus: z.string().optional(),
+  competitiveExam: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+        if (!data.class) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a class.',
+                path: ['class'],
+            });
+        } else if (data.class && data.class !== 'DEGREE' && !data.syllabus) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a syllabus.',
+                path: ['syllabus'],
+            });
+        }
+    }
+    if (data.courseModel === 'COMPETITIVE EXAM') {
+        if (!data.competitiveExam) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a competitive exam.',
+                path: ['competitiveExam'],
+            });
+        }
+    }
 });
 
+
 type FormValues = z.infer<typeof formSchema>;
+
+const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
+const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
+const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSE', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 
 export function SignUpForm() {
   const { auth, firestore } = useFirebase();
@@ -57,6 +90,13 @@ export function SignUpForm() {
       mobile: '',
     },
   });
+
+  const courseModel = form.watch('courseModel');
+  const selectedClass = form.watch('class');
+  
+  const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
+  const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
 
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
@@ -87,6 +127,16 @@ export function SignUpForm() {
         countryCode: data.countryCode,
         mobile: data.mobile,
       };
+
+      if (showClassField && data.class) {
+        userProfile.class = data.class;
+      }
+      if (showSyllabusField && data.syllabus) {
+          userProfile.syllabus = data.syllabus;
+      }
+      if (showCompetitiveExamField && data.competitiveExam) {
+          userProfile.competitiveExam = data.competitiveExam;
+      }
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 
@@ -124,7 +174,13 @@ export function SignUpForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Course Model</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  form.setValue('class', '');
+                  form.setValue('syllabus', '');
+                  form.setValue('competitiveExam', '');
+                  form.clearErrors(['class', 'syllabus', 'competitiveExam']);
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a course model" />
@@ -140,6 +196,79 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
+        
+        {showClassField && (
+            <FormField
+            control={form.control}
+            name="class"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Class</FormLabel>
+                <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('syllabus', '');
+                    form.clearErrors('syllabus');
+                }} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a class" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
+
+        {showSyllabusField && (
+            <FormField
+            control={form.control}
+            name="syllabus"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Syllabus</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a syllabus" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
+
+        {showCompetitiveExamField && (
+            <FormField
+            control={form.control}
+            name="competitiveExam"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Competitive Exam</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an exam" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {competitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
 
         <FormField
           control={form.control}
