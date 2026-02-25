@@ -1,18 +1,30 @@
 'use client';
 
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
   const loaderContent = (
     <div className="flex items-center justify-center">
-      <Image
-        src="/logoo_1@4x.webp"
-        alt="Loading..."
-        width={100}
-        height={100}
-        className="animate-pulse"
-        priority
-      />
+      <motion.div
+        animate={{
+          scale: [1, 1.05, 1],
+          opacity: [0.7, 1, 0.7],
+        }}
+        transition={{
+          duration: 2,
+          ease: "easeInOut",
+          repeat: Infinity,
+        }}
+      >
+        <Image
+          src="/logoo_1@4x.webp"
+          alt="Loading..."
+          width={120}
+          height={37}
+          priority
+        />
+      </motion.div>
     </div>
   );
 
