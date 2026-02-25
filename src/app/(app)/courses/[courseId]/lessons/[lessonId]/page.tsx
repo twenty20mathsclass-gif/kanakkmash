@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { PracticeGenerator } from '@/components/practice/practice-generator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Reveal } from '@/components/shared/reveal';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,46 +31,52 @@ export default function LessonPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="space-y-4">
-        <h1 className="text-4xl font-bold font-headline">{lesson.title}</h1>
-        <div
-          className="prose lg:prose-lg"
-          dangerouslySetInnerHTML={{ __html: lesson.content }}
-        />
-        <Button>
-          <CheckCircle className="mr-2 h-4 w-4" />
-          Mark as Complete
-        </Button>
-      </div>
+      <Reveal>
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold font-headline">{lesson.title}</h1>
+          <div
+            className="prose lg:prose-lg"
+            dangerouslySetInnerHTML={{ __html: lesson.content }}
+          />
+          <Button>
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Mark as Complete
+          </Button>
+        </div>
+      </Reveal>
 
       <Separator className="my-8" />
       
-      <div className="flex justify-between">
-        {prevLesson ? (
-          <Button variant="outline" asChild>
-            <Link href={`/courses/${course.id}/lessons/${prevLesson.id}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-            </Link>
-          </Button>
-        ) : <div />}
-        {nextLesson ? (
-          <Button variant="outline" asChild>
-            <Link href={`/courses/${course.id}/lessons/${nextLesson.id}`}>
-              Next <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        ) : <div />}
-      </div>
+      <Reveal>
+        <div className="flex justify-between">
+          {prevLesson ? (
+            <Button variant="outline" asChild>
+              <Link href={`/courses/${course.id}/lessons/${prevLesson.id}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+              </Link>
+            </Button>
+          ) : <div />}
+          {nextLesson ? (
+            <Button variant="outline" asChild>
+              <Link href={`/courses/${course.id}/lessons/${nextLesson.id}`}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : <div />}
+        </div>
+      </Reveal>
 
-      <Card className="mt-12">
-        <CardHeader>
-            <CardTitle className="font-headline text-2xl">Reinforce Your Learning</CardTitle>
-            <CardDescription>Use our AI tool to generate practice problems for this topic.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <PracticeGenerator defaultTopic={lesson.topicForAI} />
-        </CardContent>
-      </Card>
+      <Reveal delay={0.2}>
+        <Card className="mt-12">
+          <CardHeader>
+              <CardTitle className="font-headline text-2xl">Reinforce Your Learning</CardTitle>
+              <CardDescription>Use our AI tool to generate practice problems for this topic.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <PracticeGenerator defaultTopic={lesson.topicForAI} />
+          </CardContent>
+        </Card>
+      </Reveal>
     </div>
   );
 }

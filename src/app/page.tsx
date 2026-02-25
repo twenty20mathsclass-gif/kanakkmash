@@ -6,6 +6,7 @@ import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import Image from 'next/image';
 import { MobileLogo } from '@/components/shared/mobile-logo';
+import { Reveal } from '@/components/shared/reveal';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,39 +27,43 @@ export default function Home() {
             <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
           </div>
           <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
-            <div className="mx-auto max-w-3xl">
-              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                Unlock Your <span>Math Potential</span> with{' '}
-                <Image
-                  src="/logoo_1@4x.webp"
-                  alt="kanakkmash"
-                  width={400}
-                  height={123}
-                  className="inline-block"
-                  priority
-                />
-              </h1>
-              <p className="mx-auto mt-6 max-w-xl text-lg text-foreground/80">
-                An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.
-              </p>
-            </div>
-            <div className="mt-10 flex justify-center gap-4">
-              <Button size="lg" asChild>
-                <Link href="/sign-up">Get Started for Free</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-            </div>
+            <Reveal>
+              <div className="mx-auto max-w-3xl">
+                <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
+                  Unlock Your <span>Math Potential</span> with{' '}
+                  <Image
+                    src="/logoo_1@4x.webp"
+                    alt="kanakkmash"
+                    width={400}
+                    height={123}
+                    className="inline-block"
+                    priority
+                  />
+                </h1>
+                <p className="mx-auto mt-6 max-w-xl text-lg text-foreground/80">
+                  An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.
+                </p>
+              </div>
+              <div className="mt-10 flex justify-center gap-4">
+                <Button size="lg" asChild>
+                  <Link href="/sign-up">Get Started for Free</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>
       <footer className="bg-background py-6">
-        <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-          <p className="text-sm text-foreground/60">
-            © {new Date().getFullYear()} kanakkmash. All rights reserved.
-          </p>
-        </div>
+        <Reveal>
+          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
+            <p className="text-sm text-foreground/60">
+              © {new Date().getFullYear()} kanakkmash. All rights reserved.
+            </p>
+          </div>
+        </Reveal>
       </footer>
     </div>
   );

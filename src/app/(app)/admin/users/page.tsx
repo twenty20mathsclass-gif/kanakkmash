@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { Reveal } from '@/components/shared/reveal';
 
 const AddUserDialog = nextDynamic(
     () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog), 
@@ -77,30 +78,34 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-8">
-        <div className="flex items-center justify-between">
-            <div>
-                <h1 className="text-3xl font-bold font-headline">{title}</h1>
-                <p className="text-muted-foreground">{description}</p>
-            </div>
-            <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
-        </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+        <Reveal>
+          <div className="flex items-center justify-between">
+              <div>
+                  <h1 className="text-3xl font-bold font-headline">{title}</h1>
+                  <p className="text-muted-foreground">{description}</p>
               </div>
-            ) : (
-              <UsersTable users={users} />
-            )}
-        </CardContent>
-      </Card>
+              <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
+          </div>
+        </Reveal>
+        <Reveal delay={0.2}>
+          <Card>
+            <CardHeader>
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : (
+                  <UsersTable users={users} />
+                )}
+            </CardContent>
+          </Card>
+        </Reveal>
     </div>
   );
 }
