@@ -198,12 +198,12 @@ export function SignUpForm() {
 
         <div>
           <Label>Mobile Number</Label>
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-2 flex flex-row gap-2">
             <FormField
               control={form.control}
               name="countryCode"
               render={({ field }) => (
-                <FormItem className="w-full sm:w-1/3">
+                <FormItem className="w-1/3">
                   <FormControl>
                     <Input placeholder="+91" {...field} />
                   </FormControl>
