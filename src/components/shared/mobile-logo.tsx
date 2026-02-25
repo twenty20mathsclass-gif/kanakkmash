@@ -32,13 +32,13 @@ export function MobileLogo() {
 
   return (
     <div className="fixed top-4 left-4 z-50 md:hidden">
-      <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full bg-background/80 p-2 border transition-colors hover:bg-accent">
+      <Link href={homeHref}>
           <Image
               src="/logoo_1@4x.webp"
               alt="kanakkmash logo"
-              width={40}
-              height={40}
-              className="h-auto w-10 object-contain"
+              width={144}
+              height={44}
+              className="h-auto w-36 object-contain"
               priority
           />
       </Link>

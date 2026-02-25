@@ -18,6 +18,7 @@ import { LogOut, UserCircle } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useState, useEffect } from 'react';
 
 type NavItem = {
   href: string;
@@ -87,6 +88,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+  const [showDesktopLogo, setShowDesktopLogo] = useState(false);
+
+  useEffect(() => {
+    // This ensures the logo is only shown on the client-side for desktop,
+    // preventing hydration mismatches and ensuring it's hidden on mobile.
+    setShowDesktopLogo(!isMobile);
+  }, [isMobile]);
 
   const getHomeHref = () => {
       if (!user) return '/';
@@ -119,7 +127,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
-            {!isMobile && (
+            {showDesktopLogo && (
                 <>
                     <motion.div transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
                         <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-accent">
