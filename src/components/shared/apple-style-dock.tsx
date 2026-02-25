@@ -93,7 +93,11 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   useEffect(() => {
     // This ensures the logo is only shown on the client-side for desktop,
     // preventing hydration mismatches and ensuring it's hidden on mobile.
-    setShowDesktopLogo(!isMobile);
+    if (!isMobile) {
+      setShowDesktopLogo(true);
+    } else {
+      setShowDesktopLogo(false);
+    }
   }, [isMobile]);
 
   const getHomeHref = () => {
@@ -176,7 +180,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                           {isActive && (
                           <motion.div
                               layoutId="active-pill"
-                              className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-amber-400 via-primary to-amber-400 bg-[length:200%_auto] animate-gradient-pan"
+                              className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-accent via-primary to-accent bg-[length:200%_auto] animate-gradient-pan"
                               transition={{ type: "spring", duration: 0.6 }}
                           />
                           )}

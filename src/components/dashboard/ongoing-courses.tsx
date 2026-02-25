@@ -7,7 +7,7 @@ import { Reveal } from "../shared/reveal";
 
 export function OngoingCourses() {
     const ongoingCourses = courses.slice(0, 2); 
-    const courseCardColors = ["hsl(30 95% 60%)", "hsl(255 85% 65%)"];
+    const courseCardColors = ["hsl(30 95% 55%)", "hsl(45 90% 48%)"];
 
   return (
     <section>

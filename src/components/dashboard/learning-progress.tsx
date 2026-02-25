@@ -36,21 +36,21 @@ export function LearningProgress() {
           title="Total Time" 
           value="5h 48m" 
           icon={<Clock className="h-5 w-5" />}
-          color="hsl(255 85% 65%)"
+          color="hsl(30 95% 55%)"
           delay={0.1}
         />
         <ProgressCard 
           title="Retention" 
           value="88%" 
           icon={<BrainCircuit className="h-5 w-5" />}
-          color="hsl(30 95% 60%)"
+          color="hsl(45 90% 48%)"
           delay={0.2}
         />
         <ProgressCard 
           title="Streak" 
           value="03" 
           icon={<Flame className="h-5 w-5" />}
-          color="hsl(270 85% 65%)"
+          color="hsl(30 85% 50%)"
           delay={0.3}
         />
       </div>
