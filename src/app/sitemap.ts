@@ -5,21 +5,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://www.kanakkmash.com';
 
   const staticPages = [
-    { url: '/', priority: 1.0 },
-    { url: '/courses', priority: 0.8 },
-    { url: '/blog', priority: 0.7 },
-    { url: '/materials', priority: 0.7 },
-    { url: '/community', priority: 0.7 },
-    { url: '/practice', priority: 0.7 },
-    { url: '/sign-in', priority: 0.5 },
-    { url: '/sign-up', priority: 0.5 },
-    { url: '/terms-and-conditions', priority: 0.3 },
+    { url: '/', priority: 1.0, changeFrequency: 'weekly' },
+    { url: '/courses', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/blog', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/materials', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/community', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/practice', priority: 0.7, changeFrequency: 'monthly' },
+    { url: '/sign-in', priority: 0.5, changeFrequency: 'monthly' },
+    { url: '/sign-up', priority: 0.5, changeFrequency: 'monthly' },
+    { url: '/terms-and-conditions', priority: 0.3, changeFrequency: 'yearly' },
   ];
 
   const staticUrls = staticPages.map((page) => ({
     url: `${baseUrl}${page.url}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as 'weekly',
+    lastModified: new Date().toISOString().split('T')[0],
+    changeFrequency: page.changeFrequency as 'weekly' | 'monthly' | 'yearly',
     priority: page.priority,
   }));
 
@@ -27,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     course.modules.flatMap((module) =>
       module.lessons.map((lesson) => ({
         url: `${baseUrl}/courses/${course.id}/lessons/${lesson.id}`,
-        lastModified: new Date(),
+        lastModified: new Date().toISOString().split('T')[0],
         changeFrequency: 'monthly' as 'monthly',
         priority: 0.6,
       }))
