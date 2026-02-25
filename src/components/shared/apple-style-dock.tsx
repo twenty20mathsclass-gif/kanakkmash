@@ -54,8 +54,8 @@ function UserNav({ user, onSignOut, isMobile }: { user: User, onSignOut: () => v
          </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mt-2" 
-        side={'bottom'} 
+        className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2" 
+        side={isMobile ? 'top' : 'bottom'} 
         align="end"
       >
         <DropdownMenuLabel className="font-normal">
@@ -115,23 +115,27 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-50 md:left-1/2 md:-translate-x-1/2">
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
         >
-          <motion.div transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
-            <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-accent">
-                <Image
-                    src="/logoo_1@4x.webp"
-                    alt="kanakkmash logo"
-                    width={40}
-                    height={40}
-                    className="h-auto w-10 object-contain"
-                    priority
-                />
-            </Link>
-          </motion.div>
-          <div className="h-full w-px bg-border mx-1 self-center" />
+            {!isMobile && (
+                <>
+                    <motion.div transition={{ type: 'spring', stiffness: 400, damping: 12 }}>
+                        <Link href={homeHref} className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-accent">
+                            <Image
+                                src="/logoo_1@4x.webp"
+                                alt="kanakkmash logo"
+                                width={40}
+                                height={40}
+                                className="h-auto w-10 object-contain"
+                                priority
+                            />
+                        </Link>
+                    </motion.div>
+                    <div className="h-full w-px bg-border mx-1 self-center" />
+                </>
+            )}
           {items.map((item) => {
               const Icon = item.icon;
               
