@@ -11,6 +11,13 @@ import { useFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Form,
   FormControl,
   FormField,
@@ -21,11 +28,16 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/definitions';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  syllabus: z.string({ required_error: 'Please select your syllabus.' }),
+  class: z.string({ required_error: 'Please select your class.' }),
+  countryCode: z.string().min(1, 'Country code is required.'),
+  mobile: z.string().min(1, 'Mobile number is required.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,6 +53,10 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
+      syllabus: '',
+      class: '',
+      countryCode: '',
+      mobile: '',
     },
   });
 
@@ -69,6 +85,10 @@ export function SignUpForm() {
         email: data.email,
         role: 'student',
         avatarUrl: avatarUrl,
+        syllabus: data.syllabus,
+        class: data.class,
+        countryCode: data.countryCode,
+        mobile: data.mobile,
       };
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
@@ -126,6 +146,85 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="syllabus"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Syllabus</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your syllabus" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="kerala-state">Kerala state</SelectItem>
+                  <SelectItem value="cbse-kerala">CBSE Kerala</SelectItem>
+                  <SelectItem value="cbse-uae">CBSE UAE</SelectItem>
+                  <SelectItem value="cbse-ksa">CBSE KSA</SelectItem>
+                  <SelectItem value="icse">ICSE</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="class"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Class</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your class" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((classNum) => (
+                    <SelectItem key={classNum} value={String(classNum)}>
+                      Class {classNum}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div>
+          <Label>Mobile Number</Label>
+          <div className="mt-2 flex gap-2">
+            <FormField
+              control={form.control}
+              name="countryCode"
+              render={({ field }) => (
+                <FormItem className="w-1/4">
+                  <FormControl>
+                    <Input placeholder="+91" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="mobile"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input placeholder="9876543210" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
         {error && (
           <Alert variant="destructive">
