@@ -90,13 +90,19 @@
 
   @keyframes gentle-float {
     0% {
-      transform: translateY(0px);
+      transform: translate(0px, 0px);
+    }
+    25% {
+      transform: translate(5px, -10px);
     }
     50% {
-      transform: translateY(-20px);
+      transform: translate(0px, -20px);
+    }
+    75% {
+      transform: translate(-5px, -10px);
     }
     100% {
-      transform: translateY(0px);
+      transform: translate(0px, 0px);
     }
   }
 }
