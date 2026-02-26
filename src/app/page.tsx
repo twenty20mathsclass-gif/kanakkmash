@@ -28,14 +28,14 @@ export default function Home() {
           </div>
           <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
             <Reveal>
-              <div className="mx-auto max-w-3xl">
-                <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
+              <div className="mx-auto max-w-4xl">
+                <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
                   Unlock Your <span>Math Potential</span> with{' '}
                   <Image
                     src="/kanakkmash mlm@4x.webp"
                     alt="kanakkmash"
-                    width={200}
-                    height={62}
+                    width={250}
+                    height={78}
                     className="inline-block"
                     priority
                   />
