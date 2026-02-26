@@ -45,7 +45,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[72px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[88px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
@@ -109,7 +109,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: 1.1, y: 5 }}
+                    whileHover={{ scale: 1.1, y: isMobile ? 0 : 5 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                       <Link
