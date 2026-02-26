@@ -82,26 +82,21 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[80px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+            "flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
           {!isMobile && (
              <>
-                <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                >
-                    <Link href={homeHref} className="flex items-center justify-center h-16 w-auto px-3">
-                        <Image
-                            src="/logoo@4x.webp"
-                            alt="kanakkmash logo"
-                            width={200}
-                            height={62}
-                            className="h-auto object-contain"
-                            priority
-                        />
-                    </Link>
-                </motion.div>
+                <Link href={homeHref} className="flex items-center justify-center h-14 w-auto px-3">
+                    <Image
+                        src="/logoo@4x.webp"
+                        alt="kanakkmash logo"
+                        width={180}
+                        height={56}
+                        className="h-auto object-contain"
+                        priority
+                    />
+                </Link>
                 <div className="h-full w-px bg-border mx-1 self-center" />
              </>
           )}
