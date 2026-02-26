@@ -94,7 +94,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className={cn(
             "flex h-[60px] justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md",
-            isMobile ? "items-end" : "items-start"
+            isMobile ? "items-center" : "items-start"
           )}
         >
             {showDesktopLogo && (
