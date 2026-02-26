@@ -1,4 +1,3 @@
-'use client';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, MoreVertical, Calendar, Clock, BookOpen } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
+import { use } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,8 @@ type PageProps = {
 };
 
 export default function CourseDetailPage({ params }: PageProps) {
-  const course = courses.find((c) => c.id === params.courseId);
+  const resolvedParams = use(params as Promise<{ courseId: string }>);
+  const course = courses.find((c) => c.id === resolvedParams.courseId);
   if (!course) notFound();
 
   const allLessons = course.modules.flatMap((m) => m.lessons);
