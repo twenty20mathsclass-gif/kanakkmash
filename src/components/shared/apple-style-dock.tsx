@@ -88,12 +88,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
           {!isMobile && (
              <>
-                <Link href={homeHref} className="flex items-center justify-center h-10 w-auto px-2">
+                <Link href={homeHref} className="flex items-center justify-center h-12 w-auto px-3">
                     <Image
                         src="/kanakkmash mlm@4x.webp"
                         alt="kanakkmash logo"
-                        width={112}
-                        height={35}
+                        width={144}
+                        height={44}
                         className="h-auto object-contain"
                         priority
                     />
@@ -110,7 +110,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={isMobile ? {} : { scale: 1.1, y: 4 }}
+                    whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
                   >
                       <Link
@@ -143,7 +143,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={isMobile ? {} : { scale: 1.1, y: 4 }}
+            whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
             transition={{ type: "spring", stiffness: 400, damping: 12 }}
           >
             <Link
@@ -161,7 +161,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.1, y: 4 }}
+                whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
                   <UserNav 
