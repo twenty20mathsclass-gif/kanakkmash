@@ -45,7 +45,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[72px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[56px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
@@ -86,7 +86,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+            "flex h-[56px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
           {!isMobile && (
@@ -95,9 +95,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     <Image
                         src="/logoo@4x.webp"
                         alt="kanakkmash logo"
-                        width={100}
-                        height={25}
-                        className="h-auto object-contain"
+                        width={80}
+                        height={20}
+                        className="h-6 w-auto"
                         priority
                     />
                 </Link>
@@ -119,7 +119,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:h-12 md:w-12",
+                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                               isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
                           )}
                       >
@@ -154,9 +154,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors md:h-12 md:w-12"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
             >
-                <WhatsAppIcon className="h-7 w-7" />
+                <WhatsAppIcon className="h-6 w-6" />
             </Link>
           </motion.div>
 
@@ -170,7 +170,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <UserNav 
                     user={user} 
                     onSignOut={onSignOut} 
-                    triggerClassName="bg-secondary/80 hover:bg-secondary h-12 w-12" 
+                    triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10" 
                   />
               </motion.div>
             </>
