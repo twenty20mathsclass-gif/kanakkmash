@@ -88,21 +88,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
           {!isMobile && (
              <>
-                <motion.div
-                    whileHover={{ scale: 1.2, y: 8 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                >
-                    <Link href={homeHref} className="flex items-center justify-center h-10 w-auto px-2">
-                        <Image
-                            src="/logoo@4x.webp"
-                            alt="kanakkmash logo"
-                            width={112}
-                            height={35}
-                            className="h-auto object-contain"
-                            priority
-                        />
-                    </Link>
-                </motion.div>
+                <Link href={homeHref} className="flex items-center justify-center h-10 w-auto px-2">
+                    <Image
+                        src="/logoo_1@4x.webp"
+                        alt="kanakkmash logo"
+                        width={112}
+                        height={35}
+                        className="h-auto object-contain"
+                        priority
+                    />
+                </Link>
                 <div className="h-full w-px bg-border mx-1 self-center" />
              </>
           )}
