@@ -82,7 +82,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+            "flex h-[80px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
           {!isMobile && (
@@ -91,12 +91,12 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
                 >
-                    <Link href={homeHref} className="flex items-center justify-center h-14 w-auto px-3">
+                    <Link href={homeHref} className="flex items-center justify-center h-16 w-auto px-3">
                         <Image
-                            src="/kanakkmash mlm@4x.webp"
+                            src="/logoo@4x.webp"
                             alt="kanakkmash logo"
-                            width={180}
-                            height={55}
+                            width={200}
+                            height={62}
                             className="h-auto object-contain"
                             priority
                         />
@@ -114,13 +114,14 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: isMobile ? 1.0 : 1.1, y: isMobile ? 0 : -5 }}
+                    whileHover={{ scale: isMobile ? 1 : 1.1, y: isMobile ? 0 : -5 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:w-auto md:px-4"
+                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:h-12 md:w-12",
+                              isMobile ? "" : "md:w-auto md:px-4"
                           )}
                       >
                           <div className={cn(
@@ -129,7 +130,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                               )}
                           >
                               <Icon className="h-5 w-5" />
-                              <span className="hidden md:ml-2 md:block">{item.label}</span>
+                              <span className={cn("hidden", isMobile ? "" : "md:ml-2 md:block")}>{item.label}</span>
                           </div>
                           
                           {isActive && (
@@ -154,7 +155,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors md:h-12 md:w-12"
             >
                 <WhatsAppIcon className="h-7 w-7" />
             </Link>
@@ -170,7 +171,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <UserNav 
                     user={user} 
                     onSignOut={onSignOut} 
-                    triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10" 
+                    triggerClassName="bg-secondary/80 hover:bg-secondary h-12 w-12" 
                   />
               </motion.div>
             </>
