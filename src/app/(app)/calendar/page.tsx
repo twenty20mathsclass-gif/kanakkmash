@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -12,8 +13,9 @@ import { Reveal } from '@/components/shared/reveal';
 const scheduleData = [
   {
     id: 1,
-    subject: 'Language',
-    title: 'The Language Lecture Series',
+    courseId: 'geometry-fundamentals',
+    subject: 'Geometry',
+    title: 'Geometry Fundamentals',
     time: '08:00am',
     startTime: '8:00',
     endTime: '8:45',
@@ -23,6 +25,7 @@ const scheduleData = [
   },
   {
     id: 2,
+    courseId: 'advanced-math-framework',
     subject: 'Maths',
     title: 'Advanced Math Framework',
     time: '09:00am',
@@ -34,8 +37,9 @@ const scheduleData = [
   },
   {
     id: 3,
-    subject: 'Chemistry',
-    title: 'Chemistry Concepts Series',
+    courseId: 'calculus-essentials',
+    subject: 'Calculus',
+    title: 'Calculus Essentials',
     time: '11:00am',
     startTime: '11:00',
     endTime: '11:45',
@@ -122,23 +126,25 @@ export default function SchedulePage() {
               <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
                 
                 {event ? (
-                  <Card style={{backgroundColor: event.color}} className="shadow-lg">
-                      <CardContent className="p-3" style={{color: event.textColor}}>
-                          <div className="flex gap-3 items-center">
-                              <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
-                                  <event.icon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                  <p className="text-xs opacity-80">{event.subject}</p>
-                                  <p className="font-bold text-sm leading-tight">{event.title}</p>
-                                  <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
-                                      <Clock className="h-3 w-3" />
-                                      <span>{event.startTime}-{event.endTime}</span>
-                                  </div>
-                              </div>
-                          </div>
-                      </CardContent>
-                  </Card>
+                  <Link href={`/courses/${event.courseId}`} className="block">
+                    <Card style={{backgroundColor: event.color}} className="shadow-lg">
+                        <CardContent className="p-3" style={{color: event.textColor}}>
+                            <div className="flex gap-3 items-center">
+                                <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
+                                    <event.icon className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs opacity-80">{event.subject}</p>
+                                    <p className="font-bold text-sm leading-tight">{event.title}</p>
+                                    <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{event.startTime}-{event.endTime}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                  </Link>
                 ) : (
                    index === 2 && (
                     <div className="text-center text-muted-foreground text-xs pt-8 relative -left-3">
