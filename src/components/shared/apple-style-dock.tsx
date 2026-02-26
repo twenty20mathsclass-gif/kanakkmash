@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -83,7 +82,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+            "flex h-[88px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
           {!isMobile && (
@@ -92,8 +91,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     <Image
                         src="/logoo@4x.webp"
                         alt="kanakkmash logo"
-                        width={200}
-                        height={56}
+                        width={280}
+                        height={78}
                         className="h-auto object-contain"
                         priority
                     />
@@ -110,7 +109,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: isMobile ? 1.0 : 1.1, y: isMobile ? 0 : 5 }}
+                    whileHover={{ scale: 1.1, y: 5 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                       <Link
