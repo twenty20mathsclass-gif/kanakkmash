@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -37,22 +36,11 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
-  const [showDesktopLogo, setShowDesktopLogo] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  useEffect(() => {
-    // This ensures the logo is only shown on the client-side for desktop,
-    // preventing hydration mismatches and ensuring it's hidden on mobile.
-    if (!isMobile) {
-      setShowDesktopLogo(true);
-    } else {
-      setShowDesktopLogo(false);
-    }
-  }, [isMobile]);
 
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
@@ -98,23 +86,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             "items-center"
           )}
         >
-            {showDesktopLogo && (
-                <>
-                    <div className='flex h-10 w-28 items-center justify-center'>
-                        <Link href="/" className="transition-colors">
-                            <Image
-                                src="/kanakkmash mlm@4x.webp"
-                                alt="kanakkmash logo"
-                                width={100}
-                                height={31}
-                                className="h-auto w-24 object-contain"
-                                priority
-                            />
-                        </Link>
-                    </div>
-                    <div className="h-full w-px bg-border mx-1 self-center" />
-                </>
-            )}
           {items.map((item) => {
               const Icon = item.icon;
               
