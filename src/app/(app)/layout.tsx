@@ -71,7 +71,6 @@ export default function AppLayout({
     { href: '/calendar', label: 'Schedule', icon: Calendar },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
-    { href: '/purchased-courses', label: 'Payment History', icon: Receipt },
   ];
 
   const teacherNav = [

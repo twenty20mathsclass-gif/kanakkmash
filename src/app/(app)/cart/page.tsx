@@ -1,3 +1,7 @@
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Receipt } from 'lucide-react';
+
 export const dynamic = 'force-dynamic';
 
 export default function CartPage() {
@@ -8,6 +12,12 @@ export default function CartPage() {
                 <h1 className="text-3xl font-bold font-headline">Shopping Cart</h1>
                 <p className="text-muted-foreground">Review items in your cart.</p>
             </div>
+            <Button asChild variant="outline">
+                <Link href="/purchased-courses">
+                    <Receipt className="mr-2 h-4 w-4" />
+                    Payment History
+                </Link>
+            </Button>
         </div>
         <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
             Your cart is empty.
