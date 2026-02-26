@@ -77,6 +77,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     return closest;
   }, '');
 
+  const simpleHover = { scale: 1.1 };
+  const simpleTransition = { type: "tween", ease: "easeOut", duration: 0.2 };
+
+
   return (
     <>
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
@@ -86,19 +90,19 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           )}
         >
           {!isMobile && (
-             <>
-                <Link href={homeHref} className="flex h-16 w-auto items-center justify-center px-3">
+            <>
+                <Link href={homeHref} className="flex h-full items-center justify-center px-3">
                     <Image
                         src="/logoo@4x.webp"
                         alt="kanakkmash logo"
-                        width={280}
-                        height={78}
+                        width={100}
+                        height={25}
                         className="h-auto object-contain"
                         priority
                     />
                 </Link>
                 <div className="h-full w-px bg-border mx-1 self-center" />
-             </>
+            </>
           )}
 
           {items.map((item) => {
@@ -109,8 +113,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: 1.1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    whileHover={simpleHover}
+                    transition={simpleTransition}
                   >
                       <Link
                           href={item.href}
@@ -142,8 +146,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={{ scale: 1.1, y: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            whileHover={simpleHover}
+            transition={simpleTransition}
           >
             <Link
               href="https://wa.me/919995315893"
@@ -160,8 +164,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.1, y: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                whileHover={simpleHover}
+                transition={simpleTransition}
               >
                   <UserNav 
                     user={user} 
