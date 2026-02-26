@@ -110,7 +110,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: 1.2, y: isMobile ? -8 : 8 }}
+                    whileHover={isMobile ? {} : { scale: 1.1, y: 4 }}
                     transition={{ type: "spring", stiffness: 400, damping: 12 }}
                   >
                       <Link
@@ -142,7 +142,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={{ scale: 1.2, y: isMobile ? -8 : 8 }}
+            whileHover={isMobile ? {} : { scale: 1.1, y: 4 }}
             transition={{ type: "spring", stiffness: 400, damping: 12 }}
           >
             <Link
@@ -160,7 +160,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.2, y: 8 }}
+                whileHover={{ scale: 1.1, y: 4 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
                   <UserNav 
