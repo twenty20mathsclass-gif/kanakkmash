@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -94,7 +95,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className={cn(
             "flex h-[60px] justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md",
-            isMobile ? "items-center" : "items-start"
+            "items-center"
           )}
         >
             {showDesktopLogo && (
@@ -102,7 +103,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     <div className='flex h-10 w-28 items-center justify-center'>
                         <Link href="/" className="transition-colors">
                             <Image
-                                src="/logoo_1@4x.webp"
+                                src="/kanakkmash mlm@4x.webp"
                                 alt="kanakkmash logo"
                                 width={100}
                                 height={31}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -45,7 +46,7 @@ export default function SignUpPage() {
         <AnimatedMathIcons />
         <Link href="/" className="absolute top-8 left-8 z-10">
             <Image
-              src="/logoo_1@4x.webp"
+              src="/kanakkmash mlm@4x.webp"
               alt="kanakkmash"
               width={200}
               height={62}

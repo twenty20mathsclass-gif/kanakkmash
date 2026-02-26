@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -20,7 +21,7 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
     <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between md:hidden">
       <Link href="/">
           <Image
-              src="/logoo_1@4x.webp"
+              src="/kanakkmash mlm@4x.webp"
               alt="kanakkmash logo"
               width={144}
               height={44}
