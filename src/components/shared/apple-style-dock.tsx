@@ -117,6 +117,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                           href={item.href}
                           className={cn(
                               "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:w-auto md:px-4",
+                              "flex items-center"
                           )}
                       >
                           <div className={cn(
