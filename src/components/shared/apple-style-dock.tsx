@@ -86,6 +86,27 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             "items-center"
           )}
         >
+          {!isMobile && (
+             <>
+                <motion.div
+                    whileHover={{ scale: 1.2, y: 8 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                >
+                    <Link href={homeHref} className="flex items-center justify-center h-10 w-auto px-2">
+                        <Image
+                            src="/logoo@4x.webp"
+                            alt="kanakkmash logo"
+                            width={112}
+                            height={35}
+                            className="h-auto object-contain"
+                            priority
+                        />
+                    </Link>
+                </motion.div>
+                <div className="h-full w-px bg-border mx-1 self-center" />
+             </>
+          )}
+
           {items.map((item) => {
               const Icon = item.icon;
               
@@ -144,7 +165,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.2, y: isMobile ? -8 : 8 }}
+                whileHover={{ scale: 1.2, y: 8 }}
                 transition={{ type: "spring", stiffness: 400, damping: 12 }}
               >
                   <UserNav 
