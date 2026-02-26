@@ -5,7 +5,7 @@ import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, ArrowRight, Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 
@@ -56,11 +56,6 @@ export default function SchedulePage() {
   const learningProgress = 88;
   const learningTotal = 180;
   
-  const upNextEvent = scheduleData.sort((a,b) => a.startTime.localeCompare(b.startTime)).find(event => {
-      const [hour] = event.startTime.split(':').map(Number);
-      return new Date().getHours() < hour;
-  }) || scheduleData[0];
-
   return (
     <div className="space-y-6 max-w-lg mx-auto pb-24">
       <Reveal>
@@ -103,9 +98,6 @@ export default function SchedulePage() {
                 <p className="text-sm">Today's Learning</p>
                 <p className="text-lg font-bold">{learningProgress}min / {learningTotal}min</p>
               </div>
-              <Button size="icon" variant="ghost" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 rounded-full">
-                <ArrowRight className="h-5 w-5" />
-              </Button>
             </div>
             <Progress value={(learningProgress/learningTotal) * 100} className="mt-2 h-1.5 [&>*]:bg-primary-foreground" />
           </CardContent>
@@ -162,23 +154,6 @@ export default function SchedulePage() {
           )
         })}
       </Reveal>
-
-       {upNextEvent && (
-        <div className="fixed bottom-[7rem] md:bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg z-20">
-           <Reveal>
-                <div className="bg-card text-card-foreground rounded-full p-2 pr-3 shadow-2xl flex items-center justify-between border">
-                    <div className='flex items-center gap-2'>
-                        <span className="text-xs font-bold bg-muted text-muted-foreground rounded-full px-3 py-1.5">Up Next</span>
-                        <p className="font-bold text-sm">{upNextEvent.subject}</p>
-                    </div>
-                    <Button variant="link" size="icon" className="text-card-foreground">
-                        <span className='font-bold text-sm mr-2'>{upNextEvent.title}</span>
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
-                </div>
-           </Reveal>
-        </div>
-       )}
     </div>
   );
 }
