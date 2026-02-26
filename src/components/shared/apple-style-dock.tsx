@@ -45,7 +45,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[60px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[72px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
@@ -82,22 +82,26 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[60px] justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md",
-            "flex items-center"
+            "flex h-[72px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
           {!isMobile && (
              <>
-                <Link href={homeHref} className="flex items-center justify-center h-12 w-auto px-3">
-                    <Image
-                        src="/kanakkmash mlm@4x.webp"
-                        alt="kanakkmash logo"
-                        width={144}
-                        height={44}
-                        className="h-auto object-contain"
-                        priority
-                    />
-                </Link>
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                >
+                    <Link href={homeHref} className="flex items-center justify-center h-14 w-auto px-3">
+                        <Image
+                            src="/kanakkmash mlm@4x.webp"
+                            alt="kanakkmash logo"
+                            width={180}
+                            height={55}
+                            className="h-auto object-contain"
+                            priority
+                        />
+                    </Link>
+                </motion.div>
                 <div className="h-full w-px bg-border mx-1 self-center" />
              </>
           )}
@@ -110,14 +114,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
-                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                    whileHover={{ scale: isMobile ? 1.0 : 1.1, y: isMobile ? 0 : -5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:w-auto md:px-4",
-                              "flex items-center"
+                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:w-auto md:px-4"
                           )}
                       >
                           <div className={cn(
@@ -143,15 +146,15 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            whileHover={{ scale: 1.1, y: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             <Link
               href="https://wa.me/919995315893"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex items-center justify-center rounded-full h-10 w-10 bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
             >
                 <WhatsAppIcon className="h-7 w-7" />
             </Link>
@@ -161,8 +164,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
-                transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                whileHover={{ scale: 1.1, y: -5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                   <UserNav 
                     user={user} 
