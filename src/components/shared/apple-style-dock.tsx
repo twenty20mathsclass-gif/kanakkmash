@@ -83,14 +83,14 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         <motion.nav
           className={cn(
             "flex h-[60px] justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md",
-            "items-center"
+            "flex items-center"
           )}
         >
           {!isMobile && (
              <>
                 <Link href={homeHref} className="flex items-center justify-center h-10 w-auto px-2">
                     <Image
-                        src="/logoo_1@4x.webp"
+                        src="/kanakkmash mlm@4x.webp"
                         alt="kanakkmash logo"
                         width={112}
                         height={35}
