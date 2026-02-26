@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -87,11 +88,11 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
           {!isMobile && (
              <>
-                <Link href={homeHref} className="flex items-center justify-center h-14 w-auto px-3">
+                <Link href={homeHref} className="flex h-16 w-auto items-center justify-center px-3">
                     <Image
                         src="/logoo@4x.webp"
                         alt="kanakkmash logo"
-                        width={180}
+                        width={200}
                         height={56}
                         className="h-auto object-contain"
                         priority
@@ -109,14 +110,14 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: isMobile ? 1 : 1.1, y: isMobile ? 0 : -5 }}
+                    whileHover={{ scale: isMobile ? 1.0 : 1.1, y: isMobile ? 0 : 5 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                       <Link
                           href={item.href}
                           className={cn(
                               "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:h-12 md:w-12",
-                              isMobile ? "" : "md:w-auto md:px-4"
+                              isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
                           )}
                       >
                           <div className={cn(
@@ -142,7 +143,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={{ scale: 1.1, y: -5 }}
+            whileHover={{ scale: 1.1, y: 5 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             <Link
@@ -160,7 +161,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.1, y: -5 }}
+                whileHover={{ scale: 1.1, y: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                   <UserNav 
