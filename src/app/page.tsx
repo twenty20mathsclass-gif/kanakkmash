@@ -45,7 +45,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-10 flex justify-center gap-4">
-                <Button size="lg" asChild>
+                <Button size="lg" asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground transition-all hover:bg-gradient-to-br hover:shadow-lg">
                   <Link href="/sign-up">Get Started for Free</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
