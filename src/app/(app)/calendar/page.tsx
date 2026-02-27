@@ -6,9 +6,7 @@ import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
+import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 
@@ -67,21 +65,6 @@ export default function SchedulePage() {
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Schedule</h1>
-          <Popover>
-            <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="border rounded-full">
-                    <CalendarIcon className="h-5 w-5" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    initialFocus
-                />
-            </PopoverContent>
-          </Popover>
         </div>
       </Reveal>
 
