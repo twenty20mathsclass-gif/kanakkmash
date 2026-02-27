@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect } from 'react';
 import { UserNav } from './user-nav';
+import { ThemeToggle } from './theme-toggle';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -91,13 +92,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
           {!isMobile && (
             <>
-                <Link href={homeHref} className="flex h-full items-center justify-center px-3">
+                <Link href={homeHref} className="flex h-10 items-center justify-center px-3">
                     <Image
                         src="/logoo@4x.webp"
                         alt="kanakkmash"
                         width={100}
                         height={31}
-                        className="h-8 w-auto"
+                        className="h-auto"
                         priority
                     />
                 </Link>
@@ -158,6 +159,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             >
                 <WhatsAppIcon className="h-6 w-6" />
             </Link>
+          </motion.div>
+          
+          <motion.div 
+            whileHover={simpleHover}
+            transition={simpleTransition}
+          >
+            <ThemeToggle />
           </motion.div>
 
           {user && onSignOut && !isMobile && (
