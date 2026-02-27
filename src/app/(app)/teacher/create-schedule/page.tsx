@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { courses } from '@/lib/data';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,22 +16,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, AlertCircle, BookText, AppWindow, FlaskConical, BarChart } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle, BookText, User, Award, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Reveal } from '@/components/shared/reveal';
 
 
-const courseVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
-    'advanced-math-framework': { icon: 'AppWindow', color: 'hsl(270 80% 65%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Maths' },
-    'geometry-fundamentals': { icon: 'BookText', color: 'hsl(30 95% 55%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Geometry' },
-    'calculus-essentials': { icon: 'FlaskConical', color: 'hsl(340 80% 65%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Calculus' },
-    'statistics-intro': { icon: 'BarChart', color: 'hsl(210 80% 65%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Statistics' },
+const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
+    'MATHS ONLINE TUITION': { icon: 'BookText', color: 'hsl(210 80% 65%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Online Tuition' },
+    'ONE TO ONE': { icon: 'User', color: 'hsl(270 80% 65%)', textColor: 'hsl(var(--primary-foreground))', subject: 'One to One' },
+    'COMPETITIVE EXAM': { icon: 'Award', color: 'hsl(30 95% 55%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Exam Prep' },
 };
 
 const scheduleSchema = z.object({
-  courseId: z.string().min(1, 'Please select a course.'),
-  title: z.string().min(3, 'Title must be at least 3 characters.'),
+  courseModel: z.string().min(1, 'Please select a course model.'),
+  courseTitle: z.string().min(3, 'Course title must be at least 3 characters.'),
   date: z.date({ required_error: 'A date is required.' }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
@@ -52,8 +49,9 @@ export default function CreateSchedulePage() {
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
-      courseId: '',
-      title: '',
+      courseModel: '',
+      courseTitle: '',
+      date: undefined,
       startTime: '',
       endTime: '',
       meetLink: 'https://meet.google.com/',
@@ -69,18 +67,22 @@ export default function CreateSchedulePage() {
     setError(null);
 
     try {
-      const selectedCourseVisuals = courseVisuals[data.courseId] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
+      const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
 
       await addDoc(collection(firestore, 'schedules'), {
-        ...data,
+        courseModel: data.courseModel,
+        title: data.courseTitle,
         date: Timestamp.fromDate(data.date),
+        startTime: data.startTime,
+        endTime: data.endTime,
+        meetLink: data.meetLink,
         teacherId: user.id,
-        ...selectedCourseVisuals
+        ...selectedVisuals
       });
 
       toast({
         title: 'Schedule Created!',
-        description: `Your class "${data.title}" has been successfully scheduled.`,
+        description: `Your class "${data.courseTitle}" has been successfully scheduled.`,
       });
       form.reset();
     } catch (e: any) {
@@ -111,20 +113,20 @@ export default function CreateSchedulePage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="courseId"
+                  name="courseModel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Course</FormLabel>
+                      <FormLabel>Course Model</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a course" />
+                            <SelectValue placeholder="Select a course model" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {courses.map((course) => (
-                            <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
-                          ))}
+                          <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
+                          <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
+                          <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -134,11 +136,11 @@ export default function CreateSchedulePage() {
 
                 <FormField
                   control={form.control}
-                  name="title"
+                  name="courseTitle"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Class Title</FormLabel>
-                      <FormControl><Input placeholder="e.g., Chapter 5 Review" {...field} /></FormControl>
+                      <FormLabel>Course Title</FormLabel>
+                      <FormControl><Input placeholder="e.g., Advanced Algebra Chapter 5" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

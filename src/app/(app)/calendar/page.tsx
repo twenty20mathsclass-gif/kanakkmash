@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart } from 'lucide-react';
+import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart, User, Award, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,19 +20,26 @@ const iconMap: { [key: string]: React.ElementType } = {
   AppWindow,
   FlaskConical,
   BarChart,
+  User,
+  Award,
+  BookOpen
 };
 
 const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm', '01:00pm', '02:00pm', '03:00pm'];
 
 export default function SchedulePage() {
   const { firestore } = useFirebase();
+  const { user } = useUser();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !user?.courseModel) {
+        setLoading(false);
+        return;
+    };
 
     const fetchSchedules = async () => {
       setLoading(true);
@@ -42,6 +49,7 @@ export default function SchedulePage() {
         
         const q = query(
           collection(firestore, 'schedules'),
+          where('courseModel', '==', user.courseModel),
           where('date', '>=', Timestamp.fromDate(start)),
           where('date', '<=', Timestamp.fromDate(end))
         );
@@ -58,7 +66,7 @@ export default function SchedulePage() {
     };
 
     fetchSchedules();
-  }, [selectedDate, firestore]);
+  }, [selectedDate, firestore, user]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
@@ -156,7 +164,7 @@ export default function SchedulePage() {
           </div>
         ) : schedules.length > 0 ? (
           schedules.map((event) => {
-            const IconComponent = iconMap[event.icon] || BookText;
+            const IconComponent = iconMap[event.icon] || BookOpen;
             return (
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
                 <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>

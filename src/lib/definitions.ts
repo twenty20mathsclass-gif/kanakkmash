@@ -37,7 +37,7 @@ export type Course = {
 
 export type Schedule = {
   id: string;
-  courseId: string;
+  courseModel: string;
   subject: string;
   title: string;
   date: Timestamp;
