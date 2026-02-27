@@ -46,7 +46,7 @@ export default function SignUpPage() {
         <AnimatedMathIcons />
         <Link href="/" className="absolute top-8 left-8 z-10">
             <Image
-              src="/kanakkmash mlm@4x.webp"
+              src="/logo eng@4x.png"
               alt="kanakkmash"
               width={200}
               height={62}

@@ -32,7 +32,7 @@ export default function Home() {
                 <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
                   Unlock Your <span>Math Potential</span> with{' '}
                   <Image
-                    src="/kanakkmash mlm@4x.webp"
+                    src="/logo mlm@4x.png"
                     alt="kanakkmash"
                     width={250}
                     height={78}
