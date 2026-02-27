@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -51,6 +52,10 @@ export default function CreateSchedulePage() {
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
+      courseId: '',
+      title: '',
+      startTime: '',
+      endTime: '',
       meetLink: 'https://meet.google.com/',
     },
   });
@@ -77,9 +82,7 @@ export default function CreateSchedulePage() {
         title: 'Schedule Created!',
         description: `Your class "${data.title}" has been successfully scheduled.`,
       });
-      form.reset({
-        meetLink: 'https://meet.google.com/',
-      });
+      form.reset();
     } catch (e: any) {
       console.error('Error creating schedule: ', e);
       setError(e.message || 'An unexpected error occurred.');
