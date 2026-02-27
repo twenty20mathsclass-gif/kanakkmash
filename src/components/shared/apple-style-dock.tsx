@@ -91,21 +91,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             "flex h-[56px] md:h-16 items-center justify-center gap-1 md:gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
-          {!isMobile && (
-            <>
-                <Link href={homeHref} className="flex h-10 md:h-12 items-center justify-center px-3">
-                    <Image
-                        src="/logo mlm@4x.png"
-                        alt="kanakkmash"
-                        width={200}
-                        height={62}
-                        className="h-8 md:h-9 w-auto"
-                        priority
-                    />
-                </Link>
-                <div className="h-full w-px bg-border mx-1 self-center" />
-            </>
-          )}
+          <Link href={homeHref} className="flex h-10 items-center justify-center px-2 md:h-12 md:px-3">
+              <Image
+                  src="/logo eng@4x.png"
+                  alt="kanakkmash"
+                  width={150}
+                  height={47}
+                  className="h-7 w-auto md:h-9"
+                  priority
+              />
+          </Link>
+          <div className="h-full w-px bg-border mx-1 self-center" />
 
           {items.map((item) => {
               const Icon = item.icon;
@@ -169,7 +165,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <ThemeToggle />
           </motion.div>
 
-          {user && onSignOut && !isMobile && (
+          {user && onSignOut && (
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
