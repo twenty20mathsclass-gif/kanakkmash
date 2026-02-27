@@ -99,7 +99,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                         alt="kanakkmash"
                         width={200}
                         height={62}
-                        className="h-full w-auto"
+                        className="h-8 md:h-9 w-auto"
                         priority
                     />
                 </Link>
