@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     'kanakkmash'
   ],
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.ico?v=2',
   },
 };
 
