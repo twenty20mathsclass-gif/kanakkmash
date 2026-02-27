@@ -34,14 +34,14 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse",
-        head_row: "flex justify-around",
+        head_row: "grid grid-cols-7",
         head_cell:
-          "text-muted-foreground rounded-full w-9 h-9 font-normal text-xs flex items-center justify-center",
-        row: "flex w-full mt-2 justify-around",
-        cell: "p-0",
+          "text-muted-foreground rounded-full w-9 font-normal text-[0.8rem] flex items-center justify-center",
+        row: "grid grid-cols-7 w-full mt-2",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 flex items-center justify-center",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "w-9 h-9 p-0 font-normal rounded-full"
+          "h-9 w-9 p-0 font-normal rounded-full"
         ),
         day_selected:
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
@@ -56,7 +56,7 @@ function Calendar({
         ...classNames,
       }}
       formatters={{
-        formatCaption: (month, options) => format(month, "MMMM", { locale: options?.locale }),
+        formatCaption: (month, options) => format(month, "MMMM yyyy", { locale: options?.locale }),
         formatWeekdayName: (day, options) => format(day, "EEEEE", { locale: options?.locale }),
       }}
       components={{
