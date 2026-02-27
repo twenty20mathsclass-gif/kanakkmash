@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     'CSAT',
     'kanakkmash'
   ],
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -43,7 +46,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="5RfOM7ZZi1WMvbRBiPca4fo7dCpcpI6vAoDkuqiaupQ" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
