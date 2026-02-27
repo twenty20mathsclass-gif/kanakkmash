@@ -63,7 +63,7 @@ export default function SchedulePage() {
   const learningTotal = 180;
   
   return (
-    <div className="space-y-6 max-w-lg mx-auto pb-24">
+    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Schedule</h1>
@@ -86,25 +86,27 @@ export default function SchedulePage() {
       </Reveal>
 
       <Reveal delay={0.1}>
-        <div className="flex justify-around bg-muted p-1 rounded-full">
-          {weekDays.map((day) => (
-            <button
-              key={day.toISOString()}
-              onClick={() => setSelectedDate(day)}
-              className={cn(
-                'flex flex-col items-center justify-center w-12 h-16 rounded-full transition-colors relative',
-                isSameDay(day, selectedDate)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent/50'
-              )}
-            >
-              <span className="text-sm">{format(day, 'E')}</span>
-              <span className="font-bold text-lg">{format(day, 'd')}</span>
-               {isToday(day) && !isSameDay(day, selectedDate) && (
-                <div className="absolute bottom-1.5 h-1 w-1 rounded-full bg-primary"></div>
-              )}
-            </button>
-          ))}
+        <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex w-max space-x-1 p-1 bg-muted rounded-full mx-auto">
+                {weekDays.map((day) => (
+                    <button
+                    key={day.toISOString()}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                        'flex flex-col items-center justify-center w-12 h-16 rounded-full transition-colors relative shrink-0',
+                        isSameDay(day, selectedDate)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent/50'
+                    )}
+                    >
+                    <span className="text-sm">{format(day, 'E')}</span>
+                    <span className="font-bold text-lg">{format(day, 'd')}</span>
+                    {isToday(day) && !isSameDay(day, selectedDate) && (
+                        <div className="absolute bottom-1.5 h-1 w-1 rounded-full bg-primary"></div>
+                    )}
+                    </button>
+                ))}
+            </div>
         </div>
       </Reveal>
 
