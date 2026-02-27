@@ -168,16 +168,11 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             {user && onSignOut && (
               <>
                 <div className="h-full w-px bg-border mx-1 self-center" />
-                <motion.div 
-                  whileHover={simpleHover}
-                  transition={simpleTransition}
-                >
-                    <UserNav 
-                      user={user} 
-                      onSignOut={onSignOut} 
-                      triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
-                    />
-                </motion.div>
+                <UserNav 
+                  user={user} 
+                  onSignOut={onSignOut} 
+                  triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
+                />
               </>
             )}
           </motion.nav>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,19 +34,27 @@ export function UserNav({
   const dropdownSide = side || (isMobile ? 'top' : 'bottom');
   const router = useRouter();
 
+  const simpleHover = { scale: 1.1 };
+  const simpleTransition = { type: "tween", ease: "easeOut", duration: 0.2 };
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
-        >
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+      <motion.div
+        whileHover={simpleHover}
+        transition={simpleTransition}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
+          >
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={user.avatarUrl} alt={user.name} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+      </motion.div>
       <DropdownMenuContent
         className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2"
         side={dropdownSide}
