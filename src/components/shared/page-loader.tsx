@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -18,7 +19,7 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
         }}
       >
         <Image
-          src="/logoo_1@4x.webp"
+          src="/kanakkmash mlm@4x.webp"
           alt="Loading..."
           width={120}
           height={37}

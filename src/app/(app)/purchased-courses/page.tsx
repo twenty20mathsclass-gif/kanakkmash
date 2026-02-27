@@ -5,12 +5,12 @@ export default function PurchasedCoursesPage() {
     <div className="space-y-8">
         <div className="flex items-center justify-between">
             <div>
-                <h1 className="text-3xl font-bold font-headline">Purchased Courses</h1>
-                <p className="text-muted-foreground">Your collection of purchased courses.</p>
+                <h1 className="text-3xl font-bold font-headline">Payment History</h1>
+                <p className="text-muted-foreground">Review your purchased courses and payment history.</p>
             </div>
         </div>
         <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-            Purchased courses will appear here.
+            Your payment history will appear here.
         </div>
     </div>
   );

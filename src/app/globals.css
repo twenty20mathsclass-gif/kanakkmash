@@ -11,24 +11,24 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 30 95% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 95% 55%;
+    --primary-foreground: 60 9.1% 97.8%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 45 90% 55%;
-    --accent-foreground: 240 10% 3.9%;
+    --accent: 30 95% 55%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 30 95% 55%;
-    --chart-1: 30 95% 55%;
-    --chart-2: 45 90% 55%;
-    --chart-3: 30 95% 65%;
-    --chart-4: 45 90% 65%;
-    --chart-5: 30 85% 50%;
+    --ring: 45 95% 55%;
+    --chart-1: 45 95% 55%;
+    --chart-2: 30 95% 55%;
+    --chart-3: 45 95% 65%;
+    --chart-4: 30 95% 65%;
+    --chart-5: 45 90% 50%;
     --radius: 0.8rem;
   }
   .dark {
@@ -38,24 +38,24 @@
     --card-foreground: 60 9.1% 97.8%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 60 9.1% 97.8%;
-    --primary: 30 95% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 95% 55%;
+    --primary-foreground: 240 10% 3.9%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 60 9.1% 97.8%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 45 90% 60%;
-    --accent-foreground: 240 10% 3.9%;
+    --accent: 30 95% 55%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 30 95% 60%;
-    --chart-1: 30 95% 60%;
-    --chart-2: 45 90% 60%;
-    --chart-3: 30 95% 70%;
-    --chart-4: 45 90% 70%;
-    --chart-5: 30 85% 55%;
+    --ring: 45 95% 55%;
+    --chart-1: 45 95% 55%;
+    --chart-2: 30 95% 55%;
+    --chart-3: 45 95% 65%;
+    --chart-4: 30 95% 65%;
+    --chart-5: 45 90% 50%;
   }
 }
 

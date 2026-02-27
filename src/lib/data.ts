@@ -7,18 +7,45 @@ export const users: User[] = [];
 
 export const courses: Course[] = [
   {
-    id: 'algebra-basics',
-    title: 'Algebra Basics',
-    description: 'Master the fundamentals of algebra, from variables to equations.',
+    id: 'advanced-math-framework',
+    title: 'Advanced Math Framework',
+    description: 'An advanced look at modern mathematical frameworks and methodologies, from limits to series.',
     imageId: 'algebra-basics',
     modules: [
       {
-        id: 'ab-m1',
-        title: 'Introduction to Variables',
+        id: 'amf-m1',
+        title: 'Introduction to Calculus',
         lessons: [
-          { id: 'ab-l1', title: 'What is a Variable?', content: '<p>A variable is a symbol for a number we don\'t know yet. It is usually a letter like x or y.</p>', topicForAI: 'Introduction to algebraic variables' },
-          { id: 'ab-l2', title: 'Solving for x', content: '<p>Learn the basic techniques to isolate and solve for a single variable in an equation.</p>', topicForAI: 'Solving single variable linear equations' },
+          { id: 'amf-l1', title: 'Introduction to Limits', content: '<p>A limit is the value that a function approaches as the input approaches some value.</p>', topicForAI: 'Introduction to limits in calculus' },
+          { id: 'amf-l2', title: 'Evaluating Limits', content: '<p>Learn various techniques to evaluate the limits of functions.</p>', topicForAI: 'Evaluating limits of functions' },
         ],
+      },
+      {
+        id: 'amf-m2',
+        title: 'Derivatives',
+        lessons: [
+          { id: 'amf-l3', title: 'The Derivative as a Function', content: '<p>Understand the definition of a derivative and how it represents a rate of change.</p>', topicForAI: 'Definition of the derivative' },
+        ],
+      },
+      {
+        id: 'amf-m3',
+        title: 'Integration',
+        lessons: [],
+      },
+      {
+        id: 'amf-m4',
+        title: 'Differential Equations',
+        lessons: [],
+      },
+      {
+        id: 'amf-m5',
+        title: 'Sequences and Series',
+        lessons: [],
+      },
+      {
+        id: 'amf-m6',
+        title: 'Applications of Calculus',
+        lessons: [],
       },
     ],
   },
@@ -71,8 +98,8 @@ export const courses: Course[] = [
 ];
 
 export const studentProgress: StudentProgress = {
-  'algebra-basics': {
-    completedLessons: ['ab-l1'],
+  'advanced-math-framework': {
+    completedLessons: ['amf-l1'],
   },
   'geometry-fundamentals': {
     completedLessons: [],

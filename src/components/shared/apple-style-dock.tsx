@@ -36,27 +36,16 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
-  const [showDesktopLogo, setShowDesktopLogo] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    // This ensures the logo is only shown on the client-side for desktop,
-    // preventing hydration mismatches and ensuring it's hidden on mobile.
-    if (!isMobile) {
-      setShowDesktopLogo(true);
-    } else {
-      setShowDesktopLogo(false);
-    }
-  }, [isMobile]);
-
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[60px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[56px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
@@ -88,29 +77,34 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
     return closest;
   }, '');
 
+  const simpleHover = { scale: 1.1 };
+  const simpleTransition = { type: "tween", ease: "easeOut", duration: 0.2 };
+
+
   return (
     <>
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
-          className="flex h-[60px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+          className={cn(
+            "flex h-[56px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+          )}
         >
-            {showDesktopLogo && (
-                <>
-                    <div className='flex h-10 w-28 items-center justify-center'>
-                        <Link href="/" className="transition-colors">
-                            <Image
-                                src="/logoo_1@4x.webp"
-                                alt="kanakkmash logo"
-                                width={100}
-                                height={31}
-                                className="h-auto w-24 object-contain"
-                                priority
-                            />
-                        </Link>
-                    </div>
-                    <div className="h-full w-px bg-border mx-1 self-center" />
-                </>
-            )}
+          {!isMobile && (
+            <>
+                <Link href={homeHref} className="flex h-full items-center justify-center px-3">
+                    <Image
+                        src="/logoo@4x.webp"
+                        alt="kanakkmash"
+                        width={100}
+                        height={31}
+                        className="h-8 w-auto"
+                        priority
+                    />
+                </Link>
+                <div className="h-full w-px bg-border mx-1 self-center" />
+            </>
+          )}
+
           {items.map((item) => {
               const Icon = item.icon;
               
@@ -119,13 +113,14 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               return (
                   <motion.div 
                     key={item.href}
-                    whileHover={{ scale: 1.2, y: -8 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                    whileHover={simpleHover}
+                    transition={simpleTransition}
                   >
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:w-auto md:px-4",
+                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                              isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
                           )}
                       >
                           <div className={cn(
@@ -134,7 +129,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                               )}
                           >
                               <Icon className="h-5 w-5" />
-                              <span className="hidden md:ml-2 md:block">{item.label}</span>
+                              <span className={cn("hidden", isMobile ? "" : "md:ml-2 md:block")}>{item.label}</span>
                           </div>
                           
                           {isActive && (
@@ -151,17 +146,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
           <div className="h-full w-px bg-border mx-1 self-center" />
           <motion.div 
-            whileHover={{ scale: 1.2, y: -8 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            whileHover={simpleHover}
+            transition={simpleTransition}
           >
             <Link
               href="https://wa.me/919995315893"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex items-center justify-center rounded-full h-10 w-10 bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
             >
-                <WhatsAppIcon className="h-7 w-7" />
+                <WhatsAppIcon className="h-6 w-6" />
             </Link>
           </motion.div>
 
@@ -169,8 +164,8 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
-                whileHover={{ scale: 1.2, y: -8 }}
-                transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                whileHover={simpleHover}
+                transition={simpleTransition}
               >
                   <UserNav 
                     user={user} 

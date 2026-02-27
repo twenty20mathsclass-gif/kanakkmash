@@ -9,6 +9,7 @@ import { LearningProgress } from '@/components/dashboard/learning-progress';
 import { OngoingCourses } from '@/components/dashboard/ongoing-courses';
 import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
+import type { User } from '@/lib/definitions';
 
 
 export default function DashboardPage() {
@@ -27,6 +28,22 @@ export default function DashboardPage() {
     return <div>Please sign in to view your dashboard.</div>;
   }
 
+  const getSubtitle = (user: User) => {
+    if (user.role !== 'student') {
+      return user.role;
+    }
+    if (user.competitiveExam) {
+      return user.competitiveExam;
+    }
+    if (user.courseModel && user.class) {
+      return `${user.courseModel} - ${user.class}`;
+    }
+    if (user.courseModel) {
+      return user.courseModel;
+    }
+    return user.role;
+  };
+
   return (
     <div className="space-y-6">
       <Reveal>
@@ -34,7 +51,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-xl font-bold font-headline">{user.name}</h1>
-              <p className="text-sm text-muted-foreground">{user.role}</p>
+              <p className="text-sm text-muted-foreground">{getSubtitle(user)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

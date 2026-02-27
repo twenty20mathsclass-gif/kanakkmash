@@ -46,7 +46,7 @@ export default function CoursesPage() {
                   <CardContent className="flex flex-1 items-end">
                       {firstLesson ? (
                           <Button asChild className="w-full">
-                              <Link href={`/courses/${course.id}/lessons/${firstLesson.id}`}>
+                              <Link href={`/courses/${course.id}`}>
                                   Start Learning <ArrowRight className="ml-2 h-4 w-4" />
                               </Link>
                           </Button>
