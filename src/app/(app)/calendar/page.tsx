@@ -1,81 +1,64 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
+import { useFirebase } from '@/firebase';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import type { Schedule } from '@/lib/definitions';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays } from 'lucide-react';
+import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 
+const iconMap: { [key: string]: React.ElementType } = {
+  BookText,
+  AppWindow,
+  FlaskConical,
+  BarChart,
+};
 
-const today = new Date();
-const todayDayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
-
-const weeklyScheduleData = [
-  {
-    id: 1,
-    courseId: 'geometry-fundamentals',
-    subject: 'Geometry',
-    title: 'Geometry Fundamentals',
-    time: '08:00am',
-    startTime: '8:00',
-    endTime: '8:45',
-    icon: BookText,
-    color: 'hsl(30 95% 55%)',
-    textColor: 'hsl(var(--primary-foreground))',
-    dayOfWeek: todayDayOfWeek, 
-  },
-  {
-    id: 2,
-    courseId: 'advanced-math-framework',
-    subject: 'Maths',
-    title: 'Advanced Math Framework',
-    time: '09:00am',
-    startTime: '9:00',
-    endTime: '9:45',
-    icon: AppWindow,
-    color: 'hsl(270 80% 65%)',
-    textColor: 'hsl(var(--primary-foreground))',
-    dayOfWeek: todayDayOfWeek,
-  },
-  {
-    id: 3,
-    courseId: 'calculus-essentials',
-    subject: 'Calculus',
-    title: 'Calculus Essentials',
-    time: '11:00am',
-    startTime: '11:00',
-    endTime: '11:45',
-    icon: FlaskConical,
-    color: 'hsl(340 80% 65%)',
-    textColor: 'hsl(var(--primary-foreground))',
-    dayOfWeek: todayDayOfWeek,
-  },
-   {
-    id: 4,
-    courseId: 'geometry-fundamentals',
-    subject: 'Geometry',
-    title: 'Extra Geometry Session',
-    time: '08:00am',
-    startTime: '8:00',
-    endTime: '8:45',
-    icon: BookText,
-    color: 'hsl(30 95% 55%)',
-    textColor: 'hsl(var(--primary-foreground))',
-    dayOfWeek: (todayDayOfWeek + 2) % 7, // An event two days from today
-  },
-];
-
-const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm'];
+const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm', '01:00pm', '02:00pm', '03:00pm'];
 
 export default function SchedulePage() {
+  const { firestore } = useFirebase();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+
+    const fetchSchedules = async () => {
+      setLoading(true);
+      try {
+        const start = startOfDay(selectedDate);
+        const end = endOfDay(selectedDate);
+        
+        const q = query(
+          collection(firestore, 'schedules'),
+          where('date', '>=', Timestamp.fromDate(start)),
+          where('date', '<=', Timestamp.fromDate(end))
+        );
+
+        const querySnapshot = await getDocs(q);
+        const schedulesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+        schedulesData.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        setSchedules(schedulesData);
+      } catch (error) {
+        console.error("Error fetching schedules: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedules();
+  }, [selectedDate, firestore]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
@@ -83,8 +66,14 @@ export default function SchedulePage() {
   const learningProgress = 88;
   const learningTotal = 180;
   
-  const selectedDayOfWeek = selectedDate.getDay();
-  const eventsForSelectedDay = weeklyScheduleData.filter(e => e.dayOfWeek === selectedDayOfWeek);
+  const getFormattedTime = (time: string) => {
+    try {
+      const date = parse(time, 'HH:mm', new Date());
+      return format(date, 'hh:mmaaa');
+    } catch {
+      return '';
+    }
+  }
 
   return (
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
@@ -161,41 +150,41 @@ export default function SchedulePage() {
       </Reveal>
 
       <Reveal delay={0.4} className="space-y-1 relative">
-        {timeSlots.map((time) => {
-          const event = eventsForSelectedDay.find(e => e.time === time);
-          return (
-            <div key={time} className="flex gap-4 items-stretch min-h-[4rem]">
-              <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{time}</div>
-              <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
-                
-                {event ? (
-                  <Link href={`/courses/${event.courseId}`} className="block">
-                    <Card style={{backgroundColor: event.color}} className="shadow-lg">
-                        <CardContent className="p-3" style={{color: event.textColor}}>
-                            <div className="flex gap-3 items-center">
-                                <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
-                                    <event.icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="text-xs opacity-80">{event.subject}</p>
-                                    <p className="font-bold text-sm leading-tight">{event.title}</p>
-                                    <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{event.startTime}-{event.endTime}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                  </Link>
-                ) : (
-                   <div className="h-full w-full" />
-                )}
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : schedules.length > 0 ? (
+          schedules.map((event) => {
+            const IconComponent = iconMap[event.icon] || BookText;
+            return (
+              <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
+                <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
+                <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
+                  <a href={event.meetLink} target="_blank" rel="noopener noreferrer" className="block">
+                      <Card style={{backgroundColor: event.color}} className="shadow-lg">
+                          <CardContent className="p-3" style={{color: event.textColor}}>
+                              <div className="flex gap-3 items-center">
+                                  <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
+                                      <IconComponent className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs opacity-80">{event.subject}</p>
+                                      <p className="font-bold text-sm leading-tight">{event.title}</p>
+                                      <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                      </div>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                    </a>
+                </div>
               </div>
-            </div>
-          )
-        })}
-         {eventsForSelectedDay.length === 0 && (
+            )
+          })
+        ) : (
             <div className="text-center text-muted-foreground text-sm pt-8">
                 You have no lectures scheduled for this day.
             </div>

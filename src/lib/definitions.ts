@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type User = {
   id: string;
   name: string;
@@ -31,6 +33,21 @@ export type Course = {
   description: string;
   imageId: string;
   modules: Module[];
+};
+
+export type Schedule = {
+  id: string;
+  courseId: string;
+  subject: string;
+  title: string;
+  date: Timestamp;
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  meetLink: string;
+  teacherId: string;
+  icon: string; // lucide icon name
+  color: string; // hsl color
+  textColor: string;
 };
 
 export type StudentProgress = {

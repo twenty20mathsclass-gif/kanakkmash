@@ -30,5 +30,16 @@ service cloud.firestore {
       // Admins can delete users. Users can delete their own account.
       allow delete: if isAdmin() || isOwner(userId);
     }
+
+    match /schedules/{scheduleId} {
+      // Anyone logged in can see schedules
+      allow list, get: if request.auth != null;
+
+      // Only teachers can create schedules, and they must be the owner
+      allow create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && request.resource.data.teacherId == request.auth.uid;
+
+      // Only the teacher who created the schedule or an admin can update/delete it
+      allow update, delete: if (get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid) || isAdmin();
+    }
   }
 }

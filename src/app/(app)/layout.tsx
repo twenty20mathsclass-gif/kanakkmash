@@ -22,7 +22,8 @@ import {
     Calendar,
     ShoppingCart,
     Receipt,
-    BookOpen
+    BookOpen,
+    CalendarPlus
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -69,7 +70,7 @@ export default function AppLayout({
   const teacherNav = [
     { href: '/teacher', label: 'Home', icon: LayoutDashboard },
     { href: '/teacher/create-class', label: 'Create Class', icon: PlusSquare },
-    { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
+    { href: '/teacher/create-schedule', label: 'Create Schedule', icon: CalendarPlus },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
