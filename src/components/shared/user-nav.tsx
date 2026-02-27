@@ -17,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Create a motion-wrapped version of the Button
+const MotionButton = motion(Button);
+
 export function UserNav({ 
   user, 
   onSignOut, 
@@ -34,27 +37,21 @@ export function UserNav({
   const dropdownSide = side || (isMobile ? 'top' : 'bottom');
   const router = useRouter();
 
-  const simpleHover = { scale: 1.1 };
-  const simpleTransition = { type: "tween", ease: "easeOut", duration: 0.2 };
-
   return (
     <DropdownMenu>
-      <motion.div
-        whileHover={simpleHover}
-        transition={simpleTransition}
-      >
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
-          >
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-      </motion.div>
+      <DropdownMenuTrigger asChild>
+        <MotionButton
+          variant="ghost"
+          className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
+          whileHover={{ scale: 1.1 }}
+          transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+        >
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={user.avatarUrl} alt={user.name} />
+            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+        </MotionButton>
+      </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2"
         side={dropdownSide}
