@@ -97,9 +97,10 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
-        {user ? (
+        {user && (
            <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
-        ) : (
+        )}
+        {!user && isPubliclyAccessible && (
           <HomePageDock />
         )}
       </Suspense>
