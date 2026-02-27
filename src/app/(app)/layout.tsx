@@ -41,12 +41,6 @@ export default function AppLayout({
   const publiclyAccessiblePaths = ['/', '/blog', '/materials', '/community'];
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses');
 
-  // Paths that should show the public-facing "Home Page Dock" even for logged-in users.
-  // We exclude `/courses` here so that it shows the app dock for logged-in users.
-  const marketingPaths = ['/', '/blog', '/materials', '/community'];
-  const isMarketingPage = marketingPaths.includes(pathname);
-
-
   const handleSignOut = async () => {
     if (auth) {
       await firebaseSignOut(auth);
@@ -100,13 +94,11 @@ export default function AppLayout({
         : studentNav
     : [];
     
-  const useAppDock = user && !isMarketingPage;
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
-        {useAppDock ? (
-           <AppleStyleDock items={navItems} user={user!} onSignOut={handleSignOut} />
+        {user ? (
+           <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
         ) : (
           <HomePageDock />
         )}
