@@ -6,11 +6,17 @@ import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
+import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
-const scheduleData = [
+
+const today = new Date();
+const todayDayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+const weeklyScheduleData = [
   {
     id: 1,
     courseId: 'geometry-fundamentals',
@@ -21,7 +27,8 @@ const scheduleData = [
     endTime: '8:45',
     icon: BookText,
     color: 'hsl(30 95% 55%)',
-    textColor: 'hsl(var(--primary-foreground))'
+    textColor: 'hsl(var(--primary-foreground))',
+    dayOfWeek: todayDayOfWeek, 
   },
   {
     id: 2,
@@ -33,7 +40,8 @@ const scheduleData = [
     endTime: '9:45',
     icon: AppWindow,
     color: 'hsl(270 80% 65%)',
-    textColor: 'hsl(var(--primary-foreground))'
+    textColor: 'hsl(var(--primary-foreground))',
+    dayOfWeek: todayDayOfWeek,
   },
   {
     id: 3,
@@ -45,7 +53,21 @@ const scheduleData = [
     endTime: '11:45',
     icon: FlaskConical,
     color: 'hsl(340 80% 65%)',
-    textColor: 'hsl(var(--primary-foreground))'
+    textColor: 'hsl(var(--primary-foreground))',
+    dayOfWeek: todayDayOfWeek,
+  },
+   {
+    id: 4,
+    courseId: 'geometry-fundamentals',
+    subject: 'Geometry',
+    title: 'Extra Geometry Session',
+    time: '08:00am',
+    startTime: '8:00',
+    endTime: '8:45',
+    icon: BookText,
+    color: 'hsl(30 95% 55%)',
+    textColor: 'hsl(var(--primary-foreground))',
+    dayOfWeek: (todayDayOfWeek + 2) % 7, // An event two days from today
   },
 ];
 
@@ -53,6 +75,7 @@ const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm'];
 
 export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
@@ -60,11 +83,32 @@ export default function SchedulePage() {
   const learningProgress = 88;
   const learningTotal = 180;
   
+  const selectedDayOfWeek = selectedDate.getDay();
+  const eventsForSelectedDay = weeklyScheduleData.filter(e => e.dayOfWeek === selectedDayOfWeek);
+
   return (
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Schedule</h1>
+           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <CalendarDays className="h-6 w-6" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                            if (date) setSelectedDate(date);
+                            setIsCalendarOpen(false);
+                        }}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
         </div>
       </Reveal>
 
@@ -109,7 +153,7 @@ export default function SchedulePage() {
 
       <Reveal delay={0.3}>
         <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-headline">My Schedule</h2>
+            <h2 className="text-xl font-bold font-headline">My Schedule for {format(selectedDate, 'MMMM d')}</h2>
             <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-5 w-5" />
             </Button>
@@ -117,9 +161,8 @@ export default function SchedulePage() {
       </Reveal>
 
       <Reveal delay={0.4} className="space-y-1 relative">
-        {timeSlots.map((time, index) => {
-          // Note: The schedule is static. For a real app, this should filter events for `selectedDate`.
-          const event = scheduleData.find(e => e.time === time);
+        {timeSlots.map((time) => {
+          const event = eventsForSelectedDay.find(e => e.time === time);
           return (
             <div key={time} className="flex gap-4 items-stretch min-h-[4rem]">
               <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{time}</div>
@@ -146,19 +189,17 @@ export default function SchedulePage() {
                     </Card>
                   </Link>
                 ) : (
-                   index === 2 && (
-                    <div className="text-center text-muted-foreground text-xs pt-8 relative -left-3">
-                        <div className="h-px w-full bg-border/70 absolute top-1/2 left-0 -translate-y-1/2"></div>
-                        <span className='bg-background px-2 relative z-10'>
-                            You've no lectures from 10:00am to 11:00am
-                        </span>
-                    </div>
-                   )
+                   <div className="h-full w-full" />
                 )}
               </div>
             </div>
           )
         })}
+         {eventsForSelectedDay.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm pt-8">
+                You have no lectures scheduled for this day.
+            </div>
+        )}
       </Reveal>
     </div>
   );
