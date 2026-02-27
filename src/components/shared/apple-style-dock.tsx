@@ -94,10 +94,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                 <Link href={homeHref} className="flex h-full items-center justify-center px-3">
                     <Image
                         src="/logoo@4x.webp"
-                        alt="kanakkmash logo"
-                        width={80}
-                        height={20}
-                        className="h-6 w-auto"
+                        alt="kanakkmash"
+                        width={100}
+                        height={31}
+                        className="h-8 w-auto"
                         priority
                     />
                 </Link>
