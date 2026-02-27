@@ -10,18 +10,20 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect } from 'react';
 import { UserNav } from './user-nav';
+import { ThemeToggle } from './theme-toggle';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
+      role="img"
+      viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24"
-      fill="currentColor"
       {...props}
+      fill="currentColor"
     >
-      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.586-1.456l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.451-4.437-9.885-9.888-9.885-5.451 0-9.885 4.434-9.888 9.885.002 2.17.637 4.288 1.873 6.039l-.989 3.655 3.745-1.017z"/>
+      <path
+        d="M12.04 2C6.58 2 2.13 6.45 2.13 12c0 1.74.45 3.33 1.2 4.74L2.3 22l5.33-1.18a9.9 9.9 0 0 0 4.4 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.76-1.12-5.26-2.95-7.07A9.82 9.82 0 0 0 12.04 2zM6.55 18.25c-1.23-1.49-1.99-3.3-1.99-5.32 0-4.69 3.81-8.5 8.5-8.5a8.44 8.44 0 0 1 6.01 2.48A8.44 8.44 0 0 1 21.55 12c0 4.69-3.81 8.5-8.5 8.5h-.01c-1.8 0-3.5-.55-4.94-1.52l-5.44 1.21 1.24-5.32zM16.95 14.3c-.28-.14-1.64-.81-1.9-.94-.25-.13-.43-.21-.62.13-.18.34-.72.94-.88 1.13-.16.2-.32.21-.59.11-.28-.1-1.18-.43-2.24-1.36-1.62-1.42-2.1-2.27-2.18-2.39-.08-.12-.18-.21-.18-.33s.12-.18.24-.3c.12-.12.28-.31.42-.46.1-.11.18-.21.28-.36.09-.15.04-.28-.02-.42-.06-.14-.59-1.42-.81-1.94-.23-.54-.46-.46-.62-.47-.16-.01-.34-.01-.52-.01s-.46.06-.7.34c-.23.27-.88.85-.88 2.07 0 1.22.9 2.4 1.03 2.57.13.16 1.78 2.73 4.3 3.78 2.52 1.05 2.52.7 3.02.67.5-.03 1.64-.67 1.87-1.32.23-.65.23-1.2.16-1.32-.07-.13-.25-.21-.52-.35z"
+      />
     </svg>
   );
 }
@@ -91,13 +93,13 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
         >
           {!isMobile && (
             <>
-                <Link href={homeHref} className="flex h-full items-center justify-center px-3">
+                <Link href={homeHref} className="flex h-10 items-center justify-center px-3">
                     <Image
-                        src="/logoo@4x.webp"
+                        src="/logo eng@4x.png"
                         alt="kanakkmash"
-                        width={100}
-                        height={31}
-                        className="h-8 w-auto"
+                        width={200}
+                        height={62}
+                        className="h-full w-auto"
                         priority
                     />
                 </Link>
@@ -154,10 +156,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
             >
                 <WhatsAppIcon className="h-6 w-6" />
             </Link>
+          </motion.div>
+          
+          <motion.div 
+            whileHover={simpleHover}
+            transition={simpleTransition}
+          >
+            <ThemeToggle />
           </motion.div>
 
           {user && onSignOut && !isMobile && (
@@ -170,7 +179,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <UserNav 
                     user={user} 
                     onSignOut={onSignOut} 
-                    triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10" 
+                    triggerClassName="bg-secondary/80 hover:bg-secondary" 
                   />
               </motion.div>
             </>

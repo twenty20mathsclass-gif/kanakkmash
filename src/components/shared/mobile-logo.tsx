@@ -21,7 +21,7 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
     <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between md:hidden">
       <Link href="/">
           <Image
-              src="/kanakkmash mlm@4x.webp"
+              src="/logo mlm@4x.png"
               alt="kanakkmash logo"
               width={144}
               height={44}

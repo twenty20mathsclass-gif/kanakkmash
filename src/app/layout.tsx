@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FloatingActionButtons } from '@/components/shared/floating-action-buttons';
+import { ThemeProvider } from '@/components/shared/theme-provider';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
@@ -31,6 +32,9 @@ export const metadata: Metadata = {
     'CSAT',
     'kanakkmash'
   ],
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -50,9 +54,16 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>{children}</FirebaseClientProvider>
-        <Toaster />
-        <FloatingActionButtons />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <FirebaseClientProvider>{children}</FirebaseClientProvider>
+          <Toaster />
+          <FloatingActionButtons />
+        </ThemeProvider>
       </body>
     </html>
   );

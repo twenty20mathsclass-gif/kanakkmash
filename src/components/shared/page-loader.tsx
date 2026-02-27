@@ -19,7 +19,7 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
         }}
       >
         <Image
-          src="/kanakkmash mlm@4x.webp"
+          src="/logo mlm@4x.png"
           alt="Loading..."
           width={120}
           height={37}
