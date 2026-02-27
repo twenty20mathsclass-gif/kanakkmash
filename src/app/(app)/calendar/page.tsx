@@ -6,6 +6,8 @@ import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Clock, MoreHorizontal, BookText, AppWindow, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
@@ -52,10 +54,10 @@ const scheduleData = [
 const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm'];
 
 export default function SchedulePage() {
-  const [selectedDate, setSelectedDate] = useState(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 0));
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 0 }); // Sunday
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfCurrentWeek, i));
+  const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
   
   const learningProgress = 88;
   const learningTotal = 180;
@@ -65,9 +67,21 @@ export default function SchedulePage() {
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Schedule</h1>
-          <Button variant="ghost" size="icon" className="border rounded-full">
-            <CalendarIcon className="h-5 w-5" />
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="border rounded-full">
+                    <CalendarIcon className="h-5 w-5" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    initialFocus
+                />
+            </PopoverContent>
+          </Popover>
         </div>
       </Reveal>
 
@@ -119,6 +133,7 @@ export default function SchedulePage() {
 
       <Reveal delay={0.4} className="space-y-1 relative">
         {timeSlots.map((time, index) => {
+          // Note: The schedule is static. For a real app, this should filter events for `selectedDate`.
           const event = scheduleData.find(e => e.time === time);
           return (
             <div key={time} className="flex gap-4 items-stretch min-h-[4rem]">
