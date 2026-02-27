@@ -47,7 +47,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   if (!isClient) {
     // Render a placeholder or null on the server to avoid hydration mismatch
     // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[56px] -translate-x-1/2 md:top-4 md:bottom-auto" />;
+    return <div className="fixed bottom-4 left-1/2 z-50 h-[56px] md:h-16 -translate-x-1/2 md:top-4 md:bottom-auto" />;
   }
 
   const getHomeHref = () => {
@@ -88,24 +88,21 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
         <motion.nav
           className={cn(
-            "flex h-[56px] items-center justify-center gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
+            "flex h-[56px] md:h-16 items-center justify-center gap-1 md:gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
           )}
         >
-          {!isMobile && (
-            <>
-                <Link href={homeHref} className="flex h-10 items-center justify-center px-3">
-                    <Image
-                        src="/logo eng@4x.png"
-                        alt="kanakkmash"
-                        width={200}
-                        height={62}
-                        className="h-full w-auto"
-                        priority
-                    />
-                </Link>
-                <div className="h-full w-px bg-border mx-1 self-center" />
-            </>
-          )}
+          <Link href={homeHref} className="flex h-10 items-center justify-center px-2 md:h-12 md:px-3">
+              <div className="relative h-6 md:h-8" style={{ aspectRatio: 150 / 47 }}>
+                  <Image
+                      src="/logo mlm@4x.png"
+                      alt="kanakkmash"
+                      fill
+                      className="object-contain"
+                      priority
+                  />
+              </div>
+          </Link>
+          <div className="h-full w-px bg-border mx-1 self-center" />
 
           {items.map((item) => {
               const Icon = item.icon;
@@ -121,17 +118,17 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                       <Link
                           href={item.href}
                           className={cn(
-                              "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                              "relative flex h-10 w-10 md:h-12 items-center justify-center rounded-full transition-colors",
                               isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
                           )}
                       >
                           <div className={cn(
-                              "relative z-10 flex items-center",
+                              "relative z-10 flex items-center gap-2",
                               isActive ? 'text-primary-foreground' : ''
                               )}
                           >
-                              <Icon className="h-5 w-5" />
-                              <span className={cn("hidden", isMobile ? "" : "md:ml-2 md:block")}>{item.label}</span>
+                              <Icon className="h-5 w-5 md:h-6 md:w-6" />
+                              <span className={cn("hidden text-base", isMobile ? "" : "md:block")}>{item.label}</span>
                           </div>
                           
                           {isActive && (
@@ -156,9 +153,9 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
+              className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
             >
-                <WhatsAppIcon className="h-6 w-6" />
+                <WhatsAppIcon className="h-6 w-6 md:h-7 md:w-7" />
             </Link>
           </motion.div>
           
@@ -169,7 +166,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <ThemeToggle />
           </motion.div>
 
-          {user && onSignOut && !isMobile && (
+          {user && onSignOut && (
             <>
               <div className="h-full w-px bg-border mx-1 self-center" />
               <motion.div 
@@ -179,7 +176,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   <UserNav 
                     user={user} 
                     onSignOut={onSignOut} 
-                    triggerClassName="bg-secondary/80 hover:bg-secondary" 
+                    triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
                   />
               </motion.div>
             </>
