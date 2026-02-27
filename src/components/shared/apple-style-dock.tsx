@@ -92,14 +92,15 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           )}
         >
           <Link href={homeHref} className="flex h-10 items-center justify-center px-2 md:h-12 md:px-3">
-              <Image
-                  src="/logo eng@4x.png"
-                  alt="kanakkmash"
-                  width={150}
-                  height={47}
-                  className="h-7 w-auto md:h-9"
-                  priority
-              />
+              <div className="relative h-6 md:h-8" style={{ aspectRatio: 150 / 47 }}>
+                  <Image
+                      src="/logo mlm@4x.png"
+                      alt="kanakkmash"
+                      fill
+                      className="object-contain"
+                      priority
+                  />
+              </div>
           </Link>
           <div className="h-full w-px bg-border mx-1 self-center" />
 
