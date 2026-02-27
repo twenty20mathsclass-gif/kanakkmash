@@ -20,6 +20,8 @@ import { CalendarIcon, Loader2, AlertCircle, BookText, User, Award, BookOpen } f
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Reveal } from '@/components/shared/reveal';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -58,7 +60,7 @@ export default function CreateSchedulePage() {
     },
   });
 
-  const onSubmit = async (data: ScheduleFormValues) => {
+  const onSubmit = (data: ScheduleFormValues) => {
     if (!firestore || !user) {
       setError('You must be logged in to create a schedule.');
       return;
@@ -66,31 +68,48 @@ export default function CreateSchedulePage() {
     setLoading(true);
     setError(null);
 
-    try {
-      const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
+    const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
 
-      await addDoc(collection(firestore, 'schedules'), {
-        courseModel: data.courseModel,
-        title: data.courseTitle,
-        date: Timestamp.fromDate(data.date),
-        startTime: data.startTime,
-        endTime: data.endTime,
-        meetLink: data.meetLink,
-        teacherId: user.id,
-        ...selectedVisuals
-      });
+    const scheduleData = {
+      courseModel: data.courseModel,
+      title: data.courseTitle,
+      date: Timestamp.fromDate(data.date),
+      startTime: data.startTime,
+      endTime: data.endTime,
+      meetLink: data.meetLink,
+      teacherId: user.id,
+      ...selectedVisuals,
+    };
 
-      toast({
-        title: 'Schedule Created!',
-        description: `Your class "${data.courseTitle}" has been successfully scheduled.`,
+    const schedulesCollection = collection(firestore, 'schedules');
+
+    addDoc(schedulesCollection, scheduleData)
+      .then(() => {
+        toast({
+          title: 'Schedule Created!',
+          description: `Your class "${data.courseTitle}" has been successfully scheduled.`,
+        });
+        form.reset();
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError(
+          {
+            path: schedulesCollection.path,
+            operation: 'create',
+            requestResourceData: scheduleData,
+          },
+          { cause: serverError }
+        );
+
+        errorEmitter.emit('permission-error', permissionError);
+
+        setError(
+          'Failed to create schedule. Check the developer console for details.'
+        );
+      })
+      .finally(() => {
+        setLoading(false);
       });
-      form.reset();
-    } catch (e: any) {
-      console.error('Error creating schedule: ', e);
-      setError(e.message || 'An unexpected error occurred.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
