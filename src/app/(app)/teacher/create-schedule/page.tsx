@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/definitions';
 
@@ -94,14 +94,18 @@ export default function CreateSchedulePage() {
 
   useEffect(() => {
     if (!firestore) return;
-    const fetchStudents = async () => {
-        const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
-        const querySnapshot = await getDocs(studentsQuery);
-        const studentsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setAllStudents(studentsList);
-    };
-    fetchStudents();
+    
+    const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+    const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
+      const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setAllStudents(studentsList);
+    }, (error) => {
+      console.error("Failed to fetch students in real-time:", error);
+    });
+
+    return () => unsubscribe();
   }, [firestore]);
+
 
   useEffect(() => {
     if (selectedClass) {
