@@ -38,89 +38,76 @@ export function UpcomingClasses() {
     const schedulesCollection = collection(firestore, 'schedules');
     let combinedSchedules: { [key: string]: Schedule } = {};
     const unsubscribes: (() => void)[] = [];
+    const queriesToRun = [];
 
-    // Helper to process and set the final state
-    const processAndSetSchedules = () => {
-        const schedulesData = Object.values(combinedSchedules);
-        schedulesData.sort((a, b) => {
-            const dateA = a.date.toMillis();
-            const dateB = b.date.toMillis();
-            if (dateA !== dateB) return dateA - dateB;
-            return a.startTime.localeCompare(b.startTime);
-        });
-        setUpcomingClasses(schedulesData.slice(0, 3));
-        setLoading(false);
-    };
-
-    let listenersAttached = 0;
-    const resolvedListeners = new Set<string>();
-
-    const onDataResolved = (listenerId: string) => {
-        resolvedListeners.add(listenerId);
-        if (resolvedListeners.size >= listenersAttached) {
-            processAndSetSchedules();
-        }
-    };
-    
-    // Query 1: Personal schedules
-    listenersAttached++;
-    const personalQuery = query(
-      schedulesCollection,
-      where('studentId', '==', user.id),
-      where('date', '>=', Timestamp.fromDate(today)),
-      orderBy('date', 'asc'),
-      limit(3)
-    );
-    unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
-      snapshot.docs.forEach(doc => {
-        combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-      });
-      onDataResolved('personal');
-    }, (error) => {
-        console.error("Error fetching personal schedules:", error);
-        onDataResolved('personal');
-    }));
-
-    // Query 2: Group schedules
-    if (user.courseModel) {
-        listenersAttached++;
-        const groupQueryConstraints: any[] = [
-            where('courseModel', '==', user.courseModel),
-            where('date', '>=', Timestamp.fromDate(today)),
-        ];
-
-        if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
-            groupQueryConstraints.push(where('class', '==', user.class));
-        }
-        
-        if (user.class && user.class !== 'DEGREE' && user.syllabus) {
-            groupQueryConstraints.push(where('syllabus', '==', user.syllabus));
-        }
-      
-      groupQueryConstraints.push(
+    // Personal schedules query
+    queriesToRun.push(
+      query(
+        schedulesCollection,
+        where('studentId', '==', user.id),
+        where('date', '>=', Timestamp.fromDate(today)),
         orderBy('date', 'asc'),
         limit(3)
-      );
+      )
+    );
 
-      const groupQuery = query(schedulesCollection, ...groupQueryConstraints);
+    // Group schedules query
+    if (user.courseModel) {
+      const groupQueryConstraints: any[] = [
+        where('studentId', '==', null), // Ensure it's a group class
+        where('courseModel', '==', user.courseModel),
+        where('date', '>=', Timestamp.fromDate(today)),
+      ];
 
-      unsubscribes.push(onSnapshot(groupQuery, (snapshot) => {
+      if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
+        groupQueryConstraints.push(where('class', '==', user.class));
+      }
+      
+      if (user.class && user.class !== 'DEGREE' && user.syllabus) {
+        groupQueryConstraints.push(where('syllabus', '==', user.syllabus));
+      }
+
+      groupQueryConstraints.push(orderBy('date', 'asc'), limit(3));
+      
+      queriesToRun.push(query(schedulesCollection, ...groupQueryConstraints));
+    }
+    
+    let pendingQueries = queriesToRun.length;
+    if (pendingQueries === 0) {
+      setLoading(false);
+      return;
+    }
+
+    const processAndSetSchedules = () => {
+      const schedulesData = Object.values(combinedSchedules);
+      schedulesData.sort((a, b) => {
+          const dateA = a.date.toMillis();
+          const dateB = b.date.toMillis();
+          if (dateA !== dateB) return dateA - dateB;
+          return a.startTime.localeCompare(b.startTime);
+      });
+      setUpcomingClasses(schedulesData.slice(0, 3));
+      setLoading(false);
+    };
+
+    queriesToRun.forEach(q => {
+      const unsubscribe = onSnapshot(q, (snapshot) => {
         snapshot.docs.forEach(doc => {
-          if (!doc.data().studentId) { // Only add group classes
-            combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-          }
+          combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
         });
-        onDataResolved('group');
+        pendingQueries--;
+        if (pendingQueries === 0) {
+          processAndSetSchedules();
+        }
       }, (error) => {
-        console.error("Error fetching group schedules:", error);
-        onDataResolved('group');
-      }));
-    }
-
-    // If no listeners were attached, we should immediately resolve.
-    if (listenersAttached === 0) {
-        setLoading(false);
-    }
+        console.error("Error fetching schedules:", error);
+        pendingQueries--;
+        if (pendingQueries === 0) {
+          processAndSetSchedules();
+        }
+      });
+      unsubscribes.push(unsubscribe);
+    });
 
     return () => unsubscribes.forEach(unsub => unsub());
   }, [firestore, user]);
