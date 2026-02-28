@@ -32,6 +32,7 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
 };
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
+const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 
 const scheduleSchema = z.object({
   courseModel: z.string().min(1, 'Please select a course model.'),
@@ -41,6 +42,7 @@ const scheduleSchema = z.object({
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   meetLink: z.string().url('Please enter a valid URL.'),
   class: z.string().optional(),
+  syllabus: z.string().optional(),
   studentId: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
@@ -50,6 +52,14 @@ const scheduleSchema = z.object({
                 message: 'Please select a class.',
                 path: ['class'],
             });
+        } else if (data.class !== 'DEGREE') {
+             if (!data.syllabus || data.syllabus.trim() === '') {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Please select a syllabus.',
+                    path: ['syllabus'],
+                });
+            }
         }
     }
     if (data.courseModel === 'ONE TO ONE') {
@@ -85,6 +95,7 @@ export default function CreateSchedulePage() {
       endTime: '',
       meetLink: 'https://meet.google.com/',
       class: '',
+      syllabus: '',
       studentId: '',
     },
   });
@@ -146,9 +157,11 @@ export default function CreateSchedulePage() {
       ...selectedVisuals,
     };
     
-    // Add class and studentId if they exist
     if (data.class) {
         scheduleData.class = data.class;
+    }
+    if (data.syllabus) {
+        scheduleData.syllabus = data.syllabus;
     }
     if (data.studentId) {
         scheduleData.studentId = data.studentId;
@@ -171,6 +184,7 @@ export default function CreateSchedulePage() {
             endTime: '',
             meetLink: 'https://meet.google.com/',
             class: '',
+            syllabus: '',
             studentId: ''
         });
       })
@@ -196,6 +210,7 @@ export default function CreateSchedulePage() {
   };
 
   const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
   const showStudentField = courseModel === 'ONE TO ONE' && !!selectedClass;
 
   return (
@@ -225,6 +240,7 @@ export default function CreateSchedulePage() {
                       <Select onValueChange={(value) => {
                           field.onChange(value);
                           setValue('class', '');
+                          setValue('syllabus', '');
                           setValue('studentId', '');
                       }} defaultValue={field.value}>
                         <FormControl>
@@ -250,7 +266,11 @@ export default function CreateSchedulePage() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Class</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                setValue('syllabus', '');
+                                setValue('studentId', '');
+                            }} value={field.value || ''}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a class" />
@@ -265,6 +285,30 @@ export default function CreateSchedulePage() {
                         )}
                     />
                 )}
+                
+                {showSyllabusField && (
+                    <FormField
+                        control={form.control}
+                        name="syllabus"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Syllabus</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a syllabus" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
 
                 {showStudentField && (
                     <FormField

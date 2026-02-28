@@ -50,6 +50,7 @@ export type Schedule = {
   textColor: string;
   class?: string;
   studentId?: string;
+  syllabus?: string;
 };
 
 export type StudentProgress = {

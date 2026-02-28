@@ -44,8 +44,6 @@ export default function SchedulePage() {
     const start = startOfDay(selectedDate);
     const end = endOfDay(selectedDate);
     
-    // Simplified query: fetch all schedules for the selected date.
-    // Filtering will happen on the client-side.
     const schedulesQuery = query(
       collection(firestore, 'schedules'),
       where('date', '>=', Timestamp.fromDate(start)),
@@ -55,33 +53,32 @@ export default function SchedulePage() {
     const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
-      // Filter the schedules on the client
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
-        // 1. Include one-to-one classes specifically for the user
+        // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;
         }
 
-        // 2. Include group classes the user should see
-        if (!schedule.studentId) { // It's a group class if studentId is not set
-          // Check if the course model matches
-          if (schedule.courseModel === user.courseModel) {
-            // For competitive exams, only the course model needs to match
+        // Group schedule check
+        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
-              return true;
+                return true;
             }
-            // For other courses, the class must also match
-            if (schedule.class === user.class) {
-              return true;
-            }
-          }
-        }
 
-        // Exclude all other schedules
+            if (schedule.class === user.class) {
+                // For non-DEGREE classes, syllabus must also match
+                if (user.class !== 'DEGREE') {
+                    return schedule.syllabus === user.syllabus;
+                }
+                // For DEGREE classes, just matching class is enough
+                return true;
+            }
+        }
+        
         return false;
       });
 
-      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      filteredSchedules.sort((a, b) => b.startTime.localeCompare(a.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
     }, (error) => {
@@ -194,8 +191,8 @@ export default function SchedulePage() {
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
                 <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
                 <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
-                  <a href={event.meetLink} target="_blank" rel="noopener noreferrer" className="block">
-                      <Card style={{backgroundColor: event.color}} className="shadow-lg">
+                  <a href={event.meetLink} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                      <Card style={{backgroundColor: event.color}} className="shadow-lg hover:shadow-xl transition-shadow">
                           <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
                                   <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
