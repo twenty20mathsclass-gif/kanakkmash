@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -17,6 +18,10 @@ service cloud.firestore {
     // The requesting user is the owner of the data.
     function isOwner(userId) {
       return request.auth.uid == userId;
+    }
+
+    function isExamOwner(examId) {
+      return get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
     }
 
     match /users/{userId} {
@@ -58,6 +63,25 @@ service cloud.firestore {
         // Teacher who owns the schedule, the student, or an admin can read attendance
         allow get, list: if get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid || isOwner(userId) || isAdmin();
         // No one can update or delete from here to preserve attendance record.
+        allow update, delete: if false;
+      }
+    }
+
+    match /exams/{examId} {
+      // Teacher who owns it or admin can manage.
+      allow read, update, delete: if isExamOwner(examId) || isAdmin();
+      // Any authenticated user can read an exam.
+      allow get, list: if request.auth != null;
+      // Teachers and admins can create exams.
+      allow create: if isRole('teacher') || isRole('admin');
+
+      match /submissions/{userId} {
+        // A student can create their own submission.
+        allow create: if isOwner(userId);
+        // Student can read their own submission.
+        // Teacher who owns the exam or admin can read any submission for that exam.
+        allow get, list: if isOwner(userId) || isExamOwner(examId) || isAdmin();
+        // Submissions cannot be updated or deleted.
         allow update, delete: if false;
       }
     }

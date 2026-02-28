@@ -52,6 +52,8 @@ export type Schedule = {
   class?: string;
   studentId?: string;
   syllabus?: string;
+  examId?: string;
+  duration?: number; // in minutes, for exam countdown
 };
 
 export type StudentProgress = {
@@ -64,3 +66,35 @@ export type PracticeTopic = {
   id: string;
   title: string;
 };
+
+export type McqOption = {
+  text: string;
+};
+
+export type McqQuestion = {
+  questionText: string;
+  options: McqOption[];
+  correctAnswerIndex: number;
+};
+
+export type Exam = {
+  id: string;
+  teacherId: string;
+  title: string;
+  courseModel: string;
+  class?: string;
+  syllabus?: string;
+  studentId?: string;
+  questions: McqQuestion[];
+};
+
+export type ExamSubmission = {
+    id: string;
+    examId: string;
+    studentId: string;
+    studentName: string;
+    answers: number[]; // array of selected option indices
+    submittedAt: Timestamp;
+    score: number;
+    total: number;
+}

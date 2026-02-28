@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot, doc } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -33,13 +34,13 @@ const iconMap: { [key: string]: React.ElementType } = {
 export default function ExamSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
+  const router = useRouter();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
-  const [attendedClasses, setAttendedClasses] = useState<string[]>([]);
 
   useEffect(() => {
     if (!firestore || !user) {
@@ -99,19 +100,6 @@ export default function ExamSchedulePage() {
     return () => unsubscribe();
   }, [selectedDate, firestore, user]);
 
-  useEffect(() => {
-    if (!firestore || !user) return;
-    
-    const attendanceQuery = query(collection(firestore, 'users', user.id, 'attendance'));
-    const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
-        const attendedIds = snapshot.docs.map(doc => doc.id);
-        setAttendedClasses(attendedIds);
-    });
-
-    return () => unsubscribe();
-  }, [firestore, user]);
-
-
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
   
@@ -124,82 +112,10 @@ export default function ExamSchedulePage() {
       return '';
     }
   }
-
-  const getDurationInMinutes = (startTime: string, endTime: string): number => {
-    if (!startTime || !endTime) return 0;
-    try {
-        const start = parse(startTime, 'HH:mm', new Date());
-        const end = parse(endTime, 'HH:mm', new Date());
-        const diff = end.getTime() - start.getTime();
-        return Math.round(diff / (1000 * 60));
-    } catch (e) {
-        console.error("Error calculating duration", e);
-        return 0;
-    }
-  };
-
-  const totalLearningMinutes = schedules.reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
-
-  const attendedLearningMinutes = schedules
-      .filter(event => attendedClasses.includes(event.id))
-      .reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
   
-  const handleJoinMeet = () => {
-    if (!selectedEvent || !user || !firestore) return;
-
-    const duration = getDurationInMinutes(selectedEvent.startTime, selectedEvent.endTime);
-
-    if (!attendedClasses.includes(selectedEvent.id)) {
-        const studentAttendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
-        const teacherAttendanceRef = doc(firestore, 'schedules', selectedEvent.id, 'attendees', user.id);
-        
-        const studentAttendanceData = {
-            scheduleId: selectedEvent.id,
-            attendedAt: Timestamp.now(),
-            durationMinutes: duration,
-            title: selectedEvent.title,
-            date: selectedEvent.date,
-        };
-
-        const teacherAttendanceData = {
-            ...studentAttendanceData,
-            studentId: user.id,
-            studentName: user.name,
-            studentAvatar: user.avatarUrl,
-        };
-
-        const studentWrite = setDoc(studentAttendanceRef, studentAttendanceData);
-        const teacherWrite = setDoc(teacherAttendanceRef, teacherAttendanceData);
-
-        Promise.all([studentWrite, teacherWrite])
-          .then(() => {
-            toast({
-                title: 'Attendance Marked!',
-                description: `You've marked your attendance for "${selectedEvent.title}".`,
-            });
-          })
-          .catch((serverError) => {
-            const permissionError = new FirestorePermissionError(
-              {
-                path: `users/${user.id}/attendance/${selectedEvent.id} and schedules/${selectedEvent.id}/attendees/${user.id}`,
-                operation: 'create',
-                requestResourceData: teacherAttendanceData,
-              },
-              { cause: serverError }
-            );
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not mark attendance. You may not have permissions.'
-            })
-          });
-    }
-
-    if (selectedEvent.meetLink) {
-        window.open(selectedEvent.meetLink, '_blank', 'noopener,noreferrer');
-    }
-    
+  const handleStartExam = () => {
+    if (!selectedEvent || !selectedEvent.examId) return;
+    router.push(`/exams/take/${selectedEvent.examId}`);
     setSelectedEvent(null);
   };
 
@@ -229,45 +145,6 @@ export default function ExamSchedulePage() {
         </div>
       </Reveal>
 
-      <Reveal delay={0.1}>
-        <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex w-max space-x-1 p-1 bg-muted rounded-full mx-auto">
-                {weekDays.map((day) => (
-                    <button
-                    key={day.toISOString()}
-                    onClick={() => setSelectedDate(day)}
-                    className={cn(
-                        'flex flex-col items-center justify-center w-12 h-16 rounded-full transition-colors relative shrink-0',
-                        isSameDay(day, selectedDate)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent/50'
-                    )}
-                    >
-                    <span className="text-sm">{format(day, 'E')}</span>
-                    <span className="font-bold text-lg">{format(day, 'd')}</span>
-                    {isToday(day) && !isSameDay(day, selectedDate) && (
-                        <div className="absolute bottom-1.5 h-1 w-1 rounded-full bg-primary"></div>
-                    )}
-                    </button>
-                ))}
-            </div>
-        </div>
-      </Reveal>
-
-      <Reveal delay={0.2}>
-        <Card className="bg-[hsl(210,80%,65%)] text-primary-foreground shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm">Today's Exams</p>
-                <p className="text-lg font-bold">{attendedLearningMinutes}min / {totalLearningMinutes}min</p>
-              </div>
-            </div>
-            <Progress value={totalLearningMinutes > 0 ? (attendedLearningMinutes/totalLearningMinutes) * 100 : 0} className="mt-2 h-1.5 [&>*]:bg-primary-foreground" />
-          </CardContent>
-        </Card>
-      </Reveal>
-
       <Reveal delay={0.3}>
         <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold font-headline">My Exam Schedule for {format(selectedDate, 'MMMM d')}</h2>
@@ -285,31 +162,18 @@ export default function ExamSchedulePage() {
         ) : schedules.length > 0 ? (
           schedules.map((event) => {
             const IconComponent = iconMap[event.icon] || BookOpen;
-            const isAttended = attendedClasses.includes(event.id);
             return (
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
                 <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
                 <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
                   <div
-                    onClick={() => !isAttended && setSelectedEvent(event)}
-                    className={cn(
-                      'block',
-                      isAttended ? 'cursor-not-allowed' : 'cursor-pointer'
-                    )}
+                    onClick={() => setSelectedEvent(event)}
+                    className='block cursor-pointer'
                   >
                       <Card
                         style={{backgroundColor: event.color}}
-                        className={cn(
-                            'shadow-lg transition-shadow relative',
-                            !isAttended && 'hover:shadow-xl',
-                            isAttended && 'opacity-75'
-                        )}
+                        className='shadow-lg transition-shadow hover:shadow-xl'
                       >
-                          {isAttended && (
-                              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/25 border-none text-xs" style={{color: event.textColor}}>
-                                  Attended
-                              </Badge>
-                          )}
                           <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
                                   <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
@@ -343,17 +207,17 @@ export default function ExamSchedulePage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>{selectedEvent?.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Click 'Join Meet' to enter the exam and automatically mark your attendance.
+                    You are about to start the exam. Make sure you are ready. The timer will begin as soon as you start.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 text-sm">
                 <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
-                <p><strong>Time:</strong> {selectedEvent ? `${getFormattedTime(selectedEvent.startTime)} - ${getFormattedTime(selectedEvent.endTime)}` : ''}</p>
+                <p><strong>Duration:</strong> {selectedEvent?.duration} minutes</p>
             </div>
             <AlertDialogFooter>
-                <AlertDialogCancel>Close</AlertDialogCancel>
-                <Button onClick={handleJoinMeet}>
-                    Join Meet
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button onClick={handleStartExam}>
+                    Start Exam
                 </Button>
             </AlertDialogFooter>
         </AlertDialogContent>
