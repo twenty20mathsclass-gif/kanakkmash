@@ -5,6 +5,8 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from "@/components/ui/card";
 import { BrainCircuit, Clock, Flame, Loader2 } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type ProgressCardProps = {
   title: string;
@@ -49,8 +51,14 @@ export function LearningProgress() {
             }, 0);
         setTotalMinutes(total);
         setLoading(false);
-    }, (error) => {
-        console.error("Failed to fetch learning progress in real-time:", error);
+    }, async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: `users/${user.id}/attendance`,
+            operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
+
+        console.error("Failed to fetch learning progress in real-time:", serverError);
         setLoading(false);
     });
 
