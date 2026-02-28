@@ -39,7 +39,7 @@ export default function CartPage() {
                             <h3 className="font-headline text-2xl font-bold text-primary">50% OFF</h3>
                             <p className="text-muted-foreground">On over 246+ Courses</p>
                             <Button asChild variant="link" className="p-0 h-auto text-primary font-bold">
-                                <Link href="/courses">Enroll Now</Link>
+                                <Link href="/dashboard">Enroll Now</Link>
                             </Button>
                         </div>
                         <div className="relative hidden sm:block">

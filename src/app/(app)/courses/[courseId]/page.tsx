@@ -31,7 +31,7 @@ export default function CourseDetailPage({ params }: PageProps) {
       <div className="max-w-lg mx-auto">
         <header className="p-4 flex justify-between items-center text-primary-foreground">
           <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary-foreground/10" asChild>
-            <Link href="/courses">
+            <Link href="/dashboard">
               <ArrowLeft />
             </Link>
           </Button>
