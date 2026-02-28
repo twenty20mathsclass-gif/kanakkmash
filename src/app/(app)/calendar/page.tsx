@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,35 +37,33 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!firestore || !user?.courseModel) {
+        setSchedules([]);
         setLoading(false);
         return;
     };
 
-    const fetchSchedules = async () => {
-      setLoading(true);
-      try {
-        const start = startOfDay(selectedDate);
-        const end = endOfDay(selectedDate);
-        
-        const q = query(
-          collection(firestore, 'schedules'),
-          where('courseModel', '==', user.courseModel),
-          where('date', '>=', Timestamp.fromDate(start)),
-          where('date', '<=', Timestamp.fromDate(end))
-        );
+    setLoading(true);
+    const start = startOfDay(selectedDate);
+    const end = endOfDay(selectedDate);
+    
+    const q = query(
+      collection(firestore, 'schedules'),
+      where('courseModel', '==', user.courseModel),
+      where('date', '>=', Timestamp.fromDate(start)),
+      where('date', '<=', Timestamp.fromDate(end))
+    );
 
-        const querySnapshot = await getDocs(q);
-        const schedulesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-        schedulesData.sort((a, b) => a.startTime.localeCompare(b.startTime));
-        setSchedules(schedulesData);
-      } catch (error) {
-        console.error("Error fetching schedules: ", error);
-      } finally {
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const schedulesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+      schedulesData.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      setSchedules(schedulesData);
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching schedules in real-time: ", error);
         setLoading(false);
-      }
-    };
+    });
 
-    fetchSchedules();
+    return () => unsubscribe();
   }, [selectedDate, firestore, user]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
