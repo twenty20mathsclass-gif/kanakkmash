@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,13 +31,14 @@ export function UserNav({
 }) {
   const isMobile = useIsMobile();
   const dropdownSide = side || (isMobile ? 'top' : 'bottom');
+  const router = useRouter();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
+          className={cn("relative h-10 w-10 rounded-full p-0 transition-transform hover:scale-110 focus:scale-110", triggerClassName)}
         >
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
@@ -59,11 +60,9 @@ export function UserNav({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href="/profile">
+        <DropdownMenuItem onSelect={() => router.push('/profile')} className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />
             Settings
-          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">

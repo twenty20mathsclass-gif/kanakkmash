@@ -3,9 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Safely check a user's role.
+    function isRole(role) {
+      let userDocPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userDocPath) && get(userDocPath).data.role == role;
+    }
+
     // A user is an admin if their user document has role == 'admin'.
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isRole('admin');
     }
 
     // The requesting user is the owner of the data.
@@ -29,6 +35,17 @@ service cloud.firestore {
       
       // Admins can delete users. Users can delete their own account.
       allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    match /schedules/{scheduleId} {
+      // Anyone logged in can see schedules
+      allow list, get: if request.auth != null;
+
+      // Only teachers or admins can create schedules. Teachers must be the owner.
+      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isRole('admin');
+
+      // Only the teacher who created the schedule or an admin can update/delete it
+      allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
     }
   }
 }

@@ -22,7 +22,8 @@ import {
     Calendar,
     ShoppingCart,
     Receipt,
-    BookOpen
+    BookOpen,
+    CalendarPlus
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -41,12 +42,6 @@ export default function AppLayout({
   const publiclyAccessiblePaths = ['/', '/blog', '/materials', '/community'];
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses');
 
-  // Paths that should show the public-facing "Home Page Dock" even for logged-in users.
-  // We exclude `/courses` here so that it shows the app dock for logged-in users.
-  const marketingPaths = ['/', '/blog', '/materials', '/community'];
-  const isMarketingPage = marketingPaths.includes(pathname);
-
-
   const handleSignOut = async () => {
     if (auth) {
       await firebaseSignOut(auth);
@@ -55,8 +50,29 @@ export default function AppLayout({
   };
 
   useEffect(() => {
-    if (!loading && !user && !isPubliclyAccessible) {
-      router.push('/sign-in');
+    if (loading) {
+      return; // Wait for user/loading state to settle
+    }
+
+    if (!user) {
+      // Not logged in: only allow public paths
+      if (!isPubliclyAccessible) {
+        router.push('/sign-in');
+      }
+      return;
+    }
+
+    // Logged in: check role-based access
+    // Protect admin routes
+    if (pathname.startsWith('/admin') && user.role !== 'admin') {
+      router.replace('/dashboard'); // Redirect to student dashboard as a safe default
+      return;
+    }
+
+    // Protect teacher routes
+    if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
+      router.replace('/dashboard'); // Redirect to student dashboard
+      return;
     }
   }, [loading, user, router, isPubliclyAccessible, pathname]);
 
@@ -75,7 +91,7 @@ export default function AppLayout({
   const teacherNav = [
     { href: '/teacher', label: 'Home', icon: LayoutDashboard },
     { href: '/teacher/create-class', label: 'Create Class', icon: PlusSquare },
-    { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
+    { href: '/teacher/create-schedule', label: 'Create Schedule', icon: CalendarPlus },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
@@ -100,14 +116,13 @@ export default function AppLayout({
         : studentNav
     : [];
     
-  const useAppDock = user && !isMarketingPage;
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
-        {useAppDock ? (
-           <AppleStyleDock items={navItems} user={user!} onSignOut={handleSignOut} />
-        ) : (
+        {user && (
+           <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
+        )}
+        {!user && isPubliclyAccessible && (
           <HomePageDock />
         )}
       </Suspense>

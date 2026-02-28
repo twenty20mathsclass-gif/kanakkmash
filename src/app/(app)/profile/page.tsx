@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirebase } from '@/firebase';
+import { useTheme } from 'next-themes';
 import { PageLoader } from '@/components/shared/page-loader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const passwordFormSchema = z.object({
@@ -38,12 +40,18 @@ export default function ProfilePage() {
     const { user, loading: userLoading } = useUser();
     const { auth, firestore, storage } = useFirebase();
     const { toast } = useToast();
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     
     const [isUploading, setIsUploading] = useState(false);
     const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
     const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const passwordForm = useForm<PasswordFormValues>({
         resolver: zodResolver(passwordFormSchema),
@@ -123,7 +131,7 @@ export default function ProfilePage() {
     }
 
 
-    if (userLoading) {
+    if (userLoading || !mounted) {
         return <PageLoader />;
     }
 
@@ -261,6 +269,31 @@ export default function ProfilePage() {
                                     </Button>
                                 </form>
                             </Form>
+                        </CardContent>
+                    </Card>
+                </Reveal>
+
+                <Reveal delay={0.4}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Appearance</CardTitle>
+                            <CardDescription>Select how you'd like the app to look.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup value={theme} onValueChange={setTheme} className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="light" id="theme-light" />
+                                    <Label htmlFor="theme-light" className="font-normal">Light</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="dark" id="theme-dark" />
+                                    <Label htmlFor="theme-dark" className="font-normal">Dark</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="system" id="theme-system" />
+                                    <Label htmlFor="theme-system" className="font-normal">System</Label>
+                                </div>
+                            </RadioGroup>
                         </CardContent>
                     </Card>
                 </Reveal>

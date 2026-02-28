@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect } from 'react';
 import { UserNav } from './user-nav';
-import { ThemeToggle } from './theme-toggle';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -83,103 +82,93 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   return (
     <>
-      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:top-4 md:bottom-auto">
-        <motion.nav
-          className={cn(
-            "flex h-[56px] md:h-16 items-center justify-center gap-1 md:gap-2 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md"
-          )}
-        >
-          <Link href={homeHref} className="flex h-10 items-center justify-center px-2 md:h-12 md:px-3">
-              <div className="relative h-6 md:h-8" style={{ aspectRatio: '150 / 47' }}>
-                  <Image
-                      src="/logo mlm@4x.png"
-                      alt="kanakkmash"
-                      fill
-                      className="object-contain"
-                      priority
-                  />
-              </div>
-          </Link>
-          <div className="h-full w-px bg-border mx-1 self-center" />
-
-          {items.map((item) => {
-              const Icon = item.icon;
-              
-              const isActive = activePath === item.href;
-
-              return (
-                  <motion.div 
-                    key={item.href}
-                    whileHover={simpleHover}
-                    transition={simpleTransition}
-                  >
-                      <Link
-                          href={item.href}
-                          className={cn(
-                              "relative flex h-10 w-10 md:h-12 items-center justify-center rounded-full transition-colors",
-                              isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
-                          )}
-                      >
-                          <div className={cn(
-                              "relative z-10 flex items-center gap-2",
-                              isActive ? 'text-primary-foreground' : ''
-                              )}
-                          >
-                              <Icon className="h-5 w-5 md:h-6 md:w-6" />
-                              <span className={cn("hidden text-base", isMobile ? "" : "md:block")}>{item.label}</span>
-                          </div>
-                          
-                          {isActive && (
-                          <motion.div
-                              layoutId="active-pill"
-                              className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-accent via-primary to-accent bg-[length:200%_auto] animate-gradient-pan"
-                              transition={{ type: "spring", duration: 0.6 }}
-                          />
-                          )}
-                      </Link>
-                  </motion.div>
-              )
-          })}
-
-          <div className="h-full w-px bg-border mx-1 self-center" />
-          <motion.div 
-            whileHover={simpleHover}
-            transition={simpleTransition}
+      <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 md:top-4 md:bottom-auto md:w-auto md:max-w-none">
+        <div className="flex justify-center overflow-x-auto scrollbar-hide">
+          <motion.nav
+            className={cn(
+              "flex h-[56px] flex-shrink-0 items-center justify-center gap-1 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md md:h-16 md:gap-2"
+            )}
           >
-            <Link
-              href="https://wa.me/919995315893"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Chat on WhatsApp"
-              className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
-            >
-                <WhatsAppIcon className="h-6 w-6 md:h-7 md:w-7" />
+            <Link href={homeHref} className="hidden h-10 items-center justify-center px-2 md:flex md:h-12 md:px-3">
+                <div className="relative h-6 w-auto aspect-[150/47] md:h-8">
+                    <Image
+                        src="/logo mlm@4x.png"
+                        alt="kanakkmash"
+                        fill
+                        className="object-contain"
+                        priority
+                    />
+                </div>
             </Link>
-          </motion.div>
-          
-          <motion.div 
-            whileHover={simpleHover}
-            transition={simpleTransition}
-          >
-            <ThemeToggle />
-          </motion.div>
+            <div className="hidden h-full w-px bg-border mx-1 self-center md:block" />
 
-          {user && onSignOut && (
-            <>
-              <div className="h-full w-px bg-border mx-1 self-center" />
-              <motion.div 
-                whileHover={simpleHover}
-                transition={simpleTransition}
+            {items.map((item) => {
+                const Icon = item.icon;
+                
+                const isActive = activePath === item.href;
+
+                return (
+                    <motion.div 
+                      key={item.href}
+                      whileHover={simpleHover}
+                      transition={simpleTransition}
+                    >
+                        <Link
+                            href={item.href}
+                            className={cn(
+                                "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:h-12",
+                                isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
+                            )}
+                        >
+                            <div className={cn(
+                                "relative z-10 flex items-center gap-2",
+                                isActive ? 'text-primary-foreground' : ''
+                                )}
+                            >
+                                <Icon className="h-5 w-5 md:h-6 md:w-6" />
+                                <span className={cn("hidden text-base", isMobile ? "" : "md:block")}>{item.label}</span>
+                            </div>
+                            
+                            {isActive && (
+                            <motion.div
+                                layoutId="active-pill"
+                                className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-accent via-primary to-accent bg-[length:200%_auto] animate-gradient-pan"
+                                transition={{ type: "spring", duration: 0.6 }}
+                            />
+                            )}
+                        </Link>
+                    </motion.div>
+                )
+            })}
+
+            <div className="h-full w-px bg-border mx-1 self-center" />
+            <motion.div 
+              whileHover={simpleHover}
+              transition={simpleTransition}
+            >
+              <Link
+                href="https://wa.me/919995315893"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851] md:h-12 md:w-12"
               >
-                  <UserNav 
-                    user={user} 
-                    onSignOut={onSignOut} 
-                    triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
-                  />
-              </motion.div>
-            </>
-          )}
-        </motion.nav>
+                  <WhatsAppIcon className="h-6 w-6 md:h-7 md:w-7" />
+              </Link>
+            </motion.div>
+
+            {user && onSignOut && (
+              <>
+                <div className="h-full w-px bg-border mx-1 self-center" />
+                <UserNav 
+                  user={user} 
+                  onSignOut={onSignOut} 
+                  triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
+                />
+              </>
+            )}
+          </motion.nav>
+        </div>
       </div>
     </>
   );
