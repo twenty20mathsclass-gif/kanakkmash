@@ -5,6 +5,8 @@ import { useFirebase, useUser } from "@/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Reveal } from "@/components/shared/reveal";
+import { SchedulingChart } from "@/components/teacher/scheduling-chart";
+import type { Schedule } from "@/lib/definitions";
 
 export default function TeacherDashboardPage() {
     const { firestore } = useFirebase();
@@ -14,6 +16,7 @@ export default function TeacherDashboardPage() {
         classes: 0,
         exams: 0,
     });
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -32,14 +35,17 @@ export default function TeacherDashboardPage() {
                 
                 let totalClasses = 0;
                 let totalExams = 0;
-                schedulesSnapshot.forEach(doc => {
-                    if (doc.data().type === 'class') {
+                const allSchedules = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+                
+                allSchedules.forEach(schedule => {
+                    if (schedule.type === 'class') {
                         totalClasses++;
-                    } else if (doc.data().type === 'exam') {
+                    } else if (schedule.type === 'exam') {
                         totalExams++;
                     }
                 });
 
+                setSchedules(allSchedules);
                 setStats({
                     students: totalStudents,
                     classes: totalClasses,
@@ -109,6 +115,8 @@ export default function TeacherDashboardPage() {
             </Card>
         </Reveal>
       </div>
+
+      <SchedulingChart schedules={schedules} />
     </div>
   );
 }
