@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { AttendanceDetails } from '@/components/teacher/attendance-details';
-import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -24,12 +23,12 @@ export default function AttendancePage() {
 
         const schedulesQuery = query(
             collection(firestore, 'schedules'),
-            where('teacherId', '==', user.id),
-            orderBy('date', 'desc')
+            where('teacherId', '==', user.id)
         );
 
         const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
             const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+            schedulesList.sort((a, b) => b.date.toMillis() - a.date.toMillis());
             setSchedules(schedulesList);
             setLoading(false);
         }, async (serverError) => {
@@ -46,46 +45,42 @@ export default function AttendancePage() {
     
     return (
         <div className="space-y-8">
-            <Reveal>
-                <div>
-                    <h1 className="text-3xl font-bold font-headline">Students' Attendance</h1>
-                    <p className="text-muted-foreground">Select a class or exam to view attendance details.</p>
-                </div>
-            </Reveal>
+            <div>
+                <h1 className="text-3xl font-bold font-headline">Students' Attendance</h1>
+                <p className="text-muted-foreground">Select a class or exam to view attendance details.</p>
+            </div>
 
             <div className="grid md:grid-cols-2 gap-8 items-start">
-                <Reveal delay={0.2}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>My Scheduled Items</CardTitle>
-                            <CardDescription>A list of your past and upcoming classes/exams.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {loading ? (
-                                <div className="flex justify-center items-center h-40">
-                                    <Loader2 className="h-8 w-8 animate-spin" />
-                                </div>
-                            ) : schedules.length > 0 ? (
-                                <ul className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                                    {schedules.map(schedule => (
-                                        <li key={schedule.id}>
-                                            <button 
-                                                className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedSchedule?.id === schedule.id ? 'bg-accent border-primary' : 'hover:bg-accent/50'}`}
-                                                onClick={() => setSelectedSchedule(schedule)}
-                                            >
-                                                <p className="font-semibold">{schedule.title}</p>
-                                                <p className="text-sm text-muted-foreground capitalize">{schedule.date.toDate().toLocaleDateString()} - {schedule.type}</p>
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-center text-muted-foreground py-10">You have not scheduled any items yet.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Reveal>
-                <Reveal delay={0.4} className="sticky top-20">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Scheduled Items</CardTitle>
+                        <CardDescription>A list of your past and upcoming classes/exams.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loading ? (
+                            <div className="flex justify-center items-center h-40">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        ) : schedules.length > 0 ? (
+                            <ul className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                                {schedules.map(schedule => (
+                                    <li key={schedule.id}>
+                                        <button 
+                                            className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedSchedule?.id === schedule.id ? 'bg-accent border-primary' : 'hover:bg-accent/50'}`}
+                                            onClick={() => setSelectedSchedule(schedule)}
+                                        >
+                                            <p className="font-semibold">{schedule.title}</p>
+                                            <p className="text-sm text-muted-foreground capitalize">{schedule.date.toDate().toLocaleDateString()} - {schedule.type}</p>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-10">You have not scheduled any items yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+                <div className="sticky top-20">
                     {selectedSchedule ? (
                         <AttendanceDetails schedule={selectedSchedule} />
                     ) : (
@@ -93,7 +88,7 @@ export default function AttendancePage() {
                              <p className="text-muted-foreground">Select an item to see details</p>
                         </Card>
                     )}
-                </Reveal>
+                </div>
             </div>
         </div>
     );

@@ -147,11 +147,11 @@ export function CreateExamForm() {
         if (!firestore || !user) return;
         const q = query(
             collection(firestore, 'schedules'),
-            where('teacherId', '==', user.id),
-            where('type', '==', 'exam')
+            where('teacherId', '==', user.id)
         );
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const exams = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
+                .filter(schedule => schedule.type === 'exam')
                 .sort((a,b) => b.date.toMillis() - a.date.toMillis() || b.startTime.localeCompare(a.startTime));
             setScheduledExams(exams);
         }, async (serverError) => {
