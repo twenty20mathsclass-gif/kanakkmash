@@ -188,13 +188,13 @@ export function CreateExamForm() {
                 title: 'Image Uploaded',
                 description: 'Your image has been successfully added to the question.'
             });
-        } catch (e) {
-            console.error("Image upload failed", e);
+        } catch (error: any) {
+            console.error("Image upload failed", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
             toast({
                 variant: 'destructive',
                 title: 'Upload Failed',
-                description: 'Could not upload the image. Please try again.'
+                description: error.message || 'Could not upload the image. Please try again.'
             });
         }
     }
@@ -380,14 +380,14 @@ export function CreateExamForm() {
                                         <FormLabel>Question Image (Optional)</FormLabel>
                                         {watch(`questions.${index}.imageUrl`) ? (
                                             <div className="relative w-48 h-32">
-                                                <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} layout="fill" objectFit="cover" className="rounded-md border" />
+                                                <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} fill className="object-cover rounded-md border" />
                                                 <Button
                                                     type="button"
                                                     variant="destructive"
                                                     size="icon"
                                                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
                                                     onClick={() => {
-                                                        setValue(`questions.${index}.imageUrl`, undefined);
+                                                        setValue(`questions.${index}.imageUrl`, undefined, { shouldValidate: true });
                                                         setImageUploadStatus(prev => ({...prev, [index]: 'idle'}));
                                                     }}
                                                 >
@@ -409,7 +409,12 @@ export function CreateExamForm() {
                                                     }}
                                                     disabled={imageUploadStatus[index] === 'uploading'}
                                                 />
-                                                <Button asChild variant="outline" type="button">
+                                                <Button
+                                                    asChild 
+                                                    variant="outline"
+                                                    type="button"
+                                                    disabled={imageUploadStatus[index] === 'uploading'}
+                                                >
                                                     <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
                                                         {imageUploadStatus[index] === 'uploading' 
                                                             ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
