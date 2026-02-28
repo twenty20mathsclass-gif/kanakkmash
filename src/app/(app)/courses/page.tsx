@@ -62,8 +62,11 @@ export default function ExamSchedulePage() {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
-        // This is a placeholder. In the future, we can add a 'type' field to schedules to differentiate between 'class' and 'exam'.
-        // For now, it will show the same as the class schedule.
+        if (schedule.type !== 'exam') {
+            return false;
+        }
+
+        // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;
         }

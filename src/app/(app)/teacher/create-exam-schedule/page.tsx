@@ -36,7 +36,7 @@ const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KS
 
 const scheduleSchema = z.object({
   courseModel: z.string().min(1, 'Please select a course model.'),
-  courseTitle: z.string().min(3, 'Course title must be at least 3 characters.'),
+  courseTitle: z.string().min(3, 'Exam title must be at least 3 characters.'),
   date: z.date({ required_error: 'A date is required.' }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
@@ -75,7 +75,7 @@ const scheduleSchema = z.object({
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
-export default function CreateSchedulePage() {
+export default function CreateExamSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
@@ -147,7 +147,7 @@ export default function CreateSchedulePage() {
     const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
 
     const scheduleData: any = {
-      type: 'class',
+      type: 'exam', // This is an exam
       courseModel: data.courseModel,
       title: data.courseTitle,
       date: Timestamp.fromDate(data.date),
@@ -174,8 +174,8 @@ export default function CreateSchedulePage() {
     addDoc(schedulesCollection, scheduleData)
       .then(() => {
         toast({
-          title: 'Schedule Created!',
-          description: `Your class "${data.courseTitle}" has been successfully scheduled.`,
+          title: 'Exam Schedule Created!',
+          description: `The exam "${data.courseTitle}" has been successfully scheduled.`,
         });
         form.reset({
             courseModel: '',
@@ -218,15 +218,15 @@ export default function CreateSchedulePage() {
     <div className="space-y-8 max-w-2xl mx-auto">
       <Reveal>
         <div>
-          <h1 className="text-3xl font-bold font-headline">Create a New Schedule</h1>
-          <p className="text-muted-foreground">Fill out the form below to add a new class to the student schedule.</p>
+          <h1 className="text-3xl font-bold font-headline">Create a New Exam Schedule</h1>
+          <p className="text-muted-foreground">Fill out the form below to add a new exam to the student schedule.</p>
         </div>
       </Reveal>
 
       <Reveal delay={0.2}>
         <Card>
           <CardHeader>
-            <CardTitle>Class Details</CardTitle>
+            <CardTitle>Exam Details</CardTitle>
             <CardDescription>All fields are required unless marked optional.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -339,8 +339,8 @@ export default function CreateSchedulePage() {
                   name="courseTitle"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Course Title</FormLabel>
-                      <FormControl><Input placeholder="e.g., Advanced Algebra Chapter 5" {...field} /></FormControl>
+                      <FormLabel>Exam Title</FormLabel>
+                      <FormControl><Input placeholder="e.g., Final Term Algebra Exam" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -429,7 +429,7 @@ export default function CreateSchedulePage() {
 
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Schedule
+                  Create Exam Schedule
                 </Button>
               </form>
             </Form>

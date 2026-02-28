@@ -62,6 +62,11 @@ export default function ClassSchedulePage() {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
+        // Show schedules that are explicitly 'class' or have no type (for backward compatibility)
+        if (schedule.type && schedule.type !== 'class') {
+          return false;
+        }
+
         // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;

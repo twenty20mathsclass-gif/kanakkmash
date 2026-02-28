@@ -26,7 +26,8 @@ import {
     BookOpen,
     CalendarPlus,
     UserCheck,
-    FileText
+    FileText,
+    FilePenLine
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -99,6 +100,7 @@ export default function AppLayout({
     { href: '/teacher/students', label: 'Students', icon: Users },
     { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Schedule', icon: CalendarPlus },
+    { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },

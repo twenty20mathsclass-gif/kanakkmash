@@ -37,6 +37,7 @@ export type Course = {
 
 export type Schedule = {
   id: string;
+  type: 'class' | 'exam';
   courseModel: string;
   subject: string;
   title: string;
