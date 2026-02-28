@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
   const loaderContent = (
@@ -15,9 +16,15 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
           ease: 'easeInOut',
           repeat: Infinity,
         }}
-        className="font-headline text-3xl font-bold text-primary"
       >
-        kanakkmash
+        <Image
+          src="/logo mlm@4x.png"
+          alt="kanakkmash logo"
+          width={250}
+          height={78}
+          className="h-auto w-48"
+          priority
+        />
       </motion.div>
     </div>
   );
