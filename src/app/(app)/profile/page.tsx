@@ -289,10 +289,6 @@ export default function ProfilePage() {
                                     <RadioGroupItem value="dark" id="theme-dark" />
                                     <Label htmlFor="theme-dark" className="font-normal">Dark</Label>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="system" id="theme-system" />
-                                    <Label htmlFor="theme-system" className="font-normal">System</Label>
-                                </div>
                             </RadioGroup>
                         </CardContent>
                     </Card>
