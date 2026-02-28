@@ -2,7 +2,6 @@
 export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
-import { PageLoader } from '@/components/shared/page-loader';
 import { Button } from '@/components/ui/button';
 import { Bell, Search } from 'lucide-react';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
@@ -15,17 +14,11 @@ import type { User } from '@/lib/definitions';
 export default function DashboardPage() {
   const { user, loading } = useUser();
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    // This case should be handled by the layout, but as a fallback:
-    return <div>Please sign in to view your dashboard.</div>;
+  if (loading || !user) {
+    // The AppLayout handles the initial full-screen loading.
+    // We return null here to prevent a second loader from appearing
+    // and to avoid rendering content before the user object is ready.
+    return null;
   }
 
   const getSubtitle = (user: User) => {
