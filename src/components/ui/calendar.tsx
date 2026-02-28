@@ -20,21 +20,22 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
+      captionLayout="buttons"
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-between items-center mb-4",
-        caption_label: "text-base font-medium",
-        nav: "space-x-1 flex items-center",
+        caption: "flex flex-col-reverse items-start gap-2 mb-4",
+        caption_label: "text-lg font-medium",
+        nav: "flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "ghost" }),
           "h-7 w-7 p-0"
         ),
-        table: "w-full border-collapse space-y-1",
-        head_row: "grid grid-cols-7",
+        table: "w-full border-collapse",
+        head_row: "grid grid-cols-7 mb-2",
         head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
-        row: "grid grid-cols-7 w-full mt-2",
+          "text-muted-foreground w-9 font-normal text-[0.8rem] text-center",
+        row: "grid grid-cols-7 w-full",
         cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex justify-center items-center",
         day: cn(
           buttonVariants({ variant: "ghost" }),
@@ -57,8 +58,9 @@ function Calendar({
           format(day, "EEEEE", { locale: options?.locale }),
       }}
       components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-5 w-5" />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-5 w-5" />,
+        ...props.components
       }}
       {...props}
     />
