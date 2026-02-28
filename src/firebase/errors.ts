@@ -11,12 +11,13 @@ export class FirestorePermissionError extends Error {
   public readonly cause: any;
 
   constructor(context: SecurityRuleContext, options?: ErrorOptions) {
-    const message = `Firestore Permission Denied: The request was denied by Firestore security rules. Context: ${JSON.stringify(
-      context,
-      null,
-      2
-    )}`;
+    const contextString = JSON.stringify(context, null, 2);
+    const causeString = options?.cause ? `\nCause: ${options.cause}` : '';
+    
+    const message = `Firestore Permission Denied: The request was denied by Firestore security rules. \nContext: ${contextString}${causeString}`;
+    
     super(message, options);
+    
     this.name = 'FirestorePermissionError';
     this.context = context;
     if (options?.cause) {
