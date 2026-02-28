@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -95,6 +97,19 @@ export default function SchedulePage() {
     return () => unsubscribe();
   }, [selectedDate, firestore, user]);
 
+  useEffect(() => {
+    if (!firestore || !user) return;
+    
+    const attendanceQuery = query(collection(firestore, 'users', user.id, 'attendance'));
+    const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
+        const attendedIds = snapshot.docs.map(doc => doc.id);
+        setAttendedClasses(attendedIds);
+    });
+
+    return () => unsubscribe();
+  }, [firestore, user]);
+
+
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
   
@@ -128,15 +143,45 @@ export default function SchedulePage() {
       .reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
   
   const handleJoinMeet = () => {
-    if (!selectedEvent) return;
+    if (!selectedEvent || !user || !firestore) return;
+
+    const duration = getDurationInMinutes(selectedEvent.startTime, selectedEvent.endTime);
 
     // Mark attendance if not already marked
     if (!attendedClasses.includes(selectedEvent.id)) {
-        setAttendedClasses([...attendedClasses, selectedEvent.id]);
-        toast({
-            title: 'Attendance Marked!',
-            description: `You've marked your attendance for "${selectedEvent.title}".`,
-        });
+        const attendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
+        
+        const attendanceData = {
+            scheduleId: selectedEvent.id,
+            attendedAt: Timestamp.now(),
+            durationMinutes: duration,
+            title: selectedEvent.title,
+            date: selectedEvent.date,
+        };
+
+        setDoc(attendanceRef, attendanceData)
+          .then(() => {
+            toast({
+                title: 'Attendance Marked!',
+                description: `You've marked your attendance for "${selectedEvent.title}".`,
+            });
+          })
+          .catch((serverError) => {
+            const permissionError = new FirestorePermissionError(
+              {
+                path: attendanceRef.path,
+                operation: 'create',
+                requestResourceData: attendanceData,
+              },
+              { cause: serverError }
+            );
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not mark attendance. You may not have permissions.'
+            })
+          });
     }
 
     // Open meet link in a new tab
