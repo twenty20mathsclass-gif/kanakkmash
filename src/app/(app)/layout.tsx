@@ -6,6 +6,9 @@ import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
+import { AppSidebar } from '@/components/shared/app-sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+
 import { 
     BookPlus,
     FilePlus2,
@@ -13,7 +16,6 @@ import {
     PenSquare,
     TrendingDown,
     TrendingUp,
-    UserCheck,
     PlusSquare,
     DollarSign,
     Users, 
@@ -21,9 +23,9 @@ import {
     Home,
     Calendar,
     ShoppingCart,
-    Receipt,
     BookOpen,
-    CalendarPlus
+    CalendarPlus,
+    UserCheck
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -37,6 +39,9 @@ export default function AppLayout({
   const { auth } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = usePathname();
+  const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
 
   // Paths that can be viewed without being logged in.
   const publiclyAccessiblePaths = ['/', '/blog', '/materials', '/community'];
@@ -89,17 +94,20 @@ export default function AppLayout({
   ];
 
   const teacherNav = [
-    { href: '/teacher', label: 'Home', icon: LayoutDashboard },
-    { href: '/teacher/create-class', label: 'Create Class', icon: PlusSquare },
+    { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/teacher/students', label: 'Students', icon: Users },
+    { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Schedule', icon: CalendarPlus },
-    { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
-    { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
+    { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
+    { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
   ];
 
   const adminNav = [
-    { href: '/admin/users?role=student', label: 'Student Data', icon: Users },
-    { href: '/admin/users?role=teacher', label: 'Teacher Data', icon: Users },
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/users?role=student', label: 'Students', icon: Users },
+    { href: '/admin/users?role=teacher', label: 'Teachers', icon: Users },
+    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
     { href: '/admin/blog/create', label: 'Blog Creation', icon: PenSquare },
@@ -108,19 +116,33 @@ export default function AppLayout({
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
   ];
 
-  const navItems = user 
-    ? user.role === 'admin'
-        ? adminNav
-        : user.role === 'teacher'
-        ? teacherNav
-        : studentNav
-    : [];
+  if (user && (user.role === 'admin' || user.role === 'teacher')) {
+    const navItems = user.role === 'admin' ? adminNav : teacherNav;
+    const pageTitle = navItems.find(item => currentUrl.startsWith(item.href) && item.href !== '/')?.label || 'Dashboard';
+
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+            <AppSidebar items={navItems} user={user} onSignOut={handleSignOut} />
+            <div className="flex flex-col flex-1 md:ml-[--sidebar-width-icon] group-data-[state=expanded]:md:ml-[--sidebar-width] transition-[margin-left] duration-300 ease-in-out">
+                <header className="p-4 border-b h-16 flex items-center gap-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+                    <SidebarTrigger className="md:hidden" />
+                    <h1 className="font-semibold text-lg">{pageTitle}</h1>
+                </header>
+                <main className="flex-grow p-4 md:p-6 bg-muted/30">
+                    {children}
+                </main>
+            </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
     
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
         {user && (
-           <AppleStyleDock items={navItems} user={user} onSignOut={handleSignOut} />
+           <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
         )}
         {!user && isPubliclyAccessible && (
           <HomePageDock />
