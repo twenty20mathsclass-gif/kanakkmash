@@ -26,7 +26,8 @@ import {
     CalendarPlus,
     UserCheck,
     FileText,
-    FilePenLine
+    FilePenLine,
+    ShoppingBag
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -106,6 +107,7 @@ export default function AppLayout({
     { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
+    { href: '/teacher/course-cart', label: 'Course Cart', icon: ShoppingBag },
   ];
 
   const adminNav = [
@@ -119,6 +121,7 @@ export default function AppLayout({
     { href: '/admin/materials/upload', label: 'Material Upload', icon: Upload },
     { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
+    { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
   ];
 
   if (user && (user.role === 'admin' || user.role === 'teacher')) {
