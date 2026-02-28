@@ -54,19 +54,19 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
-        <div className="relative flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
-          <Link href={logoLink}>
-            <Image
-              src="/logo mlm@4x.png"
-              alt="kanakkmash"
-              width={140}
-              height={43}
-              className="h-auto w-28 object-contain"
-              priority
-            />
-          </Link>
-          
-          <div className="flex items-center gap-4">
+        <div className="relative flex h-16 items-center justify-center rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
+          <div className="flex items-center gap-6">
+            <Link href={logoLink}>
+              <Image
+                src="/logo mlm@4x.png"
+                alt="kanakkmash"
+                width={140}
+                height={43}
+                className="h-auto w-28 object-contain"
+                priority
+              />
+            </Link>
+            
             <nav className="hidden items-center gap-1 md:flex">
               {navItems.map(item => {
                 const Icon = item.icon;
