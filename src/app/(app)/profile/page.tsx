@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirebase } from '@/firebase';
 import { useTheme } from 'next-themes';
-import { PageLoader } from '@/components/shared/page-loader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { Reveal } from '@/components/shared/reveal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
@@ -132,7 +130,7 @@ export default function ProfilePage() {
 
 
     if (userLoading || !mounted) {
-        return <PageLoader />;
+        return null;
     }
 
     if (!user) {
@@ -146,17 +144,17 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-        <Reveal>
+        <div>
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold font-headline">Profile Settings</h1>
                     <p className="text-muted-foreground">Manage your account settings and preferences.</p>
                 </div>
             </div>
-        </Reveal>
+        </div>
 
         <div className="grid gap-8 md:grid-cols-3">
-            <Reveal delay={0.1} className="md:col-span-1">
+            <div className="md:col-span-1">
                 <Card>
                     <CardHeader>
                         <CardTitle>Profile Picture</CardTitle>
@@ -186,10 +184,10 @@ export default function ProfilePage() {
                         </p>
                     </CardContent>
                 </Card>
-            </Reveal>
+            </div>
 
             <div className="space-y-8 md:col-span-2">
-                <Reveal delay={0.2}>
+                <div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Your Information</CardTitle>
@@ -206,9 +204,9 @@ export default function ProfilePage() {
                             </div>
                         </CardContent>
                     </Card>
-                </Reveal>
+                </div>
 
-                <Reveal delay={0.3}>
+                <div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Change Password</CardTitle>
@@ -271,9 +269,9 @@ export default function ProfilePage() {
                             </Form>
                         </CardContent>
                     </Card>
-                </Reveal>
+                </div>
 
-                <Reveal delay={0.4}>
+                <div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Appearance</CardTitle>
@@ -292,7 +290,7 @@ export default function ProfilePage() {
                             </RadioGroup>
                         </CardContent>
                     </Card>
-                </Reveal>
+                </div>
             </div>
         </div>
     </div>

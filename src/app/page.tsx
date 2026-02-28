@@ -8,7 +8,6 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
-import { Reveal } from '@/components/shared/reveal';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +35,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
           </div>
           <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
-            <Reveal>
+            <div>
               <div className="mx-auto max-w-4xl">
                 <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
                   Unlock Your <span>Math Potential</span> with{' '}
@@ -61,18 +60,18 @@ export default function Home() {
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
               </div>
-            </Reveal>
+            </div>
           </div>
         </section>
       </main>
       <footer className="bg-background py-6">
-        <Reveal>
+        <div>
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
               © {new Date().getFullYear()} kanakkmash. All rights reserved.
             </p>
           </div>
-        </Reveal>
+        </div>
       </footer>
     </div>
   );

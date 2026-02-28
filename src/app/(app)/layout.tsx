@@ -28,7 +28,6 @@ import {
     FileText,
     FilePenLine
 } from 'lucide-react';
-import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
@@ -88,7 +87,7 @@ export default function AppLayout({
   }, [loading, user, router, isPubliclyAccessible, pathname]);
 
   if (loading || (!user && !isPubliclyAccessible)) {
-    return <PageLoader />;
+    return null;
   }
 
   // Define nav items for logged-in users

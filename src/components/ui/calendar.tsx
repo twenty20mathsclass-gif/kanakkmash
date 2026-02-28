@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -24,18 +23,17 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-between items-center px-1 pt-1 relative mb-4",
+        caption: "flex justify-between items-center mb-4",
         caption_label: "text-base font-medium",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          buttonVariants({ variant: "ghost" }),
+          "h-7 w-7 p-0"
         ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "grid grid-cols-7",
-        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
+        head_cell:
+          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
         row: "grid grid-cols-7 w-full mt-2",
         cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex justify-center items-center",
         day: cn(
@@ -47,13 +45,16 @@ function Calendar({
         day_today: "bg-accent text-accent-foreground",
         day_outside: "day-outside text-muted-foreground opacity-50",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_range_middle:
+          "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
       }}
       formatters={{
-        formatCaption: (month, options) => format(month, "MMMM yyyy", { locale: options?.locale }),
-        formatWeekdayName: (day, options) => format(day, "EEEEE", { locale: options?.locale }),
+        formatCaption: (month, options) =>
+          format(month, "MMMM yyyy", { locale: options?.locale }),
+        formatWeekdayName: (day, options) =>
+          format(day, "EEEEE", { locale: options?.locale }),
       }}
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,

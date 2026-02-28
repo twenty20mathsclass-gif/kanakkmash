@@ -12,7 +12,6 @@ import { SignInForm } from '@/components/auth/sign-in-form';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { PageLoader } from '@/components/shared/page-loader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -35,7 +34,7 @@ export default function SignInPage() {
   }, [user, loading, router]);
 
   if (loading || (!loading && user)) {
-    return <PageLoader />;
+    return null;
   }
 
   return (

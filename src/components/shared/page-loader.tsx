@@ -11,7 +11,7 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
                 alt="kanakkmash logo"
                 width={128}
                 height={128}
-                className="h-32 w-32"
+                className="h-32 w-32 animate-pulse"
                 priority
             />
         </div>
