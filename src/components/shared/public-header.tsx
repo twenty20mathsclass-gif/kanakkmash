@@ -29,6 +29,7 @@ const publicNavItems = [
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/materials', label: 'Materials', icon: BarChart3 },
     { href: '/community', label: 'Community', icon: Users },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart },
 ];
 
 const studentNavItems = [
