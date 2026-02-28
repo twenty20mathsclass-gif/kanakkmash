@@ -75,7 +75,7 @@ export function LearningProgress() {
   return (
     <section>
       <h2 className="text-xl font-bold font-headline mb-4">Learning Progress</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <ProgressCard 
           title="Total Time" 
           value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatTime(totalMinutes)}
