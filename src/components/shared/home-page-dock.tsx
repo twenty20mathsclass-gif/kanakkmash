@@ -12,6 +12,6 @@ export function HomePageDock() {
     ];
 
     return (
-        <AppleStyleDock items={navItems} user={null} onSignOut={() => {}} />
+        <AppleStyleDock items={navItems} user={null} />
     );
 }

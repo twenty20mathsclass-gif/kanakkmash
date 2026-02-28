@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
-import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { AppSidebar } from '@/components/shared/app-sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -31,6 +30,8 @@ import {
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
+import { MobileLogo } from '@/components/shared/mobile-logo';
+import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 
 export default function AppLayout({
   children,
@@ -141,16 +142,21 @@ export default function AppLayout({
   }
     
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="relative min-h-screen bg-background">
       <Suspense fallback={null}>
+        <MobileLogo onSignOut={handleSignOut} />
         {user && (
-          <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
+          <div className="fixed bottom-4 left-0 right-0 z-50">
+            <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
+          </div>
         )}
         {!user && isPubliclyAccessible && (
-          <HomePageDock />
+          <div className="fixed bottom-4 left-0 right-0 z-50">
+            <HomePageDock />
+          </div>
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-20 pb-8 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
+      <main className="flex-grow p-4 pt-20 pb-28 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
       {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">

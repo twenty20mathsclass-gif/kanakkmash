@@ -1,15 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
+import { Dock, DockIcon, DockItem, DockLabel } from '@/components/ui/dock';
 import { cn } from '@/lib/utils';
 import { UserNav } from './user-nav';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+};
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -25,134 +29,63 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-type NavItem = {
-    href: string;
-    label: string;
-    icon: LucideIcon;
-};
-
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const getHomeHref = () => {
-    const publicPaths = ['/courses', '/blog', '/materials', '/community'];
-    const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/';
-
-    if (!user || isPublicPath) return '/';
-
-    switch(user?.role) {
-        case 'admin': return '/admin';
-        case 'teacher': return '/teacher';
-        default: return '/dashboard';
-    }
-  }
-  const homeHref = getHomeHref();
-
-
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   const activePath = items.reduce((closest, item) => {
-    if (item.href === homeHref && pathname === homeHref) {
-        return homeHref;
-    }
+    if (item.href === '/' && pathname === '/') return '/';
     if (currentUrl.startsWith(item.href) && item.href.length > closest.length && item.href !== '/') {
         return item.href;
     }
     return closest;
-  }, homeHref === pathname ? homeHref : '');
+  }, pathname === '/' ? '/' : '');
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex h-16 items-center justify-between">
-          <Link href={homeHref} className="flex items-center gap-2 text-primary font-bold">
-            <Image
-                src="/logo mlm@4x.png"
-                alt="kanakkmash"
-                width={40}
-                height={40}
-                className="h-8 w-auto object-contain"
-                priority
-            />
-             <span className='hidden sm:inline'>കണക്ക് മാഷ്</span>
-          </Link>
-          
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-muted-foreground">
-            {items.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePath === item.href;
+    <Dock className='bg-background/80 backdrop-blur-md'>
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = activePath === item.href;
 
-                return (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                            "flex items-center gap-2 p-2 rounded-md transition-colors hover:text-foreground hover:bg-muted",
-                            isActive ? 'text-primary font-semibold' : ''
-                        )}
-                    >
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                    </Link>
-                )
-            })}
-          </nav>
-          
-          <div className="flex items-center gap-3">
-              <Link
+        return (
+          <DockItem key={item.href}>
+            <Link href={item.href} passHref legacyBehavior>
+                <motion.a
+                    className={cn(
+                        "relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300",
+                        isActive ? "bg-gradient-to-br from-primary to-accent" : "bg-muted/70 hover:bg-muted"
+                    )}
+                >
+                    <DockIcon>
+                        <Icon className={cn("transition-colors", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover/menu-item:text-foreground")} />
+                    </DockIcon>
+                </motion.a>
+            </Link>
+            <DockLabel alwaysVisible={isActive}>{item.label}</DockLabel>
+          </DockItem>
+        );
+      })}
+
+      {user && onSignOut && (
+         <DockItem>
+            <UserNav user={user} onSignOut={onSignOut} />
+         </DockItem>
+      )}
+
+        <DockItem>
+            <Link
                 href="https://wa.me/919995315893"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Chat on WhatsApp"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
-              >
-                  <WhatsAppIcon className="h-5 w-5" />
-              </Link>
-            
-            {user && onSignOut && (
-              <UserNav 
-                user={user} 
-                onSignOut={onSignOut}
-                triggerClassName="h-9 w-9"
-              />
-            )}
-             
-             {/* Mobile Nav */}
-             <div className="md:hidden">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Menu className="h-6 w-6" />
-                            <span className="sr-only">Open menu</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left">
-                        <nav className="grid gap-6 text-lg font-medium pt-8">
-                            {items.map((item) => {
-                                const Icon = item.icon;
-                                const isActive = activePath === item.href;
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={cn("flex items-center gap-4 px-2.5",
-                                            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        <Icon className="h-5 w-5" />
-                                        {item.label}
-                                    </Link>
-                                )
-                            })}
-                        </nav>
-                    </SheetContent>
-                </Sheet>
-             </div>
-
-          </div>
-        </div>
-      </div>
-    </header>
+                className="flex h-full w-full items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
+            >
+                <DockIcon>
+                    <WhatsAppIcon className="h-6 w-6" />
+                </DockIcon>
+            </Link>
+             <DockLabel>WhatsApp</DockLabel>
+        </DockItem>
+    </Dock>
   );
 }
