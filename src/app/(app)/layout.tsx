@@ -32,6 +32,8 @@ import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { PublicHeader } from '@/components/shared/public-header';
 
 export default function AppLayout({
   children,
@@ -44,6 +46,7 @@ export default function AppLayout({
   const pathname = usePathname();
   const searchParams = usePathname();
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const isMobile = useIsMobile();
 
 
   // Paths that can be viewed without being logged in.
@@ -151,12 +154,14 @@ export default function AppLayout({
           </div>
         )}
         {!user && isPubliclyAccessible && (
-          <div className="fixed bottom-4 left-0 right-0 z-50">
-            <HomePageDock />
-          </div>
+          isMobile === false ? <PublicHeader /> : (
+            <div className="fixed bottom-4 left-0 right-0 z-50">
+              <HomePageDock />
+            </div>
+          )
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-20 pb-28 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
+      <main className="flex-grow p-4 pt-28 pb-28 md:p-6 lg:p-8">{children}</main>
       {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
