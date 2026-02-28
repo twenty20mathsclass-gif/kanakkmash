@@ -93,8 +93,9 @@ export type ExamSubmission = {
     examId: string;
     studentId: string;
     studentName: string;
-    answers: number[]; // array of selected option indices
+    answers: (number | null)[];
     submittedAt: Timestamp;
     score: number;
-    total: number;
+    totalQuestions: number;
+    examTitle: string;
 }

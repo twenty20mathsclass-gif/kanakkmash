@@ -65,12 +65,12 @@ service cloud.firestore {
     }
 
     match /exams/{examId} {
-      // Teacher who owns it or admin can manage.
-      allow read, update, delete: if isExamOwner(examId) || isAdmin();
       // Any authenticated user can read an exam.
       allow get, list: if request.auth != null;
       // Teachers and admins can create exams. Teachers must own them.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
+      // Teacher who owns it or admin can manage.
+      allow read, update, delete: if isExamOwner(examId) || isAdmin();
 
       match /submissions/{userId} {
         // A student can create their own submission.
