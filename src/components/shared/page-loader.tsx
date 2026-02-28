@@ -6,26 +6,28 @@ import Image from 'next/image';
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
   const loaderContent = (
     <div className="flex items-center justify-center">
-      <motion.div
-        animate={{
-          scale: [1, 1.05, 1],
-          opacity: [0.7, 1, 0.7],
-        }}
-        transition={{
-          duration: 2,
-          ease: 'easeInOut',
-          repeat: Infinity,
-        }}
-      >
-        <Image
-          src="/logo mlm@4x.png"
-          alt="kanakkmash logo"
-          width={250}
-          height={78}
-          className="h-auto w-48"
-          priority
-        />
-      </motion.div>
+        <div className="relative w-32 h-32">
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ clipPath: 'circle(0% at 50% 50%)' }}
+              animate={{ clipPath: 'circle(100% at 50% 50%)' }}
+              transition={{ 
+                  duration: 1.5,
+                  ease: 'easeInOut', 
+                  repeat: Infinity, 
+                  repeatType: 'mirror'
+                }}
+            >
+                <Image
+                    src="/fv.png"
+                    alt="kanakkmash logo"
+                    width={128}
+                    height={128}
+                    className="h-32 w-32"
+                    priority
+                />
+            </motion.div>
+        </div>
     </div>
   );
 
