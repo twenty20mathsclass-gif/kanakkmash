@@ -69,16 +69,25 @@ export function UpcomingClasses() {
 
     // Query 2: Group schedules
     if (user.courseModel) {
-      const groupQueryConstraints = [
-        where('courseModel', '==', user.courseModel),
-        where('date', '>=', Timestamp.fromDate(today)),
+        const groupQueryConstraints: any[] = [
+            where('courseModel', '==', user.courseModel),
+            where('date', '>=', Timestamp.fromDate(today)),
+        ];
+
+        if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
+            groupQueryConstraints.push(where('class', '==', user.class));
+        }
+        
+        if (user.class && user.class !== 'DEGREE' && user.syllabus) {
+            groupQueryConstraints.push(where('syllabus', '==', user.syllabus));
+        }
+      
+      groupQueryConstraints.push(
         orderBy('date', 'asc'),
         orderBy('startTime', 'asc'),
         limit(3)
-      ];
-      if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
-        groupQueryConstraints.splice(1, 0, where('class', '==', user.class));
-      }
+      );
+
       const groupQuery = query(schedulesCollection, ...groupQueryConstraints);
 
       unsubscribes.push(onSnapshot(groupQuery, (snapshot) => {

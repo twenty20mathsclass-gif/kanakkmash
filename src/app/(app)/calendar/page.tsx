@@ -54,21 +54,27 @@ export default function SchedulePage() {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
+        // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;
         }
 
-        if (!schedule.studentId) { 
-          if (schedule.courseModel === user.courseModel) {
+        // Group schedule check
+        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
-              return true;
+                return true;
             }
-            if (schedule.class === user.class) {
-              return true;
-            }
-          }
-        }
 
+            if (schedule.class === user.class) {
+                // For non-DEGREE classes, syllabus must also match
+                if (user.class !== 'DEGREE') {
+                    return schedule.syllabus === user.syllabus;
+                }
+                // For DEGREE classes, just matching class is enough
+                return true;
+            }
+        }
+        
         return false;
       });
 
