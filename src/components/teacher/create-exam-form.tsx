@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { UploadResult } from 'firebase/storage';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -179,7 +180,18 @@ export function CreateExamForm() {
         const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
         
         try {
-            const uploadResult = await uploadBytes(storageRef, file);
+            // Add a timeout to the upload process
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Upload timed out after 30 seconds. Please check your network and Firebase Storage configuration.')), 30000)
+            );
+
+            const uploadTask = uploadBytes(storageRef, file);
+
+            const uploadResult = await Promise.race([
+                uploadTask,
+                timeoutPromise
+            ]) as UploadResult;
+            
             const downloadURL = await getDownloadURL(uploadResult.ref);
             
             setValue(`questions.${questionIndex}.imageUrl`, downloadURL, { shouldValidate: true });
@@ -189,7 +201,7 @@ export function CreateExamForm() {
                 description: 'Your image has been successfully added to the question.'
             });
         } catch (error: any) {
-            console.error("Image upload failed", error);
+            console.error("Image upload failed:", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
             toast({
                 variant: 'destructive',
