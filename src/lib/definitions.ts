@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -100,3 +101,24 @@ export type ExamSubmission = {
     totalQuestions: number;
     examTitle: string;
 }
+
+export type CartOffer = {
+  id?: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+};
+
+export type CourseCategory = {
+  id?: string;
+  name: string;
+  courseCount: string;
+  imageUrl: string;
+  style: 'primary' | 'secondary' | 'accent';
+};
+
+export type PopularCourse = {
+  id?: string;
+  courseId: string;
+};

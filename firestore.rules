@@ -82,5 +82,18 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    match /cartContent/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /courseCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() || isRole('teacher');
+    }
+    match /popularCourses/{popularId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
