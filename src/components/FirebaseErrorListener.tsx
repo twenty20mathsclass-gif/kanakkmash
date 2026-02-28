@@ -10,7 +10,6 @@ export function FirebaseErrorListener() {
       if (process.env.NODE_ENV === 'development') {
         // In development, throw the error so Next.js can display its overlay.
         // This provides a rich debugging experience for security rules.
-        console.error("Firestore Permission Error:", error);
         throw error;
       } else {
         // In production, you might log to an external service.
