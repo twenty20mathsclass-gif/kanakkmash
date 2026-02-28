@@ -35,6 +35,11 @@ service cloud.firestore {
       
       // Admins can delete users. Users can delete their own account.
       allow delete: if isAdmin() || isOwner(userId);
+
+      match /attendance/{attendanceId} {
+        // A user can create/read/update/delete their own attendance records.
+        allow read, write: if isOwner(userId);
+      }
     }
 
     match /schedules/{scheduleId} {
