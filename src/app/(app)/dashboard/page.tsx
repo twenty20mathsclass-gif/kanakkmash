@@ -6,7 +6,7 @@ import { PageLoader } from '@/components/shared/page-loader';
 import { Button } from '@/components/ui/button';
 import { Bell, Search } from 'lucide-react';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
-import { OngoingCourses } from '@/components/dashboard/ongoing-courses';
+import { UpcomingClasses } from '@/components/dashboard/upcoming-classes';
 import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
 import type { User } from '@/lib/definitions';
@@ -67,7 +67,7 @@ export default function DashboardPage() {
 
       <LearningProgress />
       
-      <OngoingCourses />
+      <UpcomingClasses />
 
       <StudyHoursChart />
 
