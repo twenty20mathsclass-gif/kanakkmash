@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -127,9 +127,10 @@ export default function SchedulePage() {
       .filter(event => attendedClasses.includes(event.id))
       .reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
   
-  const handleMarkAttended = () => {
+  const handleJoinMeet = () => {
     if (!selectedEvent) return;
 
+    // Mark attendance if not already marked
     if (!attendedClasses.includes(selectedEvent.id)) {
         setAttendedClasses([...attendedClasses, selectedEvent.id]);
         toast({
@@ -137,6 +138,12 @@ export default function SchedulePage() {
             description: `You've marked your attendance for "${selectedEvent.title}".`,
         });
     }
+
+    // Open meet link in a new tab
+    if (selectedEvent.meetLink) {
+        window.open(selectedEvent.meetLink, '_blank', 'noopener,noreferrer');
+    }
+    
     setSelectedEvent(null); // Close dialog
   };
 
@@ -261,7 +268,7 @@ export default function SchedulePage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>{selectedEvent?.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Join the class meeting or mark your attendance for this session.
+                    Click 'Join Meet' to enter the class and automatically mark your attendance.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 text-sm">
@@ -270,15 +277,9 @@ export default function SchedulePage() {
             </div>
             <AlertDialogFooter>
                 <AlertDialogCancel>Close</AlertDialogCancel>
-                <Button asChild variant="outline">
-                    <a href={selectedEvent?.meetLink} target="_blank" rel="noopener noreferrer">Join Meet</a>
+                <Button onClick={handleJoinMeet}>
+                    Join Meet
                 </Button>
-                <AlertDialogAction
-                    onClick={handleMarkAttended}
-                    disabled={attendedClasses.includes(selectedEvent?.id || '')}
-                >
-                    {attendedClasses.includes(selectedEvent?.id || '') ? 'Attended' : 'Mark as Attended'}
-                </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
