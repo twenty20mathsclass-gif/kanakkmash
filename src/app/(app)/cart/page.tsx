@@ -1,5 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Receipt, PlayCircle, Star } from 'lucide-react';
@@ -12,6 +17,26 @@ export const dynamic = 'force-dynamic';
 const recommendedCourses = courses.slice(0, 2);
 
 export default function CartPage() {
+  const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleAddToCart = (courseTitle: string) => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to add items to your cart.',
+        variant: 'destructive',
+      });
+      router.push('/sign-in');
+    } else {
+      // This is where you would add the item to the cart in a real implementation
+      toast({
+        title: 'Success!',
+        description: `${courseTitle} has been added to your cart.`,
+      });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -126,7 +151,7 @@ export default function CartPage() {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-lg text-primary">$26.99</p>
-                                        <Button size="sm" className="mt-1">Add to Cart</Button>
+                                        <Button size="sm" className="mt-1" onClick={() => handleAddToCart(course.title)}>Add to Cart</Button>
                                     </div>
                                 </CardContent>
                             </Card>
