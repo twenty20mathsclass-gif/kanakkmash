@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +15,6 @@ import type { User } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-// Create a motion-wrapped version of the Button
-const MotionButton = motion(Button);
 
 export function UserNav({ 
   user, 
@@ -40,17 +36,15 @@ export function UserNav({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <MotionButton
+        <Button
           variant="ghost"
-          className={cn("relative h-10 w-10 rounded-full p-0", triggerClassName)}
-          whileHover={{ scale: 1.1 }}
-          transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+          className={cn("relative h-10 w-10 rounded-full p-0 transition-transform hover:scale-110 focus:scale-110", triggerClassName)}
         >
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
-        </MotionButton>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-56 bg-popover/80 border-border text-popover-foreground backdrop-blur-md mb-2"
