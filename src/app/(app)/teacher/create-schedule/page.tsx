@@ -89,8 +89,10 @@ export default function CreateSchedulePage() {
     },
   });
 
-  const courseModel = form.watch('courseModel');
-  const selectedClass = form.watch('class');
+  const { watch, setValue } = form;
+
+  const courseModel = watch('courseModel');
+  const selectedClass = watch('class');
 
   useEffect(() => {
     if (!firestore) return;
@@ -111,11 +113,11 @@ export default function CreateSchedulePage() {
     if (selectedClass) {
         const studentsInClass = allStudents.filter(student => student.class === selectedClass);
         setFilteredStudents(studentsInClass);
-        form.setValue('studentId', ''); // Reset student selection when class changes
+        setValue('studentId', ''); // Reset student selection when class changes
     } else {
         setFilteredStudents([]);
     }
-  }, [selectedClass, allStudents, form]);
+  }, [selectedClass, allStudents, setValue]);
 
 
   const onSubmit = (data: ScheduleFormValues) => {
@@ -217,8 +219,8 @@ export default function CreateSchedulePage() {
                       <FormLabel>Course Model</FormLabel>
                       <Select onValueChange={(value) => {
                           field.onChange(value);
-                          form.setValue('class', '');
-                          form.setValue('studentId', '');
+                          setValue('class', '');
+                          setValue('studentId', '');
                       }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
