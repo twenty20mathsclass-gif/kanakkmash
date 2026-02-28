@@ -1,19 +1,30 @@
+'use client';
 
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
+import { PublicHeader } from '@/components/shared/public-header';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
 import { Reveal } from '@/components/shared/reveal';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
+  const isMobile = useIsMobile();
+
   return (
     <div className="flex min-h-screen flex-col">
       <Suspense fallback={null}>
-        <HomePageDock />
+        {isMobile ? (
+          <div className="fixed bottom-4 left-0 right-0 z-50 md:hidden">
+            <HomePageDock />
+          </div>
+        ) : (
+          <PublicHeader />
+        )}
       </Suspense>
       <main className="flex flex-1 items-center justify-center pt-8 pb-24 md:pt-24 md:pb-0">
         <section className="relative overflow-hidden">

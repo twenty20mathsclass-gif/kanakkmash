@@ -5,7 +5,10 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { House, Newspaper, BarChart3, Users } from 'lucide-react';
+import { House, Newspaper, BarChart3, Users, Calendar, FileText, ShoppingCart } from 'lucide-react';
+import type { User } from '@/lib/definitions';
+import { UserNav } from './user-nav';
+
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -28,13 +31,31 @@ const publicNavItems = [
     { href: '/community', label: 'Community', icon: Users },
 ];
 
-export function PublicHeader() {
+const studentNavItems = [
+    { href: '/dashboard', label: 'Home', icon: House },
+    { href: '/calendar', label: 'Class Schedule', icon: Calendar },
+    { href: '/courses', label: 'Exam Schedule', icon: FileText },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart },
+];
+
+
+export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOut?: () => void }) {
   const pathname = usePathname();
+  const navItems = user ? studentNavItems : publicNavItems;
+  const logoLink = user ? '/dashboard' : '/';
+
+  const isActive = (href: string) => {
+    if(user) {
+        if (href === '/dashboard' && pathname === '/dashboard') return true;
+        return href !== '/dashboard' && pathname.startsWith(href);
+    }
+    return pathname === href;
+  }
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
         <div className="flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
-          <Link href="/">
+          <Link href={logoLink}>
             <Image
               src="/logo mlm@4x.png"
               alt="kanakkmash"
@@ -46,17 +67,17 @@ export function PublicHeader() {
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             <div className="w-px h-6 bg-border mx-2"></div>
-            {publicNavItems.map(item => {
+            {navItems.map(item => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const active = isActive(item.href);
               return (
                 <Button
                   key={item.href}
-                  variant={isActive ? 'default' : 'ghost'}
+                  variant={active ? 'default' : 'ghost'}
                   asChild
                   className={cn(
                     "rounded-full",
-                    isActive && "text-primary-foreground"
+                    active && "text-primary-foreground"
                   )}
                 >
                   <Link href={item.href}>
@@ -68,15 +89,21 @@ export function PublicHeader() {
             })}
           </nav>
           <div className="flex-1 md:hidden"></div>
-          <Link
-            href="https://wa.me/919995315893"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat on WhatsApp"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851] shrink-0"
-          >
-            <WhatsAppIcon className="h-6 w-6" />
-          </Link>
+          {user && onSignOut ? (
+            <div className="h-10 w-10">
+                <UserNav user={user} onSignOut={onSignOut} />
+            </div>
+          ) : (
+            <Link
+                href="https://wa.me/919995315893"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851] shrink-0"
+            >
+                <WhatsAppIcon className="h-6 w-6" />
+            </Link>
+          )}
         </div>
     </header>
   );

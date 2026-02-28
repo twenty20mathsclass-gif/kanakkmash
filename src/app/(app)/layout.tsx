@@ -149,9 +149,13 @@ export default function AppLayout({
       <Suspense fallback={null}>
         <MobileLogo onSignOut={handleSignOut} />
         {user && (
-          <div className="fixed bottom-4 left-0 right-0 z-50">
-            <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
-          </div>
+          isMobile ? (
+            <div className="fixed bottom-4 left-0 right-0 z-50">
+              <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
+            </div>
+          ) : (
+            <PublicHeader user={user} onSignOut={handleSignOut} />
+          )
         )}
         {!user && isPubliclyAccessible && (
           isMobile === false ? <PublicHeader /> : (
@@ -161,7 +165,7 @@ export default function AppLayout({
           )
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-28 pb-28 md:p-6 lg:p-8">{children}</main>
+      <main className="flex-grow p-4 pt-28 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
       {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
