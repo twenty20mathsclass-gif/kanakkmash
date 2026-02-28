@@ -82,29 +82,6 @@
 }
 
 @layer components {
-  .math-icon {
-    @apply absolute block text-primary/20;
-    animation: gentle-float ease-in-out infinite;
-    will-change: transform;
-  }
-
-  @keyframes gentle-float {
-    0% {
-      transform: translate(0px, 0px);
-    }
-    25% {
-      transform: translate(5px, -10px);
-    }
-    50% {
-      transform: translate(0px, -20px);
-    }
-    75% {
-      transform: translate(-5px, -10px);
-    }
-    100% {
-      transform: translate(0px, 0px);
-    }
-  }
 }
 
 @layer utilities {
