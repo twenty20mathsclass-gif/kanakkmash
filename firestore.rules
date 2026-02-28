@@ -51,6 +51,15 @@ service cloud.firestore {
 
       // Only the teacher who created the schedule or an admin can update/delete it
       allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
+
+      match /attendees/{userId} {
+        // Student can create their own attendance record for a schedule
+        allow create: if isOwner(userId);
+        // Teacher who owns the schedule, the student, or an admin can read attendance
+        allow get, list: if get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid || isOwner(userId) || isAdmin();
+        // No one can update or delete from here to preserve attendance record.
+        allow update, delete: if false;
+      }
     }
   }
 }

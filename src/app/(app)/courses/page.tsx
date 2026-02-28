@@ -150,9 +150,10 @@ export default function ExamSchedulePage() {
     const duration = getDurationInMinutes(selectedEvent.startTime, selectedEvent.endTime);
 
     if (!attendedClasses.includes(selectedEvent.id)) {
-        const attendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
+        const studentAttendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
+        const teacherAttendanceRef = doc(firestore, 'schedules', selectedEvent.id, 'attendees', user.id);
         
-        const attendanceData = {
+        const studentAttendanceData = {
             scheduleId: selectedEvent.id,
             attendedAt: Timestamp.now(),
             durationMinutes: duration,
@@ -160,7 +161,17 @@ export default function ExamSchedulePage() {
             date: selectedEvent.date,
         };
 
-        setDoc(attendanceRef, attendanceData)
+        const teacherAttendanceData = {
+            ...studentAttendanceData,
+            studentId: user.id,
+            studentName: user.name,
+            studentAvatar: user.avatarUrl,
+        };
+
+        const studentWrite = setDoc(studentAttendanceRef, studentAttendanceData);
+        const teacherWrite = setDoc(teacherAttendanceRef, teacherAttendanceData);
+
+        Promise.all([studentWrite, teacherWrite])
           .then(() => {
             toast({
                 title: 'Attendance Marked!',
@@ -170,9 +181,9 @@ export default function ExamSchedulePage() {
           .catch((serverError) => {
             const permissionError = new FirestorePermissionError(
               {
-                path: attendanceRef.path,
+                path: `users/${user.id}/attendance/${selectedEvent.id} and schedules/${selectedEvent.id}/attendees/${user.id}`,
                 operation: 'create',
-                requestResourceData: attendanceData,
+                requestResourceData: teacherAttendanceData,
               },
               { cause: serverError }
             );
