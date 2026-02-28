@@ -72,7 +72,7 @@ export default function SchedulePage() {
         return false;
       });
 
-      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      filteredSchedules.sort((a, b) => b.startTime.localeCompare(a.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
     }, (error) => {
