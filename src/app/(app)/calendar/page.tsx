@@ -25,8 +25,6 @@ const iconMap: { [key: string]: React.ElementType } = {
   BookOpen
 };
 
-const timeSlots = ['08:00am', '09:00am', '10:00am', '11:00am', '12:00pm', '01:00pm', '02:00pm', '03:00pm'];
-
 export default function SchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -45,75 +43,54 @@ export default function SchedulePage() {
     setLoading(true);
     const start = startOfDay(selectedDate);
     const end = endOfDay(selectedDate);
-    const schedulesCollection = collection(firestore, 'schedules');
-
-    // --- Create Queries ---
-    const personalQuery = query(
-      schedulesCollection,
-      where('studentId', '==', user.id),
+    
+    // Simplified query: fetch all schedules for the selected date.
+    // Filtering will happen on the client-side.
+    const schedulesQuery = query(
+      collection(firestore, 'schedules'),
       where('date', '>=', Timestamp.fromDate(start)),
       where('date', '<=', Timestamp.fromDate(end))
     );
 
-    const groupQueryConstraints = [
-      where('date', '>=', Timestamp.fromDate(start)),
-      where('date', '<=', Timestamp.fromDate(end)),
-    ];
-    if (user.courseModel) {
-      groupQueryConstraints.push(where('courseModel', '==', user.courseModel));
-    }
-    if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
-      groupQueryConstraints.push(where('class', '==', user.class));
-    }
-    const groupQuery = user.courseModel ? query(schedulesCollection, ...groupQueryConstraints) : null;
+    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+      const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
-    // --- State for each listener ---
-    let personalSchedules: Schedule[] = [];
-    let groupSchedules: Schedule[] = [];
-    let personalDone = false;
-    let groupDone = !groupQuery;
+      // Filter the schedules on the client
+      const filteredSchedules = allSchedulesForDay.filter(schedule => {
+        // 1. Include one-to-one classes specifically for the user
+        if (schedule.studentId === user.id) {
+          return true;
+        }
 
-    const combineAndSet = () => {
-      if (personalDone && groupDone) {
-        const combined = [...personalSchedules, ...groupSchedules];
-        const uniqueSchedules = Array.from(new Map(combined.map(s => [s.id, s])).values());
-        uniqueSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
-        setSchedules(uniqueSchedules);
-        setLoading(false);
-      }
-    };
-    
-    const unsubPersonal = onSnapshot(personalQuery, (snapshot) => {
-      personalSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-      personalDone = true;
-      combineAndSet();
+        // 2. Include group classes the user should see
+        if (!schedule.studentId) { // It's a group class if studentId is not set
+          // Check if the course model matches
+          if (schedule.courseModel === user.courseModel) {
+            // For competitive exams, only the course model needs to match
+            if (user.courseModel === 'COMPETITIVE EXAM') {
+              return true;
+            }
+            // For other courses, the class must also match
+            if (schedule.class === user.class) {
+              return true;
+            }
+          }
+        }
+
+        // Exclude all other schedules
+        return false;
+      });
+
+      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      setSchedules(filteredSchedules);
+      setLoading(false);
     }, (error) => {
-      console.error("Error fetching personal schedules: ", error);
-      personalSchedules = [];
-      personalDone = true;
-      combineAndSet();
+      console.error("Error fetching schedules: ", error);
+      setSchedules([]);
+      setLoading(false);
     });
 
-    let unsubGroup: (() => void) | null = null;
-    if (groupQuery) {
-      unsubGroup = onSnapshot(groupQuery, (snapshot) => {
-        groupSchedules = snapshot.docs
-          .filter(doc => !doc.data().studentId)
-          .map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-        groupDone = true;
-        combineAndSet();
-      }, (error) => {
-        console.error("Error fetching group schedules: ", error);
-        groupSchedules = [];
-        groupDone = true;
-        combineAndSet();
-      });
-    }
-
-    return () => {
-      unsubPersonal();
-      unsubGroup?.();
-    };
+    return () => unsubscribe();
   }, [selectedDate, firestore, user]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
