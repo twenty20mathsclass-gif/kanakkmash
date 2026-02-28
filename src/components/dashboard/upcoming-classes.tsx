@@ -53,11 +53,11 @@ export function UpcomingClasses() {
     };
 
     let listenersAttached = 0;
-    let listenersResolved = 0;
+    const resolvedListeners = new Set<string>();
 
-    const onDataResolved = () => {
-        listenersResolved++;
-        if (listenersResolved >= listenersAttached) {
+    const onDataResolved = (listenerId: string) => {
+        resolvedListeners.add(listenerId);
+        if (resolvedListeners.size >= listenersAttached) {
             processAndSetSchedules();
         }
     };
@@ -69,17 +69,17 @@ export function UpcomingClasses() {
       where('studentId', '==', user.id),
       where('date', '>=', Timestamp.fromDate(today)),
       orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
+      // orderBy('startTime', 'asc'), // This can cause a missing index error
       limit(3)
     );
     unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
       snapshot.docs.forEach(doc => {
         combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
       });
-      onDataResolved();
+      onDataResolved('personal');
     }, (error) => {
         console.error("Error fetching personal schedules:", error);
-        onDataResolved();
+        onDataResolved('personal');
     }));
 
     // Query 2: Group schedules
@@ -100,7 +100,7 @@ export function UpcomingClasses() {
       
       groupQueryConstraints.push(
         orderBy('date', 'asc'),
-        orderBy('startTime', 'asc'),
+        // orderBy('startTime', 'asc'), // This can cause a missing index error
         limit(3)
       );
 
@@ -112,10 +112,10 @@ export function UpcomingClasses() {
             combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
           }
         });
-        onDataResolved();
+        onDataResolved('group');
       }, (error) => {
         console.error("Error fetching group schedules:", error);
-        onDataResolved();
+        onDataResolved('group');
       }));
     }
 
