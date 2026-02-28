@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
-import { Dock, DockIcon, DockItem, DockLabel } from '@/components/ui/dock';
+import { Dock, DockIcon, DockItem } from '@/components/ui/dock';
 import { cn } from '@/lib/utils';
 import { UserNav } from './user-nav';
 
@@ -70,7 +70,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                 />
               </DockIcon>
             </Link>
-            <DockLabel alwaysVisible={isActive}>{item.label}</DockLabel>
           </DockItem>
         );
       })}
@@ -89,7 +88,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
             <WhatsAppIcon className="h-6 w-6" />
           </DockIcon>
         </Link>
-        <DockLabel>WhatsApp</DockLabel>
       </DockItem>
 
       {user && onSignOut && (

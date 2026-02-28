@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Settings } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DockItemContext, DockLabel } from '@/components/ui/dock';
+import { DockItemContext } from '@/components/ui/dock';
 
 export function UserNav({ user, onSignOut, side, align }: { user: User; onSignOut: () => void, side?: 'top' | 'bottom' | 'left' | 'right', align?: 'start' | 'center' | 'end' }) {
   const isMobile = useIsMobile();
@@ -55,7 +55,6 @@ export function UserNav({ user, onSignOut, side, align }: { user: User; onSignOu
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {dockItemContext && <DockLabel>{user.name}</DockLabel>}
     </>
   );
 }
