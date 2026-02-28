@@ -84,15 +84,15 @@ service cloud.firestore {
     }
 
     match /cartContent/{docId} {
-      allow read: if request.auth == null || request.auth.uid != null;
+      allow read: if true;
       allow write: if isAdmin();
     }
     match /courseCategories/{categoryId} {
-      allow read: if request.auth == null || request.auth.uid != null;
+      allow read: if true;
       allow write: if isAdmin() || isRole('teacher');
     }
     match /popularCourses/{popularId} {
-      allow read: if request.auth == null || request.auth.uid != null;
+      allow read: if true;
       allow write: if isAdmin();
     }
   }
