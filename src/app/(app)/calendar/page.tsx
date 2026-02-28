@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -28,10 +30,13 @@ const iconMap: { [key: string]: React.ElementType } = {
 export default function SchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
+  const [attendedClasses, setAttendedClasses] = useState<string[]>([]);
 
   useEffect(() => {
     if (!firestore || !user) {
@@ -93,10 +98,8 @@ export default function SchedulePage() {
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
   
-  const learningProgress = 88;
-  const learningTotal = 180;
-  
   const getFormattedTime = (time: string) => {
+    if (!time) return '';
     try {
       const date = parse(time, 'HH:mm', new Date());
       return format(date, 'hh:mmaaa');
@@ -104,6 +107,38 @@ export default function SchedulePage() {
       return '';
     }
   }
+
+  const getDurationInMinutes = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 0;
+    try {
+        const start = parse(startTime, 'HH:mm', new Date());
+        const end = parse(endTime, 'HH:mm', new Date());
+        const diff = end.getTime() - start.getTime();
+        return Math.round(diff / (1000 * 60));
+    } catch (e) {
+        console.error("Error calculating duration", e);
+        return 0;
+    }
+  };
+
+  const totalLearningMinutes = schedules.reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
+
+  const attendedLearningMinutes = schedules
+      .filter(event => attendedClasses.includes(event.id))
+      .reduce((acc, event) => acc + getDurationInMinutes(event.startTime, event.endTime), 0);
+  
+  const handleMarkAttended = () => {
+    if (!selectedEvent) return;
+
+    if (!attendedClasses.includes(selectedEvent.id)) {
+        setAttendedClasses([...attendedClasses, selectedEvent.id]);
+        toast({
+            title: 'Attendance Marked!',
+            description: `You've marked your attendance for "${selectedEvent.title}".`,
+        });
+    }
+    setSelectedEvent(null); // Close dialog
+  };
 
   return (
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
@@ -162,10 +197,10 @@ export default function SchedulePage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm">Today's Learning</p>
-                <p className="text-lg font-bold">{learningProgress}min / {learningTotal}min</p>
+                <p className="text-lg font-bold">{attendedLearningMinutes}min / {totalLearningMinutes}min</p>
               </div>
             </div>
-            <Progress value={(learningProgress/learningTotal) * 100} className="mt-2 h-1.5 [&>*]:bg-primary-foreground" />
+            <Progress value={totalLearningMinutes > 0 ? (attendedLearningMinutes/totalLearningMinutes) * 100 : 0} className="mt-2 h-1.5 [&>*]:bg-primary-foreground" />
           </CardContent>
         </Card>
       </Reveal>
@@ -191,7 +226,7 @@ export default function SchedulePage() {
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
                 <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
                 <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
-                  <a href={event.meetLink} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                  <div onClick={() => setSelectedEvent(event)} className="block cursor-pointer">
                       <Card style={{backgroundColor: event.color}} className="shadow-lg hover:shadow-xl transition-shadow">
                           <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
@@ -209,7 +244,7 @@ export default function SchedulePage() {
                               </div>
                           </CardContent>
                       </Card>
-                    </a>
+                    </div>
                 </div>
               </div>
             )
@@ -220,6 +255,33 @@ export default function SchedulePage() {
             </div>
         )}
       </Reveal>
+
+      <AlertDialog open={!!selectedEvent} onOpenChange={(isOpen) => !isOpen && setSelectedEvent(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{selectedEvent?.title}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Join the class meeting or mark your attendance for this session.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 text-sm">
+                <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
+                <p><strong>Time:</strong> {selectedEvent ? `${getFormattedTime(selectedEvent.startTime)} - ${getFormattedTime(selectedEvent.endTime)}` : ''}</p>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Close</AlertDialogCancel>
+                <Button asChild variant="outline">
+                    <a href={selectedEvent?.meetLink} target="_blank" rel="noopener noreferrer">Join Meet</a>
+                </Button>
+                <AlertDialogAction
+                    onClick={handleMarkAttended}
+                    disabled={attendedClasses.includes(selectedEvent?.id || '')}
+                >
+                    {attendedClasses.includes(selectedEvent?.id || '') ? 'Attended' : 'Mark as Attended'}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
