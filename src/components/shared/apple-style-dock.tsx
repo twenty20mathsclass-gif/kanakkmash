@@ -90,7 +90,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               "flex h-[56px] flex-shrink-0 items-center justify-center gap-1 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md md:h-16 md:gap-2"
             )}
           >
-            <Link href={homeHref} className="flex h-10 items-center justify-center px-2 md:h-12 md:px-3">
+            <Link href={homeHref} className="hidden h-10 items-center justify-center px-2 md:flex md:h-12 md:px-3">
                 <div className="relative h-6 w-auto aspect-[150/47] md:h-8">
                     <Image
                         src="/logo mlm@4x.png"
@@ -101,7 +101,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                     />
                 </div>
             </Link>
-            <div className="h-full w-px bg-border mx-1 self-center" />
+            <div className="hidden h-full w-px bg-border mx-1 self-center md:block" />
 
             {items.map((item) => {
                 const Icon = item.icon;
