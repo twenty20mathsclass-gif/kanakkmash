@@ -45,74 +45,75 @@ export default function SchedulePage() {
     setLoading(true);
     const start = startOfDay(selectedDate);
     const end = endOfDay(selectedDate);
-    
     const schedulesCollection = collection(firestore, 'schedules');
-    let combinedSchedules: { [key: string]: Schedule } = {};
-    const unsubscribes: (() => void)[] = [];
-    let queriesFinished = 0;
-    
-    const expectedQueries = (user.courseModel ? 1 : 0) + 1; // +1 for personal query
 
-    const processSnapshots = () => {
-      queriesFinished++;
-      if (queriesFinished >= expectedQueries) {
-        const schedulesData = Object.values(combinedSchedules);
-        schedulesData.sort((a, b) => a.startTime.localeCompare(b.startTime));
-        setSchedules(schedulesData);
-        setLoading(false);
-      }
-    };
-    
-    // Query 1: Schedules specifically for this user (one-to-one)
+    // --- Create Queries ---
     const personalQuery = query(
       schedulesCollection,
       where('studentId', '==', user.id),
       where('date', '>=', Timestamp.fromDate(start)),
       where('date', '<=', Timestamp.fromDate(end))
     );
-    unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
-      snapshot.docs.forEach(doc => {
-        combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-      });
-      processSnapshots();
+
+    const groupQueryConstraints = [
+      where('date', '>=', Timestamp.fromDate(start)),
+      where('date', '<=', Timestamp.fromDate(end)),
+    ];
+    if (user.courseModel) {
+      groupQueryConstraints.push(where('courseModel', '==', user.courseModel));
+    }
+    if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
+      groupQueryConstraints.push(where('class', '==', user.class));
+    }
+    const groupQuery = user.courseModel ? query(schedulesCollection, ...groupQueryConstraints) : null;
+
+    // --- State for each listener ---
+    let personalSchedules: Schedule[] = [];
+    let groupSchedules: Schedule[] = [];
+    let personalDone = false;
+    let groupDone = !groupQuery;
+
+    const combineAndSet = () => {
+      if (personalDone && groupDone) {
+        const combined = [...personalSchedules, ...groupSchedules];
+        const uniqueSchedules = Array.from(new Map(combined.map(s => [s.id, s])).values());
+        uniqueSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        setSchedules(uniqueSchedules);
+        setLoading(false);
+      }
+    };
+    
+    const unsubPersonal = onSnapshot(personalQuery, (snapshot) => {
+      personalSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+      personalDone = true;
+      combineAndSet();
     }, (error) => {
       console.error("Error fetching personal schedules: ", error);
-      processSnapshots();
-    }));
+      personalSchedules = [];
+      personalDone = true;
+      combineAndSet();
+    });
 
-    // Query 2: Group schedules for the user's class
-    if (user.courseModel) {
-      const groupQueryConstraints = [
-        where('courseModel', '==', user.courseModel),
-        where('date', '>=', Timestamp.fromDate(start)),
-        where('date', '<=', Timestamp.fromDate(end)),
-      ];
-      if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
-        groupQueryConstraints.push(where('class', '==', user.class));
-      }
-      const groupQuery = query(schedulesCollection, ...groupQueryConstraints);
-      
-      unsubscribes.push(onSnapshot(groupQuery, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-          // Only add if it's a group class (no studentId)
-          if (!doc.data().studentId) {
-            combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-          }
-        });
-        processSnapshots();
+    let unsubGroup: (() => void) | null = null;
+    if (groupQuery) {
+      unsubGroup = onSnapshot(groupQuery, (snapshot) => {
+        groupSchedules = snapshot.docs
+          .filter(doc => !doc.data().studentId)
+          .map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+        groupDone = true;
+        combineAndSet();
       }, (error) => {
         console.error("Error fetching group schedules: ", error);
-        processSnapshots();
-      }));
-    } else {
-        queriesFinished++;
+        groupSchedules = [];
+        groupDone = true;
+        combineAndSet();
+      });
     }
 
-    if (queriesFinished >= expectedQueries) {
-        setLoading(false);
-    }
-
-    return () => unsubscribes.forEach(unsub => unsub());
+    return () => {
+      unsubPersonal();
+      unsubGroup?.();
+    };
   }, [selectedDate, firestore, user]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
