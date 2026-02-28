@@ -25,11 +25,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Admins and teachers can get user profiles. Users can only get their own.
-      allow get: if isOwner(userId) || isAdmin() || isRole('teacher');
-
-      // Admins and teachers can list users.
-      allow list: if isAdmin() || isRole('teacher');
+      // Admins and teachers can read user profiles. Users can only read their own.
+      allow read: if isOwner(userId) || isAdmin() || isRole('teacher');
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
