@@ -5,9 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from '@/lib/definitions';
+import type { User, Schedule } from '@/lib/definitions';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -85,6 +86,8 @@ export default function CreateExamSchedulePage() {
   const [allStudents, setAllStudents] = useState<User[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<User[]>([]);
 
+  const [scheduledExams, setScheduledExams] = useState<Schedule[]>([]);
+
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
@@ -106,7 +109,7 @@ export default function CreateExamSchedulePage() {
   const selectedClass = watch('class');
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     
     const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
@@ -117,7 +120,7 @@ export default function CreateExamSchedulePage() {
     });
 
     return () => unsubscribe();
-  }, [firestore]);
+  }, [firestore, user]);
 
 
   useEffect(() => {
@@ -134,6 +137,34 @@ export default function CreateExamSchedulePage() {
     // Reset student selection when class changes to avoid sending an invalid studentId
     setValue('studentId', '');
   }, [selectedClass, setValue]);
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const q = query(
+      collection(firestore, 'schedules'),
+      where('teacherId', '==', user.id),
+      where('type', '==', 'exam'),
+      where('date', '>=', Timestamp.fromDate(today)),
+      orderBy('date', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const exams: Schedule[] = [];
+      querySnapshot.forEach((doc) => {
+        exams.push({ id: doc.id, ...doc.data() } as Schedule);
+      });
+      exams.sort((a,b) => a.startTime.localeCompare(b.startTime));
+      setScheduledExams(exams);
+    }, (error) => {
+      console.error("Error fetching scheduled exams:", error);
+    });
+
+    return () => unsubscribe();
+  }, [firestore, user]);
 
 
   const onSubmit = (data: ScheduleFormValues) => {
@@ -215,227 +246,238 @@ export default function CreateExamSchedulePage() {
   const showStudentField = courseModel === 'ONE TO ONE' && !!selectedClass;
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
-      <Reveal>
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Create a New Exam Schedule</h1>
-          <p className="text-muted-foreground">Fill out the form below to add a new exam to the student schedule.</p>
-        </div>
-      </Reveal>
+    <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="space-y-8">
+            <Reveal>
+                <div>
+                <h1 className="text-3xl font-bold font-headline">Create a New Exam Schedule</h1>
+                <p className="text-muted-foreground">Fill out the form below to add a new exam to the student schedule.</p>
+                </div>
+            </Reveal>
 
-      <Reveal delay={0.2}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Exam Details</CardTitle>
-            <CardDescription>All fields are required unless marked optional.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="courseModel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Course Model</FormLabel>
-                      <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          setValue('class', '');
-                          setValue('syllabus', '');
-                          setValue('studentId', '');
-                      }} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a course model" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                          <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
-                          <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {showClassField && (
-                    <FormField
+            <Reveal delay={0.2}>
+                <Card>
+                <CardHeader>
+                    <CardTitle>Exam Details</CardTitle>
+                    <CardDescription>All fields are required unless marked optional.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
                         control={form.control}
-                        name="class"
+                        name="courseModel"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Class</FormLabel>
+                            <FormLabel>Course Model</FormLabel>
                             <Select onValueChange={(value) => {
                                 field.onChange(value);
+                                setValue('class', '');
                                 setValue('syllabus', '');
                                 setValue('studentId', '');
-                            }} value={field.value || ''}>
+                            }} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a class" />
+                                    <SelectValue placeholder="Select a course model" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
+                                <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
+                                <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />
                             </FormItem>
                         )}
-                    />
-                )}
-                
-                {showSyllabusField && (
-                    <FormField
+                        />
+
+                        {showClassField && (
+                            <FormField
+                                control={form.control}
+                                name="class"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Class</FormLabel>
+                                    <Select onValueChange={(value) => {
+                                        field.onChange(value);
+                                        setValue('syllabus', '');
+                                        setValue('studentId', '');
+                                    }} value={field.value || ''}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a class" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                        
+                        {showSyllabusField && (
+                            <FormField
+                                control={form.control}
+                                name="syllabus"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Syllabus</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a syllabus" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+
+                        {showStudentField && (
+                            <FormField
+                                control={form.control}
+                                name="studentId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Student</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No students in this class"} />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        <FormField
                         control={form.control}
-                        name="syllabus"
+                        name="courseTitle"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Syllabus</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a syllabus" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <FormLabel>Exam Title</FormLabel>
+                            <FormControl><Input placeholder="e.g., Final Term Algebra Exam" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
-                    />
-                )}
-
-
-                {showStudentField && (
-                    <FormField
+                        />
+                        
+                        <FormField
                         control={form.control}
-                        name="studentId"
+                        name="date"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                            control={form.control}
+                            name="startTime"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Start Time</FormLabel>
+                                <FormControl><Input type="time" {...field} /></FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                            control={form.control}
+                            name="endTime"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>End Time</FormLabel>
+                                <FormControl><Input type="time" {...field} /></FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
+
+                        <FormField
+                        control={form.control}
+                        name="meetLink"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Student</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No students in this class"} />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <FormLabel>Google Meet Link</FormLabel>
+                            <FormControl><Input type="url" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
-                    />
-                )}
+                        />
 
-                <FormField
-                  control={form.control}
-                  name="courseTitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Exam Title</FormLabel>
-                      <FormControl><Input placeholder="e.g., Final Term Algebra Exam" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        {error && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                        )}
+
+                        <Button type="submit" disabled={loading} className="w-full">
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Exam Schedule
+                        </Button>
+                    </form>
+                    </Form>
+                </CardContent>
+                </Card>
+            </Reveal>
+        </div>
+        <div className="hidden md:block">
+            <Reveal delay={0.4}>
+                <ScheduledItemsList 
+                    schedules={scheduledExams}
+                    title="Upcoming Exams"
+                    description="A list of your scheduled exams."
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                    control={form.control}
-                    name="startTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Start Time</FormLabel>
-                        <FormControl><Input type="time" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="endTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>End Time</FormLabel>
-                        <FormControl><Input type="time" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="meetLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Google Meet Link</FormLabel>
-                      <FormControl><Input type="url" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Exam Schedule
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </Reveal>
+            </Reveal>
+        </div>
     </div>
   );
 }
