@@ -77,7 +77,7 @@ type DockItemContextType = {
   isHovered: MotionValue<number>;
 };
 
-const DockItemContext = createContext<DockItemContextType | undefined>(
+export const DockItemContext = createContext<DockItemContextType | undefined>(
   undefined
 );
 

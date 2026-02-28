@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import * as React from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +15,13 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Settings } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DockLabel } from '@/components/ui/dock';
+import { DockItemContext, DockLabel } from '@/components/ui/dock';
 
 export function UserNav({ user, onSignOut, side, align }: { user: User; onSignOut: () => void, side?: 'top' | 'bottom' | 'left' | 'right', align?: 'start' | 'center' | 'end' }) {
   const isMobile = useIsMobile();
   const dropdownSide = side || (isMobile ? 'top' : 'bottom');
   const router = useRouter();
+  const dockItemContext = React.useContext(DockItemContext);
 
   return (
     <>
@@ -53,7 +55,7 @@ export function UserNav({ user, onSignOut, side, align }: { user: User; onSignOu
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DockLabel>{user.name}</DockLabel>
+      {dockItemContext && <DockLabel>{user.name}</DockLabel>}
     </>
   );
 }
