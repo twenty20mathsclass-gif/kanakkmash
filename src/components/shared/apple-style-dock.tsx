@@ -90,15 +90,6 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           </DockIcon>
         </Link>
       </DockItem>
-
-      {user && onSignOut && (
-        <>
-          <DockSeparator />
-          <DockItem>
-            <UserNav user={user} onSignOut={onSignOut} />
-          </DockItem>
-        </>
-      )}
     </Dock>
   );
 }
