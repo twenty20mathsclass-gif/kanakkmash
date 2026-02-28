@@ -69,7 +69,6 @@ export function UpcomingClasses() {
       where('studentId', '==', user.id),
       where('date', '>=', Timestamp.fromDate(today)),
       orderBy('date', 'asc'),
-      // orderBy('startTime', 'asc'), // This can cause a missing index error
       limit(3)
     );
     unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
@@ -100,7 +99,6 @@ export function UpcomingClasses() {
       
       groupQueryConstraints.push(
         orderBy('date', 'asc'),
-        // orderBy('startTime', 'asc'), // This can cause a missing index error
         limit(3)
       );
 
