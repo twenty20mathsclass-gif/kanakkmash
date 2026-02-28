@@ -1,7 +1,5 @@
-
 'use client';
 
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
@@ -14,17 +12,12 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
         }}
         transition={{
           duration: 2,
-          ease: "easeInOut",
+          ease: 'easeInOut',
           repeat: Infinity,
         }}
+        className="font-headline text-3xl font-bold text-primary"
       >
-        <Image
-          src="/logo mlm@4x.png"
-          alt="Loading..."
-          width={120}
-          height={37}
-          priority
-        />
+        kanakkmash
       </motion.div>
     </div>
   );
