@@ -89,7 +89,14 @@ export default function CreateSchedulePage() {
           title: 'Schedule Created!',
           description: `Your class "${data.courseTitle}" has been successfully scheduled.`,
         });
-        form.reset();
+        form.reset({
+            courseModel: '',
+            courseTitle: '',
+            date: undefined,
+            startTime: '',
+            endTime: '',
+            meetLink: 'https://meet.google.com/',
+        });
       })
       .catch((serverError) => {
         const permissionError = new FirestorePermissionError(

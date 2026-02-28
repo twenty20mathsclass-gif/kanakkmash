@@ -23,5 +23,7 @@ export class FirestorePermissionError extends Error {
     if (options?.cause) {
       this.cause = options.cause;
     }
+    // This is required to correctly extend the built-in Error class.
+    Object.setPrototypeOf(this, FirestorePermissionError.prototype);
   }
 }
