@@ -73,6 +73,7 @@ export type McqOption = {
 
 export type McqQuestion = {
   questionText: string;
+  imageUrl?: string;
   options: McqOption[];
   correctAnswerIndex: number;
 };

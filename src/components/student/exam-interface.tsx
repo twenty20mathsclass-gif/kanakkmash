@@ -1,7 +1,9 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useFirebase } from '@/firebase';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import type { Exam, Schedule, User, ExamSubmission } from '@/lib/definitions';
@@ -132,6 +134,13 @@ export function ExamInterface({ exam, schedule, user }: Props) {
         </CardHeader>
         <CardContent className="min-h-[250px]">
           <h3 className="text-xl font-semibold mb-6">{currentQuestion.questionText}</h3>
+          
+          {currentQuestion.imageUrl && (
+            <div className="relative w-full h-64 mb-6">
+                <Image src={currentQuestion.imageUrl} alt={`Question ${currentQuestionIndex + 1} image`} layout="fill" objectFit="contain" className="rounded-md"/>
+            </div>
+          )}
+
           <RadioGroup 
             value={answers[currentQuestionIndex] !== null ? String(answers[currentQuestionIndex]) : undefined}
             onValueChange={handleAnswerChange}

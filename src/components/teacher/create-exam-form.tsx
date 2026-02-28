@@ -5,8 +5,10 @@ import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
 import { addDoc, collection, Timestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
@@ -21,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, AlertCircle, PlusCircle, Trash2, BookText, User as UserIcon, Award, BookOpen } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle, PlusCircle, Trash2, BookText, User as UserIcon, Award, BookOpen, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -43,6 +45,7 @@ const optionSchema = z.object({
 
 const questionSchema = z.object({
   questionText: z.string().min(1, { message: "Question text cannot be empty." }),
+  imageUrl: z.string().url().optional(),
   options: z.array(optionSchema).min(2, { message: "Must have at least two options." }).max(4, { message: "Cannot have more than 4 options." }),
   correctAnswerIndex: z.coerce.number().min(0, { message: "Please select a correct answer." }),
 });
@@ -80,7 +83,7 @@ const examFormSchema = z.object({
 type ExamFormValues = z.infer<typeof examFormSchema>;
 
 export function CreateExamForm() {
-    const { firestore } = useFirebase();
+    const { firestore, storage } = useFirebase();
     const { user } = useUser();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -89,6 +92,7 @@ export function CreateExamForm() {
     const [allStudents, setAllStudents] = useState<User[]>([]);
     const [filteredStudents, setFilteredStudents] = useState<User[]>([]);
     const [scheduledExams, setScheduledExams] = useState<Schedule[]>([]);
+    const [imageUploadStatus, setImageUploadStatus] = useState<Record<number, 'idle' | 'uploading' | 'success' | 'error'>>({});
 
     const form = useForm<ExamFormValues>({
         resolver: zodResolver(examFormSchema),
@@ -99,7 +103,7 @@ export function CreateExamForm() {
             startTime: '10:00',
             endTime: '11:00',
             courseModel: '',
-            questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1 }]
+            questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]
         },
     });
 
@@ -160,6 +164,42 @@ export function CreateExamForm() {
     }, [firestore, user]);
 
 
+    const handleImageUpload = async (file: File, questionIndex: number) => {
+        if (!storage || !user) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Storage service is not available.'
+            });
+            return;
+        };
+
+        setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'uploading' }));
+
+        const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
+        
+        try {
+            const uploadResult = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
+            
+            setValue(`questions.${questionIndex}.imageUrl`, downloadURL, { shouldValidate: true });
+            setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'success' }));
+            toast({
+                title: 'Image Uploaded',
+                description: 'Your image has been successfully added to the question.'
+            });
+        } catch (e) {
+            console.error("Image upload failed", e);
+            setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
+            toast({
+                variant: 'destructive',
+                title: 'Upload Failed',
+                description: 'Could not upload the image. Please try again.'
+            });
+        }
+    }
+
+
     const onSubmit = async (data: ExamFormValues) => {
         if (!firestore || !user) {
             setError('Authentication error. Please sign in again.');
@@ -206,7 +246,7 @@ export function CreateExamForm() {
                 description: `The exam "${data.title}" is now live.`,
             });
             form.reset();
-            form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1 }]);
+            form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]);
 
         } catch (serverError) {
             const permissionError = new FirestorePermissionError(
@@ -326,12 +366,60 @@ export function CreateExamForm() {
                                             </FormItem>
                                         )}
                                     />
+
+                                    <div className="space-y-2">
+                                        <FormLabel>Question Image (Optional)</FormLabel>
+                                        {watch(`questions.${index}.imageUrl`) ? (
+                                            <div className="relative w-48 h-32">
+                                                <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} layout="fill" objectFit="cover" className="rounded-md border" />
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                                    onClick={() => {
+                                                        setValue(`questions.${index}.imageUrl`, undefined);
+                                                        setImageUploadStatus(prev => ({...prev, [index]: 'idle'}));
+                                                    }}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Input 
+                                                    type="file" 
+                                                    id={`image-upload-${index}`}
+                                                    className="hidden"
+                                                    accept="image/png, image/jpeg, image/webp"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            handleImageUpload(file, index);
+                                                        }
+                                                    }}
+                                                    disabled={imageUploadStatus[index] === 'uploading'}
+                                                />
+                                                <Button asChild variant="outline" type="button">
+                                                    <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
+                                                        {imageUploadStatus[index] === 'uploading' 
+                                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            : <Upload className="mr-2 h-4 w-4" />
+                                                        }
+                                                        {imageUploadStatus[index] === 'uploading' ? 'Uploading...' : 'Upload Image'}
+                                                    </label>
+                                                </Button>
+                                            </>
+                                        )}
+                                        <FormMessage>{form.formState.errors.questions?.[index]?.imageUrl?.message}</FormMessage>
+                                    </div>
+
                                     <OptionsFieldArray questionIndex={index} control={form.control} />
                                 </div>
                             </Card>
                         ))}
                         </div>
-                        <Button type="button" variant="outline" className="mt-6" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1 })}>
+                        <Button type="button" variant="outline" className="mt-6" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Question
                         </Button>
                     </div>
