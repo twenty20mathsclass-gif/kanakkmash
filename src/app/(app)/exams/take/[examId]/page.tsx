@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 import type { Exam, Schedule } from '@/lib/definitions';
@@ -19,20 +20,34 @@ type PageProps = {
 export default function TakeExamPage({ params }: PageProps) {
   const { firestore } = useFirebase();
   const { user } = useUser();
+  const router = useRouter();
   const resolvedParams = use(params as Promise<{ examId: string }>);
   const { examId } = resolvedParams;
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'loading' | 'already_taken' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!firestore || !examId) return;
+    if (!firestore || !examId || !user) {
+        // If user is loading, keep status as 'loading'
+        if (!user) return;
+    }
 
-    const fetchExamAndSchedule = async () => {
+    const checkSubmissionAndFetchExam = async () => {
       try {
-        // Fetch Exam
+        // 1. Check if a submission already exists
+        const submissionRef = doc(firestore, 'exams', examId, 'submissions', user.id);
+        const submissionSnap = await getDoc(submissionRef);
+
+        if (submissionSnap.exists()) {
+          setStatus('already_taken');
+          router.replace(`/exams/result/${user.id}_${examId}`);
+          return;
+        }
+
+        // 2. If no submission, fetch the exam data
         const examRef = doc(firestore, 'exams', examId);
         const examSnap = await getDoc(examRef);
 
@@ -40,59 +55,77 @@ export default function TakeExamPage({ params }: PageProps) {
           setExam({ id: examSnap.id, ...examSnap.data() } as Exam);
         } else {
           setError('Exam not found.');
-          setLoading(false);
+          setStatus('error');
           return;
         }
 
-        // Fetch Schedule to get duration
+        // 3. Fetch schedule for duration
         const scheduleQuery = query(collection(firestore, 'schedules'), where('examId', '==', examId));
         const scheduleSnap = await getDocs(scheduleQuery);
 
         if (!scheduleSnap.empty) {
           const scheduleData = scheduleSnap.docs[0].data() as Schedule;
           setSchedule({id: scheduleSnap.docs[0].id, ...scheduleData});
-        } else {
-          // This case might happen if an admin is viewing an exam that isn't scheduled.
-          // For a student taking an exam, a schedule should always exist.
-          // We can proceed without schedule and the interface can use a default duration if needed.
         }
+        
+        setStatus('ready');
+
       } catch (err) {
         console.error('Error fetching exam data:', err);
         setError('Failed to load the exam. Please try again.');
-      } finally {
-        setLoading(false);
+        setStatus('error');
       }
     };
 
-    fetchExamAndSchedule();
-  }, [firestore, examId]);
+    checkSubmissionAndFetchExam();
+  }, [firestore, examId, user, router]);
+
+  const renderContent = () => {
+    switch (status) {
+        case 'loading':
+            return (
+                <div className="flex flex-col justify-center items-center h-64 gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Checking exam status...</p>
+                </div>
+            );
+        case 'already_taken':
+            return (
+                <div className="flex flex-col justify-center items-center h-64 gap-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <p className="text-muted-foreground">You have already completed this exam. Redirecting to your results...</p>
+                </div>
+            );
+        case 'error':
+             return (
+                <Card className="border-destructive">
+                    <CardHeader><CardTitle>Error</CardTitle></CardHeader>
+                    <CardContent><p className="text-destructive">{error}</p></CardContent>
+                </Card>
+            );
+        case 'ready':
+            if (exam && user) {
+                return (
+                    <Reveal>
+                        <ExamInterface exam={exam} schedule={schedule} user={user} />
+                    </Reveal>
+                );
+            }
+            // fallthrough
+        default:
+             return (
+                <Card>
+                    <CardContent className='p-8 text-center text-muted-foreground'>
+                        Could not load exam.
+                    </CardContent>
+                </Card>
+            );
+    }
+  }
 
   return (
     <div className="container mx-auto max-w-4xl py-8">
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      ) : error ? (
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle>Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-destructive">{error}</p>
-          </CardContent>
-        </Card>
-      ) : exam && user ? (
-        <Reveal>
-            <ExamInterface exam={exam} schedule={schedule} user={user} />
-        </Reveal>
-      ) : (
-          <Card>
-              <CardContent className='p-8 text-center text-muted-foreground'>
-                  Could not load exam or user not found.
-              </CardContent>
-          </Card>
-      )}
+      {renderContent()}
     </div>
   );
 }
