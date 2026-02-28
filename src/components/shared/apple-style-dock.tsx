@@ -49,17 +49,25 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
         return (
           <DockItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
-                <motion.a
-                    className={cn(
-                        "relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300",
-                        isActive ? "bg-gradient-to-br from-primary to-accent" : "bg-muted/70 hover:bg-muted"
-                    )}
-                >
-                    <DockIcon>
-                        <Icon className={cn("transition-colors", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover/menu-item:text-foreground")} />
-                    </DockIcon>
-                </motion.a>
+            <Link
+              href={item.href}
+              className={cn(
+                'relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300',
+                isActive
+                  ? 'bg-gradient-to-br from-primary to-accent'
+                  : 'bg-muted/70 hover:bg-muted'
+              )}
+            >
+              <DockIcon>
+                <Icon
+                  className={cn(
+                    'transition-colors',
+                    isActive
+                      ? 'text-primary-foreground'
+                      : 'text-muted-foreground group-hover/menu-item:text-foreground'
+                  )}
+                />
+              </DockIcon>
             </Link>
             <DockLabel alwaysVisible={isActive}>{item.label}</DockLabel>
           </DockItem>
