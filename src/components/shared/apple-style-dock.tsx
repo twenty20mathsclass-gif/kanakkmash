@@ -7,13 +7,6 @@ import type { User } from '@/lib/definitions';
 import { Dock, DockIcon, DockItem, DockLabel } from '@/components/ui/dock';
 import { cn } from '@/lib/utils';
 import { UserNav } from './user-nav';
-import { motion } from 'framer-motion';
-
-type NavItem = {
-    href: string;
-    label: string;
-    icon: LucideIcon;
-};
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -29,6 +22,16 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function DockSeparator() {
+    return <div className="h-7 w-px shrink-0 bg-border" />;
+}
+
+type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+};
+
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,59 +45,61 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
   }, pathname === '/' ? '/' : '');
 
   return (
-    <Dock className='bg-background/80 backdrop-blur-md'>
+    <Dock>
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = activePath === item.href;
 
         return (
           <DockItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
-                <motion.a
-                    className={cn(
-                        "relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300",
-                        isActive
-                        ? 'bg-gradient-to-br from-primary to-accent'
-                        : 'bg-muted/70 hover:bg-muted'
-                    )}
-                >
-                    <DockIcon>
-                        <Icon
-                        className={cn(
-                            'transition-colors',
-                            isActive
-                            ? 'text-primary-foreground'
-                            : 'text-muted-foreground group-hover/menu-item:text-foreground'
-                        )}
-                        />
-                    </DockIcon>
-                </motion.a>
+            <Link
+              href={item.href}
+              className={cn(
+                'relative flex h-full w-full items-center justify-center transition-colors duration-300',
+                isActive && 'rounded-full bg-primary'
+              )}
+            >
+              <DockIcon>
+                <Icon
+                  className={cn(
+                    'transition-colors',
+                    isActive
+                      ? 'text-primary-foreground'
+                      : 'text-muted-foreground group-hover/dock-item:text-foreground'
+                  )}
+                />
+              </DockIcon>
             </Link>
             <DockLabel alwaysVisible={isActive}>{item.label}</DockLabel>
           </DockItem>
         );
       })}
 
-      {user && onSignOut && (
-         <DockItem>
-            <UserNav user={user} onSignOut={onSignOut} />
-         </DockItem>
-      )}
+      <DockSeparator />
 
-        <DockItem>
-            <Link
-                href="https://wa.me/919995315893"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Chat on WhatsApp"
-                className="flex h-full w-full items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
-            >
-                <DockIcon>
-                    <WhatsAppIcon className="h-6 w-6" />
-                </DockIcon>
-            </Link>
-             <DockLabel>WhatsApp</DockLabel>
-        </DockItem>
+      <DockItem>
+        <Link
+          href="https://wa.me/919995315893"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat on WhatsApp"
+          className="flex h-full w-full items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
+        >
+          <DockIcon>
+            <WhatsAppIcon className="h-6 w-6" />
+          </DockIcon>
+        </Link>
+        <DockLabel>WhatsApp</DockLabel>
+      </DockItem>
+
+      {user && onSignOut && (
+        <>
+          <DockSeparator />
+          <DockItem>
+            <UserNav user={user} onSignOut={onSignOut} />
+          </DockItem>
+        </>
+      )}
     </Dock>
   );
 }
