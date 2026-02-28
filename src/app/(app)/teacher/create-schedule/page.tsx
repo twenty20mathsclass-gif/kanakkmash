@@ -44,7 +44,7 @@ const scheduleSchema = z.object({
   studentId: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
-        if (!data.class) {
+        if (!data.class || data.class.trim() === '') {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Please select a class.',
@@ -53,7 +53,7 @@ const scheduleSchema = z.object({
         }
     }
     if (data.courseModel === 'ONE TO ONE') {
-        if (!data.studentId) {
+        if (!data.studentId || data.studentId.trim() === '') {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Please select a student.',
@@ -89,8 +89,10 @@ export default function CreateSchedulePage() {
     },
   });
 
-  const courseModel = form.watch('courseModel');
-  const selectedClass = form.watch('class');
+  const { watch, setValue } = form;
+
+  const courseModel = watch('courseModel');
+  const selectedClass = watch('class');
 
   useEffect(() => {
     if (!firestore) return;
@@ -111,11 +113,16 @@ export default function CreateSchedulePage() {
     if (selectedClass) {
         const studentsInClass = allStudents.filter(student => student.class === selectedClass);
         setFilteredStudents(studentsInClass);
-        form.setValue('studentId', ''); // Reset student selection when class changes
     } else {
         setFilteredStudents([]);
     }
-  }, [selectedClass, allStudents, form]);
+    // Only re-run when selectedClass or allStudents changes.
+  }, [selectedClass, allStudents]);
+
+  useEffect(() => {
+    // Reset student selection when class changes to avoid sending an invalid studentId
+    setValue('studentId', '');
+  }, [selectedClass, setValue]);
 
 
   const onSubmit = (data: ScheduleFormValues) => {
@@ -217,8 +224,8 @@ export default function CreateSchedulePage() {
                       <FormLabel>Course Model</FormLabel>
                       <Select onValueChange={(value) => {
                           field.onChange(value);
-                          form.setValue('class', '');
-                          form.setValue('studentId', '');
+                          setValue('class', '');
+                          setValue('studentId', '');
                       }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
