@@ -39,6 +39,7 @@ export function UpcomingClasses() {
     let combinedSchedules: { [key: string]: Schedule } = {};
     const unsubscribes: (() => void)[] = [];
 
+    // Helper to process and set the final state
     const processAndSetSchedules = () => {
         const schedulesData = Object.values(combinedSchedules);
         schedulesData.sort((a, b) => {
@@ -49,9 +50,20 @@ export function UpcomingClasses() {
         });
         setUpcomingClasses(schedulesData.slice(0, 3));
         setLoading(false);
-    }
+    };
+
+    let listenersAttached = 0;
+    let listenersResolved = 0;
+
+    const onDataResolved = () => {
+        listenersResolved++;
+        if (listenersResolved >= listenersAttached) {
+            processAndSetSchedules();
+        }
+    };
     
     // Query 1: Personal schedules
+    listenersAttached++;
     const personalQuery = query(
       schedulesCollection,
       where('studentId', '==', user.id),
@@ -64,11 +76,15 @@ export function UpcomingClasses() {
       snapshot.docs.forEach(doc => {
         combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
       });
-      processAndSetSchedules();
+      onDataResolved();
+    }, (error) => {
+        console.error("Error fetching personal schedules:", error);
+        onDataResolved();
     }));
 
     // Query 2: Group schedules
     if (user.courseModel) {
+        listenersAttached++;
         const groupQueryConstraints: any[] = [
             where('courseModel', '==', user.courseModel),
             where('date', '>=', Timestamp.fromDate(today)),
@@ -96,12 +112,17 @@ export function UpcomingClasses() {
             combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
           }
         });
-        processAndSetSchedules();
+        onDataResolved();
+      }, (error) => {
+        console.error("Error fetching group schedules:", error);
+        onDataResolved();
       }));
-    } else {
-        processAndSetSchedules();
     }
 
+    // If no listeners were attached, we should immediately resolve.
+    if (listenersAttached === 0) {
+        setLoading(false);
+    }
 
     return () => unsubscribes.forEach(unsub => unsub());
   }, [firestore, user]);
