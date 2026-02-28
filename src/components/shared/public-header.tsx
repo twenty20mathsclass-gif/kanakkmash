@@ -54,7 +54,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
-        <div className="flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
+        <div className="relative flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
           <Link href={logoLink}>
             <Image
               src="/logo mlm@4x.png"
@@ -65,8 +65,8 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
               priority
             />
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            <div className="w-px h-6 bg-border mx-2"></div>
+          
+          <nav className="hidden items-center gap-1 md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {navItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -88,11 +88,9 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
               );
             })}
           </nav>
-          <div className="flex-1 md:hidden"></div>
+          
           {user && onSignOut ? (
-            <div className="h-10 w-10">
-                <UserNav user={user} onSignOut={onSignOut} />
-            </div>
+            <UserNav user={user} onSignOut={onSignOut} />
           ) : (
             <Link
                 href="https://wa.me/919995315893"
