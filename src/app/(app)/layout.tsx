@@ -50,8 +50,29 @@ export default function AppLayout({
   };
 
   useEffect(() => {
-    if (!loading && !user && !isPubliclyAccessible) {
-      router.push('/sign-in');
+    if (loading) {
+      return; // Wait for user/loading state to settle
+    }
+
+    if (!user) {
+      // Not logged in: only allow public paths
+      if (!isPubliclyAccessible) {
+        router.push('/sign-in');
+      }
+      return;
+    }
+
+    // Logged in: check role-based access
+    // Protect admin routes
+    if (pathname.startsWith('/admin') && user.role !== 'admin') {
+      router.replace('/dashboard'); // Redirect to student dashboard as a safe default
+      return;
+    }
+
+    // Protect teacher routes
+    if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
+      router.replace('/dashboard'); // Redirect to student dashboard
+      return;
     }
   }, [loading, user, router, isPubliclyAccessible, pathname]);
 
