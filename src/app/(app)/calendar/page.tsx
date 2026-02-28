@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -289,11 +290,16 @@ export default function SchedulePage() {
                       <Card
                         style={{backgroundColor: event.color}}
                         className={cn(
-                            'shadow-lg transition-shadow',
+                            'shadow-lg transition-shadow relative',
                             !isAttended && 'hover:shadow-xl',
                             isAttended && 'opacity-75'
                         )}
                       >
+                          {isAttended && (
+                              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/25 border-none text-xs" style={{color: event.textColor}}>
+                                  Attended
+                              </Badge>
+                          )}
                           <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
                                   <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
