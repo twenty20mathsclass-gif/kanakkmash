@@ -29,7 +29,9 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
           />
       </Link>
       {showUserNav && (
-        <UserNav user={user} onSignOut={onSignOut} side="bottom" align="end" />
+        <div className="h-10 w-10">
+            <UserNav user={user} onSignOut={onSignOut} side="bottom" align="end" />
+        </div>
       )}
     </div>
   );
