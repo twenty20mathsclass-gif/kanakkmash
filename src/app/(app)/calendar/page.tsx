@@ -229,12 +229,26 @@ export default function SchedulePage() {
         ) : schedules.length > 0 ? (
           schedules.map((event) => {
             const IconComponent = iconMap[event.icon] || BookOpen;
+            const isAttended = attendedClasses.includes(event.id);
             return (
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
                 <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
                 <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
-                  <div onClick={() => setSelectedEvent(event)} className="block cursor-pointer">
-                      <Card style={{backgroundColor: event.color}} className="shadow-lg hover:shadow-xl transition-shadow">
+                  <div
+                    onClick={() => !isAttended && setSelectedEvent(event)}
+                    className={cn(
+                      'block',
+                      isAttended ? 'cursor-not-allowed' : 'cursor-pointer'
+                    )}
+                  >
+                      <Card
+                        style={{backgroundColor: event.color}}
+                        className={cn(
+                            'shadow-lg transition-shadow',
+                            !isAttended && 'hover:shadow-xl',
+                            isAttended && 'opacity-75'
+                        )}
+                      >
                           <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
                                   <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
