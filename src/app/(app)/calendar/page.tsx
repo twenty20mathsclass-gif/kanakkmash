@@ -30,7 +30,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   BookOpen
 };
 
-export default function SchedulePage() {
+export default function ClassSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
