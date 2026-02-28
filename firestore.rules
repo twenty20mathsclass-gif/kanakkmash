@@ -28,8 +28,8 @@ service cloud.firestore {
       // Admins can get any user's profile. Users can only get their own.
       allow get: if isOwner(userId) || isAdmin();
 
-      // Admins can list all users. Non-admins cannot.
-      allow list: if isAdmin();
+      // Admins and teachers can list users.
+      allow list: if isAdmin() || isRole('teacher');
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
