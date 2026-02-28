@@ -25,8 +25,9 @@ export function UpcomingClasses() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!firestore || !user?.courseModel) {
+    if (!firestore || !user) {
       setLoading(false);
+      setUpcomingClasses([]);
       return;
     }
 
@@ -34,25 +35,66 @@ export function UpcomingClasses() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const q = query(
-      collection(firestore, 'schedules'),
-      where('courseModel', '==', user.courseModel),
+    const schedulesCollection = collection(firestore, 'schedules');
+    let combinedSchedules: { [key: string]: Schedule } = {};
+    const unsubscribes: (() => void)[] = [];
+
+    const processAndSetSchedules = () => {
+        const schedulesData = Object.values(combinedSchedules);
+        schedulesData.sort((a, b) => {
+            const dateA = a.date.toMillis();
+            const dateB = b.date.toMillis();
+            if (dateA !== dateB) return dateA - dateB;
+            return a.startTime.localeCompare(b.startTime);
+        });
+        setUpcomingClasses(schedulesData.slice(0, 3));
+        setLoading(false);
+    }
+    
+    // Query 1: Personal schedules
+    const personalQuery = query(
+      schedulesCollection,
+      where('studentId', '==', user.id),
       where('date', '>=', Timestamp.fromDate(today)),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc'),
       limit(3)
     );
+    unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
+      snapshot.docs.forEach(doc => {
+        combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
+      });
+      processAndSetSchedules();
+    }));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-      setUpcomingClasses(classes);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching upcoming classes:", error);
-      setLoading(false);
-    });
+    // Query 2: Group schedules
+    if (user.courseModel) {
+      const groupQueryConstraints = [
+        where('courseModel', '==', user.courseModel),
+        where('date', '>=', Timestamp.fromDate(today)),
+        orderBy('date', 'asc'),
+        orderBy('startTime', 'asc'),
+        limit(3)
+      ];
+      if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
+        groupQueryConstraints.splice(1, 0, where('class', '==', user.class));
+      }
+      const groupQuery = query(schedulesCollection, ...groupQueryConstraints);
 
-    return () => unsubscribe();
+      unsubscribes.push(onSnapshot(groupQuery, (snapshot) => {
+        snapshot.docs.forEach(doc => {
+          if (!doc.data().studentId) { // Only add group classes
+            combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
+          }
+        });
+        processAndSetSchedules();
+      }));
+    } else {
+        processAndSetSchedules();
+    }
+
+
+    return () => unsubscribes.forEach(unsub => unsub());
   }, [firestore, user]);
 
   return (

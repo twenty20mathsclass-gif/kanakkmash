@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import type { User } from '@/lib/definitions';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, AlertCircle, BookText, User, Award, BookOpen } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle, BookText, User as UserIcon, Award, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Reveal } from '@/components/shared/reveal';
@@ -30,6 +31,8 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
     'COMPETITIVE EXAM': { icon: 'Award', color: 'hsl(30 95% 55%)', textColor: 'hsl(var(--primary-foreground))', subject: 'Exam Prep' },
 };
 
+const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
+
 const scheduleSchema = z.object({
   courseModel: z.string().min(1, 'Please select a course model.'),
   courseTitle: z.string().min(3, 'Course title must be at least 3 characters.'),
@@ -37,6 +40,27 @@ const scheduleSchema = z.object({
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   meetLink: z.string().url('Please enter a valid URL.'),
+  class: z.string().optional(),
+  studentId: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+        if (!data.class) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a class.',
+                path: ['class'],
+            });
+        }
+    }
+    if (data.courseModel === 'ONE TO ONE') {
+        if (!data.studentId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a student.',
+                path: ['studentId'],
+            });
+        }
+    }
 });
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -48,6 +72,9 @@ export default function CreateSchedulePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [allStudents, setAllStudents] = useState<User[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<User[]>([]);
+
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
@@ -57,8 +84,35 @@ export default function CreateSchedulePage() {
       startTime: '',
       endTime: '',
       meetLink: 'https://meet.google.com/',
+      class: '',
+      studentId: '',
     },
   });
+
+  const courseModel = form.watch('courseModel');
+  const selectedClass = form.watch('class');
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchStudents = async () => {
+        const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+        const querySnapshot = await getDocs(studentsQuery);
+        const studentsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setAllStudents(studentsList);
+    };
+    fetchStudents();
+  }, [firestore]);
+
+  useEffect(() => {
+    if (selectedClass) {
+        const studentsInClass = allStudents.filter(student => student.class === selectedClass);
+        setFilteredStudents(studentsInClass);
+        form.setValue('studentId', ''); // Reset student selection when class changes
+    } else {
+        setFilteredStudents([]);
+    }
+  }, [selectedClass, allStudents, form]);
+
 
   const onSubmit = (data: ScheduleFormValues) => {
     if (!firestore || !user) {
@@ -70,7 +124,7 @@ export default function CreateSchedulePage() {
 
     const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
 
-    const scheduleData = {
+    const scheduleData: any = {
       courseModel: data.courseModel,
       title: data.courseTitle,
       date: Timestamp.fromDate(data.date),
@@ -80,6 +134,15 @@ export default function CreateSchedulePage() {
       teacherId: user.id,
       ...selectedVisuals,
     };
+    
+    // Add class and studentId if they exist
+    if (data.class) {
+        scheduleData.class = data.class;
+    }
+    if (data.studentId) {
+        scheduleData.studentId = data.studentId;
+    }
+
 
     const schedulesCollection = collection(firestore, 'schedules');
 
@@ -96,6 +159,8 @@ export default function CreateSchedulePage() {
             startTime: '',
             endTime: '',
             meetLink: 'https://meet.google.com/',
+            class: '',
+            studentId: ''
         });
       })
       .catch((serverError) => {
@@ -119,6 +184,9 @@ export default function CreateSchedulePage() {
       });
   };
 
+  const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showStudentField = courseModel === 'ONE TO ONE' && !!selectedClass;
+
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <Reveal>
@@ -132,7 +200,7 @@ export default function CreateSchedulePage() {
         <Card>
           <CardHeader>
             <CardTitle>Class Details</CardTitle>
-            <CardDescription>All fields are required.</CardDescription>
+            <CardDescription>All fields are required unless marked optional.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -143,7 +211,11 @@ export default function CreateSchedulePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Course Model</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue('class', '');
+                          form.setValue('studentId', '');
+                      }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a course model" />
@@ -159,6 +231,52 @@ export default function CreateSchedulePage() {
                     </FormItem>
                   )}
                 />
+
+                {showClassField && (
+                    <FormField
+                        control={form.control}
+                        name="class"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Class</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a class" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                {showStudentField && (
+                    <FormField
+                        control={form.control}
+                        name="studentId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Student</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No students in this class"} />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 <FormField
                   control={form.control}
