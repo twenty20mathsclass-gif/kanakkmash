@@ -209,12 +209,21 @@ export function CreateExamForm() {
         setError(null);
 
         try {
+             // Sanitize questions to remove undefined imageUrls
+            const sanitizedQuestions = data.questions.map(q => {
+                const question: Partial<typeof q> = { ...q };
+                if (!question.imageUrl) {
+                    delete question.imageUrl;
+                }
+                return question as z.infer<typeof questionSchema>;
+            });
+
             // 1. Create the exam content document
             const examData: Omit<Exam, 'id'> = {
                 teacherId: user.id,
                 title: data.title,
                 courseModel: data.courseModel,
-                questions: data.questions,
+                questions: sanitizedQuestions,
                 ...(data.class && { class: data.class }),
                 ...(data.syllabus && { syllabus: data.syllabus }),
                 ...(data.studentId && { studentId: data.studentId }),
