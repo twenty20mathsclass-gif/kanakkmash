@@ -91,10 +91,14 @@ export default function ExamSchedulePage() {
       filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching schedules: ", error);
-      setSchedules([]);
-      setLoading(false);
+    }, async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: 'schedules',
+            operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
+        setSchedules([]);
+        setLoading(false);
     });
 
     return () => unsubscribe();

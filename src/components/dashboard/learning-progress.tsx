@@ -57,8 +57,6 @@ export function LearningProgress() {
             operation: 'list',
         }, { cause: serverError });
         errorEmitter.emit('permission-error', permissionError);
-
-        console.error("Failed to fetch learning progress in real-time:", serverError);
         setLoading(false);
     });
 

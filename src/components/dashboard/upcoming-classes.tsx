@@ -5,6 +5,8 @@ import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, Timestamp, onSnapshot, orderBy } from 'firebase/firestore';
 import { format, parse } from 'date-fns';
 import type { Schedule } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -82,8 +84,13 @@ export function UpcomingClasses() {
       });
       setUpcomingClasses(filteredSchedules.slice(0, 3));
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching schedules:", error);
+    },
+    async (serverError) => {
+      const permissionError = new FirestorePermissionError({
+        path: 'schedules',
+        operation: 'list',
+      }, { cause: serverError });
+      errorEmitter.emit('permission-error', permissionError);
       setLoading(false);
       setUpcomingClasses([]);
     });

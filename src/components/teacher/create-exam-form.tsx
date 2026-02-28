@@ -118,6 +118,12 @@ export function CreateExamForm() {
         const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
             const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setAllStudents(studentsList);
+        }, async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: 'users',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
         });
         return () => unsubscribe();
     }, [firestore]);
@@ -143,6 +149,12 @@ export function CreateExamForm() {
             const exams = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
                 .sort((a,b) => b.date.toMillis() - a.date.toMillis() || b.startTime.localeCompare(a.startTime));
             setScheduledExams(exams);
+        }, async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
         });
         return () => unsubscribe();
     }, [firestore, user]);

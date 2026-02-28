@@ -114,8 +114,12 @@ export default function CreateSchedulePage() {
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
       const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllStudents(studentsList);
-    }, (error) => {
-      console.error("Failed to fetch students in real-time:", error);
+    }, async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: 'users',
+            operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
     return () => unsubscribe();
@@ -154,8 +158,12 @@ export default function CreateSchedulePage() {
         classes.push({ id: doc.id, ...doc.data() } as Schedule);
       });
       setScheduledClasses(classes);
-    }, (error) => {
-      console.error("Error fetching scheduled classes:", error);
+    }, async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: 'schedules',
+            operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
     return () => unsubscribe();

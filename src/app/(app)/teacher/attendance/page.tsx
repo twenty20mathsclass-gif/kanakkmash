@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react';
 import { AttendanceDetails } from '@/components/teacher/attendance-details';
 import { Reveal } from '@/components/shared/reveal';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AttendancePage() {
     const { firestore } = useFirebase();
@@ -30,8 +32,12 @@ export default function AttendancePage() {
             const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
             setSchedules(schedulesList);
             setLoading(false);
-        }, (error) => {
-            console.error("Error fetching schedules for attendance:", error);
+        }, async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
             setLoading(false);
         });
 

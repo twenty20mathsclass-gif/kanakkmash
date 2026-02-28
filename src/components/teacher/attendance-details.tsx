@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type Attendee = {
     id: string;
@@ -57,8 +59,12 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
             const attendeesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
             setAttendees(attendeesList);
             setLoading(false);
-        }, (error) => {
-            console.error("Error fetching attendees:", error);
+        }, async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: `schedules/${schedule.id}/attendees`,
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
             setLoading(false);
         });
 
