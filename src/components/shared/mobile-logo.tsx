@@ -17,7 +17,7 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
   const showUserNav = user && onSignOut;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-background/95 p-4 backdrop-blur-sm md:hidden">
+    <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-background p-4 md:hidden">
       <Link href="/">
           <Image
               src="/logo mlm@4x.png"
