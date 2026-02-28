@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useState, useEffect } from 'react';
 import { UserNav } from './user-nav';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -34,18 +34,6 @@ type NavItem = {
 export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], user: User | null, onSignOut?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isMobile = useIsMobile();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    // Render a placeholder or null on the server to avoid hydration mismatch
-    // A simple div with height can prevent layout shift
-    return <div className="fixed bottom-4 left-1/2 z-50 h-[56px] md:h-16 -translate-x-1/2 md:top-4 md:bottom-auto" />;
-  }
 
   const getHomeHref = () => {
     const publicPaths = ['/courses', '/blog', '/materials', '/community'];
@@ -53,7 +41,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
     if (!user || isPublicPath) return '/';
 
-    switch(user.role) {
+    switch(user?.role) {
         case 'admin': return '/admin';
         case 'teacher': return '/teacher';
         default: return '/dashboard';
@@ -64,112 +52,107 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   const activePath = items.reduce((closest, item) => {
-    // Special handling for root/dashboard links
-    if (item.href === homeHref || (item.href === '/' && homeHref.startsWith('/'))) {
-        if (pathname === homeHref || pathname === '/') {
-            return homeHref;
-        }
+    if (item.href === homeHref && pathname === homeHref) {
+        return homeHref;
     }
     if (currentUrl.startsWith(item.href) && item.href.length > closest.length && item.href !== '/') {
         return item.href;
     }
     return closest;
-  }, '');
-
-  const simpleHover = { scale: 1.1 };
-  const simpleTransition = { type: "tween", ease: "easeOut", duration: 0.2 };
-
+  }, homeHref === pathname ? homeHref : '');
 
   return (
-    <>
-      <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 md:top-4 md:bottom-auto md:w-auto md:max-w-none">
-        <div className="flex justify-center overflow-x-auto scrollbar-hide">
-          <motion.nav
-            className={cn(
-              "flex h-[56px] flex-shrink-0 items-center justify-center gap-1 rounded-full border bg-background/80 p-2 text-sm font-medium text-muted-foreground backdrop-blur-md md:h-16 md:gap-2"
-            )}
-          >
-            <Link href={homeHref} className="hidden h-10 items-center justify-center px-2 md:flex md:h-12 md:px-3">
-                <div className="relative h-6 w-auto aspect-[150/47] md:h-8">
-                    <Image
-                        src="/logo mlm@4x.png"
-                        alt="kanakkmash"
-                        fill
-                        className="object-contain"
-                        priority
-                    />
-                </div>
-            </Link>
-            <div className="hidden h-full w-px bg-border mx-1 self-center md:block" />
-
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex h-16 items-center justify-between">
+          <Link href={homeHref} className="flex items-center gap-2 text-primary font-bold">
+            <Image
+                src="/logo mlm@4x.png"
+                alt="kanakkmash"
+                width={40}
+                height={40}
+                className="h-8 w-auto object-contain"
+                priority
+            />
+             <span className='hidden sm:inline'>കണക്ക് മാഷ്</span>
+          </Link>
+          
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-muted-foreground">
             {items.map((item) => {
                 const Icon = item.icon;
-                
                 const isActive = activePath === item.href;
 
                 return (
-                    <motion.div 
-                      key={item.href}
-                      whileHover={simpleHover}
-                      transition={simpleTransition}
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                            "flex items-center gap-2 p-2 rounded-md transition-colors hover:text-foreground hover:bg-muted",
+                            isActive ? 'text-primary font-semibold' : ''
+                        )}
                     >
-                        <Link
-                            href={item.href}
-                            className={cn(
-                                "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors md:h-12",
-                                isMobile ? "justify-center items-center" : "md:w-auto md:px-4"
-                            )}
-                        >
-                            <div className={cn(
-                                "relative z-10 flex items-center gap-2",
-                                isActive ? 'text-primary-foreground' : ''
-                                )}
-                            >
-                                <Icon className="h-5 w-5 md:h-6 md:w-6" />
-                                <span className={cn("hidden text-base", isMobile ? "" : "md:block")}>{item.label}</span>
-                            </div>
-                            
-                            {isActive && (
-                            <motion.div
-                                layoutId="active-pill"
-                                className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-accent via-primary to-accent bg-[length:200%_auto] animate-gradient-pan"
-                                transition={{ type: "spring", duration: 0.6 }}
-                            />
-                            )}
-                        </Link>
-                    </motion.div>
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                    </Link>
                 )
             })}
-
-            <div className="h-full w-px bg-border mx-1 self-center" />
-            <motion.div 
-              whileHover={simpleHover}
-              transition={simpleTransition}
-            >
+          </nav>
+          
+          <div className="flex items-center gap-3">
               <Link
                 href="https://wa.me/919995315893"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Chat on WhatsApp"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851] md:h-12 md:w-12"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851]"
               >
-                  <WhatsAppIcon className="h-6 w-6 md:h-7 md:w-7" />
+                  <WhatsAppIcon className="h-5 w-5" />
               </Link>
-            </motion.div>
-
+            
             {user && onSignOut && (
-              <>
-                <div className="h-full w-px bg-border mx-1 self-center" />
-                <UserNav 
-                  user={user} 
-                  onSignOut={onSignOut} 
-                  triggerClassName="bg-secondary/80 hover:bg-secondary h-10 w-10 md:h-12 md:w-12" 
-                />
-              </>
+              <UserNav 
+                user={user} 
+                onSignOut={onSignOut}
+                triggerClassName="h-9 w-9"
+              />
             )}
-          </motion.nav>
+             
+             {/* Mobile Nav */}
+             <div className="md:hidden">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu className="h-6 w-6" />
+                            <span className="sr-only">Open menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                        <nav className="grid gap-6 text-lg font-medium pt-8">
+                            {items.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activePath === item.href;
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn("flex items-center gap-4 px-2.5",
+                                            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        <Icon className="h-5 w-5" />
+                                        {item.label}
+                                    </Link>
+                                )
+                            })}
+                        </nav>
+                    </SheetContent>
+                </Sheet>
+             </div>
+
+          </div>
         </div>
       </div>
-    </>
+    </header>
   );
 }

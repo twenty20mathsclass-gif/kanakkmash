@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
-import { MobileLogo } from '@/components/shared/mobile-logo';
 
 export default function AppLayout({
   children,
@@ -145,16 +144,13 @@ export default function AppLayout({
     <div className="flex min-h-screen flex-col bg-background">
       <Suspense fallback={null}>
         {user && (
-          <>
-            <MobileLogo onSignOut={handleSignOut} />
-            <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
-          </>
+          <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
         )}
         {!user && isPubliclyAccessible && (
           <HomePageDock />
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-24 pb-24 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
+      <main className="flex-grow p-4 pt-20 pb-8 md:p-6 md:pt-24 lg:p-8 lg:pt-24">{children}</main>
       {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">

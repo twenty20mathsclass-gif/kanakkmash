@@ -10,6 +10,10 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
   const isMobile = useIsMobile();
   const { user } = useUser();
 
+  // This component is no longer needed as the main header is now responsive.
+  return null;
+
+  /*
   if (!isMobile) {
     return null;
   }
@@ -33,4 +37,5 @@ export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
       )}
     </div>
   );
+  */
 }
