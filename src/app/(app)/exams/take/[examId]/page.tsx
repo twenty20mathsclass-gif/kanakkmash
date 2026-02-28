@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { Exam } from '@/lib/definitions';
@@ -17,7 +17,8 @@ type PageProps = {
 
 export default function TakeExamPage({ params }: PageProps) {
   const { firestore } = useFirebase();
-  const { examId } = params;
+  const resolvedParams = use(params as Promise<{ examId: string }>);
+  const { examId } = resolvedParams;
   const [exam, setExam] = useState<Exam | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
