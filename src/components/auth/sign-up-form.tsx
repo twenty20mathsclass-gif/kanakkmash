@@ -136,17 +136,10 @@ export function SignUpForm() {
         courseModel: data.courseModel,
         countryCode: phoneCode,
         mobile: data.mobile,
+        class: data.class,
+        syllabus: data.syllabus,
+        competitiveExam: data.competitiveExam,
       };
-
-      if (showClassField && data.class) {
-        userProfile.class = data.class;
-      }
-      if (showSyllabusField && data.syllabus) {
-          userProfile.syllabus = data.syllabus;
-      }
-      if (showCompetitiveExamField && data.competitiveExam) {
-          userProfile.competitiveExam = data.competitiveExam;
-      }
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 

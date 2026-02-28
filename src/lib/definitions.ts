@@ -48,6 +48,8 @@ export type Schedule = {
   icon: string; // lucide icon name
   color: string; // hsl color
   textColor: string;
+  class?: string;
+  studentId?: string;
 };
 
 export type StudentProgress = {
