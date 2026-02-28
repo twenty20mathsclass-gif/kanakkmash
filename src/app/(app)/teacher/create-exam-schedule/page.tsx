@@ -37,7 +37,7 @@ const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KS
 
 const scheduleSchema = z.object({
   courseModel: z.string().min(1, 'Please select a course model.'),
-  courseTitle: z.string().min(3, 'Exam title must be at least 3 characters.'),
+  title: z.string().min(3, 'Exam title must be at least 3 characters.'),
   date: z.date({ required_error: 'A date is required.' }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
@@ -92,7 +92,7 @@ export default function CreateExamSchedulePage() {
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       courseModel: '',
-      courseTitle: '',
+      title: '',
       date: undefined,
       startTime: '',
       endTime: '',
@@ -180,7 +180,7 @@ export default function CreateExamSchedulePage() {
     const scheduleData: any = {
       type: 'exam', // This is an exam
       courseModel: data.courseModel,
-      title: data.courseTitle,
+      title: data.title,
       date: Timestamp.fromDate(data.date),
       startTime: data.startTime,
       endTime: data.endTime,
@@ -206,11 +206,11 @@ export default function CreateExamSchedulePage() {
       .then(() => {
         toast({
           title: 'Exam Schedule Created!',
-          description: `The exam "${data.courseTitle}" has been successfully scheduled.`,
+          description: `The exam "${data.title}" has been successfully scheduled.`,
         });
         form.reset({
             courseModel: '',
-            courseTitle: '',
+            title: '',
             date: undefined,
             startTime: '',
             endTime: '',
@@ -275,7 +275,7 @@ export default function CreateExamSchedulePage() {
                                 setValue('class', '');
                                 setValue('syllabus', '');
                                 setValue('studentId', '');
-                            }} defaultValue={field.value}>
+                            }} value={field.value || ''}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a course model" />
@@ -368,7 +368,7 @@ export default function CreateExamSchedulePage() {
 
                         <FormField
                         control={form.control}
-                        name="courseTitle"
+                        name="title"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Exam Title</FormLabel>
