@@ -197,7 +197,7 @@ export default function SchedulePage() {
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
       <Reveal>
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Schedule</h1>
+          <h1 className="text-3xl font-bold font-headline">Class Schedule</h1>
            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
@@ -260,7 +260,7 @@ export default function SchedulePage() {
 
       <Reveal delay={0.3}>
         <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-headline">My Schedule for {format(selectedDate, 'MMMM d')}</h2>
+            <h2 className="text-xl font-bold font-headline">My Class Schedule for {format(selectedDate, 'MMMM d')}</h2>
             <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-5 w-5" />
             </Button>

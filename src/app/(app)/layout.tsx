@@ -25,7 +25,8 @@ import {
     ShoppingCart,
     BookOpen,
     CalendarPlus,
-    UserCheck
+    UserCheck,
+    FileText
 } from 'lucide-react';
 import { PageLoader } from '@/components/shared/page-loader';
 import { HomePageDock } from '@/components/shared/home-page-dock';
@@ -88,8 +89,8 @@ export default function AppLayout({
   // Define nav items for logged-in users
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/calendar', label: 'Schedule', icon: Calendar },
-    { href: '/courses', label: 'Courses', icon: BookOpen },
+    { href: '/calendar', label: 'Class Schedule', icon: Calendar },
+    { href: '/courses', label: 'Exam Schedule', icon: FileText },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
   ];
 
