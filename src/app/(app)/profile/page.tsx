@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirebase } from '@/firebase';
 import { useTheme } from 'next-themes';
 import { PageLoader } from '@/components/shared/page-loader';
@@ -41,12 +41,17 @@ export default function ProfilePage() {
     const { auth, firestore, storage } = useFirebase();
     const { toast } = useToast();
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     
     const [isUploading, setIsUploading] = useState(false);
     const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
     const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const passwordForm = useForm<PasswordFormValues>({
         resolver: zodResolver(passwordFormSchema),
@@ -126,7 +131,7 @@ export default function ProfilePage() {
     }
 
 
-    if (userLoading) {
+    if (userLoading || !mounted) {
         return <PageLoader />;
     }
 
