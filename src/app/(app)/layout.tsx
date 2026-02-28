@@ -150,7 +150,7 @@ export default function AppLayout({
         <MobileLogo onSignOut={handleSignOut} />
         {user && (
           isMobile ? (
-            <div className="fixed bottom-4 left-0 right-0 z-50">
+            <div className="fixed bottom-2 left-0 right-0 z-50">
               <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
             </div>
           ) : (
@@ -159,7 +159,7 @@ export default function AppLayout({
         )}
         {!user && isPubliclyAccessible && (
           isMobile === false ? <PublicHeader /> : (
-            <div className="fixed bottom-4 left-0 right-0 z-50">
+            <div className="fixed bottom-2 left-0 right-0 z-50">
               <HomePageDock />
             </div>
           )

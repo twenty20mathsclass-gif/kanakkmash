@@ -19,7 +19,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       <Suspense fallback={null}>
         {isMobile ? (
-          <div className="fixed bottom-4 left-0 right-0 z-50 md:hidden">
+          <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
             <HomePageDock />
           </div>
         ) : (
