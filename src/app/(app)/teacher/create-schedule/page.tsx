@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Schedule } from '@/lib/definitions';
 
@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
+import { RecentClassesList } from '@/components/teacher/recent-classes-list';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -140,15 +140,12 @@ export default function CreateSchedulePage() {
   useEffect(() => {
     if (!firestore || !user) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
     const q = query(
       collection(firestore, 'schedules'),
       where('teacherId', '==', user.id),
       where('type', '==', 'class'),
-      where('date', '>=', Timestamp.fromDate(today)),
-      orderBy('date', 'asc')
+      orderBy('date', 'desc'),
+      limit(5)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -156,7 +153,6 @@ export default function CreateSchedulePage() {
       querySnapshot.forEach((doc) => {
         classes.push({ id: doc.id, ...doc.data() } as Schedule);
       });
-      classes.sort((a,b) => a.startTime.localeCompare(b.startTime));
       setScheduledClasses(classes);
     }, (error) => {
       console.error("Error fetching scheduled classes:", error);
@@ -470,11 +466,7 @@ export default function CreateSchedulePage() {
         </div>
         <div className="hidden md:block">
             <Reveal delay={0.4}>
-                <ScheduledItemsList 
-                    schedules={scheduledClasses}
-                    title="Upcoming Classes"
-                    description="A list of your scheduled classes."
-                />
+                <RecentClassesList schedules={scheduledClasses} />
             </Reveal>
         </div>
     </div>
