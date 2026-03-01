@@ -195,62 +195,62 @@ export default function TeacherDashboardPage() {
         </Reveal>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <Reveal delay={0.3}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>
-                      Your 5 most recent schedules.
-                    </CardDescription>
-                  </div>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href="/teacher/attendance">View All</Link>
-                  </Button>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Your 5 most recent schedules.
+                  </CardDescription>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center p-8">
-                    <Loader2 className="animate-spin" />
-                  </div>
-                ) : recentSchedules.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Class/Exam</TableHead>
-                        <TableHead className="text-center">Attendees</TableHead>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/teacher/attendance">View All</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="animate-spin" />
+                </div>
+              ) : recentSchedules.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Class/Exam</TableHead>
+                      <TableHead className="text-center">Attendees</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSchedules.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>
+                          <div className="font-medium">{s.title}</div>
+                          <div className="text-xs capitalize text-muted-foreground">
+                            {s.type} &bull;{' '}
+                            {format(s.date.toDate(), 'MMM d, yyyy')}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {s.attendanceCount}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentSchedules.map((s) => (
-                        <TableRow key={s.id}>
-                          <TableCell>
-                            <div className="font-medium">{s.title}</div>
-                            <div className="text-xs capitalize text-muted-foreground">
-                              {s.type} &bull;{' '}
-                              {format(s.date.toDate(), 'MMM d, yyyy')}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {s.attendanceCount}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="py-8 text-center text-muted-foreground">
-                    No schedules found.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </Reveal>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="py-8 text-center text-muted-foreground">
+                  No schedules found.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Reveal>
         <Reveal delay={0.4}>
-            <SchedulingChart schedules={schedules} />
+          <SchedulingChart schedules={schedules} />
         </Reveal>
       </div>
     </div>
