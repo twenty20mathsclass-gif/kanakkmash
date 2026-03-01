@@ -175,7 +175,7 @@ export default function AdminSchedulesHistoryPage() {
                 setSchedules(schedulesList);
                 setUsers(usersList);
             } catch (error) {
-                console.error("Error fetching schedules history:", error);
+                console.warn("Error fetching schedules history:", error);
             } finally {
                 setLoading(false);
             }

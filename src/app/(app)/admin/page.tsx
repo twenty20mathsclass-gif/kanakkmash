@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
         setRecentSchedules(schedulesWithAttendance);
 
       } catch (e) {
-        console.error("Failed to fetch admin dashboard data:", e);
+        console.warn("Failed to fetch admin dashboard data:", e);
       } finally {
         setLoading(false);
       }

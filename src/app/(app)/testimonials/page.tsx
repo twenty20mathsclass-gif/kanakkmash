@@ -33,7 +33,7 @@ export default function TestimonialsPage() {
                 const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.warn("Firestore error:", serverError);
             }
             setLoading(false);
         });

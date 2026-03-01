@@ -105,7 +105,7 @@ export default function TeacherDashboardPage() {
                 attendanceCount = attendeesSnapshot.size;
               } catch (e) {
                 // This might fail if rules deny access, but we don't want to crash the whole dashboard
-                console.error(
+                console.warn(
                   `Could not fetch attendees for schedule ${schedule.id}`,
                   e
                 );
@@ -118,7 +118,7 @@ export default function TeacherDashboardPage() {
           );
         setRecentSchedules(schedulesWithAttendance);
       } catch (error) {
-        console.error('Error fetching teacher dashboard stats:', error);
+        console.warn('Error fetching teacher dashboard stats:', error);
       } finally {
         setLoading(false);
       }

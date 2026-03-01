@@ -71,7 +71,7 @@ export default function TakeExamPage({ params }: PageProps) {
         setStatus('ready');
 
       } catch (err) {
-        console.error('Error fetching exam data:', err);
+        console.warn('Error fetching exam data:', err);
         setError('Failed to load the exam. Please try again.');
         setStatus('error');
       }

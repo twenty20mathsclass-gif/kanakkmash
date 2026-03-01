@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -86,13 +85,24 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Error fetching salary history: ", serverError);
+                console.warn("Error fetching salary history: ", serverError);
             }
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, [firestore, teacher]);
+    
+    useEffect(() => {
+        if (isOpen) {
+            form.reset({
+                amount: 0,
+                periodStart: undefined,
+                periodEnd: undefined,
+            });
+        }
+    }, [isOpen, form]);
+
 
     if (!teacher) return null;
 
@@ -117,7 +127,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                 errorEmitter.emit('permission-error', permissionError);
                 setFormError("You don't have permission to add payments.");
             } else {
-                 console.error("Error adding payment: ", serverError);
+                 console.warn("Error adding payment: ", serverError);
                  setFormError("An unexpected error occurred.");
             }
         } finally {
@@ -213,7 +223,7 @@ export default function AccountantSalariesPage() {
                     const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });
                     errorEmitter.emit('permission-error', permissionError);
                 } else {
-                    console.error("Error fetching teachers: ", serverError);
+                    console.warn("Error fetching teachers: ", serverError);
                 }
             } finally {
                 setLoading(false);

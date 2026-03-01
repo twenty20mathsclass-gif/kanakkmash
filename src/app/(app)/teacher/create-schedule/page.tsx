@@ -121,7 +121,7 @@ export default function CreateSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error:", serverError);
+            console.warn("Firestore error:", serverError);
         }
     });
 
@@ -168,7 +168,7 @@ export default function CreateSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error:", serverError);
+            console.warn("Firestore error:", serverError);
         }
     });
 
@@ -241,7 +241,7 @@ export default function CreateSchedulePage() {
             );
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error:", serverError);
+            console.warn("Firestore error:", serverError);
         }
         setError(
           'Failed to create schedule. Check the developer console for details.'

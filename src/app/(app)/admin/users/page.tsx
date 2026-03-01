@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
       const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersList);
     } catch (e) {
-      console.error("Failed to fetch users:", e);
+      console.warn("Failed to fetch users:", e);
     } finally {
       setLoading(false);
     }

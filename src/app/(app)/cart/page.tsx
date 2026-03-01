@@ -49,7 +49,7 @@ export default function CartPage() {
             const permissionError = new FirestorePermissionError({ path: offerRef.path, operation: 'get' }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error getting cart offer:", serverError);
+            console.warn("Firestore error getting cart offer:", serverError);
         }
     }));
 
@@ -62,7 +62,7 @@ export default function CartPage() {
             const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'list' }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error getting categories:", serverError);
+            console.warn("Firestore error getting categories:", serverError);
         }
     }));
 
@@ -75,7 +75,7 @@ export default function CartPage() {
             const permissionError = new FirestorePermissionError({ path: popularCol.path, operation: 'list' }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error getting popular courses:", serverError);
+            console.warn("Firestore error getting popular courses:", serverError);
         }
     }));
     

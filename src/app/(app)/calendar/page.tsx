@@ -102,7 +102,7 @@ export default function ClassSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error fetching class schedule:", serverError);
+            console.warn("Firestore error fetching class schedule:", serverError);
         }
         setSchedules([]);
         setLoading(false);
@@ -126,7 +126,7 @@ export default function ClassSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error fetching attendance:", serverError);
+            console.warn("Firestore error fetching attendance:", serverError);
         }
     });
 
@@ -155,7 +155,7 @@ export default function ClassSchedulePage() {
         const diff = end.getTime() - start.getTime();
         return Math.round(diff / (1000 * 60));
     } catch (e) {
-        console.error("Error calculating duration", e);
+        console.warn("Error calculating duration", e);
         return 0;
     }
   };
@@ -217,7 +217,7 @@ export default function ClassSchedulePage() {
                     description: 'You do not have permission to mark attendance.'
                 });
             } else {
-                console.error("Firestore error marking attendance:", serverError);
+                console.warn("Firestore error marking attendance:", serverError);
                 toast({
                     variant: 'destructive',
                     title: 'Error',

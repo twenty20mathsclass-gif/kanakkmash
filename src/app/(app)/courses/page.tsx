@@ -94,7 +94,7 @@ export default function ExamSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error fetching exam schedule:", serverError);
+            console.warn("Firestore error fetching exam schedule:", serverError);
         }
         setSchedules([]);
         setLoading(false);

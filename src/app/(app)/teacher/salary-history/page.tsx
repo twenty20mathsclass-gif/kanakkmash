@@ -48,7 +48,7 @@ export default function TeacherSalaryHistoryPage() {
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Error fetching salary history: ", serverError);
+                console.warn("Error fetching salary history: ", serverError);
             }
             setLoading(false);
         });

@@ -46,7 +46,7 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                 }
 
             } catch (e) {
-                console.error("Could not fetch total students for schedule", e);
+                console.warn("Could not fetch total students for schedule", e);
                 setTotalStudents(0);
             }
         };
@@ -67,7 +67,7 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.warn("Firestore error:", serverError);
             }
             setLoading(false);
         });

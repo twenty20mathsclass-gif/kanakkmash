@@ -37,7 +37,7 @@ function ManageOffers({ firestore }: { firestore: Firestore }) {
                 const permissionError = new FirestorePermissionError({ path: offerRef.path, operation: 'get' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error getting offer:", serverError);
+                console.warn("Firestore error getting offer:", serverError);
             }
             setLoadingOffer(false);
         });
@@ -56,7 +56,7 @@ function ManageOffers({ firestore }: { firestore: Firestore }) {
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to update the offer." });
             } else {
-                console.error(serverError);
+                console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to update offer." });
             }
         });
@@ -97,7 +97,7 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                 const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error getting categories:", serverError);
+                console.warn("Firestore error getting categories:", serverError);
             }
             setLoadingCategories(false);
         });
@@ -126,7 +126,7 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add a category." });
             } else {
-                console.error(serverError);
+                console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
             }
         });
@@ -143,7 +143,7 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this category." });
             } else {
-                console.error(serverError);
+                console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
             }
         });
@@ -207,7 +207,7 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                 const permissionError = new FirestorePermissionError({ path: popularCol.path, operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error getting popular courses:", serverError);
+                console.warn("Firestore error getting popular courses:", serverError);
             }
             setLoadingPopular(false);
         });
@@ -230,7 +230,7 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add popular courses." });
             } else {
-                console.error(serverError);
+                console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to add popular course." });
             }
         });
@@ -246,7 +246,7 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to remove popular courses." });
             } else {
-                console.error(serverError);
+                console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to remove popular course." });
             }
         });

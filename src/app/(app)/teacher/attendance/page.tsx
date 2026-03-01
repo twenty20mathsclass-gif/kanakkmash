@@ -39,7 +39,7 @@ export default function AttendancePage() {
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.warn("Firestore error:", serverError);
             }
             setLoading(false);
         });

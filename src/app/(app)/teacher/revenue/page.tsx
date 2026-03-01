@@ -149,13 +149,13 @@ export default function TeacherRevenuePage() {
         } catch (serverError: any) {
             if (serverError.code?.startsWith('storage/')) {
                 setError('Image upload failed. You may not have permission or your network connection is unstable.');
-                console.error("Storage error:", serverError);
+                console.warn("Storage error:", serverError);
             } else if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: userDocRef.path, operation: 'update', requestResourceData: dataToUpdate }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError("You don't have permission to perform this action.");
             } else {
-                console.error("An unexpected error occurred:", serverError);
+                console.warn("An unexpected error occurred:", serverError);
                 setError('An unexpected error occurred. Please try again.');
             }
         } finally {

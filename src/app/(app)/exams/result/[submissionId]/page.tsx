@@ -62,7 +62,7 @@ export default function ExamResultPage({ params }: PageProps) {
           setError('Exam submission not found.');
         }
       } catch (err) {
-        console.error('Error fetching results:', err);
+        console.warn('Error fetching results:', err);
         setError('Failed to load your results. Please try again.');
       } finally {
         setLoading(false);

@@ -78,7 +78,7 @@ export function ExamInterface({ exam, schedule, user }: Props) {
           );
           errorEmitter.emit('permission-error', permissionError);
       } else {
-        console.error("Firestore error:", serverError);
+        console.warn("Firestore error:", serverError);
       }
       toast({
         variant: 'destructive',

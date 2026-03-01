@@ -93,7 +93,7 @@ export function UpcomingClasses() {
         }, { cause: serverError });
         errorEmitter.emit('permission-error', permissionError);
       } else {
-        console.error("Firestore error fetching upcoming classes:", serverError);
+        console.warn("Firestore error fetching upcoming classes:", serverError);
       }
       setLoading(false);
       setUpcomingClasses([]);

@@ -88,7 +88,7 @@ export default function ProfilePage() {
             });
             // The useUser hook will automatically reflect the change
         } catch (error: any) {
-            console.error('Error uploading profile picture:', error);
+            console.warn('Error uploading profile picture:', error);
             let description = 'Could not update your profile picture. Please try again.';
             if (error.code === 'storage/unauthorized') {
                 description = 'You do not have permission to upload this file. Check storage rules.';
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             });
             passwordForm.reset();
         } catch (error: any) {
-            console.error('Password change error:', error);
+            console.warn('Password change error:', error);
             if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 setPasswordChangeError('The current password you entered is incorrect.');
             } else {
