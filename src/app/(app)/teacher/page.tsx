@@ -6,7 +6,13 @@ import {
   CardContent,
   CardDescription,
 } from '@/components/ui/card';
-import { Users, CalendarCheck, FilePenLine, Loader2 } from 'lucide-react';
+import {
+  Users,
+  CalendarCheck,
+  FilePenLine,
+  Loader2,
+  IndianRupee,
+} from 'lucide-react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -34,6 +40,7 @@ export default function TeacherDashboardPage() {
     students: 0,
     classes: 0,
     exams: 0,
+    revenue: 0,
   });
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [recentSchedules, setRecentSchedules] =
@@ -79,6 +86,7 @@ export default function TeacherDashboardPage() {
           students: totalStudents,
           classes: totalClasses,
           exams: totalExams,
+          revenue: 0, // Placeholder
         });
 
         const sortedSchedules = [...allSchedules].sort(
@@ -132,7 +140,7 @@ export default function TeacherDashboardPage() {
         </div>
       </Reveal>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Reveal>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -189,6 +197,24 @@ export default function TeacherDashboardPage() {
               )}
               <p className="text-xs text-muted-foreground">
                 total exams created
+              </p>
+            </CardContent>
+          </Card>
+        </Reveal>
+        <Reveal delay={0.3}>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">My Revenue</CardTitle>
+              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <div className="text-2xl font-bold">₹{stats.revenue}</div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                current month earnings
               </p>
             </CardContent>
           </Card>
