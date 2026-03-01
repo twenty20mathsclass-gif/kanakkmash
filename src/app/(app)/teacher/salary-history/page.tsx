@@ -77,16 +77,21 @@ export default function TeacherSalaryHistoryPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Payment Date</TableHead>
-                                    <TableHead>Payment Period</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
+                                    <TableHead>Hourly Rate</TableHead>
+                                    <TableHead>Total Hours</TableHead>
+                                    <TableHead className="text-right">Amount Paid</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {payments.map(payment => (
                                     <TableRow key={payment.id}>
                                         <TableCell>{payment.paymentDate ? format(payment.paymentDate.toDate(), 'PPP') : 'Processing...'}</TableCell>
+                                        <TableCell className="flex items-center gap-1">
+                                            <IndianRupee className="h-4 w-4" />
+                                            {payment.hourlyRate.toLocaleString('en-IN')}
+                                        </TableCell>
                                         <TableCell>
-                                            {format(payment.periodStart.toDate(), 'MMM d, yyyy')} - {format(payment.periodEnd.toDate(), 'MMM d, yyyy')}
+                                            {payment.totalHours}
                                         </TableCell>
                                         <TableCell className="text-right font-medium flex items-center justify-end gap-1">
                                             <IndianRupee className="h-4 w-4" />

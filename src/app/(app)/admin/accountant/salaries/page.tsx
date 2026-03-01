@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useFirebase } from '@/firebase';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { User, SalaryPayment } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, CalendarIcon, QrCode } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -18,9 +18,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -28,12 +25,8 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const addPaymentSchema = z.object({
-    amount: z.coerce.number().positive("Amount must be positive."),
-    periodStart: z.date({ required_error: "Start date is required." }),
-    periodEnd: z.date({ required_error: "End date is required." }),
-}).refine(data => data.periodEnd > data.periodStart, {
-    message: "End date must be after start date.",
-    path: ["periodEnd"],
+    hourlyRate: z.coerce.number().positive("Hourly rate must be positive."),
+    totalHours: z.coerce.number().positive("Total hours must be positive."),
 });
 type AddPaymentValues = z.infer<typeof addPaymentSchema>;
 
@@ -49,11 +42,15 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
         defaultValues: {
-            amount: 0,
-            periodStart: undefined,
-            periodEnd: undefined,
+            hourlyRate: 0,
+            totalHours: 0,
         },
     });
+
+    const hourlyRate = form.watch('hourlyRate');
+    const totalHours = form.watch('totalHours');
+    const calculatedAmount = useMemo(() => hourlyRate * totalHours, [hourlyRate, totalHours]);
+
 
     useEffect(() => {
         if (!firestore || !teacher) {
@@ -96,9 +93,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     useEffect(() => {
         if (isOpen) {
             form.reset({
-                amount: 0,
-                periodStart: undefined,
-                periodEnd: undefined,
+                hourlyRate: 0,
+                totalHours: 0,
             });
         }
     }, [isOpen, form]);
@@ -113,14 +109,15 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
         const paymentData = {
             ...data,
+            amount: data.hourlyRate * data.totalHours,
             teacherId: teacher.id,
             paymentDate: serverTimestamp(),
         };
 
         try {
             await addDoc(collection(firestore, 'salaryPayments'), paymentData);
-            toast({ title: "Success", description: `Payment of ${data.amount} recorded for ${teacher.name}.` });
-            form.reset({ amount: 0, periodStart: undefined, periodEnd: undefined });
+            toast({ title: "Success", description: `Payment of ${paymentData.amount} recorded for ${teacher.name}.` });
+            form.reset({ hourlyRate: 0, totalHours: 0 });
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'create', requestResourceData: paymentData }, { cause: serverError });
@@ -150,12 +147,13 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              {loading ? <div className="flex justify-center my-8"><Loader2 className="animate-spin" /></div> :
                              payments.length > 0 ? (
                                 <Table>
-                                    <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Period</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                                    <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {payments.map(p => (
                                             <TableRow key={p.id}>
                                                 <TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
-                                                <TableCell>{format(p.periodStart.toDate(), 'd MMM yyyy')} - {format(p.periodEnd.toDate(), 'd MMM yyyy')}</TableCell>
+                                                <TableCell className="flex items-center gap-1"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
+                                                <TableCell>{p.totalHours}</TableCell>
                                                 <TableCell className="text-right font-medium flex items-center justify-end gap-1"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</TableCell>
                                             </TableRow>
                                         ))}
@@ -171,23 +169,20 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                         <CardContent>
                            <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleAddPayment)} className="space-y-4">
-                                <FormField name="amount" control={form.control} render={({field}) => (
-                                    <FormItem><FormLabel>Amount (INR)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
-                                )} />
                                 <div className="grid grid-cols-2 gap-4">
-                                    <FormField name="periodStart" control={form.control} render={({field}) => (
-                                        <FormItem className="flex flex-col"><FormLabel>Period Start</FormLabel><Popover><PopoverTrigger asChild><FormControl>
-                                            <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button>
-                                        </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
-                                    )}/>
-                                     <FormField name="periodEnd" control={form.control} render={({field}) => (
-                                        <FormItem className="flex flex-col"><FormLabel>Period End</FormLabel><Popover><PopoverTrigger asChild><FormControl>
-                                            <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button>
-                                        </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
-                                    )}/>
+                                    <FormField name="hourlyRate" control={form.control} render={({field}) => (
+                                        <FormItem><FormLabel>Hourly Rate (INR)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                    )} />
+                                    <FormField name="totalHours" control={form.control} render={({field}) => (
+                                        <FormItem><FormLabel>Total Hours</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                    )} />
+                                </div>
+                                <div className="p-4 bg-muted rounded-md text-center">
+                                    <p className="text-sm text-muted-foreground">Calculated Total Amount</p>
+                                    <p className="text-2xl font-bold flex items-center justify-center gap-1"><IndianRupee className="h-6 w-6" />{calculatedAmount.toLocaleString('en-IN')}</p>
                                 </div>
                                 {formError && <Alert variant="destructive"><AlertCircle className="h-4 w-4"/><AlertTitle>Error</AlertTitle><AlertDescription>{formError}</AlertDescription></Alert>}
-                                <Button type="submit" disabled={isSubmitting}><PlusCircle className="mr-2 h-4 w-4"/> {isSubmitting ? 'Recording...' : 'Record Payment'}</Button>
+                                <Button type="submit" disabled={isSubmitting || calculatedAmount <= 0}><PlusCircle className="mr-2 h-4 w-4"/> {isSubmitting ? 'Recording...' : 'Record Payment'}</Button>
                             </form>
                            </Form>
                         </CardContent>

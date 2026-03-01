@@ -57,12 +57,12 @@
       "type": "object",
       "properties": {
         "teacherId": { "type": "string", "description": "The ID of the teacher receiving the payment." },
-        "amount": { "type": "number", "description": "The amount paid." },
-        "paymentDate": { "type": "object", "description": "The date the payment was made." },
-        "periodStart": { "type": "object", "description": "The start date of the payment period." },
-        "periodEnd": { "type": "object", "description": "The end date of the payment period." }
+        "hourlyRate": { "type": "number", "description": "The hourly rate for the teacher." },
+        "totalHours": { "type": "number", "description": "The total hours worked for this payment period." },
+        "amount": { "type": "number", "description": "The total amount paid (calculated from hourlyRate * totalHours)." },
+        "paymentDate": { "type": "object", "description": "The date the payment was made." }
       },
-      "required": ["teacherId", "amount", "paymentDate", "periodStart", "periodEnd"]
+      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate"]
     }
   },
   "auth": {

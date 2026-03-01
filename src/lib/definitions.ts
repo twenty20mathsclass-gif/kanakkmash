@@ -144,8 +144,8 @@ export type Testimonial = {
 export type SalaryPayment = {
   id?: string;
   teacherId: string;
+  hourlyRate: number;
+  totalHours: number;
   amount: number;
   paymentDate: Timestamp;
-  periodStart: Timestamp;
-  periodEnd: Timestamp;
 };
