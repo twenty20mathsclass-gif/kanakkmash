@@ -8,6 +8,7 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
+import { TestimonialsSection } from '@/components/home/testimonials-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,8 +26,8 @@ export default function Home() {
           <PublicHeader />
         )}
       </Suspense>
-      <main className="flex flex-1 pt-8 pb-24 md:pt-24 md:pb-0">
-        <section className="relative flex w-full items-center justify-center overflow-hidden">
+      <main className="flex flex-1 flex-col">
+        <section className="relative flex w-full items-center justify-center overflow-hidden min-h-screen">
           <div
             aria-hidden="true"
             className="absolute inset-0 -z-10"
@@ -63,6 +64,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <TestimonialsSection />
+
       </main>
       <footer className="bg-background py-6">
         <div>
