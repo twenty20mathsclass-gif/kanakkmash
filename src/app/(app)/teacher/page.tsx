@@ -53,26 +53,35 @@ export default function TeacherDashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // For this example, we count all students. In a real app, you might filter by teacherId if students were assigned to teachers.
+        // Query for students, schedules, and salary in parallel
         const studentsQuery = query(
           collection(firestore, 'users'),
           where('role', '==', 'student')
         );
-        const studentsSnapshot = await getDocs(studentsQuery);
-        const totalStudents = studentsSnapshot.size;
-
         const schedulesQuery = query(
           collection(firestore, 'schedules'),
           where('teacherId', '==', user.id)
         );
-        const schedulesSnapshot = await getDocs(schedulesQuery);
+        const salaryPaymentsQuery = query(
+          collection(firestore, 'salaryPayments'),
+          where('teacherId', '==', user.id)
+        );
 
+        const [studentsSnapshot, schedulesSnapshot, salaryPaymentsSnapshot] = await Promise.all([
+            getDocs(studentsQuery),
+            getDocs(schedulesQuery),
+            getDocs(salaryPaymentsQuery),
+        ]);
+
+        // Process students
+        const totalStudents = studentsSnapshot.size;
+
+        // Process schedules
         let totalClasses = 0;
         let totalExams = 0;
         const allSchedules = schedulesSnapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() } as Schedule)
         );
-
         allSchedules.forEach((schedule) => {
           if (schedule.type === 'class') {
             totalClasses++;
@@ -80,15 +89,23 @@ export default function TeacherDashboardPage() {
             totalExams++;
           }
         });
-
         setSchedules(allSchedules);
+
+        // Process salary
+        const totalRevenue = salaryPaymentsSnapshot.docs.reduce(
+          (sum, doc) => sum + (doc.data().amount || 0),
+          0
+        );
+
+        // Update stats
         setStats({
           students: totalStudents,
           classes: totalClasses,
           exams: totalExams,
-          revenue: 0, // Placeholder
+          revenue: totalRevenue,
         });
 
+        // Process recent schedules for table
         const sortedSchedules = [...allSchedules].sort(
           (a, b) => b.date.toMillis() - a.date.toMillis()
         );
@@ -104,7 +121,6 @@ export default function TeacherDashboardPage() {
                 const attendeesSnapshot = await getDocs(attendeesQuery);
                 attendanceCount = attendeesSnapshot.size;
               } catch (e) {
-                // This might fail if rules deny access, but we don't want to crash the whole dashboard
                 console.warn(
                   `Could not fetch attendees for schedule ${schedule.id}`,
                   e
@@ -211,10 +227,10 @@ export default function TeacherDashboardPage() {
               {loading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <div className="text-2xl font-bold">₹{stats.revenue}</div>
+                <div className="text-2xl font-bold">₹{stats.revenue.toLocaleString('en-IN')}</div>
               )}
               <p className="text-xs text-muted-foreground">
-                current month earnings
+                total earnings received
               </p>
             </CardContent>
           </Card>
