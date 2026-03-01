@@ -51,7 +51,7 @@ service cloud.firestore {
       // Only teachers or admins can create schedules. Teachers must be the owner.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isRole('admin');
 
-      // Only the teacher who created the schedule or an admin can update/delete it
+      // Only the teacher who owns the schedule or an admin can update/delete it
       allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
 
       match /attendees/{userId} {
@@ -98,6 +98,14 @@ service cloud.firestore {
     match /testimonials/{testimonialId} {
       allow get, list: if true;
       allow write: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /salaryPayments/{paymentId} {
+        allow read, write: if isAdmin();
     }
   }
 }

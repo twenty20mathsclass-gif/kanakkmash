@@ -29,6 +29,8 @@ import {
     ShoppingBag,
     Quote,
     History,
+    Banknote,
+    Receipt,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -116,13 +118,15 @@ export default function AppLayout({
     { href: '/admin/users?role=student', label: 'Students', icon: Users },
     { href: '/admin/users?role=teacher', label: 'Teachers', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
+    { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
+    { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },
+    { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
+    { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
+    { href: '/admin/accountant/salaries', label: 'Teacher Salaries', icon: Banknote },
+    { href: '/admin/accountant/invoices', label: 'Student Invoices', icon: Receipt },
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
-    { href: '/admin/blog/create', label: 'Blog Creation', icon: PenSquare },
-    { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
-    { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
-    { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
-    { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
   ];
 
   if (user && (user.role === 'admin' || user.role === 'teacher')) {

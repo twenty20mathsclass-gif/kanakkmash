@@ -27,6 +27,34 @@
         "createdAt": { "type": "object", "description": "The date and time the testimonial was created." }
       },
       "required": ["studentName", "quote", "imageUrl", "createdAt"]
+    },
+    "invoice": {
+      "title": "Invoice",
+      "description": "Represents a student invoice for fees or purchases.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "The ID of the student this invoice belongs to." },
+        "amount": { "type": "number", "description": "The total amount of the invoice." },
+        "status": { "type": "string", "enum": ["paid", "unpaid", "overdue"], "description": "The payment status of the invoice." },
+        "type": { "type": "string", "enum": ["fee", "cart"], "description": "The type of invoice." },
+        "createdAt": { "type": "object", "description": "The date the invoice was created." },
+        "dueDate": { "type": "object", "description": "The date the invoice is due." },
+        "paidAt": { "type": "object", "description": "The date the invoice was paid." }
+      },
+      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate"]
+    },
+    "salaryPayment": {
+      "title": "Salary Payment",
+      "description": "Represents a salary payment made to a teacher.",
+      "type": "object",
+      "properties": {
+        "teacherId": { "type": "string", "description": "The ID of the teacher receiving the payment." },
+        "amount": { "type": "number", "description": "The amount paid." },
+        "paymentDate": { "type": "object", "description": "The date the payment was made." },
+        "periodStart": { "type": "object", "description": "The start date of the payment period." },
+        "periodEnd": { "type": "object", "description": "The end date of the payment period." }
+      },
+      "required": ["teacherId", "amount", "paymentDate", "periodStart", "periodEnd"]
     }
   },
   "auth": {
@@ -60,6 +88,14 @@
      "/popularCourses/{popularId}": {
         "schema": {},
         "description": "Stores popular course mappings."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/invoice" },
+      "description": "Stores student invoices."
+    },
+    "/salaryPayments/{paymentId}": {
+      "schema": { "$ref": "#/entities/salaryPayment" },
+      "description": "Stores teacher salary payment records."
     }
   }
 }
