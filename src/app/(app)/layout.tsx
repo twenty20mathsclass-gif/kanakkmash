@@ -28,6 +28,7 @@ import {
     FilePenLine,
     ShoppingBag,
     Quote,
+    History,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -111,6 +112,7 @@ export default function AppLayout({
 
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users?role=student', label: 'Students', icon: Users },
     { href: '/admin/users?role=teacher', label: 'Teachers', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
