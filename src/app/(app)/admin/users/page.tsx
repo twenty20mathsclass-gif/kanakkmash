@@ -101,7 +101,7 @@ export default function AdminUsersPage() {
                     <Skeleton className="h-12 w-full" />
                   </div>
                 ) : (
-                  <UsersTable users={users} />
+                  <UsersTable users={users} onUserChanged={fetchUsers} />
                 )}
             </CardContent>
           </Card>
