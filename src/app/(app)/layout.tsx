@@ -11,7 +11,6 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { 
     BookPlus,
     FilePlus2,
-    Upload,
     PenSquare,
     TrendingDown,
     TrendingUp,
@@ -104,7 +103,6 @@ export default function AppLayout({
     { href: '/teacher/students', label: 'Students', icon: Users },
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
-    { href: '/teacher/materials', label: 'Study Material', icon: BookPlus },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/course-cart', label: 'Course Cart', icon: ShoppingBag },
@@ -118,7 +116,6 @@ export default function AppLayout({
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
     { href: '/admin/blog/create', label: 'Blog Creation', icon: PenSquare },
-    { href: '/admin/materials/upload', label: 'Material Upload', icon: Upload },
     { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
