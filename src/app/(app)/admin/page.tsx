@@ -2,16 +2,17 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User, Schedule } from '@/lib/definitions';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { courses } from "@/lib/data";
-import { Users, BookOpen, Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, BookOpen, Loader2 } from "lucide-react";
 import { Reveal } from '@/components/shared/reveal';
 import { StudentEnrollmentChart } from '@/components/admin/student-enrollment-chart';
 import { format } from 'date-fns';
+import { SchedulingActivityChart } from '@/components/admin/scheduling-activity-chart';
 
 type ScheduleWithAttendance = Schedule & { attendanceCount: number, teacherName?: string };
 
@@ -19,6 +20,7 @@ export default function AdminDashboardPage() {
   const { firestore } = useFirebase();
   const [stats, setStats] = useState({ students: 0, teachers: 0, courses: 0 });
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allSchedules, setAllSchedules] = useState<Schedule[]>([]);
   const [recentSchedules, setRecentSchedules] = useState<ScheduleWithAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -38,13 +40,16 @@ export default function AdminDashboardPage() {
         setAllUsers(usersList);
         setStats({ students: students.length, teachers: teachers.length, courses: courses.length });
         
-        // 2. Fetch recent schedules and their attendance
-        const schedulesQuery = query(collection(firestore, 'schedules'), orderBy('date', 'desc'), limit(5));
+        // 2. Fetch all schedules
+        const schedulesQuery = query(collection(firestore, 'schedules'), orderBy('date', 'desc'));
         const schedulesSnapshot = await getDocs(schedulesQuery);
-        const schedulesList = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+        const allSchedulesList = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+        setAllSchedules(allSchedulesList);
 
+        // 3. Process 5 most recent schedules for the table
+        const recentSchedulesList = allSchedulesList.slice(0, 5);
         const schedulesWithAttendance: ScheduleWithAttendance[] = await Promise.all(
-          schedulesList.map(async (schedule) => {
+          recentSchedulesList.map(async (schedule) => {
             const attendeesQuery = collection(firestore, 'schedules', schedule.id, 'attendees');
             const attendeesSnapshot = await getDocs(attendeesQuery);
             const teacher = teachers.find(t => t.id === schedule.teacherId);
@@ -117,33 +122,12 @@ export default function AdminDashboardPage() {
             <Reveal delay={0.3}>
                 <StudentEnrollmentChart users={allUsers} />
             </Reveal>
-            <div className="grid md:grid-cols-2 gap-8">
-                <Reveal delay={0.4}>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Student Revenue</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent className="text-center text-muted-foreground pt-8 h-40 flex items-center justify-center">
-                           <p>Revenue chart coming soon.</p>
-                        </CardContent>
-                    </Card>
-                </Reveal>
-                 <Reveal delay={0.5}>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Teacher Payouts</CardTitle>
-                            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent className="text-center text-muted-foreground pt-8 h-40 flex items-center justify-center">
-                           <p>Payouts chart coming soon.</p>
-                        </CardContent>
-                    </Card>
-                </Reveal>
-            </div>
+            <Reveal delay={0.4}>
+                <SchedulingActivityChart schedules={allSchedules} />
+            </Reveal>
         </div>
         <div className="lg:col-span-1">
-            <Reveal delay={0.4}>
+            <Reveal delay={0.5}>
                  <Card>
                     <CardHeader>
                         <CardTitle>Recent Schedules</CardTitle>
