@@ -119,17 +119,23 @@ export default function AdminDashboardPage() {
         </Reveal>
       </div>
       
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Reveal delay={0.3}>
+            <StudentEnrollmentChart users={allUsers} role="student" />
+        </Reveal>
+        <Reveal delay={0.4}>
+            <StudentEnrollmentChart users={allUsers} role="teacher" />
+        </Reveal>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-            <Reveal delay={0.3}>
-                <StudentEnrollmentChart users={allUsers} />
-            </Reveal>
-            <Reveal delay={0.4}>
+        <div className="lg:col-span-2">
+            <Reveal delay={0.5}>
                 <SchedulingActivityChart schedules={allSchedules} />
             </Reveal>
         </div>
         <div className="lg:col-span-1">
-            <Reveal delay={0.5}>
+            <Reveal delay={0.6}>
                  <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
