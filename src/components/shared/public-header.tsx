@@ -56,7 +56,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
         <div className="relative flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center">
                 <Link href={logoLink}>
                     <Image
                         src="/logo mlm@4x.png"
@@ -67,29 +67,30 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                         priority
                     />
                 </Link>
-                <nav className="hidden items-center gap-1 md:flex">
-                {navItems.map(item => {
-                    const Icon = item.icon;
-                    const active = isActive(item.href);
-                    return (
-                    <Button
-                        key={item.href}
-                        variant={active ? 'default' : 'ghost'}
-                        asChild
-                        className={cn(
-                        "rounded-full",
-                        active && "text-primary-foreground"
-                        )}
-                    >
-                        <Link href={item.href}>
-                        <Icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                        </Link>
-                    </Button>
-                    );
-                })}
-                </nav>
             </div>
+            
+            <nav className="hidden items-center gap-1 md:flex absolute left-1/2 -translate-x-1/2">
+            {navItems.map(item => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                <Button
+                    key={item.href}
+                    variant={active ? 'default' : 'ghost'}
+                    asChild
+                    className={cn(
+                    "rounded-full",
+                    active && "text-primary-foreground"
+                    )}
+                >
+                    <Link href={item.href}>
+                    <Icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                    </Link>
+                </Button>
+                );
+            })}
+            </nav>
 
             <div className="flex items-center gap-4">
                 {user && onSignOut ? (
