@@ -25,8 +25,8 @@ export default function Home() {
           <PublicHeader />
         )}
       </Suspense>
-      <main className="flex flex-1 items-center justify-center pt-8 pb-24 md:pt-24 md:pb-0">
-        <section className="relative overflow-hidden">
+      <main className="flex flex-1 pt-8 pb-24 md:pt-24 md:pb-0">
+        <section className="relative flex w-full items-center justify-center overflow-hidden">
           <div
             aria-hidden="true"
             className="absolute inset-0 -z-10"
