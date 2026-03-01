@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { Loader2, MoreHorizontal } from 'lucide-react';
+import { Loader2, MoreHorizontal, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
     AlertDialog, 
@@ -86,6 +86,7 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Hourly Rate</TableHead>
             <TableHead>
                 <span className="sr-only">Actions</span>
             </TableHead>
@@ -110,6 +111,16 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                 }>
                     {user.role}
                 </Badge>
+                </TableCell>
+                <TableCell>
+                    {user.role === 'teacher' && user.hourlyRate ? (
+                        <div className="flex items-center gap-1">
+                            <IndianRupee className="h-4 w-4" />
+                            {user.hourlyRate.toLocaleString('en-IN')}
+                        </div>
+                    ) : (
+                        <span className="text-muted-foreground">-</span>
+                    )}
                 </TableCell>
                 <TableCell>
                 <DropdownMenu>

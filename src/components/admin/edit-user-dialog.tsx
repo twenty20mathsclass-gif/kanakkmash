@@ -31,6 +31,7 @@ import { z } from 'zod';
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     role: z.enum(['student', 'teacher', 'admin']),
+    hourlyRate: z.coerce.number().optional(),
 });
 
 interface EditUserDialogProps {
@@ -49,11 +50,13 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
+  const [hourlyRate, setHourlyRate] = useState(user.hourlyRate || 0);
 
   useEffect(() => {
     if (isOpen) {
         setName(user.name);
         setRole(user.role);
+        setHourlyRate(user.hourlyRate || 0);
         setError(null);
         setValidationErrors({});
     }
@@ -65,7 +68,13 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     setError(null);
     setValidationErrors({});
 
-    const validatedFields = updateUserSchema.safeParse({ name, role });
+    const formObject = {
+        name,
+        role,
+        hourlyRate: role === 'teacher' ? hourlyRate : undefined,
+    }
+
+    const validatedFields = updateUserSchema.safeParse(formObject);
 
     if (!validatedFields.success) {
         const fieldErrors = validatedFields.error.flatten().fieldErrors;
@@ -83,10 +92,18 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     const userDocRef = doc(firestore, 'users', user.id);
     
     try {
-        await updateDoc(userDocRef, {
+        const dataToUpdate: Partial<User> = {
             name: validatedFields.data.name,
             role: validatedFields.data.role,
-        });
+        };
+
+        if (validatedFields.data.role === 'teacher') {
+            dataToUpdate.hourlyRate = validatedFields.data.hourlyRate;
+        } else {
+            dataToUpdate.hourlyRate = 0;
+        }
+
+        await updateDoc(userDocRef, dataToUpdate);
 
         toast({
             title: 'Success',
@@ -147,6 +164,16 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                 <p className="text-sm text-destructive">{validationErrors.role[0]}</p>
             )}
           </div>
+
+          {role === 'teacher' && (
+            <div className="space-y-2">
+                <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
+                <Input id="hourlyRate" name="hourlyRate" type="number" value={hourlyRate} onChange={(e) => setHourlyRate(Number(e.target.value))} />
+                {validationErrors?.hourlyRate && (
+                    <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
+                )}
+            </div>
+          )}
 
           {error && (
             <Alert variant="destructive">
