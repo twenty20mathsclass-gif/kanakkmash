@@ -26,7 +26,8 @@ import {
     UserCheck,
     FileText,
     FilePenLine,
-    ShoppingBag
+    ShoppingBag,
+    Quote,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -116,6 +117,7 @@ export default function AppLayout({
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
     { href: '/admin/blog/create', label: 'Blog Creation', icon: PenSquare },
+    { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
     { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },

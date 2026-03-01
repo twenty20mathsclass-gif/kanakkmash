@@ -122,3 +122,13 @@ export type PopularCourse = {
   id?: string;
   courseId: string;
 };
+
+export type Testimonial = {
+  id: string;
+  studentName: string;
+  quote: string;
+  imageUrl: string;
+  videoUrl?: string;
+  link?: string;
+  createdAt: Timestamp;
+};
