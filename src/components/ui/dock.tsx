@@ -125,7 +125,7 @@ function Dock({
           mouseX.set(Infinity);
         }}
         className={cn(
-          'mx-auto flex h-16 w-fit items-center gap-1 rounded-full border bg-secondary p-2 shadow-lg',
+          'mx-auto flex h-16 w-fit items-center gap-1 rounded-full border bg-background/60 p-2 shadow-lg backdrop-blur-md',
           className
         )}
         role='toolbar'

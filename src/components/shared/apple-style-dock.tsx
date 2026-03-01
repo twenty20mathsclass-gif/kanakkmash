@@ -56,7 +56,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               href={item.href}
               className={cn(
                 "relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300",
-                isActive ? "bg-primary" : "bg-transparent"
+                isActive ? "bg-primary/10" : "bg-transparent"
               )}
             >
               <DockIcon>
@@ -64,10 +64,10 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                   className={cn(
                     "transition-colors",
                     isActive
-                      ? "text-primary-foreground"
+                      ? "text-primary"
                       : "text-muted-foreground group-hover/dock-item:text-foreground"
                   )}
-                  strokeWidth={1.5}
+                  strokeWidth={1.2}
                 />
                 <span className="sr-only">{item.label}</span>
               </DockIcon>
