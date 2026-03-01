@@ -188,9 +188,8 @@ export function CreateExamForm() {
         const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
         
         try {
-            // Add a timeout to the upload process
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Upload timed out after 30 seconds. Please check your network and Firebase Storage configuration.')), 30000)
+                setTimeout(() => reject(new Error('Upload timed out. Please check your network and permissions.')), 30000)
             );
 
             const uploadTask = uploadBytes(storageRef, file);
@@ -211,10 +210,20 @@ export function CreateExamForm() {
         } catch (error: any) {
             console.error("Image upload failed:", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
+
+            let description = 'Could not upload the image. Please try again.';
+            if (error.code === 'storage/unauthorized') {
+                description = 'You do not have permission to upload images for exams.';
+            } else if (error.code?.startsWith('storage/')) {
+                 description = 'Image upload failed. Check your network and Firebase Storage configuration.';
+            } else if (error.message) {
+                 description = error.message;
+            }
+
             toast({
                 variant: 'destructive',
                 title: 'Upload Failed',
-                description: error.message || 'Could not upload the image. Please try again.'
+                description: description
             });
         }
     }

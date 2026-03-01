@@ -87,12 +87,18 @@ export default function ProfilePage() {
                 description: 'Profile picture updated successfully.',
             });
             // The useUser hook will automatically reflect the change
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading profile picture:', error);
+            let description = 'Could not update your profile picture. Please try again.';
+            if (error.code === 'storage/unauthorized') {
+                description = 'You do not have permission to upload this file. Check storage rules.';
+            } else if (error.code?.startsWith('storage/')) {
+                description = 'Image upload failed. Your network connection might be unstable.';
+            }
             toast({
                 variant: 'destructive',
                 title: 'Upload Failed',
-                description: 'Could not update your profile picture. Please try again.',
+                description: description,
             });
         } finally {
             setIsUploading(false);

@@ -77,32 +77,28 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
                 createdAt: serverTimestamp(),
             };
 
-            addDoc(testimonialsCollection, dataToSave).then(() => {
-                toast({ title: "Success", description: "Testimonial added." });
-                form.reset();
-                setImageFile(null);
-                setImagePreview(null);
-                onTestimonialAdded();
-            }).catch((serverError: any) => {
-                if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError(
-                        { path: testimonialsCollection.path, operation: 'create', requestResourceData: dataToSave },
-                        { cause: serverError }
-                    );
-                    errorEmitter.emit('permission-error', permissionError);
-                    setError('Failed to add testimonial. You may not have permissions.');
-                } else {
-                    console.error("Firestore error:", serverError);
-                    setError('Failed to add testimonial. A network or server error occurred.');
-                }
-            }).finally(() => {
-                 setLoading(false);
-            });
+            await addDoc(testimonialsCollection, dataToSave);
+            
+            toast({ title: "Success", description: "Testimonial added." });
+            form.reset();
+            setImageFile(null);
+            setImagePreview(null);
+            onTestimonialAdded();
 
-        } catch (storageError) {
-             console.error("Storage error:", storageError);
-             setError('Failed to upload image. Please try again.');
-             setLoading(false);
+        } catch (serverError: any) {
+            if (serverError.code?.startsWith('storage/')) {
+                console.error("Storage error:", serverError);
+                setError('Image upload failed. You may not have permission or your network is unstable.');
+            } else if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'create' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                setError('Failed to save testimonial due to permissions.');
+            } else {
+                 console.error("Unexpected error:", serverError);
+                 setError('An unexpected error occurred. Please try again.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -207,16 +203,24 @@ export default function AdminTestimonialsPage() {
             const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
             await deleteDoc(testimonialRef);
 
-            // Then delete image from storage
-            const imageRef = ref(storage, testimonial.imageUrl);
-            await deleteObject(imageRef);
+            // Then delete image from storage if it exists
+            if (testimonial.imageUrl) {
+                const imageRef = ref(storage, testimonial.imageUrl);
+                await deleteObject(imageRef);
+            }
             
             toast({ title: "Success", description: "Testimonial deleted." });
         } catch (serverError: any) {
              if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this." });
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete the database entry." });
+            } else if (serverError.code === 'storage/object-not-found') {
+                console.warn("Image not found in storage, but database entry was deleted.");
+                toast({ title: "Partial Success", description: "Testimonial deleted, but the image was not found in storage." });
+            } else if (serverError.code?.startsWith('storage/')) {
+                console.error("Storage error:", serverError);
+                toast({ variant: 'destructive', title: "Storage Error", description: "Failed to delete testimonial image. The database entry may still exist." });
             } else {
                 console.error("Firestore/Storage error:", serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
