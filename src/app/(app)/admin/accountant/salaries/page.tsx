@@ -1,12 +1,14 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useFirebase } from '@/firebase';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { User, SalaryPayment } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, CalendarIcon } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, CalendarIcon, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -67,15 +69,10 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SalaryPayment));
             
             paymentsList.sort((a, b) => {
-                const aIsPending = !a.paymentDate;
-                const bIsPending = !b.paymentDate;
-
-                if (aIsPending && !bIsPending) return -1; // a comes first
-                if (!aIsPending && bIsPending) return 1;  // b comes first
-                if (aIsPending && bIsPending) return 0;   // Order doesn't matter
-
-                // Both have dates, sort descending
-                return b.paymentDate!.toDate().getTime() - a.paymentDate!.toDate().getTime();
+                if (a.paymentDate && b.paymentDate) {
+                    return b.paymentDate.toDate().getTime() - a.paymentDate.toDate().getTime();
+                }
+                return a.paymentDate ? -1 : 1;
             });
 
             setPayments(paymentsList);
@@ -250,8 +247,23 @@ export default function AccountantSalariesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {teacher.accountHolderName ? (
+                                {teacher.paymentMethod === 'upi' ? (
                                     <div className="space-y-3 rounded-md border p-4 text-sm">
+                                        <div className="font-semibold text-center mb-2">UPI Details</div>
+                                        <div className="flex items-center gap-3">
+                                            <QrCode className="h-4 w-4 text-muted-foreground" />
+                                            <span>{teacher.upiId}</span>
+                                        </div>
+                                        {teacher.upiQrCodeUrl && (
+                                            <div className="pt-2">
+                                                <p className="text-xs text-muted-foreground mb-2">QR Code:</p>
+                                                <Image src={teacher.upiQrCodeUrl} alt="UPI QR Code" width={128} height={128} className="rounded-md mx-auto border p-1" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : teacher.paymentMethod === 'bank' || teacher.accountHolderName ? (
+                                    <div className="space-y-3 rounded-md border p-4 text-sm">
+                                        <div className="font-semibold text-center mb-2">Bank Details</div>
                                         <div className="flex items-center gap-3">
                                             <UserIcon className="h-4 w-4 text-muted-foreground" />
                                             <span>{teacher.accountHolderName}</span>
@@ -271,7 +283,7 @@ export default function AccountantSalariesPage() {
                                     </div>
                                 ) : (
                                     <div className="text-center text-muted-foreground p-6 border-2 border-dashed rounded-lg">
-                                        <p>Bank details not provided.</p>
+                                        <p>Payment details not provided.</p>
                                     </div>
                                 )}
                             </CardContent>

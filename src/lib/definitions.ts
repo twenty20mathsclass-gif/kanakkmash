@@ -14,10 +14,13 @@ export type User = {
   syllabus?: string;
   competitiveExam?: string;
   createdAt?: Timestamp;
+  paymentMethod?: 'bank' | 'upi';
   accountHolderName?: string;
   bankName?: string;
   accountNumber?: string;
   ifscCode?: string;
+  upiId?: string;
+  upiQrCodeUrl?: string;
 };
 
 export type Lesson = {
