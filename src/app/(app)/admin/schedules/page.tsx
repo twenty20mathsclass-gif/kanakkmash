@@ -61,7 +61,7 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
       <CardHeader>
         <CardTitle className="font-headline text-xl">{schedule.title}</CardTitle>
         <CardDescription>
-          {schedule.type.charAt(0).toUpperCase() + schedule.type.slice(1)} scheduled on {format(schedule.date.toDate(), 'PPP')} by {teacher?.name || 'Unknown Teacher'}
+          {schedule.type ? schedule.type.charAt(0).toUpperCase() + schedule.type.slice(1) : 'Item'} scheduled on {format(schedule.date.toDate(), 'PPP')} by {teacher?.name || 'Unknown Teacher'}
         </CardDescription>
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center gap-1.5"><Clock className="h-4 w-4"/><span>{schedule.startTime} - {schedule.endTime}</span></div>
@@ -229,7 +229,7 @@ export default function AdminSchedulesHistoryPage() {
                                     >
                                         <div className="flex items-center justify-between">
                                             <p className="font-semibold truncate">{schedule.title}</p>
-                                            <Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type}</Badge>
+                                            <Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type || 'Item'}</Badge>
                                         </div>
                                         <p className="text-sm text-muted-foreground">{format(schedule.date.toDate(), 'MMM d, yyyy')}</p>
                                         <p className="text-xs text-muted-foreground">By {schedule.teacherName}</p>
