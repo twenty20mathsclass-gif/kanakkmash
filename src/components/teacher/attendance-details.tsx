@@ -59,7 +59,7 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
             const attendeesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
             setAttendees(attendeesList);
             setLoading(false);
-        }, async (serverError: any) => {
+        }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: `schedules/${schedule.id}/attendees`,

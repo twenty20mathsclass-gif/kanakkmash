@@ -123,7 +123,7 @@ export function CreateExamForm() {
         const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
             const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setAllStudents(studentsList);
-        }, async (serverError: any) => {
+        }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: 'users',
@@ -158,7 +158,7 @@ export function CreateExamForm() {
                 .filter(schedule => schedule.type === 'exam')
                 .sort((a,b) => b.date.toMillis() - a.date.toMillis() || b.startTime.localeCompare(a.startTime));
             setScheduledExams(exams);
-        }, async (serverError: any) => {
+        }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: 'schedules',

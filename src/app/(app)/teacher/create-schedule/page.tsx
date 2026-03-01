@@ -113,7 +113,7 @@ export default function CreateSchedulePage() {
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
       const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllStudents(studentsList);
-    }, async (serverError: any) => {
+    }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: 'users',
@@ -160,7 +160,7 @@ export default function CreateSchedulePage() {
         .slice(0, 5);
 
       setScheduledClasses(classes);
-    }, async (serverError: any) => {
+    }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: 'schedules',

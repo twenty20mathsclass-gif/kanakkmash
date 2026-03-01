@@ -31,7 +31,7 @@ export default function AttendancePage() {
             schedulesList.sort((a, b) => b.date.toMillis() - a.date.toMillis());
             setSchedules(schedulesList);
             setLoading(false);
-        }, async (serverError: any) => {
+        }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
                     path: 'schedules',
