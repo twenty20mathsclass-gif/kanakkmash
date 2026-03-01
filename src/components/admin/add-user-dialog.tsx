@@ -26,7 +26,7 @@ import { AlertCircle, Loader2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
@@ -91,12 +91,13 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
         const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
 
-        const userProfile: User = {
+        const userProfile = {
             id: user.uid,
             name: name,
             email: email,
             role: role as 'student' | 'teacher',
             avatarUrl: avatarUrl,
+            createdAt: serverTimestamp(),
         };
         
         await setDoc(doc(firestore, 'users', user.uid), userProfile);

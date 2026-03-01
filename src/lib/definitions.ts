@@ -13,6 +13,7 @@ export type User = {
   class?: string;
   syllabus?: string;
   competitiveExam?: string;
+  createdAt?: Timestamp;
 };
 
 export type Lesson = {
