@@ -195,14 +195,8 @@ export default function TeacherDashboardPage() {
         </Reveal>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Reveal delay={0.3}>
-            <SchedulingChart schedules={schedules} />
-          </Reveal>
-        </div>
-        <div className="lg:col-span-1">
-          <Reveal delay={0.4}>
+      <div className="grid grid-cols-1 gap-8">
+        <Reveal delay={0.3}>
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -255,7 +249,9 @@ export default function TeacherDashboardPage() {
               </CardContent>
             </Card>
           </Reveal>
-        </div>
+        <Reveal delay={0.4}>
+            <SchedulingChart schedules={schedules} />
+        </Reveal>
       </div>
     </div>
   );
