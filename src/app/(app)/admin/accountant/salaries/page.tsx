@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useFirebase } from '@/firebase';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { User, SalaryPayment } from '@/lib/definitions';
+import type { User, SalaryPayment, Schedule } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode } from 'lucide-react';
@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -35,6 +35,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const { firestore } = useFirebase();
     const { toast } = useToast();
     const [payments, setPayments] = useState<SalaryPayment[]>([]);
+    const [allSchedules, setAllSchedules] = useState<Schedule[]>([]);
     const [loading, setLoading] = useState(true);
     const [formError, setFormError] = useState<string|null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +56,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     useEffect(() => {
         if (!firestore || !teacher) {
             setPayments([]);
+            setAllSchedules([]);
             setLoading(true);
             return;
         };
@@ -65,7 +67,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             where('teacherId', '==', teacher.id)
         );
 
-        const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
+        const unsubscribePayments = onSnapshot(paymentsQuery, (snapshot) => {
             const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SalaryPayment));
             
             paymentsList.sort((a, b) => {
@@ -87,17 +89,60 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', teacher.id));
+        const unsubscribeSchedules = onSnapshot(schedulesQuery, (snapshot) => {
+            const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+            setAllSchedules(schedulesList);
+        }, (error) => {
+            console.warn("Error fetching schedules: ", error);
+        });
+
+
+        return () => {
+            unsubscribePayments();
+            unsubscribeSchedules();
+        };
     }, [firestore, teacher]);
-    
+
+    const calculatedMonthlyHours = useMemo(() => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const totalMinutes = allSchedules.reduce((acc, schedule) => {
+            const scheduleDate = schedule.date.toDate();
+            if (scheduleDate.getMonth() === currentMonth && scheduleDate.getFullYear() === currentYear) {
+                if (schedule.type === 'exam' && typeof schedule.duration === 'number') {
+                    return acc + schedule.duration;
+                }
+                if (schedule.type === 'class' && schedule.startTime && schedule.endTime) {
+                    try {
+                        const start = new Date(`1970-01-01T${schedule.startTime}:00`);
+                        const end = new Date(`1970-01-01T${schedule.endTime}:00`);
+                        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                            const diff = end.getTime() - start.getTime();
+                            return acc + Math.round(diff / (1000 * 60));
+                        }
+                    } catch (e) {
+                         console.warn("Could not parse time for schedule:", schedule.id, e);
+                    }
+                }
+            }
+            return acc;
+        }, 0);
+
+        const hours = totalMinutes / 60;
+        return Math.round(hours * 100) / 100;
+    }, [allSchedules]);
+
     useEffect(() => {
         if (isOpen) {
             form.reset({
                 hourlyRate: 0,
-                totalHours: 0,
+                totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0,
             });
         }
-    }, [isOpen, form]);
+    }, [isOpen, form, calculatedMonthlyHours]);
 
 
     if (!teacher) return null;
@@ -116,8 +161,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
         try {
             await addDoc(collection(firestore, 'salaryPayments'), paymentData);
-            toast({ title: "Success", description: `Payment of ${paymentData.amount} recorded for ${teacher.name}.` });
-            form.reset({ hourlyRate: 0, totalHours: 0 });
+            toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
+            form.reset({ hourlyRate: 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'create', requestResourceData: paymentData }, { cause: serverError });
@@ -174,7 +219,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                         <FormItem><FormLabel>Hourly Rate (INR)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
                                     )} />
                                     <FormField name="totalHours" control={form.control} render={({field}) => (
-                                        <FormItem><FormLabel>Total Hours</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                        <FormItem>
+                                            <FormLabel>Total Hours</FormLabel>
+                                            <FormControl><Input type="number" {...field}/></FormControl>
+                                            <FormDescription>Auto-calculated for {format(new Date(), 'MMMM yyyy')}. You can override this.</FormDescription>
+                                            <FormMessage/>
+                                        </FormItem>
                                     )} />
                                 </div>
                                 <div className="p-4 bg-muted rounded-md text-center">
