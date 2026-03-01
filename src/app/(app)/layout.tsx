@@ -105,8 +105,10 @@ export default function AppLayout({
   const teacherNav = [
     { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/teacher/students', label: 'Students', icon: Users },
+    { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
+    { href: '/teacher/materials', label: 'Materials', icon: BookOpen },
     { href: '/teacher/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/course-cart', label: 'Course Cart', icon: ShoppingBag },
