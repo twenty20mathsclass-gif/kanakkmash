@@ -49,7 +49,7 @@ export default function AppLayout({
 
 
   // Paths that can be viewed without being logged in.
-  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/materials', '/community', '/cart'];
+  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials'];
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses');
 
   const handleSignOut = async () => {
