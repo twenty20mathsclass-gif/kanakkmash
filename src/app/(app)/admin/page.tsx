@@ -2,11 +2,13 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User, Schedule } from '@/lib/definitions';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from '@/components/ui/button';
 import { courses } from "@/lib/data";
 import { Users, BookOpen, Loader2 } from "lucide-react";
 import { Reveal } from '@/components/shared/reveal';
@@ -130,8 +132,17 @@ export default function AdminDashboardPage() {
             <Reveal delay={0.5}>
                  <Card>
                     <CardHeader>
-                        <CardTitle>Recent Schedules</CardTitle>
-                        <CardDescription>The 5 most recently created schedules.</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Recent Schedules</CardTitle>
+                                <CardDescription>The 5 most recent schedules.</CardDescription>
+                            </div>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/admin/schedules">
+                                    View All
+                                </Link>
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                          {loading ? <div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div> :
