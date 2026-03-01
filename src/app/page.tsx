@@ -8,7 +8,6 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
-import { TestimonialsSection } from '@/components/home/testimonials-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,8 +63,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <TestimonialsSection />
 
       </main>
       <footer className="bg-background py-6">
