@@ -124,10 +124,10 @@ export default function TeacherDashboardPage() {
       <Reveal>
         <div>
           <h1 className="text-3xl font-bold font-headline">
-            Teacher Dashboard
+            Welcome, {user?.name || 'Teacher'}!
           </h1>
           <p className="text-muted-foreground">
-            An overview of your teaching activities.
+            Here's an overview of your teaching activities.
           </p>
         </div>
       </Reveal>
