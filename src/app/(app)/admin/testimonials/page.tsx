@@ -82,12 +82,16 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
             setImagePreview(null);
             onTestimonialAdded();
 
-        } catch (serverError) {
-             const permissionError = new FirestorePermissionError(
-                { path: 'testimonials', operation: 'create', requestResourceData: newTestimonialData },
-                { cause: serverError }
-            );
-            errorEmitter.emit('permission-error', permissionError);
+        } catch (serverError: any) {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError(
+                    { path: 'testimonials', operation: 'create', requestResourceData: newTestimonialData },
+                    { cause: serverError }
+                );
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             setError('Failed to add testimonial. You may not have permissions.');
         } finally {
             setLoading(false);
@@ -170,9 +174,13 @@ export default function AdminTestimonialsPage() {
             const fetchedTestimonials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
             setTestimonials(fetchedTestimonials);
             setLoading(false);
-        }, (serverError) => {
-            const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             setLoading(false);
         });
 
@@ -195,9 +203,13 @@ export default function AdminTestimonialsPage() {
             await deleteObject(imageRef);
             
             toast({ title: "Success", description: "Testimonial deleted." });
-        } catch (serverError) {
-            const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        } catch (serverError: any) {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
         }
     };

@@ -51,12 +51,16 @@ export function LearningProgress() {
             }, 0);
         setTotalMinutes(total);
         setLoading(false);
-    }, async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: `users/${user.id}/attendance`,
-            operation: 'list',
-        }, { cause: serverError });
-        errorEmitter.emit('permission-error', permissionError);
+    }, async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.id}/attendance`,
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
         setLoading(false);
     });
 

@@ -59,12 +59,16 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
             const attendeesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
             setAttendees(attendeesList);
             setLoading(false);
-        }, async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: `schedules/${schedule.id}/attendees`,
-                operation: 'list',
-            }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, async (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: `schedules/${schedule.id}/attendees`,
+                    operation: 'list',
+                }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             setLoading(false);
         });
 

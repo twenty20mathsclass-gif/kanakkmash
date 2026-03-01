@@ -28,9 +28,13 @@ export default function TestimonialsPage() {
             const fetchedTestimonials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
             setTestimonials(fetchedTestimonials);
             setLoading(false);
-        }, (serverError) => {
-            const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             setLoading(false);
         });
 

@@ -113,12 +113,16 @@ export default function CreateSchedulePage() {
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
       const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllStudents(studentsList);
-    }, async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: 'users',
-            operation: 'list',
-        }, { cause: serverError });
-        errorEmitter.emit('permission-error', permissionError);
+    }, async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'users',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
     });
 
     return () => unsubscribe();
@@ -156,12 +160,16 @@ export default function CreateSchedulePage() {
         .slice(0, 5);
 
       setScheduledClasses(classes);
-    }, async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: 'schedules',
-            operation: 'list',
-        }, { cause: serverError });
-        errorEmitter.emit('permission-error', permissionError);
+    }, async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
     });
 
     return () => unsubscribe();
@@ -221,18 +229,20 @@ export default function CreateSchedulePage() {
             studentId: ''
         });
       })
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError(
-          {
-            path: schedulesCollection.path,
-            operation: 'create',
-            requestResourceData: scheduleData,
-          },
-          { cause: serverError }
-        );
-
-        errorEmitter.emit('permission-error', permissionError);
-
+      .catch((serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError(
+              {
+                path: schedulesCollection.path,
+                operation: 'create',
+                requestResourceData: scheduleData,
+              },
+              { cause: serverError }
+            );
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
         setError(
           'Failed to create schedule. Check the developer console for details.'
         );

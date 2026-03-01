@@ -31,12 +31,16 @@ export default function AttendancePage() {
             schedulesList.sort((a, b) => b.date.toMillis() - a.date.toMillis());
             setSchedules(schedulesList);
             setLoading(false);
-        }, async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: 'schedules',
-                operation: 'list',
-            }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, async (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: 'schedules',
+                    operation: 'list',
+                }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             setLoading(false);
         });
 

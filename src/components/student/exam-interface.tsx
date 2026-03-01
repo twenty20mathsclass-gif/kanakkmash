@@ -70,12 +70,16 @@ export function ExamInterface({ exam, schedule, user }: Props) {
       
       router.push(`/exams/result/${submissionId}`);
 
-    } catch (serverError) {
-      const permissionError = new FirestorePermissionError(
-        { path: `exams/${exam.id}/submissions/${user.id}`, operation: 'create', requestResourceData: submissionData },
-        { cause: serverError }
-      );
-      errorEmitter.emit('permission-error', permissionError);
+    } catch (serverError: any) {
+      if (serverError.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError(
+            { path: `exams/${exam.id}/submissions/${user.id}`, operation: 'create', requestResourceData: submissionData },
+            { cause: serverError }
+          );
+          errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.error("Firestore error:", serverError);
+      }
       toast({
         variant: 'destructive',
         title: 'Submission Failed',

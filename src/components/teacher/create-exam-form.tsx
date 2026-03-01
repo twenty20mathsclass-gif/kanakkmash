@@ -123,12 +123,16 @@ export function CreateExamForm() {
         const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
             const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setAllStudents(studentsList);
-        }, async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: 'users',
-                operation: 'list',
-            }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, async (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: 'users',
+                    operation: 'list',
+                }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
         });
         return () => unsubscribe();
     }, [firestore]);
@@ -154,12 +158,16 @@ export function CreateExamForm() {
                 .filter(schedule => schedule.type === 'exam')
                 .sort((a,b) => b.date.toMillis() - a.date.toMillis() || b.startTime.localeCompare(a.startTime));
             setScheduledExams(exams);
-        }, async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: 'schedules',
-                operation: 'list',
-            }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
+        }, async (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: 'schedules',
+                    operation: 'list',
+                }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
         });
         return () => unsubscribe();
     }, [firestore, user]);
@@ -269,12 +277,14 @@ export function CreateExamForm() {
             form.reset();
             form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]);
 
-        } catch (serverError) {
-            const permissionError = new FirestorePermissionError(
-                { path: '/exams or /schedules', operation: 'create', requestResourceData: {data} },
-                { cause: serverError }
-            );
-            errorEmitter.emit('permission-error', permissionError);
+        } catch (serverError: any) {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError(
+                    { path: '/exams or /schedules', operation: 'create', requestResourceData: {data} },
+                    { cause: serverError }
+                );
+                errorEmitter.emit('permission-error', permissionError);
+            }
             setError('Failed to create exam. You may not have the required permissions.');
             console.error(serverError);
         } finally {

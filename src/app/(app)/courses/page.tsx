@@ -91,12 +91,16 @@ export default function ExamSchedulePage() {
       filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
-    }, async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: 'schedules',
-            operation: 'list',
-        }, { cause: serverError });
-        errorEmitter.emit('permission-error', permissionError);
+    }, async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
         setSchedules([]);
         setLoading(false);
     });

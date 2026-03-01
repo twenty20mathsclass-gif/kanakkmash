@@ -94,12 +94,16 @@ export default function ClassSchedulePage() {
       filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
-    }, async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: 'schedules',
-            operation: 'list',
-        }, { cause: serverError });
-        errorEmitter.emit('permission-error', permissionError);
+    }, async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error:", serverError);
+        }
         setSchedules([]);
         setLoading(false);
     });
@@ -186,16 +190,20 @@ export default function ClassSchedulePage() {
                 description: `You've marked your attendance for "${selectedEvent.title}".`,
             });
           })
-          .catch((serverError) => {
-            const permissionError = new FirestorePermissionError(
-              {
-                path: `users/${user.id}/attendance/${selectedEvent.id} and schedules/${selectedEvent.id}/attendees/${user.id}`,
-                operation: 'create',
-                requestResourceData: teacherAttendanceData,
-              },
-              { cause: serverError }
-            );
-            errorEmitter.emit('permission-error', permissionError);
+          .catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError(
+                  {
+                    path: `users/${user.id}/attendance/${selectedEvent.id} and schedules/${selectedEvent.id}/attendees/${user.id}`,
+                    operation: 'create',
+                    requestResourceData: teacherAttendanceData,
+                  },
+                  { cause: serverError }
+                );
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error:", serverError);
+            }
             toast({
                 variant: 'destructive',
                 title: 'Error',
