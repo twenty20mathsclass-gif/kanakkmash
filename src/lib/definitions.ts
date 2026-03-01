@@ -21,6 +21,7 @@ export type User = {
   ifscCode?: string;
   upiId?: string;
   upiQrCodeUrl?: string;
+  hourlyRate?: number;
 };
 
 export type Lesson = {

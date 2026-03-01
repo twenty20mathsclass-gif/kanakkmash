@@ -18,7 +18,8 @@
         "accountNumber": { "type": "string", "description": "The bank account number (teachers only)." },
         "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch (teachers only)." },
         "upiId": { "type": "string", "description": "The teacher's UPI ID." },
-        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the teacher's UPI QR code image." }
+        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the teacher's UPI QR code image." },
+        "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
       },
       "required": ["id", "name", "email", "role"]
     },
