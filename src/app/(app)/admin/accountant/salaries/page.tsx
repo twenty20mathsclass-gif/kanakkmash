@@ -147,11 +147,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     if (!teacher) return null;
 
-    const handleAddPayment = async (data: AddPaymentValues) => {
+    const handleAddPayment = (data: AddPaymentValues) => {
         if (!firestore || !teacher) return;
         setIsSubmitting(true);
         setFormError(null);
 
+        const salaryPaymentsCollection = collection(firestore, 'salaryPayments');
         const paymentData = {
             ...data,
             amount: data.hourlyRate * data.totalHours,
@@ -159,22 +160,24 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             paymentDate: serverTimestamp(),
         };
 
-        try {
-            await addDoc(collection(firestore, 'salaryPayments'), paymentData);
-            toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
-            form.reset({ hourlyRate: teacher.hourlyRate || 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
-        } catch (serverError: any) {
-            if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'create', requestResourceData: paymentData }, { cause: serverError });
-                errorEmitter.emit('permission-error', permissionError);
-                setFormError("You don't have permission to add payments.");
-            } else {
-                 console.warn("Error adding payment: ", serverError);
-                 setFormError("An unexpected error occurred.");
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
+        addDoc(salaryPaymentsCollection, paymentData)
+            .then(() => {
+                toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
+                form.reset({ hourlyRate: teacher.hourlyRate || 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
+            })
+            .catch(async (serverError: any) => {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({ path: salaryPaymentsCollection.path, operation: 'create', requestResourceData: paymentData }, { cause: serverError });
+                    errorEmitter.emit('permission-error', permissionError);
+                    setFormError("You don't have permission to add payments.");
+                } else {
+                     console.warn("Error adding payment: ", serverError);
+                     setFormError("An unexpected error occurred.");
+                }
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
     };
     
     return (
