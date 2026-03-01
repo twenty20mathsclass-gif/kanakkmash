@@ -1,7 +1,7 @@
 'use client';
 
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { House, Newspaper, Users, ShoppingCart, Info } from 'lucide-react';
+import { House, Newspaper, Users, ShoppingCart, Building2 } from 'lucide-react';
 
 export function HomePageDock() {
     const navItems = [
@@ -9,7 +9,7 @@ export function HomePageDock() {
         { href: '/blog', label: 'Blog', icon: Newspaper },
         { href: '/community', label: 'Community', icon: Users },
         { href: '/cart', label: 'Cart', icon: ShoppingCart },
-        { href: '/about-us', label: 'About Us', icon: Info },
+        { href: '/about-us', label: 'About Us', icon: Building2 },
     ];
 
     return (

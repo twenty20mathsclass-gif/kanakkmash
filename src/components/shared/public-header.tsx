@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { House, Newspaper, Users, Calendar, FileText, ShoppingCart, Info } from 'lucide-react';
+import { House, Newspaper, Users, Calendar, FileText, ShoppingCart, Building2 } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { UserNav } from './user-nav';
 
@@ -29,7 +29,7 @@ const publicNavItems = [
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/community', label: 'Community', icon: Users },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
-    { href: '/about-us', label: 'About Us', icon: Info },
+    { href: '/about-us', label: 'About Us', icon: Building2 },
 ];
 
 const studentNavItems = [
