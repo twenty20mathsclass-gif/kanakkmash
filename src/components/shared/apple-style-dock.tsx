@@ -7,6 +7,7 @@ import type { User } from '@/lib/definitions';
 import { Dock, DockIcon, DockItem } from '@/components/ui/dock';
 import { cn } from '@/lib/utils';
 import { UserNav } from './user-nav';
+import { motion } from 'framer-motion';
 
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -54,15 +55,19 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
           <DockItem key={item.href}>
             <Link
               href={item.href}
-              className={cn(
-                "relative flex h-full w-full items-center justify-center rounded-full transition-colors duration-300",
-                isActive ? "bg-primary" : "bg-transparent"
-              )}
+              className="relative flex h-full w-full items-center justify-center rounded-full"
             >
+              {isActive && (
+                <motion.div
+                  layoutId="active-dock-item"
+                  className="absolute inset-0 rounded-full bg-primary"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
               <DockIcon>
                 <Icon
                   className={cn(
-                    "transition-colors",
+                    "relative transition-colors",
                     isActive
                       ? "text-primary-foreground"
                       : "text-muted-foreground group-hover/dock-item:text-foreground"
