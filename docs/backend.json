@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "userProfile": {
@@ -10,7 +11,11 @@
         "email": { "type": "string", "format": "email", "description": "The user's email address." },
         "role": { "type": "string", "enum": ["student", "teacher", "admin"], "description": "The user's role." },
         "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
-        "createdAt": { "type": "object", "description": "The date and time the user account was created." }
+        "createdAt": { "type": "object", "description": "The date and time the user account was created." },
+        "accountHolderName": { "type": "string", "description": "The account holder's name for bank details (teachers only)." },
+        "bankName": { "type": "string", "description": "The name of the bank (teachers only)." },
+        "accountNumber": { "type": "string", "description": "The bank account number (teachers only)." },
+        "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch (teachers only)." }
       },
       "required": ["id", "name", "email", "role"]
     },

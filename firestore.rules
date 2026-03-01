@@ -25,14 +25,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Admins and teachers can read user profiles. Users can only read their own.
-      allow read: if isOwner(userId) || isAdmin() || isRole('teacher');
+      // Admins can read any profile. Users can read their own. Teachers can read student profiles.
+      allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && resource.data.role == 'student');
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
 
       // Admins can update any profile. Users can only update their own.
-      // A user cannot change their own role.
+      // A user cannot change their own role. A teacher can update their own bank details.
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
       
       // Admins can delete users. Users can delete their own account.

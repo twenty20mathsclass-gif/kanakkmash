@@ -14,6 +14,10 @@ export type User = {
   syllabus?: string;
   competitiveExam?: string;
   createdAt?: Timestamp;
+  accountHolderName?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
 };
 
 export type Lesson = {
