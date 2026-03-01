@@ -67,11 +67,7 @@ const IconAnimation = () => {
     return null;
   }
 
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-      {generatedIcons}
-    </div>
-  );
+  return <>{generatedIcons}</>;
 };
 
 export function AnimatedMathIcons() {
