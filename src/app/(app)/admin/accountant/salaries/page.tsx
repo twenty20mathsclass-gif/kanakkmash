@@ -49,7 +49,11 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
-        defaultValues: { amount: 0 },
+        defaultValues: {
+            amount: 0,
+            periodStart: undefined,
+            periodEnd: undefined,
+        },
     });
 
     useEffect(() => {
@@ -106,7 +110,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         try {
             await addDoc(collection(firestore, 'salaryPayments'), paymentData);
             toast({ title: "Success", description: `Payment of ${data.amount} recorded for ${teacher.name}.` });
-            form.reset({amount: 0});
+            form.reset({ amount: 0, periodStart: undefined, periodEnd: undefined });
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'create', requestResourceData: paymentData }, { cause: serverError });
