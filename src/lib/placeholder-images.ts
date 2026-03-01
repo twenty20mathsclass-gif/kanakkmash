@@ -60,6 +60,12 @@ const data = {
       "description": "A person writing in a notebook during an online class.",
       "imageUrl": "https://picsum.photos/seed/about-service3/600/400",
       "imageHint": "online class"
+    },
+    {
+      "id": "fida-shirin",
+      "description": "A portrait of Fida Shirin G, founder of Kanakkmash.",
+      "imageUrl": "https://picsum.photos/seed/fida-shirin/500/500",
+      "imageHint": "woman mentor"
     }
   ]
 }

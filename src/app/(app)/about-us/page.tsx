@@ -8,12 +8,10 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   PlayCircle,
   Users,
-  CheckCircle,
   Clock,
   DollarSign,
   TrendingUp,
   Award,
-  BookOpen,
   Target,
   Facebook,
   Youtube,
@@ -67,7 +65,7 @@ const SocialIcon = ({
 
 export default function AboutUsPage() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'about-hero-woman');
-  const experienceImage = PlaceHolderImages.find((img) => img.id === 'about-experience-woman');
+  const founderImage = PlaceHolderImages.find((img) => img.id === 'fida-shirin');
   const service1Image = PlaceHolderImages.find((img) => img.id === 'about-service-1');
   const service2Image = PlaceHolderImages.find((img) => img.id === 'about-service-2');
   const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
@@ -227,75 +225,40 @@ export default function AboutUsPage() {
         </section>
       </Reveal>
 
-      {/* Experience Section */}
+      {/* Meet Our Mentor Section */}
       <Reveal>
         <section className="grid items-center gap-12 md:grid-cols-2">
           <div className="relative flex items-center justify-center">
             <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
             <div className="relative aspect-square h-[400px]">
-              {experienceImage && (
+              {founderImage && (
                 <Image
-                  src={experienceImage.imageUrl}
-                  alt={experienceImage.description}
+                  src={founderImage.imageUrl}
+                  alt={founderImage.description}
                   width={500}
                   height={500}
                   className="h-full w-full rounded-full object-cover shadow-2xl"
-                  data-ai-hint={experienceImage.imageHint}
+                  data-ai-hint={founderImage.imageHint}
                 />
               )}
-              <StatBubble
-                icon={TrendingUp}
-                label="Engagement"
-                value="120%"
-                className="-left-12 top-16"
-              />
-              <StatBubble
-                icon={BookOpen}
-                label="Courses"
-                value="88+"
-                className="bottom-8 -right-12"
-              />
             </div>
           </div>
           <div className="space-y-6">
             <Badge variant="outline" className="font-semibold">
-              Our Experience
+              Meet Our Head Mentor
             </Badge>
             <h2 className="font-headline text-3xl font-bold sm:text-4xl">
-              10+ Years Of Experience In Mathematics Education
+              FIDA SHIRIN G
             </h2>
+            <p className="font-bold text-primary">Founder, CEO & Head Mentor</p>
             <p className="text-muted-foreground">
-              Our long-standing presence in the education field has allowed us to
-              perfect our teaching methodologies and curriculum to ensure student
-              success.
+              With 5+ years of experience, Fida Shirin G leads Kanakkmash with a passion for making math accessible. Holding a BSc in Mathematics, DElEd, and KTET qualifications, she developed the innovative "20-20 maths class" strategy, guiding numerous students to success.
             </p>
-            <div className="space-y-4">
-              {[
-                {
-                  title: 'Personalized Learning Paths',
-                  text: 'We tailor our teaching to each student’s unique needs and learning pace.',
-                },
-                {
-                  title: 'Comprehensive Curriculum',
-                  text: 'Covering everything from basic concepts to advanced competitive exam topics.',
-                },
-                {
-                  title: 'Interactive Teaching Methods',
-                  text: 'Engaging lessons that make learning math fun and effective.',
-                },
-              ].map((item, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <CheckCircle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {item.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-2 pt-2">
+                <Badge>BSc Maths</Badge>
+                <Badge>DElEd</Badge>
+                <Badge>KTET Certified</Badge>
+                <Badge>5+ Years Experience</Badge>
             </div>
           </div>
         </section>
