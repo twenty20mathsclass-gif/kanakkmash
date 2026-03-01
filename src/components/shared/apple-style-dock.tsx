@@ -67,6 +67,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
                       ? "text-primary-foreground"
                       : "text-muted-foreground group-hover/dock-item:text-foreground"
                   )}
+                  strokeWidth={1.5}
                 />
                 <span className="sr-only">{item.label}</span>
               </DockIcon>
