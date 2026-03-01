@@ -1,0 +1,17 @@
+export const dynamic = 'force-dynamic';
+
+export default function AboutUsPage() {
+  return (
+    <div className="space-y-8">
+        <div className="flex items-center justify-between">
+            <div>
+                <h1 className="text-3xl font-bold font-headline">About Us</h1>
+                <p className="text-muted-foreground">Learn more about kanakkmash.</p>
+            </div>
+        </div>
+        <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+            Information about kanakkmash is coming soon.
+        </div>
+    </div>
+  );
+}

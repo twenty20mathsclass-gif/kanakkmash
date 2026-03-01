@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { House, Newspaper, BarChart3, Users, Calendar, FileText, ShoppingCart } from 'lucide-react';
+import { House, Newspaper, BarChart3, Users, Calendar, FileText, ShoppingCart, Info } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { UserNav } from './user-nav';
 
@@ -26,6 +26,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
 
 const publicNavItems = [
     { href: '/', label: 'Home', icon: House },
+    { href: '/about-us', label: 'About Us', icon: Info },
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/materials', label: 'Materials', icon: BarChart3 },
     { href: '/community', label: 'Community', icon: Users },
