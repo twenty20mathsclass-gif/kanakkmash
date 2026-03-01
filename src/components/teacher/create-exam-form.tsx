@@ -278,15 +278,17 @@ export function CreateExamForm() {
             form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]);
 
         } catch (serverError: any) {
-            if (serverError.code === 'permission-denied') {
+             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError(
                     { path: '/exams or /schedules', operation: 'create', requestResourceData: {data} },
                     { cause: serverError }
                 );
                 errorEmitter.emit('permission-error', permissionError);
+                setError('Failed to create exam. You may not have the required permissions.');
+            } else {
+                setError('An unexpected error occurred while creating the exam. Please try again.');
+                console.error("Error creating exam:", serverError);
             }
-            setError('Failed to create exam. You may not have the required permissions.');
-            console.error(serverError);
         } finally {
             setLoading(false);
         }

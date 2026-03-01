@@ -85,12 +85,16 @@ export function UpcomingClasses() {
       setUpcomingClasses(filteredSchedules.slice(0, 3));
       setLoading(false);
     },
-    async (serverError) => {
-      const permissionError = new FirestorePermissionError({
-        path: 'schedules',
-        operation: 'list',
-      }, { cause: serverError });
-      errorEmitter.emit('permission-error', permissionError);
+    (serverError: any) => {
+      if (serverError.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: 'schedules',
+          operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.error("Firestore error fetching upcoming classes:", serverError);
+      }
       setLoading(false);
       setUpcomingClasses([]);
     });
