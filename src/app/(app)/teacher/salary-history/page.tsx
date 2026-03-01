@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { SalaryPayment } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,12 +23,24 @@ export default function TeacherSalaryHistoryPage() {
 
         const paymentsQuery = query(
             collection(firestore, 'salaryPayments'),
-            where('teacherId', '==', user.id),
-            orderBy('paymentDate', 'desc')
+            where('teacherId', '==', user.id)
         );
 
         const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
             const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SalaryPayment));
+            
+            paymentsList.sort((a, b) => {
+                const aIsPending = !a.paymentDate;
+                const bIsPending = !b.paymentDate;
+
+                if (aIsPending && !bIsPending) return -1; // a comes first
+                if (!aIsPending && bIsPending) return 1;  // b comes first
+                if (aIsPending && bIsPending) return 0;   // Order doesn't matter
+
+                // Both have dates, sort descending
+                return b.paymentDate!.toDate().getTime() - a.paymentDate!.toDate().getTime();
+            });
+
             setPayments(paymentsList);
             setLoading(false);
         }, (serverError: any) => {

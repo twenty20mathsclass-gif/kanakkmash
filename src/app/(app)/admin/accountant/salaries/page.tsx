@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, query, where, getDocs, onSnapshot, addDoc, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { User, SalaryPayment } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -61,12 +60,24 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
         const paymentsQuery = query(
             collection(firestore, 'salaryPayments'),
-            where('teacherId', '==', teacher.id),
-            orderBy('paymentDate', 'desc')
+            where('teacherId', '==', teacher.id)
         );
 
         const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
             const paymentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SalaryPayment));
+            
+            paymentsList.sort((a, b) => {
+                const aIsPending = !a.paymentDate;
+                const bIsPending = !b.paymentDate;
+
+                if (aIsPending && !bIsPending) return -1; // a comes first
+                if (!aIsPending && bIsPending) return 1;  // b comes first
+                if (aIsPending && bIsPending) return 0;   // Order doesn't matter
+
+                // Both have dates, sort descending
+                return b.paymentDate!.toDate().getTime() - a.paymentDate!.toDate().getTime();
+            });
+
             setPayments(paymentsList);
             setLoading(false);
         }, (serverError: any) => {
