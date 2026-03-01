@@ -4,22 +4,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot, doc } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart, User, Award, BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -35,7 +31,6 @@ export default function ExamSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
-  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -91,7 +86,7 @@ export default function ExamSchedulePage() {
       filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
-    }, async (serverError: any) => {
+    }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: 'schedules',
@@ -99,7 +94,7 @@ export default function ExamSchedulePage() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error:", serverError);
+            console.error("Firestore error fetching exam schedule:", serverError);
         }
         setSchedules([]);
         setLoading(false);

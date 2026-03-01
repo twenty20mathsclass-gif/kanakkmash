@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { CourseCategory } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 function ManageCategories({ firestore }: { firestore: Firestore }) {
@@ -27,11 +29,19 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
           const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseCategory));
           setCategories(cats);
           setLoadingCategories(false);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error getting categories:", serverError);
+            }
+            setLoadingCategories(false);
         });
         return () => unsubscribe();
       }, [firestore]);
     
-    const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleAddCategory = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!firestore) return;
         const form = e.currentTarget;
@@ -42,25 +52,38 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
             imageUrl: formData.get('imageUrl') as string,
             style: formData.get('style') as 'primary' | 'secondary' | 'accent',
         };
-        try {
-            await addDoc(collection(firestore, 'courseCategories'), newCategoryData);
+        
+        const categoriesCol = collection(firestore, 'courseCategories');
+        addDoc(categoriesCol, newCategoryData).then(() => {
             toast({ title: "Success", description: "Category added." });
             form.reset();
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
-        }
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'create', requestResourceData: newCategoryData }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add a category." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
+            }
+        });
     };
     
-    const handleDeleteCategory = async (id: string) => {
+    const handleDeleteCategory = (id: string) => {
         if (!firestore) return;
-        try {
-            await deleteDoc(doc(firestore, 'courseCategories', id));
+        const categoryRef = doc(firestore, 'courseCategories', id);
+        deleteDoc(categoryRef).then(() => {
             toast({ title: "Success", description: "Category deleted." });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
-        }
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoryRef.path, operation: 'delete' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this category." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
+            }
+        });
     };
 
     return (

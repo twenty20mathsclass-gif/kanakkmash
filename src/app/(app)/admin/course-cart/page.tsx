@@ -14,6 +14,8 @@ import { Loader2, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { courses } from '@/lib/data';
 import type { CartOffer, CourseCategory, PopularCourse } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function ManageOffers({ firestore }: { firestore: Firestore }) {
     const { toast } = useToast();
@@ -30,20 +32,34 @@ function ManageOffers({ firestore }: { firestore: Firestore }) {
             setOffer({ title: '50% OFF', description: 'On over 246+ Courses', buttonText: 'Enroll Now', buttonLink: '/dashboard' });
           }
           setLoadingOffer(false);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: offerRef.path, operation: 'get' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error getting offer:", serverError);
+            }
+            setLoadingOffer(false);
         });
         return () => unsubscribe();
       }, [firestore]);
     
-    const handleOfferSave = async (e: React.FormEvent) => {
+    const handleOfferSave = (e: React.FormEvent) => {
         e.preventDefault();
         if (!firestore || !offer) return;
-        try {
-          await setDoc(doc(firestore, 'cartContent', 'mainOffer'), offer);
-          toast({ title: "Success", description: "Offer updated successfully." });
-        } catch (error) {
-          console.error(error);
-          toast({ variant: 'destructive', title: "Error", description: "Failed to update offer." });
-        }
+        const offerRef = doc(firestore, 'cartContent', 'mainOffer');
+        setDoc(offerRef, offer).then(() => {
+            toast({ title: "Success", description: "Offer updated successfully." });
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: offerRef.path, operation: 'update', requestResourceData: offer }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to update the offer." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to update offer." });
+            }
+        });
     };
 
     return (
@@ -76,11 +92,19 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
           const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseCategory));
           setCategories(cats);
           setLoadingCategories(false);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error getting categories:", serverError);
+            }
+            setLoadingCategories(false);
         });
         return () => unsubscribe();
       }, [firestore]);
     
-    const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleAddCategory = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!firestore) return;
         const form = e.currentTarget;
@@ -91,25 +115,38 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
             imageUrl: formData.get('imageUrl') as string,
             style: formData.get('style') as 'primary' | 'secondary' | 'accent',
         };
-        try {
-            await addDoc(collection(firestore, 'courseCategories'), newCategoryData);
+
+        const categoriesCol = collection(firestore, 'courseCategories');
+        addDoc(categoriesCol, newCategoryData).then(() => {
             toast({ title: "Success", description: "Category added." });
             form.reset();
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
-        }
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'create', requestResourceData: newCategoryData }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add a category." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
+            }
+        });
     };
     
-    const handleDeleteCategory = async (id: string) => {
+    const handleDeleteCategory = (id: string) => {
         if (!firestore) return;
-        try {
-            await deleteDoc(doc(firestore, 'courseCategories', id));
+        const categoryRef = doc(firestore, 'courseCategories', id);
+        deleteDoc(categoryRef).then(() => {
             toast({ title: "Success", description: "Category deleted." });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
-        }
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: categoryRef.path, operation: 'delete' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this category." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
+            }
+        });
     };
 
     return (
@@ -165,33 +202,54 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
           const popCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PopularCourse));
           setPopularCourses(popCourses);
           setLoadingPopular(false);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: popularCol.path, operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Firestore error getting popular courses:", serverError);
+            }
+            setLoadingPopular(false);
         });
         return () => unsubscribe();
       }, [firestore]);
 
-    const handleAddPopularCourse = async (courseId: string) => {
+    const handleAddPopularCourse = (courseId: string) => {
         if (!firestore || !courseId) return;
         if (popularCourses.some(p => p.courseId === courseId)) {
             toast({ variant: 'destructive', title: "Error", description: "Course is already popular." });
             return;
         }
-        try {
-            await addDoc(collection(firestore, 'popularCourses'), { courseId });
+        
+        const popularCol = collection(firestore, 'popularCourses');
+        addDoc(popularCol, { courseId }).then(() => {
             toast({ title: "Success", description: "Popular course added." });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to add popular course." });
-        }
+        }).catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: popularCol.path, operation: 'create', requestResourceData: { courseId } }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add popular courses." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to add popular course." });
+            }
+        });
     };
     const handleDeletePopularCourse = async (id: string) => {
         if (!firestore) return;
-        try {
-            await deleteDoc(doc(firestore, 'popularCourses', id));
+        const popularCourseRef = doc(firestore, 'popularCourses', id);
+        deleteDoc(popularCourseRef).then(() => {
             toast({ title: "Success", description: "Popular course removed." });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Failed to remove popular course." });
-        }
+        }).catch((serverError: any) => {
+             if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: popularCourseRef.path, operation: 'delete' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to remove popular courses." });
+            } else {
+                console.error(serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to remove popular course." });
+            }
+        });
     };
 
     return (

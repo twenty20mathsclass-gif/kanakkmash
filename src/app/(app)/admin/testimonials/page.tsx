@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
@@ -68,33 +68,41 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
             const imageRef = ref(storage, `testimonials/${Date.now()}_${imageFile.name}`);
             const snapshot = await uploadBytes(imageRef, imageFile);
             const imageUrl = await getDownloadURL(snapshot.ref);
-
+            
             // 2. Add testimonial to firestore
-            await addDoc(collection(firestore, 'testimonials'), {
+            const testimonialsCollection = collection(firestore, 'testimonials');
+            const dataToSave = {
                 ...newTestimonialData,
                 imageUrl,
                 createdAt: serverTimestamp(),
+            };
+
+            addDoc(testimonialsCollection, dataToSave).then(() => {
+                toast({ title: "Success", description: "Testimonial added." });
+                form.reset();
+                setImageFile(null);
+                setImagePreview(null);
+                onTestimonialAdded();
+            }).catch((serverError: any) => {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError(
+                        { path: testimonialsCollection.path, operation: 'create', requestResourceData: dataToSave },
+                        { cause: serverError }
+                    );
+                    errorEmitter.emit('permission-error', permissionError);
+                    setError('Failed to add testimonial. You may not have permissions.');
+                } else {
+                    console.error("Firestore error:", serverError);
+                    setError('Failed to add testimonial. A network or server error occurred.');
+                }
+            }).finally(() => {
+                 setLoading(false);
             });
 
-            toast({ title: "Success", description: "Testimonial added." });
-            form.reset();
-            setImageFile(null);
-            setImagePreview(null);
-            onTestimonialAdded();
-
-        } catch (serverError: any) {
-            if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError(
-                    { path: 'testimonials', operation: 'create', requestResourceData: newTestimonialData },
-                    { cause: serverError }
-                );
-                errorEmitter.emit('permission-error', permissionError);
-            } else {
-                console.error("Firestore error:", serverError);
-            }
-            setError('Failed to add testimonial. You may not have permissions.');
-        } finally {
-            setLoading(false);
+        } catch (storageError) {
+             console.error("Storage error:", storageError);
+             setError('Failed to upload image. Please try again.');
+             setLoading(false);
         }
     };
 
@@ -179,7 +187,7 @@ export default function AdminTestimonialsPage() {
                 const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.error("Firestore error fetching testimonials:", serverError);
             }
             setLoading(false);
         });
@@ -195,22 +203,24 @@ export default function AdminTestimonialsPage() {
         }
 
         try {
-            // Delete firestore doc
-            await deleteDoc(doc(firestore, 'testimonials', testimonial.id));
+            // Delete firestore doc first
+            const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
+            await deleteDoc(testimonialRef);
 
-            // Delete image from storage
+            // Then delete image from storage
             const imageRef = ref(storage, testimonial.imageUrl);
             await deleteObject(imageRef);
             
             toast({ title: "Success", description: "Testimonial deleted." });
         } catch (serverError: any) {
-            if (serverError.code === 'permission-denied') {
+             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this." });
             } else {
-                console.error("Firestore error:", serverError);
+                console.error("Firestore/Storage error:", serverError);
+                toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
             }
-            toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
         }
     };
 

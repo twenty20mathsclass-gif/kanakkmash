@@ -51,7 +51,7 @@ export function LearningProgress() {
             }, 0);
         setTotalMinutes(total);
         setLoading(false);
-    }, async (serverError: any) => {
+    }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: `users/${user.id}/attendance`,
@@ -59,7 +59,7 @@ export function LearningProgress() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error:", serverError);
+            console.error("Firestore error fetching learning progress:", serverError);
         }
         setLoading(false);
     });

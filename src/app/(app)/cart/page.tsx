@@ -16,6 +16,8 @@ import { useEffect, useState } from 'react';
 import { collection, doc, onSnapshot } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { CartOffer, CourseCategory, PopularCourse } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 export default function CartPage() {
@@ -42,18 +44,39 @@ export default function CartPage() {
       if (docSnap.exists()) {
         setOffer(docSnap.data() as CartOffer);
       }
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({ path: offerRef.path, operation: 'get' }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error getting cart offer:", serverError);
+        }
     }));
 
     const categoriesCol = collection(firestore, 'courseCategories');
     unsubscribes.push(onSnapshot(categoriesCol, (snapshot) => {
       const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseCategory));
       setCategories(cats);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'list' }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error getting categories:", serverError);
+        }
     }));
 
     const popularCol = collection(firestore, 'popularCourses');
     unsubscribes.push(onSnapshot(popularCol, (snapshot) => {
       const popCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PopularCourse));
       setPopularCourses(popCourses);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({ path: popularCol.path, operation: 'list' }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error getting popular courses:", serverError);
+        }
     }));
     
     // a small delay to ensure all data is loaded before hiding loader
