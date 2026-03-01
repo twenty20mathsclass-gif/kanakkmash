@@ -136,13 +136,13 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     }, [allSchedules]);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && teacher) {
             form.reset({
-                hourlyRate: 0,
+                hourlyRate: teacher.hourlyRate || 0,
                 totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0,
             });
         }
-    }, [isOpen, form, calculatedMonthlyHours]);
+    }, [isOpen, teacher, form, calculatedMonthlyHours]);
 
 
     if (!teacher) return null;
@@ -162,7 +162,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         try {
             await addDoc(collection(firestore, 'salaryPayments'), paymentData);
             toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
-            form.reset({ hourlyRate: 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
+            form.reset({ hourlyRate: teacher.hourlyRate || 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'create', requestResourceData: paymentData }, { cause: serverError });
@@ -216,7 +216,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                             <form onSubmit={form.handleSubmit(handleAddPayment)} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormField name="hourlyRate" control={form.control} render={({field}) => (
-                                        <FormItem><FormLabel>Hourly Rate (INR)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                        <FormItem>
+                                            <FormLabel>Hourly Rate (INR)</FormLabel>
+                                            <FormControl><Input type="number" {...field}/></FormControl>
+                                            <FormDescription>Pre-filled from teacher's profile.</FormDescription>
+                                            <FormMessage/>
+                                        </FormItem>
                                     )} />
                                     <FormField name="totalHours" control={form.control} render={({field}) => (
                                         <FormItem>
