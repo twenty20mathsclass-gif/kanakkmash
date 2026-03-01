@@ -8,7 +8,7 @@ import { useUser, useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Receipt, PlayCircle, Star, Loader2 } from 'lucide-react';
+import { IndianRupee, PlayCircle, Star, Loader2 } from 'lucide-react';
 import { courses } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Reveal } from '@/components/shared/reveal';
@@ -96,7 +96,7 @@ export default function CartPage() {
                 </div>
                 <Button asChild variant="outline">
                     <Link href="/purchased-courses">
-                        <Receipt className="mr-2 h-4 w-4" />
+                        <IndianRupee className="mr-2 h-4 w-4" />
                         Payment History
                     </Link>
                 </Button>
