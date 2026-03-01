@@ -137,3 +137,12 @@ export type Testimonial = {
   link?: string;
   createdAt: Timestamp;
 };
+
+export type SalaryPayment = {
+  id?: string;
+  teacherId: string;
+  amount: number;
+  paymentDate: Timestamp;
+  periodStart: Timestamp;
+  periodEnd: Timestamp;
+};
