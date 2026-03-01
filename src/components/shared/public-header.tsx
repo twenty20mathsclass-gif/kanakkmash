@@ -26,11 +26,11 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
 
 const publicNavItems = [
     { href: '/', label: 'Home', icon: House },
-    { href: '/about-us', label: 'About Us', icon: Info },
     { href: '/blog', label: 'Blog', icon: Newspaper },
     { href: '/materials', label: 'Materials', icon: BarChart3 },
     { href: '/community', label: 'Community', icon: Users },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
+    { href: '/about-us', label: 'About Us', icon: Info },
 ];
 
 const studentNavItems = [
