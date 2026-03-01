@@ -30,6 +30,36 @@ const data = {
       "description": "Charts and graphs representing statistical data.",
       "imageUrl": "https://images.unsplash.com/photo-1762279389020-eeeb69c25813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGF0aXN0aWNzJTIwY2hhcnRzfGVufDB8fHx8MTc3MTkxODAyNHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "statistics charts"
+    },
+    {
+      "id": "about-hero-woman",
+      "description": "A smiling woman in a yellow sweater with social media icons around her.",
+      "imageUrl": "https://picsum.photos/seed/about-hero/500/500",
+      "imageHint": "smiling woman"
+    },
+    {
+      "id": "about-experience-woman",
+      "description": "A smiling woman in a brown sweater with charts and graphs around her.",
+      "imageUrl": "https://picsum.photos/seed/about-exp/500/500",
+      "imageHint": "woman smiling"
+    },
+    {
+      "id": "about-service-1",
+      "description": "A person using a laptop with charts on the screen.",
+      "imageUrl": "https://picsum.photos/seed/about-service1/600/400",
+      "imageHint": "laptop charts"
+    },
+    {
+      "id": "about-service-2",
+      "description": "A person having a video call on a laptop.",
+      "imageUrl": "https://picsum.photos/seed/about-service2/600/400",
+      "imageHint": "video call"
+    },
+    {
+      "id": "about-service-3",
+      "description": "A person writing in a notebook during an online class.",
+      "imageUrl": "https://picsum.photos/seed/about-service3/600/400",
+      "imageHint": "online class"
     }
   ]
 }
