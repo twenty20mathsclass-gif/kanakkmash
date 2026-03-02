@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -6,14 +7,12 @@ import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
-import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  const isMobile = useIsMobile();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const { toast } = useToast();
 
@@ -52,13 +51,12 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Suspense fallback={null}>
-        {isMobile ? (
-          <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-            <HomePageDock />
-          </div>
-        ) : (
+        <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
+          <HomePageDock />
+        </div>
+        <div className="hidden md:block">
           <PublicHeader />
-        )}
+        </div>
       </Suspense>
       <main className="flex flex-1 flex-col">
         <section className="relative flex w-full items-center justify-center overflow-hidden min-h-screen">
