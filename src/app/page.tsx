@@ -1,18 +1,43 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
+import { Download } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
   const isMobile = useIsMobile();
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!installPrompt) {
+      return;
+    }
+    (installPrompt as any).prompt();
+    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+      setInstallPrompt(null);
+    });
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -60,6 +85,14 @@ export default function Home() {
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
               </div>
+              {installPrompt && (
+                <div className="mt-6">
+                  <Button variant="secondary" onClick={handleInstallClick}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Install Web App
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </section>

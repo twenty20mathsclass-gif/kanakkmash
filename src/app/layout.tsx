@@ -4,10 +4,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FloatingActionButtons } from '@/components/shared/floating-action-buttons';
 import { ThemeProvider } from '@/components/shared/theme-provider';
+import { PwaInstaller } from '@/components/shared/pwa-installer';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
   description: 'An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.',
+  manifest: '/manifest.json',
   keywords: [
     'online math classes',
     'maths tuition',
@@ -62,6 +64,7 @@ export default function RootLayout({
           <FirebaseClientProvider>{children}</FirebaseClientProvider>
           <Toaster />
           <FloatingActionButtons />
+          <PwaInstaller />
         </ThemeProvider>
       </body>
     </html>
