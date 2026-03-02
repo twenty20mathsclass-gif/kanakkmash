@@ -104,7 +104,6 @@ export default function AppLayout({
 
   const teacherNav = [
     { href: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/teacher/students', label: 'Students', icon: Users },
     { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
