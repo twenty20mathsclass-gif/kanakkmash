@@ -37,6 +37,7 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
+import { PageLoader } from '@/components/shared/page-loader';
 
 export default function AppLayout({
   children,
@@ -53,7 +54,7 @@ export default function AppLayout({
 
 
   // Paths that can be viewed without being logged in.
-  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials'];
+  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
 
@@ -95,8 +96,8 @@ export default function AppLayout({
     setYear(new Date().getFullYear());
   }, []);
 
-  if (loading || (!user && !isPubliclyAccessible)) {
-    return null;
+  if (loading) {
+    return <PageLoader />;
   }
 
   // Define nav items for logged-in users
