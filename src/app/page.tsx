@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -6,15 +5,17 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsClient(true);
+    
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event);
@@ -52,7 +53,6 @@ export default function Home() {
         aria-hidden="true"
         className="absolute inset-0 -z-10"
       >
-        <AnimatedMathIcons />
         <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
       </div>
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
@@ -82,12 +82,14 @@ export default function Home() {
             </Button>
           </div>
           
-          <div className="mt-6">
-            <Button variant="secondary" onClick={handleInstallClick}>
-              <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
-              Install Web App
-            </Button>
-          </div>
+          {isClient && (
+            <div className="mt-6">
+              <Button variant="secondary" onClick={handleInstallClick}>
+                <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
+                Install Web App
+              </Button>
+            </div>
+          )}
         
         </div>
       </div>
