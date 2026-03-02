@@ -64,6 +64,22 @@
         "paymentDate": { "type": "object", "description": "The date the payment was made." }
       },
       "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate"]
+    },
+    "blogPost": {
+      "title": "Blog Post",
+      "description": "Represents a blog post article.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the blog post." },
+        "content": { "type": "string", "description": "The main content of the blog post in HTML format." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the post's feature image." },
+        "authorId": { "type": "string", "description": "The UID of the author." },
+        "authorName": { "type": "string", "description": "The name of the author." },
+        "authorAvatarUrl": { "type": "string", "format": "uri", "description": "URL of the author's avatar." },
+        "createdAt": { "type": "object", "description": "The date and time the post was created." },
+        "updatedAt": { "type": "object", "description": "The date and time the post was last updated." }
+      },
+      "required": ["title", "content", "authorId", "authorName", "createdAt", "updatedAt"]
     }
   },
   "auth": {
@@ -105,6 +121,10 @@
     "/salaryPayments/{paymentId}": {
       "schema": { "$ref": "#/entities/salaryPayment" },
       "description": "Stores teacher salary payment records."
+    },
+    "/blogPosts/{postId}": {
+        "schema": { "$ref": "#/entities/blogPost" },
+        "description": "Stores blog post articles."
     }
   }
 }

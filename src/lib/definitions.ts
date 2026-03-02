@@ -150,3 +150,15 @@ export type SalaryPayment = {
   amount: number;
   paymentDate: Timestamp;
 };
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};

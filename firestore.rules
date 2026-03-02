@@ -110,5 +110,12 @@ service cloud.firestore {
         allow read: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
         allow write: if isAdmin();
     }
+    
+    match /blogPosts/{postId} {
+      allow get, list: if true;
+      allow create: if isRole('admin') || isRole('teacher');
+      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin();
+      allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
+    }
   }
 }
