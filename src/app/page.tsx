@@ -1,52 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useToast } from '@/hooks/use-toast';
+import nextDynamic from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 
+const InstallButton = nextDynamic(
+  () => import('@/components/shared/install-button'),
+  { ssr: false }
+);
+
 export default function Home() {
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [isClient, setIsClient] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    setIsClient(true);
-    
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstallClick = () => {
-    if (!installPrompt) {
-      toast({
-        title: "Installation not available",
-        description: "Your browser hasn't made the app installable. You may have already installed it or recently dismissed the prompt.",
-      });
-      return;
-    }
-    (installPrompt as any).prompt();
-    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
-      if (choiceResult.outcome === 'accepted') {
-        // The app was installed.
-      } else {
-        // The user dismissed the prompt.
-      }
-      setInstallPrompt(null);
-    });
-  };
-
   return (
     <section className="relative flex w-full items-center justify-center overflow-hidden min-h-[calc(100vh-12rem)] -mt-16">
       <div
@@ -82,14 +48,7 @@ export default function Home() {
             </Button>
           </div>
           
-          {isClient && (
-            <div className="mt-6">
-              <Button variant="secondary" onClick={handleInstallClick}>
-                <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
-                Install Web App
-              </Button>
-            </div>
-          )}
+          <InstallButton />
         
         </div>
       </div>
