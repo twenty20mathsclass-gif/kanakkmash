@@ -1,10 +1,8 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Suspense, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import Image from 'next/image';
@@ -14,11 +12,9 @@ export const dynamic = 'force-dynamic';
 
 export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    setIsClient(true);
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event);
@@ -67,7 +63,6 @@ export default function Home() {
             className="absolute inset-0 -z-10"
           >
             <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
-            <AnimatedMathIcons />
           </div>
           <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
             <div>
@@ -112,7 +107,7 @@ export default function Home() {
         <div>
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
-              © {isClient ? new Date().getFullYear() : ''} kanakkmash. All rights reserved.
+              © 2024 kanakkmash. All rights reserved.
             </p>
           </div>
         </div>
