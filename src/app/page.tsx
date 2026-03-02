@@ -1,11 +1,9 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import nextDynamic from 'next/dynamic';
-import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +20,6 @@ export default function Home() {
         className="absolute inset-0 -z-10"
       >
         <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        <AnimatedMathIcons />
       </div>
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <div>
