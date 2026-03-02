@@ -1,19 +1,13 @@
+
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from '@/firebase';
 import { UserNav } from './user-nav';
 
 export function MobileLogo({ onSignOut }: { onSignOut?: () => void }) {
-  const isMobile = useIsMobile();
   const { user } = useUser();
-  
-  if (!isMobile) {
-    return null;
-  }
-  
   const showUserNav = user && onSignOut;
 
   return (

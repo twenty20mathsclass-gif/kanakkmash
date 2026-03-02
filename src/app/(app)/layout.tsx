@@ -49,7 +49,7 @@ export default function AppLayout({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [year, setYear] = useState<number>();
 
 
   // Paths that can be viewed without being logged in.
@@ -187,9 +187,11 @@ export default function AppLayout({
       {isPubliclyAccessible && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-            <p className="text-sm text-foreground/60">
-              © {year} kanakkmash. All rights reserved.
-            </p>
+            {year && (
+              <p className="text-sm text-foreground/60">
+                © {year} kanakkmash. All rights reserved.
+              </p>
+            )}
           </div>
         </footer>
       )}
