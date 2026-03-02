@@ -8,12 +8,14 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
   const isMobile = useIsMobile();
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
@@ -30,10 +32,19 @@ export default function Home() {
 
   const handleInstallClick = () => {
     if (!installPrompt) {
+      toast({
+        title: "Installation not available",
+        description: "Your browser hasn't made the app installable. You may have already installed it or recently dismissed the prompt.",
+      });
       return;
     }
     (installPrompt as any).prompt();
     (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+      if (choiceResult.outcome === 'accepted') {
+        // The app was installed.
+      } else {
+        // The user dismissed the prompt.
+      }
       setInstallPrompt(null);
     });
   };
@@ -84,14 +95,14 @@ export default function Home() {
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
               </div>
-              {installPrompt && (
-                <div className="mt-6">
-                  <Button variant="secondary" onClick={handleInstallClick}>
-                    <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
-                    Install Web App
-                  </Button>
-                </div>
-              )}
+              
+              <div className="mt-6">
+                <Button variant="secondary" onClick={handleInstallClick}>
+                  <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
+                  Install Web App
+                </Button>
+              </div>
+            
             </div>
           </div>
         </section>
