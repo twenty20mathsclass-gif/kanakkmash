@@ -14,9 +14,11 @@ export const dynamic = 'force-dynamic';
 
 export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsClient(true);
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event);
@@ -110,7 +112,7 @@ export default function Home() {
         <div>
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
-              © {new Date().getFullYear()} kanakkmash. All rights reserved.
+              © {isClient ? new Date().getFullYear() : ''} kanakkmash. All rights reserved.
             </p>
           </div>
         </div>
