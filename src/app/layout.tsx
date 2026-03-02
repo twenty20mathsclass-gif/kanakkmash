@@ -5,6 +5,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FloatingActionButtons } from '@/components/shared/floating-action-buttons';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { PwaInstaller } from '@/components/shared/pwa-installer';
+import MainLayoutClient from '@/components/shared/main-layout-client';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
@@ -51,6 +52,7 @@ export default function RootLayout({
         <meta name="google-site-verification" content="5RfOM7ZZi1WMvbRBiPca4fo7dCpcpI6vAoDkuqiaupQ" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/fv.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -64,7 +66,9 @@ export default function RootLayout({
           defaultTheme="light"
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>{children}</FirebaseClientProvider>
+          <FirebaseClientProvider>
+            <MainLayoutClient>{children}</MainLayoutClient>
+          </FirebaseClientProvider>
           <Toaster />
           <FloatingActionButtons />
           <PwaInstaller />
