@@ -8,7 +8,6 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Image from 'next/image';
-import { Download } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,7 +87,7 @@ export default function Home() {
               {installPrompt && (
                 <div className="mt-6">
                   <Button variant="secondary" onClick={handleInstallClick}>
-                    <Download className="mr-2 h-4 w-4" />
+                    <Image src="/fv.png" alt="PWA Icon" width={20} height={20} className="mr-2" />
                     Install Web App
                   </Button>
                 </div>
