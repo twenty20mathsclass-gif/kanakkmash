@@ -72,7 +72,7 @@
       "properties": {
         "title": { "type": "string", "description": "The title of the blog post." },
         "content": { "type": "string", "description": "The main content of the blog post in HTML format." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the post's feature image." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "Optional URL of the post's feature image." },
         "authorId": { "type": "string", "description": "The UID of the author." },
         "authorName": { "type": "string", "description": "The name of the author." },
         "authorAvatarUrl": { "type": "string", "format": "uri", "description": "URL of the author's avatar." },

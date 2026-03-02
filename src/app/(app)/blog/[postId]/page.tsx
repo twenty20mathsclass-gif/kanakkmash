@@ -111,11 +111,13 @@ export default function BlogPostPage({ params }: PageProps) {
                 </header>
             </Reveal>
 
-            <Reveal delay={0.2}>
-                <div className="relative w-full aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
-                    <Image src={post.imageUrl || ''} alt={post.title} fill className="object-cover" />
-                </div>
-            </Reveal>
+            {post.imageUrl && (
+                <Reveal delay={0.2}>
+                    <div className="relative w-full aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
+                        <Image src={post.imageUrl} alt={post.title} fill className="object-cover" />
+                    </div>
+                </Reveal>
+            )}
             
             <Reveal delay={0.4}>
                 <div 

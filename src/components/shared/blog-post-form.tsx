@@ -84,18 +84,14 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
       if (imageFile) {
         setIsUploading(true);
         const imageRef = ref(storage, `blog-images/${user.id}-${Date.now()}-${imageFile.name}`);
-        const snapshot = await uploadBytes(imageRef, imageRef);
+        const snapshot = await uploadBytes(imageRef, imageFile);
         imageUrl = await getDownloadURL(snapshot.ref);
         setIsUploading(false);
-      }
-      
-      if (!imageUrl) {
-        setError('A feature image is required to create a post.');
-        setLoading(false);
-        return;
+      } else if (!imagePreview) {
+        imageUrl = '';
       }
 
-      const postData = {
+      const postData: any = {
         ...data,
         authorId: user.id,
         authorName: user.name,
@@ -103,6 +99,10 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         imageUrl: imageUrl,
         updatedAt: serverTimestamp(),
       };
+      
+      if (!isEditMode) {
+          postData.createdAt = serverTimestamp();
+      }
 
       if (isEditMode) {
         const postRef = doc(firestore, 'blogPosts', post.id);
@@ -110,10 +110,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         toast({ title: 'Success', description: 'Your post has been updated.' });
         router.push(`/blog/${post.id}`);
       } else {
-        const docRef = await addDoc(collection(firestore, 'blogPosts'), {
-          ...postData,
-          createdAt: serverTimestamp(),
-        });
+        const docRef = await addDoc(collection(firestore, 'blogPosts'), postData);
         toast({ title: 'Success', description: 'Your post has been published.' });
         router.push(`/blog/${docRef.id}`);
       }
@@ -156,7 +153,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
             />
             
             <div>
-              <FormLabel>Feature Image</FormLabel>
+              <FormLabel>Feature Image (Optional)</FormLabel>
               <Input
                 id="image"
                 type="file"
