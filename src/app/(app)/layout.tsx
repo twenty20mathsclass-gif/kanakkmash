@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, Suspense, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 
@@ -36,7 +36,6 @@ import {
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { PublicHeader } from '@/components/shared/public-header';
 
 export default function AppLayout({
@@ -48,9 +47,9 @@ export default function AppLayout({
   const { auth } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = usePathname();
+  const searchParams = useSearchParams();
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const isMobile = useIsMobile();
+  const [year, setYear] = useState(() => new Date().getFullYear());
 
 
   // Paths that can be viewed without being logged in.
@@ -91,6 +90,10 @@ export default function AppLayout({
       return;
     }
   }, [loading, user, router, isPubliclyAccessible, pathname]);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   if (loading || (!user && !isPubliclyAccessible)) {
     return null;
@@ -160,20 +163,24 @@ export default function AppLayout({
       <Suspense fallback={null}>
         <MobileLogo onSignOut={handleSignOut} />
         {user && (
-          isMobile ? (
-            <div className="fixed bottom-2 left-0 right-0 z-50">
+          <>
+            <div className="hidden md:block">
+              <PublicHeader user={user} onSignOut={handleSignOut} />
+            </div>
+            <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
               <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
             </div>
-          ) : (
-            <PublicHeader user={user} onSignOut={handleSignOut} />
-          )
+          </>
         )}
         {!user && isPubliclyAccessible && (
-          isMobile === false ? <PublicHeader /> : (
-            <div className="fixed bottom-2 left-0 right-0 z-50">
+          <>
+            <div className="hidden md:block">
+              <PublicHeader />
+            </div>
+            <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
               <HomePageDock />
             </div>
-          )
+          </>
         )}
       </Suspense>
       <main className="flex-grow p-4 pt-28 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
@@ -181,7 +188,7 @@ export default function AppLayout({
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             <p className="text-sm text-foreground/60">
-              © {new Date().getFullYear()} kanakkmash. All rights reserved.
+              © {year} kanakkmash. All rights reserved.
             </p>
           </div>
         </footer>
