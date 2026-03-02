@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, Suspense } from 'react';
@@ -54,7 +55,8 @@ export default function AppLayout({
 
   // Paths that can be viewed without being logged in.
   const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials'];
-  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses');
+  const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
+  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
 
   const handleSignOut = async () => {
     if (auth) {
