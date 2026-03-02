@@ -50,7 +50,7 @@ export default function AppLayout({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const [year, setYear] = useState<number>();
+  const [year, setYear] = useState<number | null>(null);
 
 
   // Paths that can be viewed without being logged in.
@@ -162,8 +162,8 @@ export default function AppLayout({
   return (
     <div className="relative min-h-screen bg-background">
       <Suspense fallback={null}>
-        <MobileLogo onSignOut={handleSignOut} />
-        {user && (
+        <MobileLogo />
+        {user ? (
           <>
             <div className="hidden md:block">
               <PublicHeader user={user} onSignOut={handleSignOut} />
@@ -172,8 +172,7 @@ export default function AppLayout({
               <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
             </div>
           </>
-        )}
-        {!user && isPubliclyAccessible && (
+        ) : (
           <>
             <div className="hidden md:block">
               <PublicHeader />
