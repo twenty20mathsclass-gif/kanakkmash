@@ -7,9 +7,13 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function InstallButton() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    // This effect runs only on the client, after the component has mounted.
+    setIsClient(true);
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event);
@@ -43,6 +47,12 @@ export default function InstallButton() {
       }
     );
   };
+  
+  // By returning null until we're on the client, we ensure the initial server-rendered
+  // and client-rendered HTML match, preventing a hydration error.
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="mt-6">
