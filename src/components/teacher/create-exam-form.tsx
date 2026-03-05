@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +12,6 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
-import dynamic from 'next/dynamic';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,10 +29,6 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { UploadResult } from 'firebase/storage';
-import { Skeleton } from '../ui/skeleton';
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> });
-import 'react-quill/dist/quill.snow.css';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -103,7 +99,7 @@ const examFormSchema = z.object({
         if (!data.totalMarks || data.totalMarks <= 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Total marks must be a positive number.', path: ['totalMarks'] });
         }
-         if (data.descriptiveInputMethod === 'editor' && (!data.questionPaperContent || data.questionPaperContent.replace(/<(.|\n)*?>/g, '').trim().length === 0)) {
+         if (data.descriptiveInputMethod === 'editor' && (!data.questionPaperContent || data.questionPaperContent.trim().length === 0)) {
             ctx.addIssue({ code: 'custom', message: 'Question paper content cannot be empty.', path: ['questionPaperContent'] });
         }
     }
@@ -563,7 +559,11 @@ export function CreateExamForm() {
                                             <FormItem>
                                                 <FormLabel>Question Paper Content</FormLabel>
                                                 <FormControl>
-                                                    <ReactQuill theme="snow" value={field.value || ''} onChange={field.onChange} className="bg-background" />
+                                                    <Textarea
+                                                        placeholder="Type the question paper content here..."
+                                                        className="min-h-[250px]"
+                                                        {...field}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
