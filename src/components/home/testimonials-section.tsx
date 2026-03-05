@@ -35,7 +35,7 @@ export function TestimonialsSection() {
                 const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error fetching testimonials:", serverError);
+                console.warn("Firestore error fetching testimonials:", serverError);
             }
             setLoading(false);
         });

@@ -131,7 +131,7 @@ export function CreateExamForm() {
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.warn("Firestore error:", serverError);
             }
         });
         return () => unsubscribe();
@@ -166,7 +166,7 @@ export function CreateExamForm() {
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
-                console.error("Firestore error:", serverError);
+                console.warn("Firestore error:", serverError);
             }
         });
         return () => unsubscribe();
@@ -208,7 +208,7 @@ export function CreateExamForm() {
                 description: 'Your image has been successfully added to the question.'
             });
         } catch (error: any) {
-            console.error("Image upload failed:", error);
+            console.warn("Image upload failed:", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
 
             let description = 'Could not upload the image. Please try again.';
@@ -296,7 +296,7 @@ export function CreateExamForm() {
                 setError('Failed to create exam. You may not have the required permissions.');
             } else {
                 setError('An unexpected error occurred while creating the exam. Please try again.');
-                console.error("Error creating exam:", serverError);
+                console.warn("Error creating exam:", serverError);
             }
         } finally {
             setLoading(false);

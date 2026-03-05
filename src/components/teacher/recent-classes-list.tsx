@@ -75,7 +75,7 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                 }
 
             } catch (e) {
-                console.error("Error fetching attendance for schedule item", e);
+                console.warn("Error fetching attendance for schedule item", e);
             } finally {
                 if (!cancelled) {
                     setLoading(false);

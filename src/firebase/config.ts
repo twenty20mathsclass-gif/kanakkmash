@@ -6,7 +6,6 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
-import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -29,7 +28,7 @@ if (firebaseConfig.apiKey) {
   auth = getAuth(app);
   storage = getStorage(app);
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && firestore) {
     // Enable multi-tab persistence
     enableMultiTabIndexedDbPersistence(firestore).catch((err) => {
       if (err.code == 'failed-precondition') {
@@ -44,13 +43,6 @@ if (firebaseConfig.apiKey) {
         console.warn('Firebase persistence is not supported in this browser.');
       }
     });
-
-    // Initialize Analytics only on the client side
-    try {
-      getAnalytics(app);
-    } catch (error) {
-      console.warn("Couldn't initialize analytics", error);
-    }
   }
 } else {
   app = null;

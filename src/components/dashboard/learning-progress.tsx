@@ -59,7 +59,7 @@ export function LearningProgress() {
             }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
         } else {
-            console.error("Firestore error fetching learning progress:", serverError);
+            console.warn("Firestore error fetching learning progress:", serverError);
         }
         setLoading(false);
     });
