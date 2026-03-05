@@ -113,6 +113,7 @@ service cloud.firestore {
         // Admins can read/write any payment.
         allow get: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
         // Teachers can list salary payments, but the client MUST filter by their teacherId.
+        // Admins can list all payments.
         allow list: if isAdmin() || isRole('teacher');
         allow write: if isAdmin();
     }
@@ -124,16 +125,18 @@ service cloud.firestore {
       allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
     }
 
-    match /chats/{chatId}/messages/{messageId} {
-      // The chatId is a composite of two UIDs, sorted and joined by '_'
-      // A user can read messages if their UID is in the chatId.
-      allow read: if request.auth.uid in split(chatId, '_');
-      
-      // A user can create a message if they are a participant and the sender.
-      allow create: if (request.auth.uid in split(chatId, '_')) && request.resource.data.senderId == request.auth.uid;
-      
-      // Messages are immutable.
-      allow update, delete: if false;
+    match /chats/{chatId} {
+      match /messages/{messageId} {
+        // A user can read/list messages if their UID is in the parent chatId.
+        // The chatId is a composite of two UIDs, sorted and joined by '_'
+        allow read: if request.auth != null && request.auth.uid in chatId.split('_');
+        
+        // A user can create a message if they are a participant and the sender.
+        allow create: if request.auth != null && (request.auth.uid in chatId.split('_')) && request.resource.data.senderId == request.auth.uid;
+        
+        // Messages are immutable.
+        allow update, delete: if false;
+      }
     }
   }
 }
