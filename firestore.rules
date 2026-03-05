@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -19,18 +20,19 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    match /users/{userId} {
-      // Admins can get any user's profile. Users can only get their own.
-      allow get: if isOwner(userId) || isAdmin();
+    function isExamOwner(examId) {
+      return get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
+    }
 
-      // Admins can list all users. Non-admins cannot.
-      allow list: if isAdmin();
+    match /users/{userId} {
+      // Admins can read any profile. Users can read their own. Teachers can read student profiles.
+      allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && resource.data.role == 'student');
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
 
       // Admins can update any profile. Users can only update their own.
-      // A user cannot change their own role.
+      // A user cannot change their own role. A teacher can update their own bank details.
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
       
       // Admins can delete users. Users can delete their own account.
@@ -49,8 +51,71 @@ service cloud.firestore {
       // Only teachers or admins can create schedules. Teachers must be the owner.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isRole('admin');
 
-      // Only the teacher who created the schedule or an admin can update/delete it
+      // Only the teacher who owns the schedule or an admin can update/delete it
       allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
+
+      match /attendees/{userId} {
+        // Student can create their own attendance record for a schedule
+        allow create: if isOwner(userId);
+        // Teacher who owns the schedule, the student, or an admin can read attendance
+        allow get, list: if get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid || isOwner(userId) || isAdmin();
+        // No one can update or delete from here to preserve attendance record.
+        allow update, delete: if false;
+      }
+    }
+
+    match /exams/{examId} {
+      // Any authenticated user can read an exam.
+      allow get, list: if request.auth != null;
+      // Teachers and admins can create exams. Teachers must own them.
+      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
+      // Teacher who owns it or admin can manage.
+      allow read, update, delete: if isExamOwner(examId) || isAdmin();
+
+      match /submissions/{userId} {
+        // A student can create their own submission.
+        allow create: if isOwner(userId);
+        // Student can read their own submission.
+        // Teacher who owns the exam or admin can read any submission for that exam.
+        allow get, list: if isOwner(userId) || isExamOwner(examId) || isAdmin();
+        // Submissions cannot be updated or deleted.
+        allow update, delete: if false;
+      }
+    }
+
+    match /cartContent/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /courseCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() || isRole('teacher');
+    }
+    match /popularCourses/{popularId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /salaryPayments/{paymentId} {
+        // Admins can perform any action on salary payments.
+        // Teachers can read salary payments where their UID matches the teacherId.
+        allow read: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
+        allow write: if isAdmin();
+    }
+    
+    match /blogPosts/{postId} {
+      allow get, list: if true;
+      allow create: if isRole('admin') || isRole('teacher');
+      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin();
+      allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
     }
   }
 }

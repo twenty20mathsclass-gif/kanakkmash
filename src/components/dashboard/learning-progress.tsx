@@ -5,6 +5,8 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent } from "@/components/ui/card";
 import { BrainCircuit, Clock, Flame, Loader2 } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type ProgressCardProps = {
   title: string;
@@ -49,8 +51,16 @@ export function LearningProgress() {
             }, 0);
         setTotalMinutes(total);
         setLoading(false);
-    }, (error) => {
-        console.error("Failed to fetch learning progress in real-time:", error);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.id}/attendance`,
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Firestore error fetching learning progress:", serverError);
+        }
         setLoading(false);
     });
 
@@ -69,7 +79,7 @@ export function LearningProgress() {
   return (
     <section>
       <h2 className="text-xl font-bold font-headline mb-4">Learning Progress</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <ProgressCard 
           title="Total Time" 
           value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatTime(totalMinutes)}

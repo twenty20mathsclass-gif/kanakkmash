@@ -1,0 +1,130 @@
+
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The user's unique ID." },
+        "name": { "type": "string", "description": "The user's full name." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "role": { "type": "string", "enum": ["student", "teacher", "admin"], "description": "The user's role." },
+        "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
+        "createdAt": { "type": "object", "description": "The date and time the user account was created." },
+        "paymentMethod": { "type": "string", "enum": ["bank", "upi"], "description": "The teacher's preferred payment method." },
+        "accountHolderName": { "type": "string", "description": "The account holder's name for bank details (teachers only)." },
+        "bankName": { "type": "string", "description": "The name of the bank (teachers only)." },
+        "accountNumber": { "type": "string", "description": "The bank account number (teachers only)." },
+        "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch (teachers only)." },
+        "upiId": { "type": "string", "description": "The teacher's UPI ID." },
+        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the teacher's UPI QR code image." },
+        "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "testimonial": {
+      "title": "Testimonial",
+      "description": "A testimonial from a student.",
+      "type": "object",
+      "properties": {
+        "studentName": { "type": "string", "description": "The name of the student." },
+        "quote": { "type": "string", "description": "The testimonial text." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the student's image." },
+        "videoUrl": { "type": "string", "format": "uri", "description": "Optional URL of a video testimonial." },
+        "link": { "type": "string", "format": "uri", "description": "Optional link to a project or profile." },
+        "createdAt": { "type": "object", "description": "The date and time the testimonial was created." }
+      },
+      "required": ["studentName", "quote", "imageUrl", "createdAt"]
+    },
+    "invoice": {
+      "title": "Invoice",
+      "description": "Represents a student invoice for fees or purchases.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "The ID of the student this invoice belongs to." },
+        "amount": { "type": "number", "description": "The total amount of the invoice." },
+        "status": { "type": "string", "enum": ["paid", "unpaid", "overdue"], "description": "The payment status of the invoice." },
+        "type": { "type": "string", "enum": ["fee", "cart"], "description": "The type of invoice." },
+        "createdAt": { "type": "object", "description": "The date the invoice was created." },
+        "dueDate": { "type": "object", "description": "The date the invoice is due." },
+        "paidAt": { "type": "object", "description": "The date the invoice was paid." }
+      },
+      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate"]
+    },
+    "salaryPayment": {
+      "title": "Salary Payment",
+      "description": "Represents a salary payment made to a teacher.",
+      "type": "object",
+      "properties": {
+        "teacherId": { "type": "string", "description": "The ID of the teacher receiving the payment." },
+        "hourlyRate": { "type": "number", "description": "The hourly rate for the teacher." },
+        "totalHours": { "type": "number", "description": "The total hours worked for this payment period." },
+        "amount": { "type": "number", "description": "The total amount paid (calculated from hourlyRate * totalHours)." },
+        "paymentDate": { "type": "object", "description": "The date the payment was made." }
+      },
+      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate"]
+    },
+    "blogPost": {
+      "title": "Blog Post",
+      "description": "Represents a blog post article.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the blog post." },
+        "content": { "type": "string", "description": "The main content of the blog post in HTML format." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "Optional URL of the post's feature image." },
+        "authorId": { "type": "string", "description": "The UID of the author." },
+        "authorName": { "type": "string", "description": "The name of the author." },
+        "authorAvatarUrl": { "type": "string", "format": "uri", "description": "URL of the author's avatar." },
+        "createdAt": { "type": "object", "description": "The date and time the post was created." },
+        "updatedAt": { "type": "object", "description": "The date and time the post was last updated." }
+      },
+      "required": ["title", "content", "authorId", "authorName", "createdAt", "updatedAt"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/userProfile" },
+      "description": "Stores user profile information."
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/testimonial" },
+      "description": "Stores student testimonials."
+    },
+    "/schedules/{scheduleId}": {
+        "schema": {},
+        "description": "Stores class and exam schedules."
+    },
+    "/exams/{examId}": {
+        "schema": {},
+        "description": "Stores exam content."
+    },
+    "/cartContent/{docId}": {
+        "schema": {},
+        "description": "Stores content for the cart page."
+    },
+    "/courseCategories/{categoryId}": {
+        "schema": {},
+        "description": "Stores course categories for the cart page."
+    },
+     "/popularCourses/{popularId}": {
+        "schema": {},
+        "description": "Stores popular course mappings."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/invoice" },
+      "description": "Stores student invoices."
+    },
+    "/salaryPayments/{paymentId}": {
+      "schema": { "$ref": "#/entities/salaryPayment" },
+      "description": "Stores teacher salary payment records."
+    },
+    "/blogPosts/{postId}": {
+        "schema": { "$ref": "#/entities/blogPost" },
+        "description": "Stores blog post articles."
+    }
+  }
+}

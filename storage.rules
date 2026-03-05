@@ -1,0 +1,45 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function getRole() {
+      // Assumes user document exists.
+      return get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isRole(role) {
+      return request.auth != null && getRole() == role;
+    }
+
+    // Avatars: Logged-in users can upload their own avatar. Anyone can read them.
+    match /avatars/{userId} {
+      allow read: if true;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Testimonial images: Only admins can upload. Anyone can read.
+    match /testimonials/{fileName} {
+      allow read: if true;
+      allow write: if isRole('admin');
+    }
+    
+    // UPI QR Codes: Only the specific teacher can upload/read their own QR code.
+    match /upi-qr-codes/{userId}/{fileName} {
+      allow read, write: if request.auth.uid == userId && isRole('teacher');
+    }
+
+    // Exam question images: Only teachers can upload. Authenticated users can read.
+    match /exam-questions/{teacherId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isRole('teacher') && request.auth.uid == teacherId;
+    }
+
+    // Blog post images: Only admins or teachers can upload. Anyone can read.
+    match /blog-images/{fileName} {
+      allow read: if true;
+      allow write: if isRole('admin') || isRole('teacher');
+    }
+  }
+}

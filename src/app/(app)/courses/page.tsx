@@ -1,67 +1,230 @@
-import { courses } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
+import { useFirebase, useUser } from '@/firebase';
+import { collection, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
+import type { Schedule } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart, User, Award, BookOpen } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-export const dynamic = 'force-dynamic';
+const iconMap: { [key: string]: React.ElementType } = {
+  BookText,
+  AppWindow,
+  FlaskConical,
+  BarChart,
+  User,
+  Award,
+  BookOpen
+};
 
-export default function CoursesPage() {
+export default function ExamSchedulePage() {
+  const { firestore } = useFirebase();
+  const { user } = useUser();
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
+
+  useEffect(() => {
+    if (!firestore || !user) {
+      setSchedules([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const start = startOfDay(selectedDate);
+    const end = endOfDay(selectedDate);
+    
+    const schedulesQuery = query(
+      collection(firestore, 'schedules'),
+      where('date', '>=', Timestamp.fromDate(start)),
+      where('date', '<=', Timestamp.fromDate(end))
+    );
+
+    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+      const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+
+      const filteredSchedules = allSchedulesForDay.filter(schedule => {
+        if (schedule.type !== 'exam') {
+            return false;
+        }
+
+        // Personal schedule check
+        if (schedule.studentId === user.id) {
+          return true;
+        }
+
+        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
+            if (user.courseModel === 'COMPETITIVE EXAM') {
+                return true;
+            }
+
+            if (schedule.class === user.class) {
+                if (user.class !== 'DEGREE') {
+                    return schedule.syllabus === user.syllabus;
+                }
+                return true;
+            }
+        }
+        
+        return false;
+      });
+
+      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      setSchedules(filteredSchedules);
+      setLoading(false);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.warn("Firestore error fetching exam schedule:", serverError);
+        }
+        setSchedules([]);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedDate, firestore, user]);
+
+  const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
+  
+  const getFormattedTime = (time: string) => {
+    if (!time) return '';
+    try {
+      const date = parse(time, 'HH:mm', new Date());
+      return format(date, 'hh:mmaaa');
+    } catch {
+      return '';
+    }
+  }
+  
+  const handleStartExam = () => {
+    if (!selectedEvent || !selectedEvent.examId) return;
+    router.push(`/exams/take/${selectedEvent.examId}`);
+    setSelectedEvent(null);
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
       <Reveal>
-        <div>
-          <h1 className="text-3xl font-bold font-headline">All Courses</h1>
-          <p className="text-muted-foreground">Browse our catalog of math courses and start learning today.</p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold font-headline">Exam Schedule</h1>
+           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <CalendarDays className="h-6 w-6" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                            if (date) setSelectedDate(date);
+                            setIsCalendarOpen(false);
+                        }}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
         </div>
       </Reveal>
 
-      <section>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course, index) => {
-            const courseImage = PlaceHolderImages.find(img => img.id === course.imageId);
-            const firstLesson = course.modules[0]?.lessons[0];
-
-            return (
-              <Reveal key={course.id} delay={index * 0.1}>
-                <Card className="flex flex-col overflow-hidden h-full">
-                  {courseImage && (
-                      <div className="relative h-48 w-full">
-                          <Image
-                              src={courseImage.imageUrl}
-                              alt={course.title}
-                              fill
-                              className="object-cover"
-                              data-ai-hint={courseImage.imageHint}
-                          />
-                      </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="font-headline text-xl">{course.title}</CardTitle>
-                    <CardDescription className='line-clamp-2'>{course.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 items-end">
-                      {firstLesson ? (
-                          <Button asChild className="w-full">
-                              <Link href={`/courses/${course.id}`}>
-                                  Start Learning <ArrowRight className="ml-2 h-4 w-4" />
-                              </Link>
-                          </Button>
-                      ) : (
-                          <Button className="w-full" disabled>
-                              Coming Soon
-                          </Button>
-                      )}
-                  </CardContent>
-                </Card>
-              </Reveal>
-            );
-          })}
+      <Reveal delay={0.3}>
+        <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold font-headline">My Exam Schedule for {format(selectedDate, 'MMMM d')}</h2>
+            <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-5 w-5" />
+            </Button>
         </div>
-      </section>
+      </Reveal>
+
+      <Reveal delay={0.4} className="space-y-1 relative">
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : schedules.length > 0 ? (
+          schedules.map((event) => {
+            const IconComponent = iconMap[event.icon] || BookOpen;
+            return (
+              <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
+                <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
+                <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
+                  <div
+                    onClick={() => setSelectedEvent(event)}
+                    className='block cursor-pointer'
+                  >
+                      <Card
+                        style={{backgroundColor: event.color}}
+                        className='shadow-lg transition-shadow hover:shadow-xl'
+                      >
+                          <CardContent className="p-3" style={{color: event.textColor}}>
+                              <div className="flex gap-3 items-center">
+                                  <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
+                                      <IconComponent className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs opacity-80">{event.subject}</p>
+                                      <p className="font-bold text-sm leading-tight">{event.title}</p>
+                                      <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                      </div>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                    </div>
+                </div>
+              </div>
+            )
+          })
+        ) : (
+            <div className="text-center text-muted-foreground text-sm pt-8">
+                You have no exams scheduled for this day.
+            </div>
+        )}
+      </Reveal>
+
+      <AlertDialog open={!!selectedEvent} onOpenChange={(isOpen) => !isOpen && setSelectedEvent(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{selectedEvent?.title}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    You are about to start the exam. Make sure you are ready. The timer will begin as soon as you start.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 text-sm">
+                <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
+                <p><strong>Duration:</strong> {selectedEvent?.duration} minutes</p>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button onClick={handleStartExam}>
+                    Start Exam
+                </Button>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

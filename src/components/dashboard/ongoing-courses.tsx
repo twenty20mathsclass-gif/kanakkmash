@@ -13,9 +13,6 @@ export function OngoingCourses() {
     <section>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold font-headline">Ongoing Courses</h2>
-            <Link href="/courses" className="text-sm font-medium text-primary hover:underline">
-                View All
-            </Link>
         </div>
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
         {ongoingCourses.map((course, index) => {

@@ -30,6 +30,13 @@
     --chart-4: 30 95% 65%;
     --chart-5: 45 90% 50%;
     --radius: 0.8rem;
+
+    --sidebar: 240 4.8% 95.9%;
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-border: 240 5.9% 90%;
+    --sidebar-accent: 45 95% 55%;
+    --sidebar-accent-foreground: 60 9.1% 97.8%;
+    --sidebar-ring: 45 95% 55%;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -56,6 +63,13 @@
     --chart-3: 45 95% 65%;
     --chart-4: 30 95% 65%;
     --chart-5: 45 90% 50%;
+
+    --sidebar: 240 3.7% 15.9%;
+    --sidebar-foreground: 60 9.1% 97.8%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-accent: 45 95% 55%;
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-ring: 45 95% 55%;
   }
 }
 
@@ -82,29 +96,6 @@
 }
 
 @layer components {
-  .math-icon {
-    @apply absolute block text-primary/20;
-    animation: gentle-float ease-in-out infinite;
-    will-change: transform;
-  }
-
-  @keyframes gentle-float {
-    0% {
-      transform: translate(0px, 0px);
-    }
-    25% {
-      transform: translate(5px, -10px);
-    }
-    50% {
-      transform: translate(0px, -20px);
-    }
-    75% {
-      transform: translate(-5px, -10px);
-    }
-    100% {
-      transform: translate(0px, 0px);
-    }
-  }
 }
 
 @layer utilities {

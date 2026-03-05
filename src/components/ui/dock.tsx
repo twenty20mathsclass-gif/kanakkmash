@@ -77,7 +77,7 @@ type DockItemContextType = {
   isHovered: MotionValue<number>;
 };
 
-const DockItemContext = createContext<DockItemContextType | undefined>(
+export const DockItemContext = createContext<DockItemContextType | undefined>(
   undefined
 );
 
@@ -125,7 +125,7 @@ function Dock({
           mouseX.set(Infinity);
         }}
         className={cn(
-          'mx-auto flex h-full w-fit items-end gap-2 rounded-[2.5rem] border bg-card p-2 shadow-lg',
+          'mx-auto flex h-16 w-fit items-center gap-1 rounded-full border bg-background/60 p-2 shadow-lg backdrop-blur-md',
           className
         )}
         role='toolbar'
@@ -168,7 +168,7 @@ function DockItem({ children, className }: DockItemProps) {
         onFocus={() => isHovered.set(1)}
         onBlur={() => isHovered.set(0)}
         className={cn(
-          'relative flex items-center justify-center rounded-full',
+          'group/dock-item relative flex items-center justify-center',
           className
         )}
         tabIndex={0}

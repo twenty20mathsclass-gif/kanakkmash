@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import Link from 'next/link';
 
@@ -127,11 +127,11 @@ export function SignUpForm() {
       const phoneCode = selectedCountry ? selectedCountry.phone : data.countryCode;
 
       // Create user profile in Firestore
-      const userProfile: User = {
+      const userProfile = {
         id: user.uid,
         name: data.name,
         email: data.email,
-        role: 'student',
+        role: 'student' as 'student',
         avatarUrl: avatarUrl,
         courseModel: data.courseModel,
         countryCode: phoneCode,
@@ -139,6 +139,7 @@ export function SignUpForm() {
         class: data.class,
         syllabus: data.syllabus,
         competitiveExam: data.competitiveExam,
+        createdAt: serverTimestamp(),
       };
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);

@@ -1,6 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -12,7 +14,6 @@ import { SignInForm } from '@/components/auth/sign-in-form';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { PageLoader } from '@/components/shared/page-loader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -35,7 +36,7 @@ export default function SignInPage() {
   }, [user, loading, router]);
 
   if (loading || (!loading && user)) {
-    return <PageLoader />;
+    return null;
   }
 
   return (
@@ -46,6 +47,18 @@ export default function SignInPage() {
           Back to Home
         </Link>
       </Button>
+      <div className="mb-8">
+        <Link href="/">
+            <Image
+              src="/logo mlm@4x.png"
+              alt="kanakkmash logo"
+              width={200}
+              height={62}
+              className="inline-block"
+              priority
+            />
+        </Link>
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Welcome Back!</CardTitle>

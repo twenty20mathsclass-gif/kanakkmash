@@ -4,10 +4,13 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FloatingActionButtons } from '@/components/shared/floating-action-buttons';
 import { ThemeProvider } from '@/components/shared/theme-provider';
+import { PwaInstaller } from '@/components/shared/pwa-installer';
+import MainLayoutClient from '@/components/shared/main-layout-client';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
   description: 'An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.',
+  manifest: '/manifest.json',
   keywords: [
     'online math classes',
     'maths tuition',
@@ -34,6 +37,7 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: '/favicon.ico',
+    apple: '/fv.png',
   },
 };
 
@@ -46,6 +50,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="5RfOM7ZZi1WMvbRBiPca4fo7dCpcpI6vAoDkuqiaupQ" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/fv.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -56,13 +63,15 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>{children}</FirebaseClientProvider>
+          <FirebaseClientProvider>
+            <MainLayoutClient>{children}</MainLayoutClient>
+          </FirebaseClientProvider>
           <Toaster />
           <FloatingActionButtons />
+          <PwaInstaller />
         </ThemeProvider>
       </body>
     </html>

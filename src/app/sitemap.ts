@@ -6,10 +6,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPages = [
     { url: '/', priority: 1.0, changeFrequency: 'weekly' },
+    { url: '/about-us', priority: 0.8, changeFrequency: 'monthly' },
     { url: '/courses', priority: 0.8, changeFrequency: 'weekly' },
     { url: '/blog', priority: 0.8, changeFrequency: 'weekly' },
-    { url: '/materials', priority: 0.8, changeFrequency: 'weekly' },
-    { url: '/community', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/testimonials', priority: 0.8, changeFrequency: 'weekly' },
     { url: '/practice', priority: 0.7, changeFrequency: 'monthly' },
     { url: '/sign-in', priority: 0.5, changeFrequency: 'monthly' },
     { url: '/sign-up', priority: 0.5, changeFrequency: 'monthly' },

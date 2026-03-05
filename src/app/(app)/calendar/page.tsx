@@ -30,7 +30,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   BookOpen
 };
 
-export default function SchedulePage() {
+export default function ClassSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
@@ -62,6 +62,11 @@ export default function SchedulePage() {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
+        // Show schedules that are explicitly 'class' or have no type (for backward compatibility)
+        if (schedule.type && schedule.type !== 'class') {
+          return false;
+        }
+
         // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;
@@ -86,13 +91,21 @@ export default function SchedulePage() {
         return false;
       });
 
-      filteredSchedules.sort((a, b) => b.startTime.localeCompare(a.startTime));
+      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setSchedules(filteredSchedules);
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching schedules: ", error);
-      setSchedules([]);
-      setLoading(false);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: 'schedules',
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.warn("Firestore error fetching class schedule:", serverError);
+        }
+        setSchedules([]);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -105,6 +118,16 @@ export default function SchedulePage() {
     const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
         const attendedIds = snapshot.docs.map(doc => doc.id);
         setAttendedClasses(attendedIds);
+    }, (serverError: any) => {
+         if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.id}/attendance`,
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.warn("Firestore error fetching attendance:", serverError);
+        }
     });
 
     return () => unsubscribe();
@@ -132,7 +155,7 @@ export default function SchedulePage() {
         const diff = end.getTime() - start.getTime();
         return Math.round(diff / (1000 * 60));
     } catch (e) {
-        console.error("Error calculating duration", e);
+        console.warn("Error calculating duration", e);
         return 0;
     }
   };
@@ -148,11 +171,11 @@ export default function SchedulePage() {
 
     const duration = getDurationInMinutes(selectedEvent.startTime, selectedEvent.endTime);
 
-    // Mark attendance if not already marked
     if (!attendedClasses.includes(selectedEvent.id)) {
-        const attendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
+        const studentAttendanceRef = doc(firestore, 'users', user.id, 'attendance', selectedEvent.id);
+        const teacherAttendanceRef = doc(firestore, 'schedules', selectedEvent.id, 'attendees', user.id);
         
-        const attendanceData = {
+        const studentAttendanceData = {
             scheduleId: selectedEvent.id,
             attendedAt: Timestamp.now(),
             durationMinutes: duration,
@@ -160,32 +183,50 @@ export default function SchedulePage() {
             date: selectedEvent.date,
         };
 
-        setDoc(attendanceRef, attendanceData)
+        const teacherAttendanceData = {
+            ...studentAttendanceData,
+            studentId: user.id,
+            studentName: user.name,
+            studentAvatar: user.avatarUrl,
+        };
+
+        const studentWrite = setDoc(studentAttendanceRef, studentAttendanceData);
+        const teacherWrite = setDoc(teacherAttendanceRef, teacherAttendanceData);
+
+        Promise.all([studentWrite, teacherWrite])
           .then(() => {
             toast({
                 title: 'Attendance Marked!',
                 description: `You've marked your attendance for "${selectedEvent.title}".`,
             });
           })
-          .catch((serverError) => {
-            const permissionError = new FirestorePermissionError(
-              {
-                path: attendanceRef.path,
-                operation: 'create',
-                requestResourceData: attendanceData,
-              },
-              { cause: serverError }
-            );
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not mark attendance. You may not have permissions.'
-            })
+          .catch((serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError(
+                  {
+                    path: `users/${user.id}/attendance/${selectedEvent.id} or schedules/${selectedEvent.id}/attendees/${user.id}`,
+                    operation: 'create',
+                    requestResourceData: teacherAttendanceData,
+                  },
+                  { cause: serverError }
+                );
+                errorEmitter.emit('permission-error', permissionError);
+                toast({
+                    variant: 'destructive',
+                    title: 'Permission Denied',
+                    description: 'You do not have permission to mark attendance.'
+                });
+            } else {
+                console.warn("Firestore error marking attendance:", serverError);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Could not mark attendance. A network or server error occurred.'
+                })
+            }
           });
     }
 
-    // Open meet link in a new tab
     if (selectedEvent.meetLink) {
         window.open(selectedEvent.meetLink, '_blank', 'noopener,noreferrer');
     }
@@ -197,7 +238,7 @@ export default function SchedulePage() {
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
       <Reveal>
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-headline">Schedule</h1>
+          <h1 className="text-3xl font-bold font-headline">Class Schedule</h1>
            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
@@ -260,7 +301,7 @@ export default function SchedulePage() {
 
       <Reveal delay={0.3}>
         <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-headline">My Schedule for {format(selectedDate, 'MMMM d')}</h2>
+            <h2 className="text-xl font-bold font-headline">My Class Schedule for {format(selectedDate, 'MMMM d')}</h2>
             <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-5 w-5" />
             </Button>

@@ -13,8 +13,8 @@ export function FirebaseErrorListener() {
         throw error;
       } else {
         // In production, you might log to an external service.
-        // For now, we'll just log it to the console.
-        console.error('A Firestore permission error occurred:', error.message);
+        // For now, we'll just log it to the console as a warning.
+        console.warn('A Firestore permission error occurred:', error.message);
       }
     };
 

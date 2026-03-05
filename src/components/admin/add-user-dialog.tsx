@@ -26,7 +26,7 @@ import { AlertCircle, Loader2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { useFirebase } from '@/firebase';
 import type { User } from '@/lib/definitions';
@@ -37,6 +37,7 @@ const createUserSchema = z.object({
     email: z.string().email('Invalid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['student', 'teacher']),
+    hourlyRate: z.coerce.number().optional(),
 });
 
 export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorRole?: 'admin' | 'teacher', onUserAdded?: () => void }) {
@@ -46,6 +47,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+  const [selectedRole, setSelectedRole] = useState('student');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,6 +57,10 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
     const formData = new FormData(event.currentTarget);
     const formObject = Object.fromEntries(formData.entries());
+    
+    if (formObject.role !== 'teacher') {
+        delete formObject.hourlyRate;
+    }
 
     const validatedFields = createUserSchema.safeParse(formObject);
 
@@ -65,7 +71,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         return;
     }
 
-    const { name, email, password, role } = validatedFields.data;
+    const { name, email, password, role, hourlyRate } = validatedFields.data;
 
     // The main firestore instance from useFirebase() is used for the setDoc call,
     // which will be authenticated with the currently logged-in admin's credentials.
@@ -91,13 +97,18 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
         const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
 
-        const userProfile: User = {
+        const userProfile: Partial<User> = {
             id: user.uid,
             name: name,
             email: email,
             role: role as 'student' | 'teacher',
             avatarUrl: avatarUrl,
+            createdAt: serverTimestamp(),
         };
+
+        if(role === 'teacher' && hourlyRate) {
+            userProfile.hourlyRate = hourlyRate;
+        }
         
         await setDoc(doc(firestore, 'users', user.uid), userProfile);
         
@@ -128,6 +139,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
       // Reset state on close
       setError(null);
       setValidationErrors({});
+      setSelectedRole('student');
     }
     setIsOpen(open);
   }
@@ -171,7 +183,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select name="role" defaultValue="student" required>
+            <Select name="role" defaultValue="student" required onValueChange={(value) => setSelectedRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -186,6 +198,17 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
                 <p className="text-sm text-destructive">{validationErrors.role[0]}</p>
             )}
           </div>
+
+          {selectedRole === 'teacher' && (
+            <div className="space-y-2">
+                <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
+                <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={0} />
+                {validationErrors?.hourlyRate && (
+                    <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
+                )}
+            </div>
+          )}
+
 
           {error && (
             <Alert variant="destructive">

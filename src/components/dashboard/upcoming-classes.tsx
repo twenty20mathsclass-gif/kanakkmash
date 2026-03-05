@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot, orderBy } from 'firebase/firestore';
 import { format, parse } from 'date-fns';
 import type { Schedule } from '@/lib/definitions';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -35,75 +37,69 @@ export function UpcomingClasses() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const schedulesCollection = collection(firestore, 'schedules');
-    let combinedSchedules: { [key: string]: Schedule } = {};
-    const unsubscribes: (() => void)[] = [];
-
-    const processAndSetSchedules = () => {
-        const schedulesData = Object.values(combinedSchedules);
-        schedulesData.sort((a, b) => {
-            const dateA = a.date.toMillis();
-            const dateB = b.date.toMillis();
-            if (dateA !== dateB) return dateA - dateB;
-            return a.startTime.localeCompare(b.startTime);
-        });
-        setUpcomingClasses(schedulesData.slice(0, 3));
-        setLoading(false);
-    }
-    
-    // Query 1: Personal schedules
-    const personalQuery = query(
-      schedulesCollection,
-      where('studentId', '==', user.id),
+    // Query all upcoming schedules, then filter client-side.
+    // This is more robust and avoids needing complex composite indexes.
+    const schedulesQuery = query(
+      collection(firestore, 'schedules'),
       where('date', '>=', Timestamp.fromDate(today)),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-      limit(3)
+      orderBy('date', 'asc')
     );
-    unsubscribes.push(onSnapshot(personalQuery, (snapshot) => {
-      snapshot.docs.forEach(doc => {
-        combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-      });
-      processAndSetSchedules();
-    }));
 
-    // Query 2: Group schedules
-    if (user.courseModel) {
-        const groupQueryConstraints: any[] = [
-            where('courseModel', '==', user.courseModel),
-            where('date', '>=', Timestamp.fromDate(today)),
-        ];
+    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+      const allUpcomingSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
-        if (user.class && user.courseModel !== 'COMPETITIVE EXAM') {
-            groupQueryConstraints.push(where('class', '==', user.class));
+      const filteredSchedules = allUpcomingSchedules.filter(schedule => {
+        // Personal schedule check
+        if (schedule.studentId === user.id) {
+          return true;
+        }
+
+        // Group schedule check
+        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
+            if (user.courseModel === 'COMPETITIVE EXAM') {
+                return true;
+            }
+
+            if (schedule.class === user.class) {
+                // For non-DEGREE classes, syllabus must also match
+                if (user.class !== 'DEGREE') {
+                    return schedule.syllabus === user.syllabus;
+                }
+                // For DEGREE classes, just matching class is enough
+                return true;
+            }
         }
         
-        if (user.class && user.class !== 'DEGREE' && user.syllabus) {
-            groupQueryConstraints.push(where('syllabus', '==', user.syllabus));
-        }
-      
-      groupQueryConstraints.push(
-        orderBy('date', 'asc'),
-        orderBy('startTime', 'asc'),
-        limit(3)
-      );
+        return false;
+      });
 
-      const groupQuery = query(schedulesCollection, ...groupQueryConstraints);
+      // Now, correctly sort by startTime and take the first 3 results.
+      // The primary sort by date is already handled by the query.
+      // This secondary sort handles multiple classes on the same day.
+      filteredSchedules.sort((a, b) => {
+        const dateA = a.date.toMillis();
+        const dateB = b.date.toMillis();
+        if (dateA !== dateB) return dateA - dateB; // Should be redundant due to query orderBy, but safe
+        return a.startTime.localeCompare(b.startTime);
+      });
+      setUpcomingClasses(filteredSchedules.slice(0, 3));
+      setLoading(false);
+    },
+    (serverError: any) => {
+      if (serverError.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: 'schedules',
+          operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.error("Firestore error fetching upcoming classes:", serverError);
+      }
+      setLoading(false);
+      setUpcomingClasses([]);
+    });
 
-      unsubscribes.push(onSnapshot(groupQuery, (snapshot) => {
-        snapshot.docs.forEach(doc => {
-          if (!doc.data().studentId) { // Only add group classes
-            combinedSchedules[doc.id] = { id: doc.id, ...doc.data() } as Schedule;
-          }
-        });
-        processAndSetSchedules();
-      }));
-    } else {
-        processAndSetSchedules();
-    }
-
-
-    return () => unsubscribes.forEach(unsub => unsub());
+    return () => unsubscribe();
   }, [firestore, user]);
 
   return (

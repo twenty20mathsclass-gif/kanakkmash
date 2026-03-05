@@ -1,31 +1,20 @@
-
 'use client';
 
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
   const loaderContent = (
     <div className="flex items-center justify-center">
-      <motion.div
-        animate={{
-          scale: [1, 1.05, 1],
-          opacity: [0.7, 1, 0.7],
-        }}
-        transition={{
-          duration: 2,
-          ease: "easeInOut",
-          repeat: Infinity,
-        }}
-      >
-        <Image
-          src="/logo mlm@4x.png"
-          alt="Loading..."
-          width={120}
-          height={37}
-          priority
-        />
-      </motion.div>
+        <div className="relative w-32 h-32">
+            <Image
+                src="/fv.png"
+                alt="kanakkmash logo"
+                width={128}
+                height={128}
+                className="h-32 w-32 animate-pulse"
+                priority
+            />
+        </div>
     </div>
   );
 
