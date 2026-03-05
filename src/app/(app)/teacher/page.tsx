@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -334,7 +333,7 @@ export default function TeacherDashboardPage() {
                         return (
                             <div key={item.id} className="min-w-[280px] w-[280px] flex-shrink-0">
                                 <Link href="/teacher/attendance" className="block h-full">
-                                    <Card style={{ backgroundColor: item.color }} className={cn("text-primary-foreground shadow-lg h-full", item.type === 'exam' && 'border-4 border-destructive/50')}>
+                                    <Card style={{ backgroundColor: item.color }} className={cn("text-primary-foreground shadow-lg h-full")}>
                                         <CardContent className="p-6 flex flex-col justify-between h-full">
                                             <div>
                                                 <div className="flex items-center gap-3">
