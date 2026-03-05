@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -138,14 +137,17 @@ export function CreateExamForm() {
     }, [firestore]);
 
     useEffect(() => {
-        if (selectedClass) {
-            const studentsInClass = allStudents.filter(student => student.class === selectedClass);
-            setFilteredStudents(studentsInClass);
+        if (courseModel === 'ONE TO ONE' && selectedClass) {
+            const oneToOneStudentsInClass = allStudents.filter(student => 
+                student.courseModel === 'ONE TO ONE' && student.class === selectedClass
+            );
+            setFilteredStudents(oneToOneStudentsInClass);
         } else {
             setFilteredStudents([]);
         }
+        // Reset student selection when filters change
         setValue('studentId', '');
-    }, [selectedClass, allStudents, setValue]);
+    }, [courseModel, selectedClass, allStudents, setValue]);
     
     useEffect(() => {
         if (!firestore || !user) return;
@@ -380,7 +382,7 @@ export function CreateExamForm() {
                                 <FormItem>
                                 <FormLabel>Student</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No students in this class"} /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger><SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students in this class"} /></SelectTrigger></FormControl>
                                     <SelectContent>{filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}</SelectContent>
                                 </Select><FormMessage />
                                 </FormItem>

@@ -130,19 +130,17 @@ export default function CreateSchedulePage() {
 
 
   useEffect(() => {
-    if (selectedClass) {
-        const studentsInClass = allStudents.filter(student => student.class === selectedClass);
-        setFilteredStudents(studentsInClass);
+    if (courseModel === 'ONE TO ONE' && selectedClass) {
+        const oneToOneStudentsInClass = allStudents.filter(student => 
+            student.courseModel === 'ONE TO ONE' && student.class === selectedClass
+        );
+        setFilteredStudents(oneToOneStudentsInClass);
     } else {
         setFilteredStudents([]);
     }
-    // Only re-run when selectedClass or allStudents changes.
-  }, [selectedClass, allStudents]);
-
-  useEffect(() => {
-    // Reset student selection when class changes to avoid sending an invalid studentId
+    // Reset student selection when filters change to avoid sending an invalid studentId
     setValue('studentId', '');
-  }, [selectedClass, setValue]);
+  }, [courseModel, selectedClass, allStudents, setValue]);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -361,7 +359,7 @@ export default function CreateSchedulePage() {
                                 <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No students in this class"} />
+                                        <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students in this class"} />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
