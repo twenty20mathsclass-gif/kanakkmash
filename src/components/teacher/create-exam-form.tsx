@@ -508,7 +508,7 @@ export function CreateExamForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField control={form.control} name="totalMarks" render={({ field }) => (
-                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <div className="space-y-2">
                                     <FormLabel>Question Paper</FormLabel>
