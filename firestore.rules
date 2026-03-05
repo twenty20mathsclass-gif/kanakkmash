@@ -124,21 +124,16 @@ service cloud.firestore {
       allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
     }
 
-    match /chats/{chatId} {
+    match /chats/{chatId}/messages/{messageId} {
       // The chatId is a composite of two UIDs, sorted and joined by '_'
-      function isParticipant() {
-        let uids = split(chatId, '_');
-        return request.auth.uid == uids[0] || request.auth.uid == uids[1];
-      }
+      // A user can read messages if their UID is in the chatId.
+      allow read: if request.auth.uid in split(chatId, '_');
       
-      match /messages/{messageId} {
-        // Participants can read all messages and create new ones.
-        // The sender must be the currently authenticated user.
-        allow read: if isParticipant();
-        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
-        // Messages are immutable.
-        allow update, delete: if false;
-      }
+      // A user can create a message if they are a participant and the sender.
+      allow create: if (request.auth.uid in split(chatId, '_')) && request.resource.data.senderId == request.auth.uid;
+      
+      // Messages are immutable.
+      allow update, delete: if false;
     }
   }
 }
