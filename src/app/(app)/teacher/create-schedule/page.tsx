@@ -45,7 +45,7 @@ const scheduleSchema = z.object({
   syllabus: z.string().optional(),
   studentId: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+    if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class || data.class.trim() === '') {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -130,17 +130,17 @@ export default function CreateSchedulePage() {
 
 
   useEffect(() => {
-    if (courseModel === 'ONE TO ONE' && selectedClass) {
-        const oneToOneStudentsInClass = allStudents.filter(student => 
-            student.courseModel === 'ONE TO ONE' && student.class === selectedClass
+    if (courseModel === 'ONE TO ONE') {
+        const oneToOneStudents = allStudents.filter(student => 
+            student.courseModel === 'ONE TO ONE'
         );
-        setFilteredStudents(oneToOneStudentsInClass);
+        setFilteredStudents(oneToOneStudents);
     } else {
         setFilteredStudents([]);
     }
-    // Reset student selection when filters change to avoid sending an invalid studentId
+    // Reset student selection when filters change
     setValue('studentId', '');
-  }, [courseModel, selectedClass, allStudents, setValue]);
+  }, [courseModel, allStudents, setValue]);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -196,14 +196,20 @@ export default function CreateSchedulePage() {
       ...selectedVisuals,
     };
     
-    if (data.class) {
-        scheduleData.class = data.class;
-    }
-    if (data.syllabus) {
-        scheduleData.syllabus = data.syllabus;
-    }
-    if (data.studentId) {
-        scheduleData.studentId = data.studentId;
+    if (data.courseModel === 'ONE TO ONE') {
+        const student = allStudents.find(s => s.id === data.studentId);
+        if (student) {
+            scheduleData.studentId = student.id;
+            if (student.class) scheduleData.class = student.class;
+            if (student.syllabus) scheduleData.syllabus = student.syllabus;
+        }
+    } else {
+        if (data.class) {
+            scheduleData.class = data.class;
+        }
+        if (data.syllabus) {
+            scheduleData.syllabus = data.syllabus;
+        }
     }
 
 
@@ -250,9 +256,9 @@ export default function CreateSchedulePage() {
       });
   };
 
-  const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showClassField = courseModel === 'MATHS ONLINE TUITION';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
-  const showStudentField = courseModel === 'ONE TO ONE' && !!selectedClass;
+  const showStudentField = courseModel === 'ONE TO ONE';
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -359,7 +365,7 @@ export default function CreateSchedulePage() {
                                 <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students in this class"} />
+                                        <SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students found"} />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -474,7 +480,7 @@ export default function CreateSchedulePage() {
             </CardContent>
             </Card>
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:block sticky top-20">
             <RecentClassesList schedules={scheduledClasses} />
         </div>
     </div>

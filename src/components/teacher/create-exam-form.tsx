@@ -64,7 +64,7 @@ const examFormSchema = z.object({
 
   questions: z.array(questionSchema).min(1, 'An exam must have at least one question.'),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+    if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class || data.class.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a class.', path: ['class'] });
         } else if (data.class !== 'DEGREE') {
@@ -137,17 +137,17 @@ export function CreateExamForm() {
     }, [firestore]);
 
     useEffect(() => {
-        if (courseModel === 'ONE TO ONE' && selectedClass) {
-            const oneToOneStudentsInClass = allStudents.filter(student => 
-                student.courseModel === 'ONE TO ONE' && student.class === selectedClass
+        if (courseModel === 'ONE TO ONE') {
+            const oneToOneStudents = allStudents.filter(student => 
+                student.courseModel === 'ONE TO ONE'
             );
-            setFilteredStudents(oneToOneStudentsInClass);
+            setFilteredStudents(oneToOneStudents);
         } else {
             setFilteredStudents([]);
         }
         // Reset student selection when filters change
         setValue('studentId', '');
-    }, [courseModel, selectedClass, allStudents, setValue]);
+    }, [courseModel, allStudents, setValue]);
     
     useEffect(() => {
         if (!firestore || !user) return;
@@ -250,22 +250,16 @@ export function CreateExamForm() {
             });
 
             // 1. Create the exam content document
-            const examData: Omit<Exam, 'id'> = {
+            const examData: Partial<Exam> = {
                 teacherId: user.id,
                 title: data.title,
                 courseModel: data.courseModel,
                 questions: sanitizedQuestions,
-                ...(data.class && { class: data.class }),
-                ...(data.syllabus && { syllabus: data.syllabus }),
-                ...(data.studentId && { studentId: data.studentId }),
             };
-            const examDocRef = await addDoc(collection(firestore, 'exams'), examData);
 
-            // 2. Create the schedule document
             const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
-            const scheduleData: Omit<Schedule, 'id'> = {
+            const scheduleData: Partial<Schedule> = {
                 type: 'exam',
-                examId: examDocRef.id,
                 duration: data.duration,
                 teacherId: user.id,
                 title: data.title,
@@ -273,12 +267,39 @@ export function CreateExamForm() {
                 startTime: data.startTime,
                 endTime: data.endTime,
                 courseModel: data.courseModel,
-                meetLink: `https://kanakkmash.com/exams/take/${examDocRef.id}`, // Placeholder link
                 ...selectedVisuals,
-                ...(data.class && { class: data.class }),
-                ...(data.syllabus && { syllabus: data.syllabus }),
-                ...(data.studentId && { studentId: data.studentId }),
             };
+
+            if (data.courseModel === 'ONE TO ONE') {
+                const student = allStudents.find(s => s.id === data.studentId);
+                if (student) {
+                    examData.studentId = student.id;
+                    scheduleData.studentId = student.id;
+                    if (student.class) {
+                        examData.class = student.class;
+                        scheduleData.class = student.class;
+                    }
+                    if (student.syllabus) {
+                        examData.syllabus = student.syllabus;
+                        scheduleData.syllabus = student.syllabus;
+                    }
+                }
+            } else {
+                if (data.class) {
+                    examData.class = data.class;
+                    scheduleData.class = data.class;
+                }
+                if (data.syllabus) {
+                    examData.syllabus = data.syllabus;
+                    scheduleData.syllabus = data.syllabus;
+                }
+            }
+            
+            const examDocRef = await addDoc(collection(firestore, 'exams'), examData);
+
+            scheduleData.examId = examDocRef.id;
+            scheduleData.meetLink = `/exams/take/${examDocRef.id}`;
+
             await addDoc(collection(firestore, 'schedules'), scheduleData);
             
             toast({
@@ -305,9 +326,9 @@ export function CreateExamForm() {
         }
     };
 
-    const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+    const showClassField = courseModel === 'MATHS ONLINE TUITION';
     const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
-    const showStudentField = courseModel === 'ONE TO ONE' && !!selectedClass;
+    const showStudentField = courseModel === 'ONE TO ONE';
 
     return (
         <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -382,7 +403,7 @@ export function CreateExamForm() {
                                 <FormItem>
                                 <FormLabel>Student</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students in this class"} /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger><SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students found"} /></SelectTrigger></FormControl>
                                     <SelectContent>{filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}</SelectContent>
                                 </Select><FormMessage />
                                 </FormItem>
