@@ -165,7 +165,7 @@ export default function MainLayoutClient({
   return (
     <div className="relative min-h-screen bg-background">
       <Suspense fallback={null}>
-        <MobileLogo />
+        <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
         {user ? (
           <>
             <div className="hidden md:block">
