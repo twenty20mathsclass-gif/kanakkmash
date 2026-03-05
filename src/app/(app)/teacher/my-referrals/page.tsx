@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { User } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,11 +41,21 @@ export default function MyReferralsPage() {
             try {
                 const affiliatesQuery = query(
                     collection(firestore, 'users'),
-                    where('referredBy', '==', user.id),
-                    orderBy('createdAt', 'desc')
+                    where('referredBy', '==', user.id)
                 );
                 const querySnapshot = await getDocs(affiliatesQuery);
                 const affiliatesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                
+                // Sort on the client-side to avoid needing a composite index
+                affiliatesList.sort((a, b) => {
+                    if (a.createdAt && b.createdAt) {
+                        return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
+                    }
+                    if (a.createdAt) return -1;
+                    if (b.createdAt) return 1;
+                    return 0;
+                });
+
                 setAffiliates(affiliatesList);
             } catch (serverError: any) {
                 if (serverError.code === 'permission-denied') {
@@ -56,7 +67,7 @@ export default function MyReferralsPage() {
                         description: 'You do not have permission to view referral data.'
                     });
                 } else {
-                    console.error("Error fetching affiliates:", serverError);
+                    console.warn("Error fetching affiliates:", serverError);
                     toast({
                         variant: 'destructive',
                         title: 'Error',
