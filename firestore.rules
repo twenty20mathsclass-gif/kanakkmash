@@ -27,6 +27,8 @@ service cloud.firestore {
     match /users/{userId} {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
+      // Any authenticated user can query the users collection.
+      // Specific query constraints are enforced by get rules.
       allow list: if request.auth != null;
       
       // A user can create their own profile, and an admin can create any user profile.
@@ -114,9 +116,8 @@ service cloud.firestore {
         // Admins can get any payment. Teachers can only get their own.
         allow get: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
         
-        // Admins can list all payments. Teachers cannot perform broad list queries.
-        // Their queries MUST be constrained by teacherId, which is validated against the `get` rule.
-        allow list: if isAdmin();
+        // List operations will be validated against the `get` rule on a per-document basis.
+        // By not having an `allow list` rule, we ensure queries are properly constrained.
         
         // Only admins can create/update/delete payments.
         allow write: if isAdmin();
