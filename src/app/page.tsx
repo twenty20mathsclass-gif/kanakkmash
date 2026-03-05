@@ -35,8 +35,8 @@ export default function Home() {
                 priority
               />
             </h1>
-            <p className="mx-auto mt-6 max-w-xl text-foreground/80">
-              An online platform that offers quality mathematics classes for students from Class 1 to degree level and for competitive exam preparation.
+            <p className="mx-auto mt-6 max-w-2xl text-foreground/80">
+              An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
             </p>
           </div>
           <div className="mt-10 flex justify-center gap-4">
