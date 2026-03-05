@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, Suspense, useState } from 'react';
@@ -31,6 +32,7 @@ import {
     History,
     Banknote,
     Receipt,
+    MessagesSquare,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -115,6 +117,7 @@ export default function MainLayoutClient({
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Class Schedule', icon: Calendar },
     { href: '/courses', label: 'Exam Schedule', icon: FileText },
+    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/cart', label: 'Cart', icon: ShoppingCart },
   ];
 
@@ -123,6 +126,7 @@ export default function MainLayoutClient({
     { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
+    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/teacher/materials', label: 'Materials', icon: BookOpen },
     { href: '/teacher/revenue', label: 'My Revenue', icon: Banknote },
     { href: '/teacher/salary-history', label: 'Salary History', icon: History },

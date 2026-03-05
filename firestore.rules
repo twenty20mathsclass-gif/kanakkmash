@@ -117,5 +117,22 @@ service cloud.firestore {
       allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin();
       allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
     }
+
+    match /chats/{chatId} {
+      // The chatId is a composite of two UIDs, sorted and joined by '_'
+      function isParticipant() {
+        let uids = split(chatId, '_');
+        return request.auth.uid == uids[0] || request.auth.uid == uids[1];
+      }
+      
+      match /messages/{messageId} {
+        // Participants can read all messages and create new ones.
+        // The sender must be the currently authenticated user.
+        allow read: if isParticipant();
+        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
+        // Messages are immutable.
+        allow update, delete: if false;
+      }
+    }
   }
 }

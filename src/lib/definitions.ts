@@ -162,3 +162,10 @@ export type BlogPost = {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
+
+export type ChatMessage = {
+  id?: string;
+  text: string;
+  senderId: string;
+  timestamp: Timestamp;
+};
