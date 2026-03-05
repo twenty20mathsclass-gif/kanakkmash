@@ -8,6 +8,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,6 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import type { User } from '@/lib/definitions';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { countries } from '@/lib/countries';
@@ -82,6 +82,7 @@ const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 
 
 export function SignUpForm() {
   const { auth, firestore } = useFirebase();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -126,8 +127,10 @@ export function SignUpForm() {
       const selectedCountry = countries.find(c => c.code === data.countryCode);
       const phoneCode = selectedCountry ? selectedCountry.phone : data.countryCode;
 
+      const referralId = searchParams.get('ref');
+
       // Create user profile in Firestore
-      const userProfile = {
+      const userProfile: any = {
         id: user.uid,
         name: data.name,
         email: data.email,
@@ -141,6 +144,10 @@ export function SignUpForm() {
         competitiveExam: data.competitiveExam,
         createdAt: serverTimestamp(),
       };
+
+      if (referralId) {
+        userProfile.referredBy = referralId;
+      }
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 

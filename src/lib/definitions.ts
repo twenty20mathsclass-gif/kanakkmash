@@ -13,6 +13,7 @@ export type User = {
   syllabus?: string;
   competitiveExam?: string;
   createdAt?: Timestamp;
+  referredBy?: string;
   // Private teacher details are now in a subcollection
   paymentMethod?: 'bank' | 'upi';
   accountHolderName?: string;

@@ -33,6 +33,7 @@ import {
     Banknote,
     Receipt,
     MessagesSquare,
+    Share2,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -125,6 +126,7 @@ export default function MainLayoutClient({
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/teacher/revenue', label: 'My Revenue', icon: Banknote },
     { href: '/teacher/salary-history', label: 'Salary History', icon: History },
+    { href: '/teacher/my-referrals', label: 'My Referrals', icon: Share2 },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/course-cart', label: 'Course Cart', icon: ShoppingBag },
   ];
