@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ExamInterface } from '@/components/student/exam-interface';
 import { Reveal } from '@/components/shared/reveal';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type PageProps = {
   params: {
@@ -70,9 +72,18 @@ export default function TakeExamPage({ params }: PageProps) {
         
         setStatus('ready');
 
-      } catch (err) {
-        console.warn('Error fetching exam data:', err);
-        setError('Failed to load the exam. Please try again.');
+      } catch (err: any) {
+        if (err.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError(
+                { path: `exams/${examId}/submissions/${user.id} or /exams/${examId} or /schedules`, operation: 'get' },
+                { cause: err }
+            );
+            errorEmitter.emit('permission-error', permissionError);
+            setError('You do not have permission to access this exam.');
+        } else {
+          console.warn('Error fetching exam data:', err);
+          setError('Failed to load the exam. Please try again.');
+        }
         setStatus('error');
       }
     };

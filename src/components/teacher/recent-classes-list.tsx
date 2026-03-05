@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Schedule } from '@/lib/definitions';
@@ -10,6 +11,8 @@ import { useFirebase } from '@/firebase';
 import { useState, useEffect } from 'react';
 import { getDocs, query, where, collection } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText: BookOpen,
@@ -74,8 +77,13 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                     setAttendance({ count, total });
                 }
 
-            } catch (e) {
-                console.warn("Error fetching attendance for schedule item", e);
+            } catch (e: any) {
+                if (e.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({ path: `schedules/${schedule.id}/attendees or users`, operation: 'list' }, { cause: e });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Error fetching attendance for schedule item", e);
+                }
             } finally {
                 if (!cancelled) {
                     setLoading(false);

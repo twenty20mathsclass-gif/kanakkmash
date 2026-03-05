@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const AddUserDialog = nextDynamic(
     () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog), 
@@ -83,8 +85,16 @@ export default function AdminUsersPage() {
           setUsers(usersList);
       }
 
-    } catch (e) {
-      console.warn("Failed to fetch users:", e);
+    } catch (e: any) {
+      if (e.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: 'users or users/{userId}/teacher_details/payment',
+          operation: 'list',
+        }, { cause: e });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.warn("Failed to fetch users:", e);
+      }
     } finally {
       setLoading(false);
     }

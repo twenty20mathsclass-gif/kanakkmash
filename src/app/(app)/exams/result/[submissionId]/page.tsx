@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -11,6 +12,8 @@ import { Loader2, CheckCircle, XCircle, Award } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type PageProps = {
   params: {
@@ -61,9 +64,18 @@ export default function ExamResultPage({ params }: PageProps) {
         } else {
           setError('Exam submission not found.');
         }
-      } catch (err) {
-        console.warn('Error fetching results:', err);
-        setError('Failed to load your results. Please try again.');
+      } catch (err: any) {
+        if (err.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError(
+                { path: `exams/{examId}/submissions/{userId} or /exams/{examId}`, operation: 'get' },
+                { cause: err }
+            );
+            errorEmitter.emit('permission-error', permissionError);
+            setError('You do not have permission to view these results.');
+        } else {
+          console.warn('Error fetching results:', err);
+          setError('Failed to load your results. Please try again.');
+        }
       } finally {
         setLoading(false);
       }

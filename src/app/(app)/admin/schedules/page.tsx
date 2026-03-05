@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -16,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type Attendee = { id: string; studentName: string; studentAvatar: string; attendedAt: { toDate: () => Date } };
 type SubmissionWithStudentInfo = ExamSubmission & { student?: User; examTotalQuestions?: number };
@@ -29,28 +32,41 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
   useEffect(() => {
     const fetchDetails = async () => {
       setLoading(true);
-      if (schedule.type === 'class') {
-        const attendeesQuery = query(collection(firestore, 'schedules', schedule.id, 'attendees'));
-        const attendeesSnapshot = await getDocs(attendeesQuery);
-        const attendeesList = attendeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
-        setDetails({ attendees: attendeesList });
-      } else if (schedule.type === 'exam' && schedule.examId) {
-        const examRef = doc(firestore, 'exams', schedule.examId);
-        const submissionsQuery = query(collection(firestore, 'exams', schedule.examId, 'submissions'));
+      try {
+        if (schedule.type === 'class') {
+          const attendeesQuery = query(collection(firestore, 'schedules', schedule.id, 'attendees'));
+          const attendeesSnapshot = await getDocs(attendeesQuery);
+          const attendeesList = attendeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
+          setDetails({ attendees: attendeesList });
+        } else if (schedule.type === 'exam' && schedule.examId) {
+          const examRef = doc(firestore, 'exams', schedule.examId);
+          const submissionsQuery = query(collection(firestore, 'exams', schedule.examId, 'submissions'));
 
-        const [examSnap, submissionsSnap] = await Promise.all([getDoc(examRef), getDocs(submissionsQuery)]);
+          const [examSnap, submissionsSnap] = await Promise.all([getDoc(examRef), getDocs(submissionsQuery)]);
 
-        const examData = examSnap.exists() ? (examSnap.data() as Exam) : null;
-        const totalQuestions = examData?.questions.length || 0;
+          const examData = examSnap.exists() ? (examSnap.data() as Exam) : null;
+          const totalQuestions = examData?.questions.length || 0;
 
-        const submissionsList = submissionsSnap.docs.map(doc => {
-          const submission = { id: doc.id, ...doc.data() } as ExamSubmission;
-          const student = users.find(u => u.id === submission.studentId);
-          return { ...submission, student, examTotalQuestions: totalQuestions };
-        });
-        setDetails({ submissions: submissionsList });
+          const submissionsList = submissionsSnap.docs.map(doc => {
+            const submission = { id: doc.id, ...doc.data() } as ExamSubmission;
+            const student = users.find(u => u.id === submission.studentId);
+            return { ...submission, student, examTotalQuestions: totalQuestions };
+          });
+          setDetails({ submissions: submissionsList });
+        }
+      } catch (error: any) {
+        if (error.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError(
+              { path: `schedules/${schedule.id}/attendees or exams/${schedule.examId}/submissions`, operation: 'list' },
+              { cause: error }
+          );
+          errorEmitter.emit('permission-error', permissionError);
+        } else {
+          console.warn("Error fetching schedule details:", error);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchDetails();
@@ -174,8 +190,16 @@ export default function AdminSchedulesHistoryPage() {
                 
                 setSchedules(schedulesList);
                 setUsers(usersList);
-            } catch (error) {
-                console.warn("Error fetching schedules history:", error);
+            } catch (error: any) {
+                if (error.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError(
+                        { path: 'schedules or users', operation: 'list' },
+                        { cause: error }
+                    );
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Error fetching schedules history:", error);
+                }
             } finally {
                 setLoading(false);
             }

@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
@@ -45,8 +46,13 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                     setTotalStudents(studentsSnapshot.size);
                 }
 
-            } catch (e) {
-                console.warn("Could not fetch total students for schedule", e);
+            } catch (e: any) {
+                if (e.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: e });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Could not fetch total students for schedule", e);
+                }
                 setTotalStudents(0);
             }
         };

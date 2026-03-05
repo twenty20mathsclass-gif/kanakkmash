@@ -284,7 +284,7 @@ export default function AccountantSalariesPage() {
                 setTeachers(teachersWithDetails);
             } catch (serverError: any) {
                 if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });
+                    const permissionError = new FirestorePermissionError({ path: 'users or users/{userId}/teacher_details/payment', operation: 'list' }, { cause: serverError });
                     errorEmitter.emit('permission-error', permissionError);
                 } else {
                     console.warn("Error fetching teachers: ", serverError);

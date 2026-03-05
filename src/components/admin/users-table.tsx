@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -34,6 +35,8 @@ import {
     AlertDialogTitle 
 } from '../ui/alert-dialog';
 import { EditUserDialog } from './edit-user-dialog';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface UsersTableProps {
   users: User[];
@@ -62,8 +65,16 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                 description: `${userToDelete.name} has been removed from the system.`,
             });
             onUserChanged();
-        } catch (error) {
-            console.error("Error deleting user:", error);
+        } catch (error: any) {
+            if (error.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'delete',
+                }, { cause: error });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.error("Error deleting user:", error);
+            }
             toast({
                 variant: 'destructive',
                 title: 'Error',
