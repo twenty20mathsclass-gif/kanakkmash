@@ -30,6 +30,8 @@ import {
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type ScheduleWithAttendance = Schedule & { attendanceCount: number };
 
@@ -67,11 +69,12 @@ export default function TeacherDashboardPage() {
           where('teacherId', '==', user.id)
         );
 
-        const [studentsSnapshot, schedulesSnapshot, salaryPaymentsSnapshot] = await Promise.all([
+        const [studentsSnapshot, schedulesSnapshot, salaryPaymentsSnapshot] =
+          await Promise.all([
             getDocs(studentsQuery),
             getDocs(schedulesQuery),
             getDocs(salaryPaymentsQuery),
-        ]);
+          ]);
 
         // Process students
         const totalStudents = studentsSnapshot.size;
@@ -120,11 +123,22 @@ export default function TeacherDashboardPage() {
                 );
                 const attendeesSnapshot = await getDocs(attendeesQuery);
                 attendanceCount = attendeesSnapshot.size;
-              } catch (e) {
-                console.warn(
-                  `Could not fetch attendees for schedule ${schedule.id}`,
-                  e
-                );
+              } catch (e: any) {
+                if (e.code === 'permission-denied') {
+                  const permissionError = new FirestorePermissionError(
+                    {
+                      path: `schedules/${schedule.id}/attendees`,
+                      operation: 'list',
+                    },
+                    { cause: e }
+                  );
+                  errorEmitter.emit('permission-error', permissionError);
+                } else {
+                  console.warn(
+                    `Could not fetch attendees for schedule ${schedule.id}`,
+                    e
+                  );
+                }
               }
               return {
                 ...schedule,
@@ -133,8 +147,16 @@ export default function TeacherDashboardPage() {
             })
           );
         setRecentSchedules(schedulesWithAttendance);
-      } catch (error) {
-        console.warn('Error fetching teacher dashboard stats:', error);
+      } catch (error: any) {
+        if (error.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError(
+            { path: 'users, schedules, or salaryPayments', operation: 'list' },
+            { cause: error }
+          );
+          errorEmitter.emit('permission-error', permissionError);
+        } else {
+          console.warn('Error fetching teacher dashboard stats:', error);
+        }
       } finally {
         setLoading(false);
       }

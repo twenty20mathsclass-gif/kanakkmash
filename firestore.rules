@@ -110,9 +110,10 @@ service cloud.firestore {
     }
 
     match /salaryPayments/{paymentId} {
-        // Admins can perform any action on salary payments.
-        // Teachers can read salary payments where their UID matches the teacherId.
-        allow read: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
+        // Admins can read/write any payment.
+        allow get: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
+        // Teachers can list salary payments, but the client MUST filter by their teacherId.
+        allow list: if isAdmin() || isRole('teacher');
         allow write: if isAdmin();
     }
     

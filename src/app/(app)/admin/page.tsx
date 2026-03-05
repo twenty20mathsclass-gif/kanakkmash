@@ -15,6 +15,8 @@ import { Reveal } from '@/components/shared/reveal';
 import { StudentEnrollmentChart } from '@/components/admin/student-enrollment-chart';
 import { format } from 'date-fns';
 import { SchedulingActivityChart } from '@/components/admin/scheduling-activity-chart';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type ScheduleWithAttendance = Schedule & { attendanceCount: number, teacherName?: string };
 
@@ -64,8 +66,16 @@ export default function AdminDashboardPage() {
         );
         setRecentSchedules(schedulesWithAttendance);
 
-      } catch (e) {
-        console.warn("Failed to fetch admin dashboard data:", e);
+      } catch (e: any) {
+        if (e.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError(
+            { path: 'users or schedules', operation: 'list' },
+            { cause: e }
+          );
+          errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.warn("Failed to fetch admin dashboard data:", e);
+        }
       } finally {
         setLoading(false);
       }
