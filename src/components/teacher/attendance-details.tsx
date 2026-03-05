@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
@@ -194,20 +193,35 @@ function ReviewDescriptiveSubmissionDialog({ submission, exam, isOpen, onOpenCha
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Review Submission for {submission.studentName}</DialogTitle>
                     <DialogDescription>{submission.examTitle}</DialogDescription>
                 </DialogHeader>
-                <div className="grid md:grid-cols-2 gap-6 py-4">
-                    <div className="space-y-4">
+                <div className="grid md:grid-cols-3 gap-6 py-4 max-h-[70vh] overflow-y-auto">
+                    <div className="md:col-span-1 space-y-4">
+                         <h3 className="font-semibold">Question Paper</h3>
+                        <div className="border rounded-md p-4 h-96 overflow-y-auto bg-muted/50">
+                            {exam.questionPaperUrl ? (
+                                <div>
+                                    <p>Question paper is a file.</p>
+                                    <Button asChild variant="link" className="p-0">
+                                        <a href={exam.questionPaperUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">View file in new tab</a>
+                                    </Button>
+                                </div>
+                            ) : exam.questionPaperContent ? (
+                                <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: exam.questionPaperContent }} />
+                            ) : <p>No question paper found.</p>}
+                        </div>
+                    </div>
+                    <div className="md:col-span-1 space-y-4">
                         <h3 className="font-semibold">Student's Answer</h3>
                          {submission.answerFileUrl ? (
                             <iframe src={submission.answerFileUrl} className="w-full h-96 border rounded-md" title="Student Submission" />
                          ) : <p>No file submitted.</p>}
-                         <Button variant="outline" asChild><a href={submission.answerFileUrl} target="_blank" rel="noopener noreferrer">Open in New Tab</a></Button>
+                         <Button variant="outline" asChild><a href={submission.answerFileUrl} target="_blank" rel="noopener noreferrer">Open Answer in New Tab</a></Button>
                     </div>
-                     <div className="space-y-4">
+                     <div className="md:col-span-1 space-y-4">
                         <h3 className="font-semibold">Marking</h3>
                         <div>
                             <Label htmlFor="marks">Marks Awarded (out of {exam.totalMarks})</Label>

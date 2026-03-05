@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-quill/package.json b/node_modules/react-quill/package.json
+index 548c734..f15a13c 100644
+--- a/node_modules/react-quill/package.json
++++ b/node_modules/react-quill/package.json
+@@ -98,8 +98,8 @@
+     "url": "https://github.com/zenoamaro/react-quill.git"
+   },
+   "peerDependencies": {
+-    "react": "^16 || ^17 || ^18",
+-    "react-dom": "^16 || ^17 || ^18"
++    "react": "^16 || ^17 || ^18 || ^19",
++    "react-dom": "^16 || ^17 || ^18 || ^19"
+   },
+   "dependencies": {
+     "quill": "^2.0.0"

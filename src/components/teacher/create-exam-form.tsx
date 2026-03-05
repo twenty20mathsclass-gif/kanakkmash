@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,6 +11,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
+import dynamic from 'next/dynamic';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,10 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { UploadResult } from 'firebase/storage';
+import { Skeleton } from '../ui/skeleton';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> });
+import 'react-quill/dist/quill.snow.css';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -66,6 +70,8 @@ const examFormSchema = z.object({
   competitiveExam: z.string().optional(),
 
   examType: z.enum(['mcq', 'descriptive'], { required_error: 'Please select an exam type.' }),
+  descriptiveInputMethod: z.enum(['upload', 'editor']).optional(),
+  questionPaperContent: z.string().optional(),
   totalMarks: z.coerce.number().optional(),
   questions: z.array(questionSchema).optional(),
 }).superRefine((data, ctx) => {
@@ -97,6 +103,9 @@ const examFormSchema = z.object({
         if (!data.totalMarks || data.totalMarks <= 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Total marks must be a positive number.', path: ['totalMarks'] });
         }
+         if (data.descriptiveInputMethod === 'editor' && (!data.questionPaperContent || data.questionPaperContent.replace(/<(.|\n)*?>/g, '').trim().length === 0)) {
+            ctx.addIssue({ code: 'custom', message: 'Question paper content cannot be empty.', path: ['questionPaperContent'] });
+        }
     }
 });
 
@@ -127,6 +136,7 @@ export function CreateExamForm() {
             courseModel: '',
             competitiveExam: '',
             examType: 'mcq',
+            descriptiveInputMethod: 'upload',
             questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]
         },
     });
@@ -140,6 +150,7 @@ export function CreateExamForm() {
     const courseModel = watch('courseModel');
     const selectedClass = watch('class');
     const examType = watch('examType');
+    const descriptiveInputMethod = watch('descriptiveInputMethod');
     
     useEffect(() => {
         if (!firestore) return;
@@ -182,7 +193,7 @@ export function CreateExamForm() {
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const exams = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
                 .filter(schedule => schedule.type === 'exam')
-                .sort((a,b) => b.date.toMillis() - a.date.toMillis() || b.startTime.localeCompare(a.startTime));
+                .sort((a,b) => b.date.toMillis() - a.startTime.localeCompare(b.startTime));
             setScheduledExams(exams);
         }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
@@ -254,8 +265,8 @@ export function CreateExamForm() {
             return;
         }
         
-        if (data.examType === 'descriptive' && questionPaperUpload.status !== 'success') {
-            setError('Please upload a question paper for the descriptive exam.');
+        if (data.examType === 'descriptive' && data.descriptiveInputMethod === 'upload' && questionPaperUpload.status !== 'success') {
+            setError('Please upload a question paper file.');
             return;
         }
 
@@ -277,7 +288,13 @@ export function CreateExamForm() {
                     return question as z.infer<typeof questionSchema>;
                 });
             } else { // Descriptive
-                examData.questionPaperUrl = questionPaperUpload.url;
+                if (data.descriptiveInputMethod === 'upload') {
+                    examData.questionPaperUrl = questionPaperUpload.url;
+                    examData.questionPaperContent = undefined;
+                } else {
+                    examData.questionPaperContent = data.questionPaperContent;
+                    examData.questionPaperUrl = undefined;
+                }
                 examData.totalMarks = data.totalMarks;
             }
 
@@ -508,16 +525,51 @@ export function CreateExamForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField control={form.control} name="totalMarks" render={({ field }) => (
-                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                <div className="space-y-2">
-                                    <FormLabel>Question Paper</FormLabel>
-                                    <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" disabled={questionPaperUpload.status === 'uploading'}/>
-                                    {questionPaperUpload.status === 'uploading' && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="animate-spin h-4 w-4"/>Uploading...</div>}
-                                    {questionPaperUpload.status === 'success' && questionPaperUpload.file && <div className="text-sm text-green-600">Uploaded: {questionPaperUpload.file.name}</div>}
-                                    {questionPaperUpload.status === 'error' && <div className="text-sm text-destructive">Upload failed. Please try again.</div>}
-                                    <FormDescription>Upload a PDF or image file.</FormDescription>
-                                </div>
+                                 <FormField
+                                    control={form.control}
+                                    name="descriptiveInputMethod"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Question Paper Method</FormLabel>
+                                            <FormControl>
+                                                <RadioGroup onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    if (value === 'upload') setValue('questionPaperContent', '');
+                                                    if (value === 'editor') setQuestionPaperUpload({ file: null, status: 'idle' });
+                                                }} value={field.value} className="flex space-x-4">
+                                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="upload" /></FormControl><FormLabel className="font-normal">Upload File</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="editor" /></FormControl><FormLabel className="font-normal">Text Editor</FormLabel></FormItem>
+                                                </RadioGroup>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                {descriptiveInputMethod === 'upload' ? (
+                                    <div className="space-y-2">
+                                        <FormLabel>Question Paper File</FormLabel>
+                                        <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" disabled={questionPaperUpload.status === 'uploading'}/>
+                                        {questionPaperUpload.status === 'uploading' && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="animate-spin h-4 w-4"/>Uploading...</div>}
+                                        {questionPaperUpload.status === 'success' && questionPaperUpload.file && <div className="text-sm text-green-600">Uploaded: {questionPaperUpload.file.name}</div>}
+                                        {questionPaperUpload.status === 'error' && <div className="text-sm text-destructive">Upload failed. Please try again.</div>}
+                                        <FormDescription>Upload a PDF or image file.</FormDescription>
+                                    </div>
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name="questionPaperContent"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Question Paper Content</FormLabel>
+                                                <FormControl>
+                                                    <ReactQuill theme="snow" value={field.value || ''} onChange={field.onChange} className="bg-background" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </CardContent>
                         </Card>
                     )}

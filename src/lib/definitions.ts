@@ -1,4 +1,3 @@
-
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -116,6 +115,7 @@ export type Exam = {
   questions?: McqQuestion[];
   // For Descriptive
   questionPaperUrl?: string;
+  questionPaperContent?: string;
   totalMarks?: number;
 };
 

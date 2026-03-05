@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -159,9 +158,15 @@ function DescriptiveExamInterface({ exam, schedule, user, timeLeft, handleSubmit
         <CardContent className="space-y-6">
             <div>
                 <h3 className="font-semibold mb-2">Question Paper</h3>
-                <Button asChild>
-                    <a href={exam.questionPaperUrl} target="_blank" rel="noopener noreferrer">View Question Paper</a>
-                </Button>
+                 {exam.questionPaperUrl ? (
+                    <Button asChild>
+                        <a href={exam.questionPaperUrl} target="_blank" rel="noopener noreferrer">View Question Paper</a>
+                    </Button>
+                ) : exam.questionPaperContent ? (
+                    <div className="prose dark:prose-invert border p-4 rounded-md max-h-96 overflow-y-auto" dangerouslySetInnerHTML={{ __html: exam.questionPaperContent }} />
+                ) : (
+                    <p className="text-muted-foreground">No question paper available.</p>
+                )}
             </div>
             <div>
                 <h3 className="font-semibold mb-2">Upload Your Answer</h3>
