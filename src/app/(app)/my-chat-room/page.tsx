@@ -86,7 +86,6 @@ export default function MyChatRoomPage() {
                     setContacts(teacherContacts);
                 }
             } catch (err: any) {
-                console.error("Failed to fetch contacts:", err);
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
                         path: 'schedules or users',

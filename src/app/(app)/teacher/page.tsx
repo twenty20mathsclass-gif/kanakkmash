@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -133,11 +134,6 @@ export default function TeacherDashboardPage() {
                     { cause: e }
                   );
                   errorEmitter.emit('permission-error', permissionError);
-                } else {
-                  console.warn(
-                    `Could not fetch attendees for schedule ${schedule.id}`,
-                    e
-                  );
                 }
               }
               return {
@@ -154,8 +150,6 @@ export default function TeacherDashboardPage() {
             { cause: error }
           );
           errorEmitter.emit('permission-error', permissionError);
-        } else {
-          console.warn('Error fetching teacher dashboard stats:', error);
         }
       } finally {
         setLoading(false);

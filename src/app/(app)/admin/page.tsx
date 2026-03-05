@@ -1,3 +1,4 @@
+
 'use client';
 export const dynamic = 'force-dynamic';
 
@@ -73,8 +74,6 @@ export default function AdminDashboardPage() {
             { cause: e }
           );
           errorEmitter.emit('permission-error', permissionError);
-        } else {
-            console.warn("Failed to fetch admin dashboard data:", e);
         }
       } finally {
         setLoading(false);

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,8 +39,6 @@ export default function AttendancePage() {
                     operation: 'list',
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-            } else {
-                console.warn("Firestore error:", serverError);
             }
             setLoading(false);
         });

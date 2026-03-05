@@ -50,8 +50,6 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                 if (e.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: e });
                     errorEmitter.emit('permission-error', permissionError);
-                } else {
-                    console.warn("Could not fetch total students for schedule", e);
                 }
                 setTotalStudents(0);
             }
@@ -72,8 +70,6 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                     operation: 'list',
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-            } else {
-                console.warn("Firestore error:", serverError);
             }
             setLoading(false);
         });
