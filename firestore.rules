@@ -111,11 +111,14 @@ service cloud.firestore {
     }
 
     match /salaryPayments/{paymentId} {
-        // Admins can read/write any payment.
+        // Admins can get any payment. Teachers can only get their own.
         allow get: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
-        // Teachers can list salary payments, but the client MUST filter by their teacherId.
-        // Admins can list all payments.
-        allow list: if isAdmin() || isRole('teacher');
+        
+        // Admins can list all payments. Teachers cannot perform broad list queries.
+        // Their queries MUST be constrained by teacherId, which is validated against the `get` rule.
+        allow list: if isAdmin();
+        
+        // Only admins can create/update/delete payments.
         allow write: if isAdmin();
     }
     
