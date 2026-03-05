@@ -70,15 +70,16 @@ export default function MyChatRoomPage() {
                     const allTeachers = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
                     // Filter schedules relevant to the student
-                    const relevantSchedules = allSchedules.filter(schedule => 
-                        schedule.studentId === user.id ||
-                        (
-                            !schedule.studentId &&
-                            schedule.courseModel === user.courseModel &&
-                            (user.courseModel === 'COMPETITIVE EXAM' || schedule.class === user.class) &&
-                            (user.class === 'DEGREE' || schedule.syllabus === user.syllabus)
-                        )
-                    );
+                    const relevantSchedules = allSchedules.filter(schedule => {
+                        if (schedule.studentId === user.id) return true;
+                        if (schedule.courseModel !== user.courseModel || schedule.studentId) return false;
+
+                        if (user.courseModel === 'COMPETITIVE EXAM') {
+                            return schedule.competitiveExam === user.competitiveExam;
+                        } else {
+                            return schedule.class === user.class && (user.class === 'DEGREE' || schedule.syllabus === user.syllabus);
+                        }
+                    });
 
                     const teacherIds = new Set(relevantSchedules.map(s => s.teacherId));
                     const studentContacts = allTeachers.filter(teacher => teacherIds.has(teacher.id));
@@ -101,12 +102,16 @@ export default function MyChatRoomPage() {
                         } else {
                             // For group classes, find all matching students
                             allStudents.forEach(student => {
-                                if (
-                                    schedule.courseModel === student.courseModel &&
-                                    (student.courseModel === 'COMPETITIVE EXAM' || schedule.class === student.class) &&
-                                    (student.class === 'DEGREE' || schedule.syllabus === student.syllabus)
-                                ) {
-                                    studentIds.add(student.id);
+                                if (schedule.courseModel !== student.courseModel) return;
+    
+                                if (student.courseModel === 'COMPETITIVE EXAM') {
+                                    if (schedule.competitiveExam === student.competitiveExam) {
+                                        studentIds.add(student.id);
+                                    }
+                                } else {
+                                    if (schedule.class === student.class && (student.class === 'DEGREE' || schedule.syllabus === student.syllabus)) {
+                                        studentIds.add(student.id);
+                                    }
                                 }
                             });
                         }

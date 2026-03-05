@@ -77,6 +77,7 @@ export type Schedule = {
   syllabus?: string;
   examId?: string;
   duration?: number; // in minutes, for exam countdown
+  competitiveExam?: string;
 };
 
 export type StudentProgress = {
@@ -110,6 +111,7 @@ export type Exam = {
   syllabus?: string;
   studentId?: string;
   questions: McqQuestion[];
+  competitiveExam?: string;
 };
 
 export type ExamSubmission = {

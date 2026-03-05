@@ -63,7 +63,7 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                      total = 1;
                 } else {
                     if (schedule.courseModel === 'COMPETITIVE EXAM') {
-                        studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('courseModel', '==', 'COMPETITIVE EXAM'));
+                        studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('courseModel', '==', 'COMPETITIVE EXAM'), where('competitiveExam', '==', schedule.competitiveExam));
                     } else if (schedule.class === 'DEGREE') {
                         studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', 'DEGREE'));
                     } else {
@@ -121,12 +121,11 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                                 <span>{getFormattedTime(schedule.startTime)}</span>
                             </div>
                         </div>
-                        {(schedule.class || schedule.syllabus) && (
-                            <div className="flex flex-wrap gap-1 pt-1">
-                                {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
-                                {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
-                            </div>
-                        )}
+                        <div className="flex flex-wrap gap-1 pt-1">
+                            {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
+                            {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
+                            {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
+                        </div>
                         {isPastOrToday && (
                             <div className="text-xs text-muted-foreground pt-2">
                                 {loading ? (

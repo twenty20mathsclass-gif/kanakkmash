@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Schedule } from '@/lib/definitions';
@@ -59,12 +60,11 @@ export function ScheduledItemsList({ schedules, title, description }: { schedule
                                         <span>{getFormattedTime(schedule.startTime)}</span>
                                     </div>
                                 </div>
-                                {(schedule.class || schedule.syllabus) && (
-                                    <div className="flex flex-wrap gap-1 pt-1">
-                                        {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
-                                        {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
-                                    </div>
-                                )}
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                    {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
+                                    {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
+                                    {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
+                                </div>
                             </div>
                         </div>
                     </CardContent>

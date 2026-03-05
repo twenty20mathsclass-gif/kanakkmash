@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,6 +39,7 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
+const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 
 const optionSchema = z.object({
   text: z.string().min(1, { message: "Option text cannot be empty." }),
@@ -61,6 +63,7 @@ const examFormSchema = z.object({
   class: z.string().optional(),
   syllabus: z.string().optional(),
   studentId: z.string().optional(),
+  competitiveExam: z.string().optional(),
 
   questions: z.array(questionSchema).min(1, 'An exam must have at least one question.'),
 }).superRefine((data, ctx) => {
@@ -76,6 +79,11 @@ const examFormSchema = z.object({
     if (data.courseModel === 'ONE TO ONE') {
         if (!data.studentId || data.studentId.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a student.', path: ['studentId'] });
+        }
+    }
+    if (data.courseModel === 'COMPETITIVE EXAM') {
+        if (!data.competitiveExam || data.competitiveExam.trim() === '') {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
         }
     }
 });
@@ -103,6 +111,7 @@ export function CreateExamForm() {
             startTime: '10:00',
             endTime: '11:00',
             courseModel: '',
+            competitiveExam: '',
             questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]
         },
     });
@@ -284,6 +293,9 @@ export function CreateExamForm() {
                         scheduleData.syllabus = student.syllabus;
                     }
                 }
+            } else if (data.courseModel === 'COMPETITIVE EXAM') {
+                examData.competitiveExam = data.competitiveExam;
+                scheduleData.competitiveExam = data.competitiveExam;
             } else {
                 if (data.class) {
                     examData.class = data.class;
@@ -329,6 +341,7 @@ export function CreateExamForm() {
     const showClassField = courseModel === 'MATHS ONLINE TUITION';
     const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
     const showStudentField = courseModel === 'ONE TO ONE';
+    const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
 
     return (
         <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -371,7 +384,7 @@ export function CreateExamForm() {
                              <FormField control={form.control} name="courseModel" render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Course Model</FormLabel>
-                                <Select onValueChange={(value) => { field.onChange(value); setValue('class', ''); setValue('syllabus', ''); setValue('studentId', ''); }} value={field.value || ''}>
+                                <Select onValueChange={(value) => { field.onChange(value); setValue('class', ''); setValue('syllabus', ''); setValue('studentId', ''); setValue('competitiveExam', ''); }} value={field.value || ''}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a course model" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
@@ -405,6 +418,15 @@ export function CreateExamForm() {
                                 <Select onValueChange={field.onChange} value={field.value || ''} disabled={filteredStudents.length === 0}>
                                     <FormControl><SelectTrigger><SelectValue placeholder={filteredStudents.length > 0 ? "Select a student" : "No 'One to One' students found"} /></SelectTrigger></FormControl>
                                     <SelectContent>{filteredStudents.map(student => <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>)}</SelectContent>
+                                </Select><FormMessage />
+                                </FormItem>
+                            )}/>}
+                             {showCompetitiveExamField && <FormField control={form.control} name="competitiveExam" render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Competitive Exam</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a competitive exam" /></SelectTrigger></FormControl>
+                                    <SelectContent>{competitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
                                 </Select><FormMessage />
                                 </FormItem>
                             )}/>}

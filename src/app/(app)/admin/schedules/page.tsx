@@ -84,6 +84,7 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
             {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
             {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
             {schedule.courseModel && <Badge variant="secondary">{schedule.courseModel}</Badge>}
+            {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
         </div>
       </CardHeader>
       <CardContent>

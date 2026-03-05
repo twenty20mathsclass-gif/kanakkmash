@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -75,7 +76,7 @@ export default function ClassSchedulePage() {
         // Group schedule check
         if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
-                return true;
+                return schedule.competitiveExam === user.competitiveExam;
             }
 
             if (schedule.class === user.class) {

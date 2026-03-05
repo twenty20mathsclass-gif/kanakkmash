@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -57,7 +58,7 @@ export function UpcomingClasses() {
         // Group schedule check
         if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
-                return true;
+                return schedule.competitiveExam === user.competitiveExam;
             }
 
             if (schedule.class === user.class) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,6 +34,7 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
+const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 
 const scheduleSchema = z.object({
   courseModel: z.string().min(1, 'Please select a course model.'),
@@ -44,6 +46,7 @@ const scheduleSchema = z.object({
   class: z.string().optional(),
   syllabus: z.string().optional(),
   studentId: z.string().optional(),
+  competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class || data.class.trim() === '') {
@@ -68,6 +71,15 @@ const scheduleSchema = z.object({
                 code: z.ZodIssueCode.custom,
                 message: 'Please select a student.',
                 path: ['studentId'],
+            });
+        }
+    }
+    if (data.courseModel === 'COMPETITIVE EXAM') {
+        if (!data.competitiveExam || data.competitiveExam.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Please select a competitive exam.',
+                path: ['competitiveExam'],
             });
         }
     }
@@ -98,6 +110,7 @@ export default function CreateSchedulePage() {
       class: '',
       syllabus: '',
       studentId: '',
+      competitiveExam: '',
     },
   });
 
@@ -203,6 +216,8 @@ export default function CreateSchedulePage() {
             if (student.class) scheduleData.class = student.class;
             if (student.syllabus) scheduleData.syllabus = student.syllabus;
         }
+    } else if (data.courseModel === 'COMPETITIVE EXAM') {
+        scheduleData.competitiveExam = data.competitiveExam;
     } else {
         if (data.class) {
             scheduleData.class = data.class;
@@ -230,7 +245,8 @@ export default function CreateSchedulePage() {
             meetLink: 'https://meet.google.com/',
             class: '',
             syllabus: '',
-            studentId: ''
+            studentId: '',
+            competitiveExam: '',
         });
       })
       .catch((serverError: any) => {
@@ -259,6 +275,7 @@ export default function CreateSchedulePage() {
   const showClassField = courseModel === 'MATHS ONLINE TUITION';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
   const showStudentField = courseModel === 'ONE TO ONE';
+  const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -287,6 +304,7 @@ export default function CreateSchedulePage() {
                             setValue('class', '');
                             setValue('syllabus', '');
                             setValue('studentId', '');
+                            setValue('competitiveExam', '');
                         }} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
@@ -377,6 +395,30 @@ export default function CreateSchedulePage() {
                             )}
                         />
                     )}
+
+                    {showCompetitiveExamField && (
+                        <FormField
+                            control={form.control}
+                            name="competitiveExam"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Competitive Exam</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a competitive exam" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {competitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
 
                     <FormField
                     control={form.control}
