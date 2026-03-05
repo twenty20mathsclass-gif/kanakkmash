@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { User, Schedule } from '@/lib/definitions';
@@ -52,6 +52,8 @@ export default function MyChatRoomPage() {
     const [contacts, setContacts] = useState<User[]>([]);
     const [selectedContact, setSelectedContact] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const contactListTitle = user?.role === 'student' ? 'My Teachers' : user?.role === 'teacher' ? 'My Students' : 'My Contacts';
 
     useEffect(() => {
         if (!firestore || !user) return;
@@ -141,7 +143,7 @@ export default function MyChatRoomPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 h-full gap-4">
                 <Card className="md:col-span-1 flex flex-col">
                     <CardHeader>
-                        <CardTitle className="font-headline">My Contacts</CardTitle>
+                        <CardTitle className="font-headline">{contactListTitle}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-hidden p-2">
                         {loading ? (
