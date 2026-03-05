@@ -2,7 +2,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import {
   getFirestore,
-  enableMultiTabIndexedDbPersistence,
   type Firestore,
 } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
@@ -27,23 +26,6 @@ if (firebaseConfig.apiKey) {
   firestore = getFirestore(app);
   auth = getAuth(app);
   storage = getStorage(app);
-
-  if (typeof window !== 'undefined' && firestore) {
-    // Enable multi-tab persistence
-    enableMultiTabIndexedDbPersistence(firestore).catch((err) => {
-      if (err.code == 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled
-        // in one tab at a time.
-        console.warn(
-          'Firebase persistence failed to initialize. This is normal if you have multiple tabs open.'
-        );
-      } else if (err.code == 'unimplemented') {
-        // The current browser does not support all of the
-        // features required to enable persistence
-        console.warn('Firebase persistence is not supported in this browser.');
-      }
-    });
-  }
 } else {
   app = null;
   auth = null;
