@@ -122,7 +122,11 @@ export default function CreateSchedulePage() {
   useEffect(() => {
     if (!firestore || !user) return;
     
-    const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+    const studentsQuery = query(
+        collection(firestore, 'users'), 
+        where('role', '==', 'student'),
+        where('referredBy', '==', user.id)
+    );
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
       const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllStudents(studentsList);

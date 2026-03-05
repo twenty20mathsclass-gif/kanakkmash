@@ -27,8 +27,8 @@ service cloud.firestore {
     match /users/{userId} {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
-      // Only admins can query the full users collection.
-      allow list: if isAdmin();
+      // Admins can list all users. Teachers can only list users they have referred.
+      allow list: if isAdmin() || (isRole('teacher') && 'referredBy' in request.query.where);
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
