@@ -27,9 +27,8 @@ service cloud.firestore {
     match /users/{userId} {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
-      // Any authenticated user can query the users collection.
-      // Specific query constraints are enforced by get rules.
-      allow list: if request.auth != null;
+      // Only admins can query the full users collection.
+      allow list: if isAdmin();
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();

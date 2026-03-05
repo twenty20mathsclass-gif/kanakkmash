@@ -20,7 +20,7 @@ import {
   CalendarPlus,
 } from 'lucide-react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, documentId } from 'firebase/firestore';
 import { useEffect, useState, type ReactNode, type ReactElement } from 'react';
 import { Reveal } from '@/components/shared/reveal';
 import { SchedulingChart } from '@/components/teacher/scheduling-chart';
@@ -121,10 +121,6 @@ export default function TeacherDashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const studentsQuery = query(
-          collection(firestore, 'users'),
-          where('role', '==', 'student')
-        );
         const schedulesQuery = query(
           collection(firestore, 'schedules'),
           where('teacherId', '==', user.id)
@@ -134,28 +130,38 @@ export default function TeacherDashboardPage() {
           where('teacherId', '==', user.id)
         );
 
-        const [studentsSnapshot, schedulesSnapshot, salaryPaymentsSnapshot] =
+        const [schedulesSnapshot, salaryPaymentsSnapshot] =
           await Promise.all([
-            getDocs(studentsQuery),
             getDocs(schedulesQuery),
-            getDocs(salaryPaymentsQuery),
+            getDocs(salaryPaymentsSnapshot),
           ]);
-
-        const allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
         let totalClasses = 0;
         let totalExams = 0;
+        const studentIdsFromSchedules = new Set<string>();
         const allSchedules = schedulesSnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Schedule)
-        );
-        allSchedules.forEach((schedule) => {
-          if (schedule.type === 'class') {
-            totalClasses++;
-          } else if (schedule.type === 'exam') {
-            totalExams++;
+          (doc) => {
+            const schedule = { id: doc.id, ...doc.data() } as Schedule;
+            if (schedule.type === 'class') {
+              totalClasses++;
+            } else if (schedule.type === 'exam') {
+              totalExams++;
+            }
+            if (schedule.studentId) {
+              studentIdsFromSchedules.add(schedule.studentId);
+            }
+            return schedule;
           }
-        });
+        );
         setSchedules(allSchedules);
+        
+        let allStudents: User[] = [];
+        if (studentIdsFromSchedules.size > 0) {
+            const studentIdArray = Array.from(studentIdsFromSchedules);
+            const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', studentIdArray));
+            const studentsSnapshot = await getDocs(studentsQuery);
+            allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        }
 
         const totalRevenue = salaryPaymentsSnapshot.docs.reduce(
           (sum, doc) => sum + (doc.data().amount || 0),
@@ -163,7 +169,7 @@ export default function TeacherDashboardPage() {
         );
 
         setStats({
-          students: allStudents.length,
+          students: studentIdsFromSchedules.size,
           classes: totalClasses,
           exams: totalExams,
           revenue: totalRevenue,
@@ -184,29 +190,8 @@ export default function TeacherDashboardPage() {
             .slice(0, 5);
         setUpcomingSchedules(upcoming);
         
-        // Determine contacts
-        const studentIds = new Set<string>();
-        allSchedules.forEach(schedule => {
-            if (schedule.studentId) {
-                studentIds.add(schedule.studentId);
-            } else {
-                allStudents.forEach(student => {
-                    if (schedule.courseModel !== student.courseModel) return;
-        
-                    if (student.courseModel === 'COMPETITIVE EXAM') {
-                        if (schedule.competitiveExam === student.competitiveExam) {
-                            studentIds.add(student.id);
-                        }
-                    } else {
-                        if (schedule.class === student.class && (student.class === 'DEGREE' || schedule.syllabus === student.syllabus)) {
-                            studentIds.add(student.id);
-                        }
-                    }
-                });
-            }
-        });
-        const teacherContacts = allStudents.filter(student => studentIds.has(student.id));
-        setContacts(teacherContacts.slice(0, 8));
+        // Use the fetched students for contacts
+        setContacts(allStudents.slice(0, 8));
 
 
       } catch (error: any) {
@@ -240,9 +225,9 @@ export default function TeacherDashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Platform Students"
+          title="My Students"
           value={loading ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.students}
-          description="Total students on platform"
+          description="Total students in your classes"
           icon={Users}
           color="hsl(210 80% 65%)"
           delay={0}
