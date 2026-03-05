@@ -43,34 +43,25 @@ export default function MainLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
+  // 1. All hooks are called unconditionally at the top.
   const { user, loading } = useUser();
   const { auth } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   const [year, setYear] = useState<number | null>(null);
 
-  const authPages = ['/sign-in', '/sign-up'];
-  if (authPages.includes(pathname)) {
-    return <>{children}</>;
-  }
-
-  // Paths that can be viewed without being logged in.
-  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
-  const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
-  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
-
-  const handleSignOut = async () => {
-    if (auth) {
-      await firebaseSignOut(auth);
-    }
-    router.push('/sign-in');
-  };
-
+  // This effect handles auth-based redirects.
   useEffect(() => {
-    if (loading) {
-      return; // Wait for user/loading state to settle
+    // Define constants used in this effect
+    const authPages = ['/sign-in', '/sign-up'];
+    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
+    const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
+    const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
+
+    // Exit early if loading or on an auth page
+    if (loading || authPages.includes(pathname)) {
+      return;
     }
 
     if (!user) {
@@ -82,27 +73,43 @@ export default function MainLayoutClient({
     }
 
     // Logged in: check role-based access
-    // Protect admin routes
     if (pathname.startsWith('/admin') && user.role !== 'admin') {
-      router.replace('/dashboard'); // Redirect to student dashboard as a safe default
-      return;
+      router.replace('/dashboard');
+    } else if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
+      router.replace('/dashboard');
     }
+  }, [loading, user, router, pathname]);
 
-    // Protect teacher routes
-    if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
-      router.replace('/dashboard'); // Redirect to student dashboard
-      return;
-    }
-  }, [loading, user, router, isPubliclyAccessible, pathname]);
-
+  // This effect sets the copyright year.
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
 
+  // 2. Conditional returns happen AFTER all hook calls.
+  const authPages = ['/sign-in', '/sign-up'];
+  if (authPages.includes(pathname)) {
+    return <>{children}</>;
+  }
+
+  // Handle the main loading state for the app.
   if (loading) {
     return <PageLoader />;
   }
 
+  // From here, the component can safely render different layouts based on user state.
+  const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
+    router.push('/sign-in');
+  };
+
+  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
+  const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
+  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
+  
   // Define nav items for logged-in users
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
