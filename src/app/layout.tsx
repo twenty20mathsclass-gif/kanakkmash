@@ -6,6 +6,7 @@ import { FloatingActionButtons } from '@/components/shared/floating-action-butto
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { PwaInstaller } from '@/components/shared/pwa-installer';
 import MainLayoutClient from '@/components/shared/main-layout-client';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
@@ -67,7 +68,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <MainLayoutClient>{children}</MainLayoutClient>
+            <Suspense>
+              <MainLayoutClient>{children}</MainLayoutClient>
+            </Suspense>
           </FirebaseClientProvider>
           <Toaster />
           <FloatingActionButtons />
