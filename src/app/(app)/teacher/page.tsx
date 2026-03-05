@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
+  CardDescription,
 } from '@/components/ui/card';
 import {
   Users,
@@ -17,6 +18,7 @@ import {
   BookOpen,
   User as UserIcon,
   Award,
+  CalendarPlus,
 } from 'lucide-react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
@@ -274,6 +276,46 @@ export default function TeacherDashboardPage() {
 
        <Reveal delay={0.4}>
         <section>
+            <h2 className="text-xl font-bold font-headline mb-4">Quick Actions</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card className="hover:shadow-md transition-shadow">
+                    <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                        <div className="p-3 rounded-full bg-primary/10 text-primary">
+                            <CalendarPlus className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <CardTitle>Schedule a Class</CardTitle>
+                            <CardDescription>Set up a new live session.</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild>
+                            <Link href="/teacher/create-schedule">Create Class</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-shadow">
+                    <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                        <div className="p-3 rounded-full bg-primary/10 text-primary">
+                            <FilePenLine className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <CardTitle>Create an Exam</CardTitle>
+                            <CardDescription>Assess student knowledge.</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild>
+                            <Link href="/teacher/create-exam-schedule">Create Exam</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        </section>
+      </Reveal>
+
+      <Reveal delay={0.5}>
+        <section>
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold font-headline">Upcoming Schedules</h2>
                 <Button asChild variant="link" className="text-primary">
@@ -337,7 +379,7 @@ export default function TeacherDashboardPage() {
         </section>
       </Reveal>
       
-      <Reveal delay={0.5}>
+      <Reveal delay={0.6}>
         <section>
           <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold font-headline">My Students</h2>
@@ -369,7 +411,7 @@ export default function TeacherDashboardPage() {
         </section>
       </Reveal>
 
-      <Reveal delay={0.6}>
+      <Reveal delay={0.7}>
           <SchedulingChart schedules={schedules} />
       </Reveal>
 
