@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUser, useFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,13 +15,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Upload, X } from 'lucide-react';
+import { Loader2, Save, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import type { User } from '@/lib/definitions';
+import type { TeacherPrivateDetails } from '@/lib/definitions';
 
 const paymentDetailsSchema = z.object({
   paymentMethod: z.enum(['bank', 'upi'], { required_error: 'Please select a payment method.' }),
@@ -55,6 +55,7 @@ export default function TeacherRevenuePage() {
 
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
     const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
+    const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
 
 
     const form = useForm<PaymentDetailsFormValues>({
@@ -72,20 +73,29 @@ export default function TeacherRevenuePage() {
     const paymentMethod = form.watch('paymentMethod');
 
     useEffect(() => {
-        if (user) {
-            form.reset({
-                paymentMethod: user.paymentMethod || 'bank',
-                accountHolderName: user.accountHolderName || '',
-                bankName: user.bankName || '',
-                accountNumber: user.accountNumber || '',
-                ifscCode: user.ifscCode || '',
-                upiId: user.upiId || '',
-            });
-            if (user.upiQrCodeUrl) {
-                setQrCodePreview(user.upiQrCodeUrl);
+        if (!user || !firestore) return;
+        
+        const fetchDetails = async () => {
+            const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+            const docSnap = await getDoc(detailsRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data() as TeacherPrivateDetails;
+                form.reset({
+                    paymentMethod: data.paymentMethod || 'bank',
+                    accountHolderName: data.accountHolderName || '',
+                    bankName: data.bankName || '',
+                    accountNumber: data.accountNumber || '',
+                    ifscCode: data.ifscCode || '',
+                    upiId: data.upiId || '',
+                });
+                if (data.upiQrCodeUrl) {
+                    setQrCodePreview(data.upiQrCodeUrl);
+                    setExistingQrUrl(data.upiQrCodeUrl);
+                }
             }
         }
-    }, [user, form]);
+        fetchDetails();
+    }, [user, firestore, form]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -109,49 +119,53 @@ export default function TeacherRevenuePage() {
         setLoading(true);
         setError(null);
 
-        const userDocRef = doc(firestore, 'users', user.id);
-        let dataToUpdate: Partial<User> = { paymentMethod: data.paymentMethod };
+        const detailsDocRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+        let dataToUpdate: TeacherPrivateDetails = { paymentMethod: data.paymentMethod };
         
         try {
             if (data.paymentMethod === 'upi') {
                 dataToUpdate.upiId = data.upiId;
-                dataToUpdate.accountHolderName = '';
-                dataToUpdate.bankName = '';
-                dataToUpdate.accountNumber = '';
-                dataToUpdate.ifscCode = '';
+                dataToUpdate.accountHolderName = undefined;
+                dataToUpdate.bankName = undefined;
+                dataToUpdate.accountNumber = undefined;
+                dataToUpdate.ifscCode = undefined;
 
                 if (qrCodeFile) {
                     const storageRef = ref(storage, `upi-qr-codes/${user.id}/${qrCodeFile.name}`);
                     const uploadResult = await uploadBytes(storageRef, qrCodeFile);
-                    const downloadURL = await getDownloadURL(uploadResult.ref);
-                    dataToUpdate.upiQrCodeUrl = downloadURL;
-                } else if (!user.upiQrCodeUrl) {
+                    dataToUpdate.upiQrCodeUrl = await getDownloadURL(uploadResult.ref);
+                } else if (!existingQrUrl) {
                      setError('Please upload a QR code image for UPI payments.');
                      setLoading(false);
                      return;
+                } else {
+                    dataToUpdate.upiQrCodeUrl = existingQrUrl;
                 }
             } else { // 'bank'
                 dataToUpdate.accountHolderName = data.accountHolderName;
                 dataToUpdate.bankName = data.bankName;
                 dataToUpdate.accountNumber = data.accountNumber;
                 dataToUpdate.ifscCode = data.ifscCode;
-                dataToUpdate.upiId = '';
-                dataToUpdate.upiQrCodeUrl = '';
+                dataToUpdate.upiId = undefined;
+                dataToUpdate.upiQrCodeUrl = undefined;
             }
 
-            await updateDoc(userDocRef, dataToUpdate);
+            await setDoc(detailsDocRef, dataToUpdate, { merge: true });
             toast({
                 title: 'Success!',
                 description: 'Your payment details have been saved.',
             });
              setQrCodeFile(null); // Clear file input after successful submission
+             if (dataToUpdate.upiQrCodeUrl) {
+                setExistingQrUrl(dataToUpdate.upiQrCodeUrl);
+             }
 
         } catch (serverError: any) {
             if (serverError.code?.startsWith('storage/')) {
                 setError('Image upload failed. You may not have permission or your network connection is unstable.');
                 console.warn("Storage error:", serverError);
             } else if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: userDocRef.path, operation: 'update', requestResourceData: dataToUpdate }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: detailsDocRef.path, operation: 'update', requestResourceData: dataToUpdate }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError("You don't have permission to perform this action.");
             } else {
@@ -195,7 +209,7 @@ export default function TeacherRevenuePage() {
                                         <FormControl>
                                             <RadioGroup
                                                 onValueChange={field.onChange}
-                                                defaultValue={field.value}
+                                                value={field.value}
                                                 className="flex flex-col space-y-1"
                                             >
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
@@ -243,7 +257,7 @@ export default function TeacherRevenuePage() {
                                             <div className="mt-4 relative w-40 h-40">
                                                 <Image src={qrCodePreview} alt="QR Code preview" fill className="rounded-md object-cover border p-1" />
                                                 <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                    onClick={() => { setQrCodeFile(null); setQrCodePreview(null); }}>
+                                                    onClick={() => { setQrCodeFile(null); setQrCodePreview(null); setExistingQrUrl(null); }}>
                                                     <X className="h-4 w-4" />
                                                 </Button>
                                             </div>

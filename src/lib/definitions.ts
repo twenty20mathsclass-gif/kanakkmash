@@ -14,6 +14,7 @@ export type User = {
   syllabus?: string;
   competitiveExam?: string;
   createdAt?: Timestamp;
+  // Private teacher details are now in a subcollection
   paymentMethod?: 'bank' | 'upi';
   accountHolderName?: string;
   bankName?: string;
@@ -23,6 +24,18 @@ export type User = {
   upiQrCodeUrl?: string;
   hourlyRate?: number;
 };
+
+export type TeacherPrivateDetails = {
+    paymentMethod?: 'bank' | 'upi';
+    accountHolderName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    upiId?: string;
+    upiQrCodeUrl?: string;
+    hourlyRate?: number;
+};
+
 
 export type Lesson = {
   id: string;

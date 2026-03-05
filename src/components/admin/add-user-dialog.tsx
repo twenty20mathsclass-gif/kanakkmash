@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +30,7 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { useFirebase } from '@/firebase';
-import type { User } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails } from '@/lib/definitions';
 import { z } from 'zod';
 
 const createUserSchema = z.object({
@@ -73,16 +74,12 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
     const { name, email, password, role, hourlyRate } = validatedFields.data;
 
-    // The main firestore instance from useFirebase() is used for the setDoc call,
-    // which will be authenticated with the currently logged-in admin's credentials.
-    // This allows the `isAdmin()` check in the security rules to pass.
     if (!firestore) {
         setError("Firestore is not available. Please try again later.");
         setLoading(false);
         return;
     }
 
-    // Create a temporary app to create the user without signing the admin out
     const tempAppName = `temp-user-creation-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppName);
     const tempAuth = getAuth(tempApp);
@@ -97,7 +94,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
         const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
 
-        const userProfile: Partial<User> = {
+        const userProfile: Omit<User, 'hourlyRate' | 'paymentMethod'> = {
             id: user.uid,
             name: name,
             email: email,
@@ -105,12 +102,13 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
             avatarUrl: avatarUrl,
             createdAt: serverTimestamp(),
         };
-
-        if(role === 'teacher' && hourlyRate) {
-            userProfile.hourlyRate = hourlyRate;
-        }
         
         await setDoc(doc(firestore, 'users', user.uid), userProfile);
+        
+        if(role === 'teacher' && (hourlyRate || hourlyRate === 0)) {
+            const privateDetails: TeacherPrivateDetails = { hourlyRate };
+            await setDoc(doc(firestore, 'users', user.uid, 'teacher_details', 'payment'), privateDetails);
+        }
         
         toast({
             title: 'Success',

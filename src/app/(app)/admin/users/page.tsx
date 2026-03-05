@@ -1,12 +1,13 @@
+
 'use client';
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
-import type { User } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails } from '@/lib/definitions';
 import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,7 +65,24 @@ export default function AdminUsersPage() {
 
       const usersSnapshot = await getDocs(usersQuery);
       const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setUsers(usersList);
+      
+      // If we are fetching teachers or all users, we also need to get their private details
+      if (roleFilter === 'teacher' || !roleFilter) {
+          const usersWithDetails = await Promise.all(usersList.map(async (user) => {
+              if (user.role === 'teacher') {
+                  const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+                  const detailsSnap = await getDoc(detailsRef);
+                  if (detailsSnap.exists()) {
+                      return { ...user, ...(detailsSnap.data() as TeacherPrivateDetails) };
+                  }
+              }
+              return user;
+          }));
+          setUsers(usersWithDetails);
+      } else {
+          setUsers(usersList);
+      }
+
     } catch (e) {
       console.warn("Failed to fetch users:", e);
     } finally {

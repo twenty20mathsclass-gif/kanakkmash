@@ -11,7 +11,15 @@
         "email": { "type": "string", "format": "email", "description": "The user's email address." },
         "role": { "type": "string", "enum": ["student", "teacher", "admin"], "description": "The user's role." },
         "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
-        "createdAt": { "type": "object", "description": "The date and time the user account was created." },
+        "createdAt": { "type": "object", "description": "The date and time the user account was created." }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "teacherPrivateDetails": {
+      "title": "Teacher Private Details",
+      "description": "Stores private payment and salary information for a teacher.",
+      "type": "object",
+      "properties": {
         "paymentMethod": { "type": "string", "enum": ["bank", "upi"], "description": "The teacher's preferred payment method." },
         "accountHolderName": { "type": "string", "description": "The account holder's name for bank details (teachers only)." },
         "bankName": { "type": "string", "description": "The name of the bank (teachers only)." },
@@ -20,8 +28,7 @@
         "upiId": { "type": "string", "description": "The teacher's UPI ID." },
         "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the teacher's UPI QR code image." },
         "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
-      },
-      "required": ["id", "name", "email", "role"]
+      }
     },
     "testimonial": {
       "title": "Testimonial",
@@ -99,7 +106,11 @@
   "firestore": {
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/userProfile" },
-      "description": "Stores user profile information."
+      "description": "Stores public user profile information."
+    },
+    "/users/{userId}/teacher_details/payment": {
+        "schema": { "$ref": "#/entities/teacherPrivateDetails" },
+        "description": "Stores a teacher's private payment details."
     },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/testimonial" },

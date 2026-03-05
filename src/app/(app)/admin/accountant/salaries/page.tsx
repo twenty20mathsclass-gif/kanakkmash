@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useFirebase } from '@/firebase';
-import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { User, SalaryPayment, Schedule } from '@/lib/definitions';
+import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode } from 'lucide-react';
@@ -270,7 +271,17 @@ export default function AccountantSalariesPage() {
                 const q = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
                 const querySnapshot = await getDocs(q);
                 const teachersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-                setTeachers(teachersList);
+
+                const teachersWithDetails = await Promise.all(teachersList.map(async (teacher) => {
+                    const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
+                    const detailsSnap = await getDoc(detailsRef);
+                    if (detailsSnap.exists()) {
+                        return { ...teacher, ...(detailsSnap.data() as TeacherPrivateDetails) };
+                    }
+                    return teacher;
+                }));
+
+                setTeachers(teachersWithDetails);
             } catch (serverError: any) {
                 if (serverError.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });

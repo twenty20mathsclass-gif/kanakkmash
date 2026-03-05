@@ -25,14 +25,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Admins can read any profile. Users can read their own. Teachers can read student profiles.
-      allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && resource.data.role == 'student');
+      // Any authenticated user can read public user profiles.
+      allow read: if request.auth != null;
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
 
       // Admins can update any profile. Users can only update their own.
-      // A user cannot change their own role. A teacher can update their own bank details.
+      // A user cannot change their own role.
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
       
       // Admins can delete users. Users can delete their own account.
@@ -41,6 +41,11 @@ service cloud.firestore {
       match /attendance/{attendanceId} {
         // A user can create/read/update/delete their own attendance records.
         allow read, write: if isOwner(userId);
+      }
+      
+      match /teacher_details/{detailsDoc} {
+        // Teacher can manage their own private details. Admin can manage any.
+        allow read, write: if (isOwner(userId) && isRole('teacher')) || isAdmin();
       }
     }
 

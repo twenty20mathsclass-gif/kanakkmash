@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,9 +24,9 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
-import type { User } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails } from '@/lib/definitions';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
@@ -90,20 +91,20 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     }
 
     const userDocRef = doc(firestore, 'users', user.id);
-    
+    const privateDetailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+
     try {
         const dataToUpdate: Partial<User> = {
             name: validatedFields.data.name,
             role: validatedFields.data.role,
         };
 
-        if (validatedFields.data.role === 'teacher') {
-            dataToUpdate.hourlyRate = validatedFields.data.hourlyRate;
-        } else {
-            dataToUpdate.hourlyRate = 0;
-        }
-
         await updateDoc(userDocRef, dataToUpdate);
+
+        if (validatedFields.data.role === 'teacher') {
+            const privateDetails: TeacherPrivateDetails = { hourlyRate: validatedFields.data.hourlyRate };
+            await setDoc(privateDetailsRef, privateDetails, { merge: true });
+        }
 
         toast({
             title: 'Success',
