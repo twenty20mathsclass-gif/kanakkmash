@@ -44,7 +44,7 @@ export default function Home() {
               <Link href="/sign-up">Enroll Now</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/sign-in">Sign In</Link>
+              <Link href="/sign-in">Student Login</Link>
             </Button>
           </div>
           
