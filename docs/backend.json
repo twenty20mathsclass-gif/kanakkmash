@@ -98,6 +98,16 @@
         "timestamp": { "type": "object", "description": "The server timestamp when the message was sent." }
       },
       "required": ["text", "senderId", "timestamp"]
+    },
+    "userStatus": {
+      "title": "User Status",
+      "description": "Represents a user's online presence.",
+      "type": "object",
+      "properties": {
+        "state": { "type": "string", "enum": ["online", "offline"], "description": "The user's online state." },
+        "last_changed": { "type": "object", "description": "The server timestamp of the last status change." }
+      },
+      "required": ["state", "last_changed"]
     }
   },
   "auth": {
@@ -151,6 +161,10 @@
     "/chats/{chatId}/messages/{messageId}": {
       "schema": { "$ref": "#/entities/chatMessage" },
       "description": "Stores individual chat messages between two users. The chatId is a composite key of the two user IDs, sorted alphabetically and joined by an underscore."
+    },
+    "/status/{userId}": {
+      "schema": { "$ref": "#/entities/userStatus" },
+      "description": "Stores real-time user presence information."
     }
   }
 }

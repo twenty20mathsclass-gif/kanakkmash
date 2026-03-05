@@ -39,13 +39,19 @@ import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { PageLoader } from '@/components/shared/page-loader';
+import { usePresence } from '@/hooks/use-presence';
+
+
+function PresenceManager() {
+    usePresence();
+    return null;
+}
 
 export default function MainLayoutClient({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 1. All hooks are called unconditionally at the top.
   const { user, loading } = useUser();
   const { auth } = useFirebase();
   const router = useRouter();
@@ -53,28 +59,23 @@ export default function MainLayoutClient({
   const searchParams = useSearchParams();
   const [year, setYear] = useState<number | null>(null);
 
-  // This effect handles auth-based redirects.
   useEffect(() => {
-    // Define constants used in this effect
     const authPages = ['/sign-in', '/sign-up'];
     const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
 
-    // Exit early if loading or on an auth page
     if (loading || authPages.includes(pathname)) {
       return;
     }
 
     if (!user) {
-      // Not logged in: only allow public paths
       if (!isPubliclyAccessible) {
         router.push('/sign-in');
       }
       return;
     }
 
-    // Logged in: check role-based access
     if (pathname.startsWith('/admin') && user.role !== 'admin') {
       router.replace('/dashboard');
     } else if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
@@ -82,23 +83,19 @@ export default function MainLayoutClient({
     }
   }, [loading, user, router, pathname]);
 
-  // This effect sets the copyright year.
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
 
-  // 2. Conditional returns happen AFTER all hook calls.
   const authPages = ['/sign-in', '/sign-up'];
   if (authPages.includes(pathname)) {
     return <>{children}</>;
   }
 
-  // Handle the main loading state for the app.
   if (loading) {
     return <PageLoader />;
   }
 
-  // From here, the component can safely render different layouts based on user state.
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
   const handleSignOut = async () => {
@@ -112,7 +109,6 @@ export default function MainLayoutClient({
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
   
-  // Define nav items for logged-in users
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Class Schedule', icon: Calendar },
@@ -157,6 +153,7 @@ export default function MainLayoutClient({
 
     return (
       <SidebarProvider>
+        <PresenceManager />
         <div className="flex min-h-screen">
             <AppSidebar items={navItems} user={user} onSignOut={handleSignOut} />
             <div className="flex flex-col flex-1 md:ml-[--sidebar-width-icon] group-data-[state=expanded]:md:ml-[--sidebar-width] transition-[margin-left] duration-300 ease-in-out">
@@ -175,6 +172,7 @@ export default function MainLayoutClient({
     
   return (
     <div className="relative min-h-screen bg-background">
+      {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
         {user ? (

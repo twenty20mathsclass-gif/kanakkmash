@@ -126,17 +126,27 @@ service cloud.firestore {
     }
 
     match /chats/{chatId} {
+      // A user is a participant if their UID is in the parent chatId.
+      // The chatId is a composite of two UIDs, sorted and joined by '_'
+      function isParticipant() {
+        return request.auth != null && request.auth.uid in chatId.split('_');
+      }
+
       match /messages/{messageId} {
-        // A user can read/list messages if their UID is in the parent chatId.
-        // The chatId is a composite of two UIDs, sorted and joined by '_'
-        allow read: if request.auth != null && request.auth.uid in chatId.split('_');
-        
+        allow read: if isParticipant();
         // A user can create a message if they are a participant and the sender.
-        allow create: if request.auth != null && (request.auth.uid in chatId.split('_')) && request.resource.data.senderId == request.auth.uid;
+        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
         
         // Messages are immutable.
         allow update, delete: if false;
       }
+    }
+
+    match /status/{userId} {
+      // Any authenticated user can see presence status.
+      allow read: if request.auth != null;
+      // A user can only write to their own status document.
+      allow write: if isOwner(userId);
     }
   }
 }

@@ -13,8 +13,38 @@ import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 
 export const dynamic = 'force-dynamic';
+
+const ContactItem = ({ contact, isSelected, onSelect }: { contact: User; isSelected: boolean; onSelect: () => void }) => {
+    const isOnline = useOnlineStatus(contact.id);
+
+    return (
+        <button
+            className={cn(
+                'w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-colors',
+                isSelected ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50'
+            )}
+            onClick={onSelect}
+        >
+            <div className="relative">
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={contact.avatarUrl} alt={contact.name} />
+                    <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {isOnline && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" title="Online" />
+                )}
+            </div>
+            <div>
+                <p className="font-semibold">{contact.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{contact.role}</p>
+            </div>
+        </button>
+    );
+};
+
 
 export default function MyChatRoomPage() {
     const { firestore } = useFirebase();
@@ -117,23 +147,12 @@ export default function MyChatRoomPage() {
                             <ScrollArea className="h-full">
                                 <div className="space-y-2 pr-4">
                                 {contacts.map(contact => (
-                                    <button
+                                    <ContactItem 
                                         key={contact.id}
-                                        className={cn(
-                                            'w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-colors',
-                                            selectedContact?.id === contact.id ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50'
-                                        )}
-                                        onClick={() => setSelectedContact(contact)}
-                                    >
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src={contact.avatarUrl} alt={contact.name} />
-                                            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{contact.name}</p>
-                                            <p className="text-xs text-muted-foreground capitalize">{contact.role}</p>
-                                        </div>
-                                    </button>
+                                        contact={contact}
+                                        isSelected={selectedContact?.id === contact.id}
+                                        onSelect={() => setSelectedContact(contact)}
+                                    />
                                 ))}
                                 </div>
                             </ScrollArea>
