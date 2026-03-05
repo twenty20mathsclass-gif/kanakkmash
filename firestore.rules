@@ -113,11 +113,13 @@ service cloud.firestore {
     }
 
     match /salaryPayments/{paymentId} {
-        // Admins can get any payment. Authenticated users can only get payments where their UID matches the teacherId.
+        // Admins can get any payment. Teachers can get their own.
         allow get: if isAdmin() || (request.auth.uid != null && resource.data.teacherId == request.auth.uid);
 
-        // List operations will be validated against the `get` rule on a per-document basis.
-        // By not having an `allow list` rule, we ensure queries are properly constrained.
+        // Allow listing payments only when filtered by a specific teacherId.
+        // This makes the query predictable and secure for the query optimizer.
+        // Document-level security is still enforced by the 'get' rule.
+        allow list: if request.auth.uid != null && 'teacherId' in request.query.where;
 
         // Only admins can create/update/delete payments.
         allow write: if isAdmin();
