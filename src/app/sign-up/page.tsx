@@ -16,7 +16,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { AnimatedMathIcons } from '@/components/shared/animated-math-icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +40,7 @@ export default function SignUpPage() {
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
       <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">
-        <AnimatedMathIcons />
+        <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
         <Link href="/" className="absolute top-8 left-8 z-10">
             <Image
               src="/logo eng@4x.png"
