@@ -278,34 +278,34 @@ export default function TeacherDashboardPage() {
         <section>
             <h2 className="text-xl font-bold font-headline mb-4">Quick Actions</h2>
             <div className="grid gap-4 md:grid-cols-2">
-                <Card className="hover:shadow-md transition-shadow">
+                <Card style={{ backgroundColor: 'hsl(210 80% 65%)' }} className="text-primary-foreground hover:shadow-lg transition-shadow">
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        <div className="p-3 rounded-full bg-primary/10 text-primary">
+                        <div className="p-3 rounded-full bg-background/20">
                             <CalendarPlus className="h-6 w-6" />
                         </div>
                         <div>
                             <CardTitle>Schedule a Class</CardTitle>
-                            <CardDescription>Set up a new live session.</CardDescription>
+                            <CardDescription className="text-primary-foreground/80">Set up a new live session.</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Button asChild>
+                        <Button asChild variant="secondary">
                             <Link href="/teacher/create-schedule">Create Class</Link>
                         </Button>
                     </CardContent>
                 </Card>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card style={{ backgroundColor: 'hsl(30 95% 55%)' }} className="text-primary-foreground hover:shadow-lg transition-shadow">
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        <div className="p-3 rounded-full bg-primary/10 text-primary">
+                        <div className="p-3 rounded-full bg-background/20">
                             <FilePenLine className="h-6 w-6" />
                         </div>
                         <div>
                             <CardTitle>Create an Exam</CardTitle>
-                            <CardDescription>Assess student knowledge.</CardDescription>
+                            <CardDescription className="text-primary-foreground/80">Assess student knowledge.</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Button asChild>
+                        <Button asChild variant="secondary">
                             <Link href="/teacher/create-exam-schedule">Create Exam</Link>
                         </Button>
                     </CardContent>
