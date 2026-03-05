@@ -96,7 +96,7 @@ const examFormSchema = z.object({
         }
     }
     if (data.examType === 'descriptive') {
-        if (!data.totalMarks || data.totalMarks <= 0) {
+        if ((data.totalMarks ?? 0) <= 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Total marks must be a positive number.', path: ['totalMarks'] });
         }
          if (data.descriptiveInputMethod === 'editor' && (!data.questionPaperContent || data.questionPaperContent.trim().length === 0)) {
@@ -133,7 +133,9 @@ export function CreateExamForm() {
             competitiveExam: '',
             examType: 'mcq',
             descriptiveInputMethod: 'upload',
-            questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]
+            questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }],
+            totalMarks: undefined,
+            questionPaperContent: undefined,
         },
     });
 
@@ -147,6 +149,24 @@ export function CreateExamForm() {
     const selectedClass = watch('class');
     const examType = watch('examType');
     const descriptiveInputMethod = watch('descriptiveInputMethod');
+
+    useEffect(() => {
+        if (examType === 'mcq') {
+            // Clear descriptive-specific fields
+            setValue('totalMarks', undefined);
+            setValue('questionPaperContent', undefined);
+            setQuestionPaperUpload({ file: null, status: 'idle', url: undefined });
+
+            // Ensure there's at least one question when switching to MCQ
+            if (!watch('questions') || watch('questions')?.length === 0) {
+                setValue('questions', [{ questionText: '', options: [{ text: '' }, { text: '' }], correctAnswerIndex: -1, imageUrl: undefined }]);
+            }
+        } else if (examType === 'descriptive') {
+            // Clear MCQ-specific fields
+            setValue('questions', undefined);
+        }
+    }, [examType, setValue, watch]);
+
     
     useEffect(() => {
         if (!firestore) return;
