@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -469,50 +469,60 @@ export function CreateExamForm() {
 
                     {examType === 'mcq' ? (
                         <div>
-                            <h2 className="text-xl font-bold mb-4 font-headline">Questions</h2>
                             <div className="space-y-6">
-                            {fields.map((field, index) => (
-                                <Card key={field.id} className="relative p-6 border-l-4 border-primary">
-                                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}>
-                                        <Trash2 className="h-4 w-4" /><span className="sr-only">Remove Question</span>
-                                    </Button>
-                                    <div className="space-y-4">
-                                        <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (
-                                            <FormItem><FormLabel>Question {index + 1}</FormLabel><FormControl><Textarea placeholder="What is 2 + 2?" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )}/>
-                                        <div className="space-y-2">
-                                            <FormLabel>Question Image (Optional)</FormLabel>
-                                            {watch(`questions.${index}.imageUrl`) ? (
-                                                <div className="relative w-48 h-32">
-                                                    <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} fill className="object-cover rounded-md border" />
-                                                    <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                        onClick={() => { setValue(`questions.${index}.imageUrl`, undefined, { shouldValidate: true }); setImageUploadStatus(prev => ({...prev, [index]: 'idle'})); }}>
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <Input type="file" id={`image-upload-${index}`} className="hidden" accept="image/png, image/jpeg, image/webp"
-                                                        onChange={(e) => { if (e.target.files?.[0]) { handleImageUpload(e.target.files[0], index); } }}
-                                                        disabled={imageUploadStatus[index] === 'uploading'}/>
-                                                    <Button asChild variant="outline" type="button" disabled={imageUploadStatus[index] === 'uploading'}>
-                                                        <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
-                                                            {imageUploadStatus[index] === 'uploading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                                            {imageUploadStatus[index] === 'uploading' ? 'Uploading...' : 'Upload Image'}
-                                                        </label>
-                                                    </Button>
-                                                </>
-                                            )}
-                                            <FormMessage>{form.formState.errors.questions?.[index]?.imageUrl?.message}</FormMessage>
+                                <h2 className="text-xl font-bold font-headline">Questions</h2>
+                                {fields.map((field, index) => (
+                                    <Card key={field.id} className="relative p-6 border-l-4 border-primary">
+                                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}>
+                                            <Trash2 className="h-4 w-4" /><span className="sr-only">Remove Question</span>
+                                        </Button>
+                                        <div className="space-y-4">
+                                            <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (
+                                                <FormItem><FormLabel>Question {index + 1}</FormLabel><FormControl><Textarea placeholder="What is 2 + 2?" {...field} /></FormControl><FormMessage /></FormItem>
+                                            )}/>
+                                            <div className="space-y-2">
+                                                <FormLabel>Question Image (Optional)</FormLabel>
+                                                {watch(`questions.${index}.imageUrl`) ? (
+                                                    <div className="relative w-48 h-32">
+                                                        <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} fill className="object-cover rounded-md border" />
+                                                        <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                                            onClick={() => { setValue(`questions.${index}.imageUrl`, undefined, { shouldValidate: true }); setImageUploadStatus(prev => ({...prev, [index]: 'idle'})); }}>
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <Input type="file" id={`image-upload-${index}`} className="hidden" accept="image/png, image/jpeg, image/webp"
+                                                            onChange={(e) => { if (e.target.files?.[0]) { handleImageUpload(e.target.files[0], index); } }}
+                                                            disabled={imageUploadStatus[index] === 'uploading'}/>
+                                                        <Button asChild variant="outline" type="button" disabled={imageUploadStatus[index] === 'uploading'}>
+                                                            <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
+                                                                {imageUploadStatus[index] === 'uploading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                                {imageUploadStatus[index] === 'uploading' ? 'Uploading...' : 'Upload Image'}
+                                                            </label>
+                                                        </Button>
+                                                    </>
+                                                )}
+                                                <FormMessage>{form.formState.errors.questions?.[index]?.imageUrl?.message}</FormMessage>
+                                            </div>
+                                            <OptionsFieldArray questionIndex={index} control={form.control} />
                                         </div>
-                                        <OptionsFieldArray questionIndex={index} control={form.control} />
-                                    </div>
-                                </Card>
-                            ))}
+                                    </Card>
+                                ))}
+                                <Button type="button" variant="outline" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Question
+                                </Button>
                             </div>
-                            <Button type="button" variant="outline" className="mt-6" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add Question
-                            </Button>
+                             <div className="mt-8 space-y-4">
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+                                <Button type="submit" disabled={loading} className="w-full">
+                                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create & Schedule Exam
+                                </Button>
+                            </div>
                         </div>
                     ) : (
                         <Card>
@@ -521,7 +531,7 @@ export function CreateExamForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField control={form.control} name="totalMarks" render={({ field }) => (
-                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                  <FormField
                                     control={form.control}
@@ -571,18 +581,18 @@ export function CreateExamForm() {
                                     />
                                 )}
                             </CardContent>
+                             <CardFooter className="flex-col items-stretch gap-4 pt-6">
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+                                <Button type="submit" disabled={loading} className="w-full">
+                                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create & Schedule Exam
+                                </Button>
+                            </CardFooter>
                         </Card>
                     )}
-
-
-                    {error && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-                    <Button type="submit" disabled={loading} className="w-full">
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create & Schedule Exam
-                    </Button>
                 </form>
             </Form>
             <div className="hidden md:block sticky top-20">
