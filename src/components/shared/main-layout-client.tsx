@@ -123,7 +123,6 @@ export default function MainLayoutClient({
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
-    { href: '/teacher/materials', label: 'Materials', icon: BookOpen },
     { href: '/teacher/revenue', label: 'My Revenue', icon: Banknote },
     { href: '/teacher/salary-history', label: 'Salary History', icon: History },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
