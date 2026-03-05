@@ -134,8 +134,8 @@ export function CreateExamForm() {
             examType: 'mcq',
             descriptiveInputMethod: 'upload',
             questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }],
-            totalMarks: undefined,
-            questionPaperContent: undefined,
+            totalMarks: 0,
+            questionPaperContent: '',
         },
     });
 
@@ -151,21 +151,21 @@ export function CreateExamForm() {
     const descriptiveInputMethod = watch('descriptiveInputMethod');
 
     useEffect(() => {
+        // When examType changes, clear the values of the other type
         if (examType === 'mcq') {
-            // Clear descriptive-specific fields
-            setValue('totalMarks', undefined);
-            setValue('questionPaperContent', undefined);
+            setValue('totalMarks', 0);
+            setValue('questionPaperContent', '');
             setQuestionPaperUpload({ file: null, status: 'idle', url: undefined });
 
-            // Ensure there's at least one question when switching to MCQ
+            // Ensure there's at least one question for MCQ
             if (!watch('questions') || watch('questions')?.length === 0) {
-                setValue('questions', [{ questionText: '', options: [{ text: '' }, { text: '' }], correctAnswerIndex: -1, imageUrl: undefined }]);
+                append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined });
             }
         } else if (examType === 'descriptive') {
-            // Clear MCQ-specific fields
-            setValue('questions', undefined);
+            // Clear MCQ-specific fields by removing all questions
+            remove(); // remove all fields
         }
-    }, [examType, setValue, watch]);
+    }, [examType, setValue, watch, append, remove]);
 
     
     useEffect(() => {
@@ -306,10 +306,8 @@ export function CreateExamForm() {
             } else { // Descriptive
                 if (data.descriptiveInputMethod === 'upload') {
                     examData.questionPaperUrl = questionPaperUpload.url;
-                    examData.questionPaperContent = undefined;
                 } else {
                     examData.questionPaperContent = data.questionPaperContent;
-                    examData.questionPaperUrl = undefined;
                 }
                 examData.totalMarks = data.totalMarks;
             }
@@ -353,7 +351,6 @@ export function CreateExamForm() {
                 description: `The exam "${data.title}" is now live.`,
             });
             form.reset();
-            form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]);
             setQuestionPaperUpload({ file: null, status: 'idle' });
 
         } catch (serverError: any) {
@@ -551,7 +548,7 @@ export function CreateExamForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField control={form.control} name="totalMarks" render={({ field }) => (
-                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                  <FormField
                                     control={form.control}
@@ -593,6 +590,7 @@ export function CreateExamForm() {
                                                         placeholder="Type the question paper content here..."
                                                         className="min-h-[250px]"
                                                         {...field}
+                                                        value={field.value || ''}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
