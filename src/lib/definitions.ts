@@ -110,8 +110,13 @@ export type Exam = {
   class?: string;
   syllabus?: string;
   studentId?: string;
-  questions: McqQuestion[];
   competitiveExam?: string;
+  examType: 'mcq' | 'descriptive';
+  // For MCQ
+  questions?: McqQuestion[];
+  // For Descriptive
+  questionPaperUrl?: string;
+  totalMarks?: number;
 };
 
 export type ExamSubmission = {
@@ -119,12 +124,24 @@ export type ExamSubmission = {
     examId: string;
     studentId: string;
     studentName: string;
-    answers: (number | null)[];
-    submittedAt: Timestamp;
-    score: number;
-    totalQuestions: number;
     examTitle: string;
-}
+    submittedAt: Timestamp;
+    examType: 'mcq' | 'descriptive';
+    
+    // For MCQ
+    answers?: (number | null)[];
+    totalQuestions?: number;
+    
+    // score for MCQ, marks awarded for descriptive
+    score?: number; 
+    
+    // For Descriptive
+    answerFileUrl?: string;
+    status?: 'submitted' | 'reviewed';
+    feedback?: string;
+    totalMarks?: number;
+};
+
 
 export type CartOffer = {
   id?: string;

@@ -65,7 +65,9 @@ const examFormSchema = z.object({
   studentId: z.string().optional(),
   competitiveExam: z.string().optional(),
 
-  questions: z.array(questionSchema).min(1, 'An exam must have at least one question.'),
+  examType: z.enum(['mcq', 'descriptive'], { required_error: 'Please select an exam type.' }),
+  totalMarks: z.coerce.number().optional(),
+  questions: z.array(questionSchema).optional(),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class || data.class.trim() === '') {
@@ -86,6 +88,16 @@ const examFormSchema = z.object({
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
         }
     }
+    if (data.examType === 'mcq') {
+        if (!data.questions || data.questions.length < 1) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'MCQ exam must have at least one question.', path: ['questions'] });
+        }
+    }
+    if (data.examType === 'descriptive') {
+        if (!data.totalMarks || data.totalMarks <= 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Total marks must be a positive number.', path: ['totalMarks'] });
+        }
+    }
 });
 
 type ExamFormValues = z.infer<typeof examFormSchema>;
@@ -101,6 +113,8 @@ export function CreateExamForm() {
     const [filteredStudents, setFilteredStudents] = useState<User[]>([]);
     const [scheduledExams, setScheduledExams] = useState<Schedule[]>([]);
     const [imageUploadStatus, setImageUploadStatus] = useState<Record<number, 'idle' | 'uploading' | 'success' | 'error'>>({});
+    const [questionPaperUpload, setQuestionPaperUpload] = useState<{ file: File | null, status: 'idle' | 'uploading' | 'success' | 'error', url?: string }>({ file: null, status: 'idle' });
+
 
     const form = useForm<ExamFormValues>({
         resolver: zodResolver(examFormSchema),
@@ -112,6 +126,7 @@ export function CreateExamForm() {
             endTime: '11:00',
             courseModel: '',
             competitiveExam: '',
+            examType: 'mcq',
             questions: [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]
         },
     });
@@ -124,6 +139,7 @@ export function CreateExamForm() {
     const { watch, setValue } = form;
     const courseModel = watch('courseModel');
     const selectedClass = watch('class');
+    const examType = watch('examType');
     
     useEffect(() => {
         if (!firestore) return;
@@ -154,7 +170,6 @@ export function CreateExamForm() {
         } else {
             setFilteredStudents([]);
         }
-        // Reset student selection when filters change
         setValue('studentId', '');
     }, [courseModel, allStudents, setValue]);
     
@@ -186,11 +201,7 @@ export function CreateExamForm() {
 
     const handleImageUpload = async (file: File, questionIndex: number) => {
         if (!storage || !user) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Storage service is not available.'
-            });
+            toast({ variant: 'destructive', title: 'Error', description: 'Storage service is not available.' });
             return;
         };
 
@@ -199,43 +210,40 @@ export function CreateExamForm() {
         const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
         
         try {
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Upload timed out. Please check your network and permissions.')), 30000)
-            );
-
-            const uploadTask = uploadBytes(storageRef, file);
-
-            const uploadResult = await Promise.race([
-                uploadTask,
-                timeoutPromise
-            ]) as UploadResult;
-            
+            const uploadResult = await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(uploadResult.ref);
             
             setValue(`questions.${questionIndex}.imageUrl`, downloadURL, { shouldValidate: true });
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'success' }));
-            toast({
-                title: 'Image Uploaded',
-                description: 'Your image has been successfully added to the question.'
-            });
+            toast({ title: 'Image Uploaded', description: 'Your image has been successfully added to the question.' });
         } catch (error: any) {
             console.warn("Image upload failed:", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
-
             let description = 'Could not upload the image. Please try again.';
             if (error.code === 'storage/unauthorized') {
                 description = 'You do not have permission to upload images for exams.';
-            } else if (error.code?.startsWith('storage/')) {
-                 description = 'Image upload failed. Check your network and Firebase Storage configuration.';
-            } else if (error.message) {
-                 description = error.message;
             }
+            toast({ variant: 'destructive', title: 'Upload Failed', description: description });
+        }
+    }
 
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description: description
-            });
+    const handleQuestionPaperUpload = async (file: File) => {
+        if (!storage || !user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Storage service is not available.' });
+            return;
+        }
+        setQuestionPaperUpload({ file, status: 'uploading' });
+
+        const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
+        try {
+            const uploadResult = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
+            setQuestionPaperUpload(prev => ({...prev, status: 'success', url: downloadURL}));
+             toast({ title: 'File Uploaded', description: 'Question paper has been uploaded.' });
+        } catch (error: any) {
+            console.warn("File upload failed:", error);
+            setQuestionPaperUpload(prev => ({...prev, status: 'error'}));
+            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the file.' });
         }
     }
 
@@ -245,26 +253,33 @@ export function CreateExamForm() {
             setError('Authentication error. Please sign in again.');
             return;
         }
+        
+        if (data.examType === 'descriptive' && questionPaperUpload.status !== 'success') {
+            setError('Please upload a question paper for the descriptive exam.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
-             // Sanitize questions to remove undefined imageUrls
-            const sanitizedQuestions = data.questions.map(q => {
-                const question: Partial<typeof q> = { ...q };
-                if (!question.imageUrl) {
-                    delete question.imageUrl;
-                }
-                return question as z.infer<typeof questionSchema>;
-            });
-
-            // 1. Create the exam content document
             const examData: Partial<Exam> = {
                 teacherId: user.id,
                 title: data.title,
                 courseModel: data.courseModel,
-                questions: sanitizedQuestions,
+                examType: data.examType,
             };
+
+            if (data.examType === 'mcq') {
+                 examData.questions = data.questions?.map(q => {
+                    const question: Partial<typeof q> = { ...q };
+                    if (!question.imageUrl) delete question.imageUrl;
+                    return question as z.infer<typeof questionSchema>;
+                });
+            } else { // Descriptive
+                examData.questionPaperUrl = questionPaperUpload.url;
+                examData.totalMarks = data.totalMarks;
+            }
 
             const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
             const scheduleData: Partial<Schedule> = {
@@ -284,34 +299,20 @@ export function CreateExamForm() {
                 if (student) {
                     examData.studentId = student.id;
                     scheduleData.studentId = student.id;
-                    if (student.class) {
-                        examData.class = student.class;
-                        scheduleData.class = student.class;
-                    }
-                    if (student.syllabus) {
-                        examData.syllabus = student.syllabus;
-                        scheduleData.syllabus = student.syllabus;
-                    }
+                    if (student.class) { examData.class = student.class; scheduleData.class = student.class; }
+                    if (student.syllabus) { examData.syllabus = student.syllabus; scheduleData.syllabus = student.syllabus; }
                 }
             } else if (data.courseModel === 'COMPETITIVE EXAM') {
                 examData.competitiveExam = data.competitiveExam;
                 scheduleData.competitiveExam = data.competitiveExam;
             } else {
-                if (data.class) {
-                    examData.class = data.class;
-                    scheduleData.class = data.class;
-                }
-                if (data.syllabus) {
-                    examData.syllabus = data.syllabus;
-                    scheduleData.syllabus = data.syllabus;
-                }
+                if (data.class) { examData.class = data.class; scheduleData.class = data.class; }
+                if (data.syllabus) { examData.syllabus = data.syllabus; scheduleData.syllabus = data.syllabus; }
             }
             
             const examDocRef = await addDoc(collection(firestore, 'exams'), examData);
-
             scheduleData.examId = examDocRef.id;
             scheduleData.meetLink = `/exams/take/${examDocRef.id}`;
-
             await addDoc(collection(firestore, 'schedules'), scheduleData);
             
             toast({
@@ -320,13 +321,11 @@ export function CreateExamForm() {
             });
             form.reset();
             form.setValue('questions', [{ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined }]);
+            setQuestionPaperUpload({ file: null, status: 'idle' });
 
         } catch (serverError: any) {
              if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError(
-                    { path: '/exams or /schedules', operation: 'create', requestResourceData: {data} },
-                    { cause: serverError }
-                );
+                const permissionError = new FirestorePermissionError({ path: '/exams or /schedules', operation: 'create', requestResourceData: {data} }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError('Failed to create exam. You may not have the required permissions.');
             } else {
@@ -350,6 +349,28 @@ export function CreateExamForm() {
                     <Card>
                         <CardHeader><CardTitle>Exam Settings</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
+                             <FormField
+                                control={form.control}
+                                name="examType"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                    <FormLabel>Exam Type</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl><RadioGroupItem value="mcq" id="mcq" /></FormControl>
+                                                <FormLabel htmlFor="mcq" className="font-normal">Multiple Choice</FormLabel>
+                                            </FormItem>
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl><RadioGroupItem value="descriptive" id="descriptive" /></FormControl>
+                                                <FormLabel htmlFor="descriptive" className="font-normal">Descriptive</FormLabel>
+                                            </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField name="title" control={form.control} render={({ field }) => (
                                 <FormItem><FormLabel>Exam Title</FormLabel><FormControl><Input placeholder="e.g., Algebra Mid-Term" {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
@@ -433,88 +454,74 @@ export function CreateExamForm() {
                         </CardContent>
                     </Card>
 
-                    <div>
-                        <h2 className="text-xl font-bold mb-4 font-headline">Questions</h2>
-                        <div className="space-y-6">
-                        {fields.map((field, index) => (
-                            <Card key={field.id} className="relative p-6 border-l-4 border-primary">
-                                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}>
-                                    <Trash2 className="h-4 w-4" /><span className="sr-only">Remove Question</span>
-                                </Button>
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name={`questions.${index}.questionText`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Question {index + 1}</FormLabel>
-                                                <FormControl><Textarea placeholder="What is 2 + 2?" {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <div className="space-y-2">
-                                        <FormLabel>Question Image (Optional)</FormLabel>
-                                        {watch(`questions.${index}.imageUrl`) ? (
-                                            <div className="relative w-48 h-32">
-                                                <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} fill className="object-cover rounded-md border" />
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                    onClick={() => {
-                                                        setValue(`questions.${index}.imageUrl`, undefined, { shouldValidate: true });
-                                                        setImageUploadStatus(prev => ({...prev, [index]: 'idle'}));
-                                                    }}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <Input 
-                                                    type="file" 
-                                                    id={`image-upload-${index}`}
-                                                    className="hidden"
-                                                    accept="image/png, image/jpeg, image/webp"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            handleImageUpload(file, index);
-                                                        }
-                                                    }}
-                                                    disabled={imageUploadStatus[index] === 'uploading'}
-                                                />
-                                                <Button
-                                                    asChild 
-                                                    variant="outline"
-                                                    type="button"
-                                                    disabled={imageUploadStatus[index] === 'uploading'}
-                                                >
-                                                    <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
-                                                        {imageUploadStatus[index] === 'uploading' 
-                                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            : <Upload className="mr-2 h-4 w-4" />
-                                                        }
-                                                        {imageUploadStatus[index] === 'uploading' ? 'Uploading...' : 'Upload Image'}
-                                                    </label>
-                                                </Button>
-                                            </>
-                                        )}
-                                        <FormMessage>{form.formState.errors.questions?.[index]?.imageUrl?.message}</FormMessage>
+                    {examType === 'mcq' ? (
+                        <div>
+                            <h2 className="text-xl font-bold mb-4 font-headline">Questions</h2>
+                            <div className="space-y-6">
+                            {fields.map((field, index) => (
+                                <Card key={field.id} className="relative p-6 border-l-4 border-primary">
+                                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}>
+                                        <Trash2 className="h-4 w-4" /><span className="sr-only">Remove Question</span>
+                                    </Button>
+                                    <div className="space-y-4">
+                                        <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (
+                                            <FormItem><FormLabel>Question {index + 1}</FormLabel><FormControl><Textarea placeholder="What is 2 + 2?" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )}/>
+                                        <div className="space-y-2">
+                                            <FormLabel>Question Image (Optional)</FormLabel>
+                                            {watch(`questions.${index}.imageUrl`) ? (
+                                                <div className="relative w-48 h-32">
+                                                    <Image src={watch(`questions.${index}.imageUrl`)!} alt={`Question ${index + 1} image`} fill className="object-cover rounded-md border" />
+                                                    <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                                        onClick={() => { setValue(`questions.${index}.imageUrl`, undefined, { shouldValidate: true }); setImageUploadStatus(prev => ({...prev, [index]: 'idle'})); }}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Input type="file" id={`image-upload-${index}`} className="hidden" accept="image/png, image/jpeg, image/webp"
+                                                        onChange={(e) => { if (e.target.files?.[0]) { handleImageUpload(e.target.files[0], index); } }}
+                                                        disabled={imageUploadStatus[index] === 'uploading'}/>
+                                                    <Button asChild variant="outline" type="button" disabled={imageUploadStatus[index] === 'uploading'}>
+                                                        <label htmlFor={`image-upload-${index}`} className="cursor-pointer">
+                                                            {imageUploadStatus[index] === 'uploading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                            {imageUploadStatus[index] === 'uploading' ? 'Uploading...' : 'Upload Image'}
+                                                        </label>
+                                                    </Button>
+                                                </>
+                                            )}
+                                            <FormMessage>{form.formState.errors.questions?.[index]?.imageUrl?.message}</FormMessage>
+                                        </div>
+                                        <OptionsFieldArray questionIndex={index} control={form.control} />
                                     </div>
-
-                                    <OptionsFieldArray questionIndex={index} control={form.control} />
-                                </div>
-                            </Card>
-                        ))}
+                                </Card>
+                            ))}
+                            </div>
+                            <Button type="button" variant="outline" className="mt-6" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Question
+                            </Button>
                         </div>
-                        <Button type="button" variant="outline" className="mt-6" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Question
-                        </Button>
-                    </div>
+                    ) : (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Descriptive Question Setup</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField control={form.control} name="totalMarks" render={({ field }) => (
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <div className="space-y-2">
+                                    <FormLabel>Question Paper</FormLabel>
+                                    <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" disabled={questionPaperUpload.status === 'uploading'}/>
+                                    {questionPaperUpload.status === 'uploading' && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="animate-spin h-4 w-4"/>Uploading...</div>}
+                                    {questionPaperUpload.status === 'success' && questionPaperUpload.file && <div className="text-sm text-green-600">Uploaded: {questionPaperUpload.file.name}</div>}
+                                    {questionPaperUpload.status === 'error' && <div className="text-sm text-destructive">Upload failed. Please try again.</div>}
+                                    <FormDescription>Upload a PDF or image file.</FormDescription>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
 
                     {error && (
                         <Alert variant="destructive">

@@ -30,10 +30,16 @@ service firebase.storage {
       allow read, write: if request.auth.uid == userId && isRole('teacher');
     }
 
-    // Exam question images: Only teachers can upload. Authenticated users can read.
+    // Exam question images (MCQ & Descriptive papers): Only teachers can upload. Authenticated users can read.
     match /exam-questions/{teacherId}/{fileName} {
       allow read: if request.auth != null;
       allow write: if isRole('teacher') && request.auth.uid == teacherId;
+    }
+
+    // Student answers for descriptive exams
+    match /exam-answers/{examId}/{studentId}/{fileName} {
+      allow read: if request.auth.uid == studentId || get(/databases/(default)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
+      allow write: if request.auth.uid == studentId;
     }
 
     // Blog post images: Only admins or teachers can upload. Anyone can read.

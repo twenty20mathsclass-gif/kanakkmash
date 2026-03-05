@@ -21,10 +21,10 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 type Attendee = { id: string; studentName: string; studentAvatar: string; attendedAt: { toDate: () => Date } };
-type SubmissionWithStudentInfo = ExamSubmission & { student?: User; examTotalQuestions?: number };
+type SubmissionWithStudentInfo = ExamSubmission & { student?: User };
 
 const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; firestore: Firestore; users: User[] }) => {
-  const [details, setDetails] = useState<{ attendees?: Attendee[]; submissions?: SubmissionWithStudentInfo[] }>({});
+  const [details, setDetails] = useState<{ attendees?: Attendee[]; submissions?: SubmissionWithStudentInfo[]; exam?: Exam | null }>({});
   const [loading, setLoading] = useState(true);
 
   const teacher = useMemo(() => users.find((u) => u.id === schedule.teacherId), [users, schedule.teacherId]);
@@ -45,21 +45,17 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
           const [examSnap, submissionsSnap] = await Promise.all([getDoc(examRef), getDocs(submissionsQuery)]);
 
           const examData = examSnap.exists() ? (examSnap.data() as Exam) : null;
-          const totalQuestions = examData?.questions.length || 0;
 
           const submissionsList = submissionsSnap.docs.map(doc => {
             const submission = { id: doc.id, ...doc.data() } as ExamSubmission;
             const student = users.find(u => u.id === submission.studentId);
-            return { ...submission, student, examTotalQuestions: totalQuestions };
+            return { ...submission, student };
           });
-          setDetails({ submissions: submissionsList });
+          setDetails({ submissions: submissionsList, exam: examData });
         }
       } catch (error: any) {
         if (error.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError(
-              { path: `schedules/${schedule.id}/attendees or exams/${schedule.examId}/submissions`, operation: 'list' },
-              { cause: error }
-          );
+          const permissionError = new FirestorePermissionError({ path: `schedules/${schedule.id}/attendees or exams/${schedule.examId}/submissions`, operation: 'list' }, { cause: error });
           errorEmitter.emit('permission-error', permissionError);
         } else {
           console.warn("Error fetching schedule details:", error);
@@ -98,8 +94,7 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
                 <h3 className="font-bold mb-2">Attendees ({details.attendees?.length || 0})</h3>
                 {details.attendees && details.attendees.length > 0 ? (
                   <ScrollArea className="h-96">
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Joined At</TableHead></TableRow></TableHeader>
+                    <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Joined At</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {details.attendees.map(attendee => (
                                 <TableRow key={attendee.id}>
@@ -116,24 +111,22 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
                 ) : <p className="text-muted-foreground text-sm text-center py-8">No attendance records for this class.</p>}
               </div>
             )}
-            {schedule.type === 'exam' && (
+            {schedule.type === 'exam' && details.submissions && (
               <div>
                 <h3 className="font-bold mb-2">Submissions ({details.submissions?.length || 0})</h3>
-                {details.submissions && details.submissions.length > 0 ? (
+                {details.submissions.length > 0 ? (
                   <ScrollArea className="h-96">
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Student</TableHead>
-                                <TableHead>Course Info</TableHead>
-                                <TableHead className="text-right">Score</TableHead>
-                            </TableRow>
-                        </TableHeader>
+                        <TableHeader><TableRow><TableHead>Student</TableHead><TableHead className="text-right">Result</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {details.submissions.map(sub => {
-                                const percentage = sub.examTotalQuestions && sub.examTotalQuestions > 0
-                                    ? Math.round((sub.score / sub.examTotalQuestions) * 100)
-                                    : 0;
+                                let resultText = '-';
+                                if (sub.examType === 'mcq') {
+                                    const percentage = sub.totalQuestions && sub.totalQuestions > 0 ? Math.round(((sub.score || 0) / sub.totalQuestions) * 100) : 0;
+                                    resultText = `${sub.score}/${sub.totalQuestions} (${percentage}%)`;
+                                } else if (sub.examType === 'descriptive') {
+                                    resultText = sub.status === 'reviewed' ? `${sub.score}/${sub.totalMarks} marks` : 'Pending';
+                                }
                                 return (
                                 <TableRow key={sub.id}>
                                     <TableCell>
@@ -142,13 +135,11 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
                                             <div className="font-medium">{sub.student?.name || 'Unknown Student'}</div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="text-xs text-muted-foreground">{sub.student?.courseModel}</div>
-                                        <div className="text-xs text-muted-foreground">{sub.student?.class}</div>
-                                    </TableCell>
                                     <TableCell className="text-right">
-                                        <div className="font-bold">{sub.score} / {sub.examTotalQuestions}</div>
-                                        <div className="text-sm text-primary">{percentage}%</div>
+                                        <div className="font-bold">{resultText}</div>
+                                        {sub.examType === 'descriptive' && sub.answerFileUrl && (
+                                            <a href={sub.answerFileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">View Submission</a>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             )})}
@@ -181,10 +172,7 @@ export default function AdminSchedulesHistoryPage() {
                 const schedulesQuery = query(collection(firestore, 'schedules'), orderBy('date', 'desc'));
                 const usersQuery = query(collection(firestore, 'users'));
                 
-                const [schedulesSnapshot, usersSnapshot] = await Promise.all([
-                    getDocs(schedulesQuery),
-                    getDocs(usersQuery),
-                ]);
+                const [schedulesSnapshot, usersSnapshot] = await Promise.all([ getDocs(schedulesQuery), getDocs(usersQuery) ]);
 
                 const schedulesList = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
                 const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
@@ -193,10 +181,7 @@ export default function AdminSchedulesHistoryPage() {
                 setUsers(usersList);
             } catch (error: any) {
                 if (error.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError(
-                        { path: 'schedules or users', operation: 'list' },
-                        { cause: error }
-                    );
+                    const permissionError = new FirestorePermissionError({ path: 'schedules or users', operation: 'list' }, { cause: error });
                     errorEmitter.emit('permission-error', permissionError);
                 } else {
                     console.warn("Error fetching schedules history:", error);
@@ -212,19 +197,12 @@ export default function AdminSchedulesHistoryPage() {
     const schedulesWithTeachers = useMemo(() => {
         return schedules.map(schedule => {
             const teacher = users.find(u => u.id === schedule.teacherId);
-            return {
-                ...schedule,
-                teacherName: teacher?.name || 'Unknown',
-            };
+            return { ...schedule, teacherName: teacher?.name || 'Unknown' };
         });
     }, [schedules, users]);
 
     if(loading) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
+        return <div className="flex h-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
 
     return (
@@ -236,26 +214,13 @@ export default function AdminSchedulesHistoryPage() {
 
             <div className="grid md:grid-cols-3 gap-8 items-start">
                 <Card className="md:col-span-1">
-                    <CardHeader>
-                        <CardTitle>All Scheduled Items</CardTitle>
-                        <CardDescription>Select an item to view its details.</CardDescription>
-                    </CardHeader>
+                    <CardHeader><CardTitle>All Scheduled Items</CardTitle><CardDescription>Select an item to view its details.</CardDescription></CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[70vh]">
                             <div className="space-y-2 pr-4">
                                 {schedulesWithTeachers.map(schedule => (
-                                    <button
-                                        key={schedule.id}
-                                        className={cn(
-                                            'w-full text-left p-3 rounded-lg border transition-colors',
-                                            selectedSchedule?.id === schedule.id ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50'
-                                        )}
-                                        onClick={() => setSelectedSchedule(schedule)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-semibold truncate">{schedule.title}</p>
-                                            <Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type || 'Item'}</Badge>
-                                        </div>
+                                    <button key={schedule.id} className={cn('w-full text-left p-3 rounded-lg border transition-colors', selectedSchedule?.id === schedule.id ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50')} onClick={() => setSelectedSchedule(schedule)}>
+                                        <div className="flex items-center justify-between"><p className="font-semibold truncate">{schedule.title}</p><Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type || 'Item'}</Badge></div>
                                         <p className="text-sm text-muted-foreground">{format(schedule.date.toDate(), 'MMM d, yyyy')}</p>
                                         <p className="text-xs text-muted-foreground">By {schedule.teacherName}</p>
                                     </button>
@@ -268,9 +233,7 @@ export default function AdminSchedulesHistoryPage() {
                     { selectedSchedule && firestore ? (
                         <ScheduleDetails schedule={selectedSchedule} firestore={firestore} users={users} />
                     ) : (
-                        <Card className="flex items-center justify-center h-96 border-2 border-dashed">
-                             <p className="text-muted-foreground">Select a schedule to see details</p>
-                        </Card>
+                        <Card className="flex items-center justify-center h-96 border-2 border-dashed"><p className="text-muted-foreground">Select a schedule to see details</p></Card>
                     )}
                 </div>
             </div>
