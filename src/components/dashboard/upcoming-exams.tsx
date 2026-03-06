@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award, FileText } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
+import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText: BookOpen,
@@ -125,7 +127,7 @@ export function UpcomingExams() {
                             <Link href={item.meetLink} className="block h-full">
                                 <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
                                     <CardContent className="p-6 flex flex-col justify-between h-full">
-                                        <div>
+                                        <div className="space-y-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
                                                     <IconComponent className="h-5 w-5" />
@@ -135,8 +137,13 @@ export function UpcomingExams() {
                                                     <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
                                                 </div>
                                             </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {item.class && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.class}</Badge>}
+                                                {item.syllabus && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.syllabus}</Badge>}
+                                                {item.competitiveExam && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.competitiveExam}</Badge>}
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between items-end mt-6">
+                                        <div className="flex justify-between items-end mt-4">
                                             <div>
                                                 <p className="text-sm font-medium">{format(item.date.toDate(), 'MMM d, yyyy')}</p>
                                                 <div className="flex items-center gap-1 text-sm opacity-80">

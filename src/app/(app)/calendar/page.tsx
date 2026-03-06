@@ -355,6 +355,11 @@ export default function ClassSchedulePage() {
                                           <Clock className="h-3 w-3" />
                                           <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
                                       </div>
+                                      <div className="flex flex-wrap gap-1 pt-2">
+                                          {event.class && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.class}</Badge>}
+                                          {event.syllabus && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.syllabus}</Badge>}
+                                          {event.competitiveExam && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.competitiveExam}</Badge>}
+                                      </div>
                                   </div>
                               </div>
                           </CardContent>

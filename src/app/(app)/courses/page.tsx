@@ -17,6 +17,7 @@ import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -189,6 +190,11 @@ export default function ExamSchedulePage() {
                                       <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
                                           <Clock className="h-3 w-3" />
                                           <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1 pt-2">
+                                          {event.class && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.class}</Badge>}
+                                          {event.syllabus && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.syllabus}</Badge>}
+                                          {event.competitiveExam && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.competitiveExam}</Badge>}
                                       </div>
                                   </div>
                               </div>
