@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -56,7 +55,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
   }
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
         <div className="relative flex h-16 items-center justify-between rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
             <div className="flex items-center">
                 <Link href={logoLink}>
