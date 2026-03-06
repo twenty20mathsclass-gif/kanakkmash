@@ -62,13 +62,48 @@ export default function MyChatRoomPage() {
         const fetchContacts = async () => {
             try {
                 if (user.role === 'student') {
-                    // A student's contact is the teacher who referred them.
-                    if (user.referredBy) {
-                        const teacherRef = doc(firestore, 'users', user.referredBy);
-                        const teacherSnap = await getDoc(teacherRef);
-                        if (teacherSnap.exists()) {
-                            setContacts([{ id: teacherSnap.id, ...teacherSnap.data() } as User]);
+                    // A student's contacts are their teachers from their schedules, plus their referrer.
+                    const schedulesQuery = query(collection(firestore, 'schedules'));
+                    const schedulesSnapshot = await getDocs(schedulesQuery);
+                    const allSchedules = schedulesSnapshot.docs.map(doc => doc.data() as Schedule);
+                    
+                    const studentSchedules = allSchedules.filter(schedule => {
+                        // Personal schedule check
+                        if (schedule.studentId === user.id) {
+                          return true;
                         }
+
+                        // Group schedule check
+                        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
+                            if (user.courseModel === 'COMPETITIVE EXAM') {
+                                return schedule.competitiveExam === user.competitiveExam;
+                            }
+
+                            if (schedule.class === user.class) {
+                                if (user.class !== 'DEGREE') {
+                                    return schedule.syllabus === user.syllabus;
+                                }
+                                return true;
+                            }
+                        }
+                        
+                        return false;
+                    });
+                    
+                    const teacherIds = [...new Set(studentSchedules.map(s => s.teacherId))];
+                    if (user.referredBy && !teacherIds.includes(user.referredBy)) {
+                        teacherIds.push(user.referredBy);
+                    }
+
+                    if (teacherIds.length > 0) {
+                        const teacherPromises = teacherIds.map(id => getDoc(doc(firestore, 'users', id)));
+                        const teacherSnaps = await Promise.all(teacherPromises);
+                        const teacherContacts = teacherSnaps
+                            .filter(snap => snap.exists() && snap.data().role === 'teacher')
+                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                        setContacts(teacherContacts);
+                    } else {
+                        setContacts([]);
                     }
                 } else if (user.role === 'teacher') {
                     // A teacher's contacts are the students they have referred.
@@ -84,18 +119,12 @@ export default function MyChatRoomPage() {
                     const affiliateIds = referralsSnapshot.docs.map(doc => doc.id);
                     
                     if (affiliateIds.length > 0) {
-                        const affiliatesData: User[] = [];
-                        // Firestore 'in' query is limited to 30 elements in array. Chunking is required.
-                        for (let i = 0; i < affiliateIds.length; i += 30) {
-                            const chunk = affiliateIds.slice(i, i + 30);
-                            if (chunk.length > 0) {
-                                const affiliatesQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-                                const querySnapshot = await getDocs(affiliatesQuery);
-                                const affiliatesChunk = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-                                affiliatesData.push(...affiliatesChunk);
-                            }
-                        }
-                        setContacts(affiliatesData);
+                        const studentPromises = affiliateIds.map(id => getDoc(doc(firestore, 'users', id)));
+                        const studentSnaps = await Promise.all(studentPromises);
+                        const studentContacts = studentSnaps
+                            .filter(snap => snap.exists())
+                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                        setContacts(studentContacts);
                     } else {
                         setContacts([]);
                     }
@@ -103,7 +132,7 @@ export default function MyChatRoomPage() {
             } catch (err: any) {
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
-                        path: 'users or referrals',
+                        path: 'schedules or users',
                         operation: 'list',
                     }, { cause: err });
                     errorEmitter.emit('permission-error', permissionError);
