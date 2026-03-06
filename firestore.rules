@@ -71,7 +71,7 @@ service cloud.firestore {
       match /salaryPayments/{paymentId} {
         // Teacher can read their own payments. Admin can read any.
         allow get: if isOwner(userId) || isAdmin();
-        allow list: if isOwner(userId) || isTheOneTrueAdmin();
+        allow list: if request.auth.uid == userId || request.auth.token.email == 'kanakkmash@gmail.com';
         // Only admins can create/update/delete payments.
         allow write: if isAdmin();
       }
