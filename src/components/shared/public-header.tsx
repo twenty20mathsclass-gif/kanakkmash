@@ -62,9 +62,9 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                     <Image
                         src="/logo mlm@4x.png"
                         alt="kanakkmash"
-                        width={140}
-                        height={43}
-                        className="h-auto w-28 object-contain"
+                        width={144}
+                        height={44}
+                        className="h-auto w-36 object-contain"
                         priority
                     />
                 </Link>
@@ -80,7 +80,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                     variant={active ? 'default' : 'ghost'}
                     asChild
                     className={cn(
-                    "rounded-full px-2",
+                    "rounded-full px-4",
                     active && "text-primary-foreground"
                     )}
                 >
