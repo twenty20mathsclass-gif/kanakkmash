@@ -123,12 +123,12 @@ export default function CreateSchedulePage() {
     if (!firestore || !user) return;
     
     const studentsQuery = query(
-        collection(firestore, 'users'), 
-        where('role', '==', 'student'),
+        collection(firestore, 'users'),
         where('referredBy', '==', user.id)
     );
     const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
-      const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      const referredUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      const studentsList = referredUsers.filter(u => u.role === 'student');
       setAllStudents(studentsList);
     }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
