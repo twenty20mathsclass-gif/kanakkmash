@@ -51,7 +51,20 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     const hourlyRate = form.watch('hourlyRate');
     const totalHours = form.watch('totalHours');
-    const calculatedAmount = useMemo(() => hourlyRate * totalHours, [hourlyRate, totalHours]);
+    
+    const previouslyPaidAmount = useMemo(() => {
+        return payments.reduce((acc, p) => acc + p.amount, 0);
+    }, [payments]);
+    
+    const previouslyPaidHours = useMemo(() => {
+        return payments.reduce((acc, p) => acc + p.totalHours, 0);
+    }, [payments]);
+    
+    const calculatedAmount = useMemo(() => {
+        const totalAmountDue = hourlyRate * totalHours;
+        const newPaymentAmount = totalAmountDue - previouslyPaidAmount;
+        return newPaymentAmount > 0 ? newPaymentAmount : 0;
+    }, [hourlyRate, totalHours, previouslyPaidAmount]);
 
 
     useEffect(() => {
@@ -93,8 +106,13 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         const unsubscribeSchedules = onSnapshot(schedulesQuery, (snapshot) => {
             const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
             setAllSchedules(schedulesList);
-        }, (error) => {
-            console.warn("Error fetching schedules: ", error);
+        }, (serverError: any) => {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: 'schedules', operation: 'list' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.warn("Error fetching schedules: ", serverError);
+            }
         });
 
 
@@ -139,10 +157,10 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         if (isOpen && teacher) {
             form.reset({
                 hourlyRate: teacher.hourlyRate || 0,
-                totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0,
+                totalHours: previouslyPaidHours + calculatedMonthlyHours > 0 ? previouslyPaidHours + calculatedMonthlyHours : 0,
             });
         }
-    }, [isOpen, teacher, form, calculatedMonthlyHours]);
+    }, [isOpen, teacher, form, calculatedMonthlyHours, previouslyPaidHours]);
 
 
     if (!teacher) return null;
@@ -152,10 +170,20 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         setIsSubmitting(true);
         setFormError(null);
 
+        const newPaymentAmount = data.hourlyRate * data.totalHours - previouslyPaidAmount;
+        if (newPaymentAmount <= 0) {
+            setFormError("Calculated payment is zero or negative. No new payment will be recorded.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        const newHours = data.totalHours - previouslyPaidHours;
+
         const salaryPaymentsCollection = collection(firestore, 'users', teacher.id, 'salaryPayments');
         const paymentData = {
-            ...data,
-            amount: data.hourlyRate * data.totalHours,
+            hourlyRate: data.hourlyRate,
+            totalHours: newHours,
+            amount: newPaymentAmount,
             teacherId: teacher.id,
             paymentDate: serverTimestamp(),
         };
@@ -163,7 +191,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         addDoc(salaryPaymentsCollection, paymentData)
             .then(() => {
                 toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
-                form.reset({ hourlyRate: teacher.hourlyRate || 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
+                onOpenChange(false);
             })
             .catch(async (serverError: any) => {
                 if (serverError.code === 'permission-denied') {
@@ -195,7 +223,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              {loading ? <div className="flex justify-center my-8"><Loader2 className="animate-spin" /></div> :
                              payments.length > 0 ? (
                                 <Table>
-                                    <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
+                                    <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Hours Paid</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {payments.map(p => (
                                             <TableRow key={p.id}>
@@ -228,15 +256,15 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                     )} />
                                     <FormField name="totalHours" control={form.control} render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Total Hours</FormLabel>
+                                            <FormLabel>Cumulative Total Hours</FormLabel>
                                             <FormControl><Input type="number" {...field}/></FormControl>
-                                            <FormDescription>Auto-calculated for {format(new Date(), 'MMMM yyyy')}. You can override this.</FormDescription>
+                                            <FormDescription>Cumulative hours for {format(new Date(), 'MMMM yyyy')}. You can override this.</FormDescription>
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
                                 </div>
                                 <div className="p-4 bg-muted rounded-md text-center">
-                                    <p className="text-sm text-muted-foreground">Calculated Total Amount</p>
+                                    <p className="text-sm text-muted-foreground">New Payment Amount (Difference)</p>
                                     <p className="text-2xl font-bold flex items-center justify-center gap-1"><IndianRupee className="h-6 w-6" />{calculatedAmount.toLocaleString('en-IN')}</p>
                                 </div>
                                 {formError && <Alert variant="destructive"><AlertCircle className="h-4 w-4"/><AlertTitle>Error</AlertTitle><AlertDescription>{formError}</AlertDescription></Alert>}
