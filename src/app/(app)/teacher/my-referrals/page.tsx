@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import type { User } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,15 +39,30 @@ export default function MyReferralsPage() {
         const fetchAffiliates = async () => {
             setLoading(true);
             try {
-                const affiliatesQuery = query(
-                    collection(firestore, 'users'),
-                    where('referredBy', '==', user.id)
-                );
-                const querySnapshot = await getDocs(affiliatesQuery);
-                const affiliatesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                const referralsQuery = query(collection(firestore, 'users', user.id, 'referrals'));
+                const referralsSnapshot = await getDocs(referralsQuery);
                 
-                // Sort on the client-side to avoid needing a composite index
-                affiliatesList.sort((a, b) => {
+                if (referralsSnapshot.empty) {
+                    setAffiliates([]);
+                    setLoading(false);
+                    return;
+                }
+        
+                const affiliateIds = referralsSnapshot.docs.map(doc => doc.id);
+                
+                const affiliatesData: User[] = [];
+                // Firestore 'in' query is limited to 30 elements in array. Chunking is required for > 30 referrals.
+                for (let i = 0; i < affiliateIds.length; i += 30) {
+                    const chunk = affiliateIds.slice(i, i + 30);
+                    if (chunk.length > 0) {
+                        const affiliatesQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+                        const querySnapshot = await getDocs(affiliatesQuery);
+                        const affiliatesChunk = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                        affiliatesData.push(...affiliatesChunk);
+                    }
+                }
+                
+                affiliatesData.sort((a, b) => {
                     if (a.createdAt && b.createdAt) {
                         return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
                     }
@@ -56,10 +71,10 @@ export default function MyReferralsPage() {
                     return 0;
                 });
 
-                setAffiliates(affiliatesList);
+                setAffiliates(affiliatesData);
             } catch (serverError: any) {
                 if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });
+                    const permissionError = new FirestorePermissionError({ path: `users/${user.id}/referrals or users`, operation: 'list' }, { cause: serverError });
                     errorEmitter.emit('permission-error', permissionError);
                     toast({
                         variant: 'destructive',

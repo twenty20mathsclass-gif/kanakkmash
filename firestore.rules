@@ -40,7 +40,7 @@ service cloud.firestore {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
       
-      // Only admins can list all users. Other roles should use specific queries.
+      // Only admins can list all users.
       allow list: if isTheOneTrueAdmin();
       
       // A user can create their own profile, and an admin can create any user profile.
@@ -70,10 +70,19 @@ service cloud.firestore {
 
       match /salaryPayments/{paymentId} {
         // Teacher can read their own payments. Admin can read any.
-        allow get: if isOwner(userId) || isTheOneTrueAdmin();
-        allow list: if request.auth.uid == userId || isTheOneTrueAdmin();
+        allow get, list: if isOwner(userId) || isTheOneTrueAdmin();
         // Only admins can create/update/delete payments.
         allow write: if isTheOneTrueAdmin();
+      }
+
+      match /referrals/{studentId} {
+        // A teacher can read their own referral list.
+        allow read, list: if isOwner(userId);
+        // A new student can create an entry in their referrer's list.
+        // studentId here is the ID of the new student being created.
+        allow create: if request.auth.uid == studentId;
+        // Only admin can modify/delete.
+        allow update, delete: if isAdmin();
       }
     }
 

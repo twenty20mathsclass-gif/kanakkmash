@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Schedule } from '@/lib/definitions';
 
@@ -123,19 +123,29 @@ export default function CreateSchedulePage() {
     if (!firestore || !user) return;
     
     const fetchStudents = async () => {
-        const studentsQuery = query(
-            collection(firestore, 'users'),
-            where('referredBy', '==', user.id)
-        );
         try {
-            const snapshot = await getDocs(studentsQuery);
-            const referredUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-            const studentsList = referredUsers.filter(u => u.role === 'student');
+            const referralsQuery = query(
+                collection(firestore, 'users', user.id, 'referrals'),
+                orderBy('referredAt', 'desc')
+            );
+            const referralsSnapshot = await getDocs(referralsQuery);
+            
+            const studentsList = referralsSnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: data.studentId,
+                    name: data.studentName,
+                    avatarUrl: data.studentAvatarUrl,
+                    courseModel: data.courseModel,
+                    role: 'student'
+                } as User;
+            });
+    
             setAllStudents(studentsList);
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
-                    path: 'users',
+                    path: `users/${user.id}/referrals`,
                     operation: 'list',
                 }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);

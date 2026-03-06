@@ -31,6 +31,19 @@
         "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
       }
     },
+    "referredStudent": {
+      "title": "Referred Student",
+      "description": "A record of a student referred by a teacher.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "studentAvatarUrl": { "type": "string", "format": "uri" },
+        "courseModel": { "type": "string" },
+        "referredAt": { "type": "object" }
+      },
+      "required": ["studentId", "studentName", "referredAt"]
+    },
     "testimonial": {
       "title": "Testimonial",
       "description": "A testimonial from a student.",
@@ -143,6 +156,10 @@
     "/users/{userId}/salaryPayments/{paymentId}": {
       "schema": { "$ref": "#/entities/salaryPayment" },
       "description": "Stores teacher salary payment records."
+    },
+    "/users/{userId}/referrals/{studentId}": {
+      "schema": { "$ref": "#/entities/referredStudent" },
+      "description": "Stores a list of students referred by a teacher."
     },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/testimonial" },

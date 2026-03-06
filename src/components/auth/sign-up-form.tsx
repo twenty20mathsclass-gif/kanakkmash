@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createUserWithEmailAndPassword, updateProfile, type User as AuthUser } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -152,11 +153,25 @@ export function SignUpForm() {
         createdAt: serverTimestamp(),
       };
       
+      const batch = writeBatch(firestore);
+      const userDocRef = doc(firestore, 'users', authUser.uid);
+      
       if (referralId) {
         userProfile.referredBy = referralId;
+        const referralDocRef = doc(firestore, 'users', referralId, 'referrals', authUser.uid);
+        const referralData = {
+            studentId: authUser.uid,
+            studentName: data.name,
+            studentAvatarUrl: avatarUrl,
+            courseModel: data.courseModel,
+            referredAt: serverTimestamp()
+        };
+        batch.set(referralDocRef, referralData);
       }
 
-      await setDoc(doc(firestore, 'users', authUser.uid), userProfile);
+      batch.set(userDocRef, userProfile);
+      await batch.commit();
+
 
       // On success, the useUser hook will update, and the sign-up page will handle the redirect.
     } catch (err: any) {
