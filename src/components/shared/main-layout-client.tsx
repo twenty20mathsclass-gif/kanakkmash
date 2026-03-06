@@ -170,7 +170,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className="relative min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-[100svh] bg-background flex flex-col">
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
