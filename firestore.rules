@@ -87,8 +87,9 @@ service cloud.firestore {
     }
 
     match /schedules/{scheduleId} {
-      // Only admin can list all schedules. Others must use specific queries.
-      allow list: if isTheOneTrueAdmin();
+      // `list` is for queries. Only admins can query for all schedules.
+      // Teachers can only query for schedules they own.
+      allow list: if isTheOneTrueAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
       // Anyone logged in can get a specific schedule.
       allow get: if request.auth != null;
 
