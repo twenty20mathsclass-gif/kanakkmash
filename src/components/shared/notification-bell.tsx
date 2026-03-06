@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
@@ -16,6 +17,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '../ui/scroll-area';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function NotificationBell({ user }: { user: User }) {
   const { firestore } = useFirebase();
@@ -31,6 +34,17 @@ export function NotificationBell({ user }: { user: User }) {
       setNotifications(notifsData);
       const unread = notifsData.filter(n => !n.isRead).length;
       setUnreadCount(unread);
+    },
+    (serverError: any) => {
+      if (serverError.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: `users/${user.id}/notifications`,
+          operation: 'list',
+        }, { cause: serverError });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.warn("Firestore error fetching notifications:", serverError);
+      }
     });
 
     return () => unsubscribe();
