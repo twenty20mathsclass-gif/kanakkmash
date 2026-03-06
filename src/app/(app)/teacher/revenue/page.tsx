@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -176,25 +175,42 @@ export default function TeacherRevenuePage() {
         
         const fetchDetails = async () => {
             const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
-            const docSnap = await getDoc(detailsRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data() as TeacherPrivateDetails;
-                form.reset({
-                    paymentMethod: data.paymentMethod || 'bank',
-                    accountHolderName: data.accountHolderName || '',
-                    bankName: data.bankName || '',
-                    accountNumber: data.accountNumber || '',
-                    ifscCode: data.ifscCode || '',
-                    upiId: data.upiId || '',
-                });
-                if (data.upiQrCodeUrl) {
-                    setQrCodePreview(data.upiQrCodeUrl);
-                    setExistingQrUrl(data.upiQrCodeUrl);
+            try {
+                const docSnap = await getDoc(detailsRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data() as TeacherPrivateDetails;
+                    form.reset({
+                        paymentMethod: data.paymentMethod || 'bank',
+                        accountHolderName: data.accountHolderName || '',
+                        bankName: data.bankName || '',
+                        accountNumber: data.accountNumber || '',
+                        ifscCode: data.ifscCode || '',
+                        upiId: data.upiId || '',
+                    });
+                    if (data.upiQrCodeUrl) {
+                        setQrCodePreview(data.upiQrCodeUrl);
+                        setExistingQrUrl(data.upiQrCodeUrl);
+                    }
+                }
+            } catch (serverError: any) {
+                 if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: detailsRef.path,
+                        operation: 'get'
+                    }, { cause: serverError });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Error fetching payment details: ", serverError);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error',
+                        description: 'Could not load your saved payment details.'
+                    });
                 }
             }
-        }
+        };
         fetchDetails();
-    }, [user, firestore, form]);
+    }, [user, firestore, form, toast]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
