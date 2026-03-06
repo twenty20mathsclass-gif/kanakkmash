@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, onSnapshot, collectionGroup, query, where } from 'firebase/firestore';
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, Loader2, BookOpen, FileText } from "lucide-react";
+import { Clock, Loader2, BookOpen, FileText, ShoppingBag } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -107,7 +107,7 @@ export function LearningProgress() {
   return (
     <section>
       <h2 className="text-xl font-bold font-headline mb-4">Learning Progress</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <ProgressCard 
           title="Total Time" 
           value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatTime(totalMinutes)}
@@ -119,7 +119,7 @@ export function LearningProgress() {
           title="Total Class" 
           value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : attendedClassesCount}
           icon={<BookOpen className="h-5 w-5" />}
-          color="hsl(270 80% 65%)"
+          color="hsl(210 80% 65%)"
           delay={0.2}
         />
         <ProgressCard 
@@ -128,6 +128,13 @@ export function LearningProgress() {
           icon={<FileText className="h-5 w-5" />}
           color="hsl(30 85% 50%)"
           delay={0.3}
+        />
+        <ProgressCard 
+          title="Number of Material" 
+          value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 0}
+          icon={<ShoppingBag className="h-5 w-5" />}
+          color="hsl(270 80% 65%)"
+          delay={0.4}
         />
       </div>
     </section>
