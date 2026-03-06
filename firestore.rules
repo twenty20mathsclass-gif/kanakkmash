@@ -78,7 +78,7 @@ service cloud.firestore {
 
       match /referrals/{studentId} {
         // A teacher can read their own referral list.
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) && isRole('teacher');
         // A new student can create an entry in their referrer's list.
         // studentId here is the ID of the new student being created.
         allow create: if request.auth != null && request.auth.uid == studentId;
@@ -89,10 +89,10 @@ service cloud.firestore {
 
     match /schedules/{scheduleId} {
       // Any authenticated user can read schedules. The client filters them.
-      allow read: if request.auth != null;
+      allow get, list: if request.auth != null;
 
       // Only teachers or admins can create schedules. Teachers must be the owner.
-      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isRole('admin');
+      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
 
       // Only the teacher who owns the schedule or an admin can update/delete it
       allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
