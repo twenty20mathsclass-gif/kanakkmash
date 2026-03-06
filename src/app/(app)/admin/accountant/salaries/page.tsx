@@ -64,8 +64,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         setLoading(true);
 
         const paymentsQuery = query(
-            collection(firestore, 'salaryPayments'),
-            where('teacherId', '==', teacher.id)
+            collection(firestore, 'users', teacher.id, 'salaryPayments')
         );
 
         const unsubscribePayments = onSnapshot(paymentsQuery, (snapshot) => {
@@ -82,7 +81,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             setLoading(false);
         }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'list' }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: `users/${teacher.id}/salaryPayments`, operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
                 console.warn("Error fetching salary history: ", serverError);
@@ -153,7 +152,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         setIsSubmitting(true);
         setFormError(null);
 
-        const salaryPaymentsCollection = collection(firestore, 'salaryPayments');
+        const salaryPaymentsCollection = collection(firestore, 'users', teacher.id, 'salaryPayments');
         const paymentData = {
             ...data,
             amount: data.hourlyRate * data.totalHours,
