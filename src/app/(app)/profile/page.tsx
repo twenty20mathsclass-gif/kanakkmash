@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
@@ -39,7 +38,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function ProfilePage() {
     const { user, loading: userLoading } = useUser();
-    const { auth, firestore, storage } = useFirebase();
+    const { auth, firestore } = useFirebase();
     const { toast } = useToast();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -69,15 +68,25 @@ export default function ProfilePage() {
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !user || !storage || !firestore || !auth?.currentUser) return;
+        if (!file || !user || !firestore || !auth?.currentUser) return;
 
         setIsUploading(true);
         let downloadURL = '';
 
         try {
-            const storageRef = ref(storage, `avatars/${user.id}`);
-            const uploadResult = await uploadBytes(storageRef, file);
-            downloadURL = await getDownloadURL(uploadResult.ref);
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Image upload failed');
+            }
+            downloadURL = result.data.url;
 
             // Update firestore document
             const userDocRef = doc(firestore, 'users', user.id);
@@ -101,22 +110,12 @@ export default function ProfilePage() {
                     { cause: error }
                 );
                 errorEmitter.emit('permission-error', permissionError);
-            } else if (error.code?.startsWith('storage/')) {
-                console.warn('Storage error uploading profile picture:', error);
-                const description = error.code === 'storage/unauthorized'
-                    ? 'You do not have permission to upload this file. Check storage rules.'
-                    : 'Image upload failed. Your network connection might be unstable.';
-                toast({
-                    variant: 'destructive',
-                    title: 'Upload Failed',
-                    description: description,
-                });
             } else {
                  console.warn('Error updating profile picture:', error);
                  toast({
                     variant: 'destructive',
                     title: 'Update Failed',
-                    description: 'Could not update your profile picture. Please try again.',
+                    description: error.message || 'Could not update your profile picture. Please try again.',
                 });
             }
         } finally {

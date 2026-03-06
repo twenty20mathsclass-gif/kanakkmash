@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 
-function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firestore: Firestore, storage: any, onTestimonialAdded: () => void }) {
+function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Firestore, onTestimonialAdded: () => void }) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -42,7 +41,7 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!firestore || !storage) return;
+        if (!firestore) return;
 
         setLoading(true);
         setError(null);
@@ -64,10 +63,20 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
         }
 
         try {
-            // 1. Upload image to storage
-            const imageRef = ref(storage, `testimonials/${Date.now()}_${imageFile.name}`);
-            const snapshot = await uploadBytes(imageRef, imageFile);
-            const imageUrl = await getDownloadURL(snapshot.ref);
+            // 1. Upload image
+            const imgbbFormData = new FormData();
+            imgbbFormData.append('image', imageFile);
+
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+                method: 'POST',
+                body: imgbbFormData,
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Image upload failed');
+            }
+            const imageUrl = result.data.url;
             
             // 2. Add testimonial to firestore
             const testimonialsCollection = collection(firestore, 'testimonials');
@@ -86,16 +95,13 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
             onTestimonialAdded();
 
         } catch (serverError: any) {
-            if (serverError.code?.startsWith('storage/')) {
-                console.warn("Storage error:", serverError);
-                setError('Image upload failed. You may not have permission or your network is unstable.');
-            } else if (serverError.code === 'permission-denied') {
+            if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'create' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError('Failed to save testimonial due to permissions.');
             } else {
                  console.warn("Unexpected error:", serverError);
-                 setError('An unexpected error occurred. Please try again.');
+                 setError(serverError.message || 'An unexpected error occurred. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -163,7 +169,7 @@ function AddTestimonialForm({ firestore, storage, onTestimonialAdded }: { firest
 
 
 export default function AdminTestimonialsPage() {
-    const { firestore, storage } = useFirebase();
+    const { firestore } = useFirebase();
     const { toast } = useToast();
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
@@ -192,43 +198,33 @@ export default function AdminTestimonialsPage() {
     }, [firestore]);
     
     const handleDelete = async (testimonial: Testimonial) => {
-        if (!firestore || !storage) return;
+        if (!firestore) return;
 
         if (!window.confirm(`Are you sure you want to delete the testimonial from ${testimonial.studentName}?`)) {
             return;
         }
 
         try {
-            // Delete firestore doc first
+            // Delete firestore doc
             const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
             await deleteDoc(testimonialRef);
 
-            // Then delete image from storage if it exists
-            if (testimonial.imageUrl) {
-                const imageRef = ref(storage, testimonial.imageUrl);
-                await deleteObject(imageRef);
-            }
+            // Note: Image on imgbb is not deleted.
             
             toast({ title: "Success", description: "Testimonial deleted." });
         } catch (serverError: any) {
              if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete the database entry." });
-            } else if (serverError.code === 'storage/object-not-found') {
-                console.warn("Image not found in storage, but database entry was deleted.");
-                toast({ title: "Partial Success", description: "Testimonial deleted, but the image was not found in storage." });
-            } else if (serverError.code?.startsWith('storage/')) {
-                console.warn("Storage error:", serverError);
-                toast({ variant: 'destructive', title: "Storage Error", description: "Failed to delete testimonial image. The database entry may still exist." });
+                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete testimonials." });
             } else {
-                console.warn("Firestore/Storage error:", serverError);
+                console.warn("Firestore error:", serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
             }
         }
     };
 
-    if (!firestore || !storage) {
+    if (!firestore) {
         return (
              <div className="space-y-8">
                 <div>
@@ -255,7 +251,7 @@ export default function AdminTestimonialsPage() {
                     <DialogHeader>
                         <DialogTitle>Add a New Testimonial</DialogTitle>
                     </DialogHeader>
-                    <AddTestimonialForm firestore={firestore} storage={storage} onTestimonialAdded={() => setIsDialogOpen(false)}/>
+                    <AddTestimonialForm firestore={firestore} onTestimonialAdded={() => setIsDialogOpen(false)}/>
                 </DialogContent>
             </Dialog>
         </div>

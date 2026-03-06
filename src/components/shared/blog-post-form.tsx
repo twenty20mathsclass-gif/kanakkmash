@@ -8,7 +8,6 @@ import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -37,7 +36,7 @@ interface BlogPostFormProps {
 }
 
 export function BlogPostForm({ post }: BlogPostFormProps) {
-  const { firestore, storage } = useFirebase();
+  const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
@@ -71,7 +70,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
   };
 
   const onSubmit = async (data: BlogPostFormValues) => {
-    if (!firestore || !user || !storage) {
+    if (!firestore || !user) {
       setError('You must be logged in to create a post.');
       return;
     }
@@ -83,9 +82,17 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
 
       if (imageFile) {
         setIsUploading(true);
-        const imageRef = ref(storage, `blog-images/${user.id}-${Date.now()}-${imageFile.name}`);
-        const snapshot = await uploadBytes(imageRef, imageFile);
-        imageUrl = await getDownloadURL(snapshot.ref);
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error?.message || 'Image upload failed');
+        }
+        imageUrl = result.data.url;
         setIsUploading(false);
       } else if (!imagePreview) {
         imageUrl = '';
@@ -102,6 +109,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
       
       if (!isEditMode) {
           postData.createdAt = serverTimestamp();
+          postData.likes = [];
       }
 
       if (isEditMode) {
@@ -115,7 +123,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         router.push(`/blog/${docRef.id}`);
       }
     } catch (e: any) {
-      setError('Failed to save post. You may not have the required permissions.');
+      setError(e.message || 'Failed to save post. You may not have the required permissions.');
       console.warn(e);
        if (e.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({ path: 'blogPosts', operation: isEditMode ? 'update' : 'create' });

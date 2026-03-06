@@ -8,7 +8,6 @@ import { z } from 'zod';
 import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
 import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, orderBy, documentId } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
@@ -28,7 +27,6 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { UploadResult } from 'firebase/storage';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -108,7 +106,7 @@ const examFormSchema = z.object({
 type ExamFormValues = z.infer<typeof examFormSchema>;
 
 export function CreateExamForm() {
-    const { firestore, storage } = useFirebase();
+    const { firestore } = useFirebase();
     const { user } = useUser();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -250,50 +248,61 @@ export function CreateExamForm() {
 
 
     const handleImageUpload = async (file: File, questionIndex: number) => {
-        if (!storage || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Storage service is not available.' });
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to upload.' });
             return;
         };
 
         setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'uploading' }));
-
-        const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
         
         try {
-            const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Image upload failed');
+            }
+            const downloadURL = result.data.url;
             
-            setValue(`questions.${index}.imageUrl`, downloadURL, { shouldValidate: true });
+            setValue(`questions.${questionIndex}.imageUrl`, downloadURL, { shouldValidate: true });
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'success' }));
             toast({ title: 'Image Uploaded', description: 'Your image has been successfully added to the question.' });
         } catch (error: any) {
             console.warn("Image upload failed:", error);
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
-            let description = 'Could not upload the image. Please try again.';
-            if (error.code === 'storage/unauthorized') {
-                description = 'You do not have permission to upload images for exams.';
-            }
-            toast({ variant: 'destructive', title: 'Upload Failed', description: description });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload the image. Please try again.' });
         }
     }
 
     const handleQuestionPaperUpload = async (file: File) => {
-        if (!storage || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Storage service is not available.' });
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to upload.' });
             return;
         }
         setQuestionPaperUpload({ file, status: 'uploading' });
 
-        const storageRef = ref(storage, `exam-questions/${user.id}/${Date.now()}-${file.name}`);
         try {
-            const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || 'File upload failed');
+            }
+            const downloadURL = result.data.url;
             setQuestionPaperUpload(prev => ({...prev, status: 'success', url: downloadURL}));
-             toast({ title: 'File Uploaded', description: 'Question paper has been uploaded.' });
+            toast({ title: 'File Uploaded', description: 'Question paper has been uploaded.' });
         } catch (error: any) {
             console.warn("File upload failed:", error);
             setQuestionPaperUpload(prev => ({...prev, status: 'error'}));
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the file.' });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload the file.' });
         }
     }
 

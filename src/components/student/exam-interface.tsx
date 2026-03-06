@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useFirebase } from '@/firebase';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Exam, Schedule, User, ExamSubmission } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -193,7 +192,7 @@ function DescriptiveExamInterface({ exam, schedule, user, timeLeft, handleSubmit
 
 export function ExamInterface({ exam, schedule, user }: Props) {
   const router = useRouter();
-  const { firestore, storage } = useFirebase();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -229,14 +228,21 @@ export function ExamInterface({ exam, schedule, user }: Props) {
   }, [firestore, isSubmitting, exam, user, toast, router]);
 
   const handleDescriptiveSubmit = useCallback(async (file: File) => {
-    if (!firestore || !storage || isSubmitting) return;
+    if (!firestore || isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-        const filePath = `exam-answers/${exam.id}/${user.id}/${file.name}`;
-        const fileRef = ref(storage, filePath);
-        await uploadBytes(fileRef, file);
-        const downloadUrl = await getDownloadURL(fileRef);
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error?.message || 'Answer file upload failed');
+        }
+        const downloadUrl = result.data.url;
         
         const submissionData: Omit<ExamSubmission, 'id'> = {
           examId: exam.id, studentId: user.id, studentName: user.name,
@@ -255,14 +261,11 @@ export function ExamInterface({ exam, schedule, user }: Props) {
          if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({ path: `exams/${exam.id}/submissions/${user.id}`, operation: 'create' }, { cause: serverError });
             errorEmitter.emit('permission-error', permissionError);
-        } else if (serverError.code?.startsWith('storage/')) {
-            const permissionError = new FirestorePermissionError({ path: `exam-answers/${exam.id}/${user.id}/${file.name}`, operation: 'create' }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
-        } else { console.warn("Firestore/Storage error:", serverError); }
-        toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your answer. Please try again.' });
+        } else { console.warn("Firestore/Upload error:", serverError); }
+        toast({ variant: 'destructive', title: 'Submission Failed', description: serverError.message || 'Could not submit your answer. Please try again.' });
         setIsSubmitting(false);
     }
-  }, [firestore, storage, isSubmitting, exam, user, toast, router]);
+  }, [firestore, isSubmitting, exam, user, toast, router]);
 
 
   useEffect(() => {

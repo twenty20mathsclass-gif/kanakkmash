@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUser, useFirebase } from '@/firebase';
 import { doc, getDoc, setDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -146,7 +145,7 @@ function SalaryHistory() {
 
 export default function TeacherRevenuePage() {
     const { user, loading: userLoading } = useUser();
-    const { firestore, storage } = useFirebase();
+    const { firestore } = useFirebase();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -226,7 +225,7 @@ export default function TeacherRevenuePage() {
 
 
     const onSubmit = async (data: PaymentDetailsFormValues) => {
-        if (!user || !firestore || !storage) {
+        if (!user || !firestore) {
             setError('You must be logged in to update your details.');
             return;
         }
@@ -246,9 +245,17 @@ export default function TeacherRevenuePage() {
                 dataToUpdate.ifscCode = undefined;
 
                 if (qrCodeFile) {
-                    const storageRef = ref(storage, `upi-qr-codes/${user.id}/${qrCodeFile.name}`);
-                    const uploadResult = await uploadBytes(storageRef, qrCodeFile);
-                    dataToUpdate.upiQrCodeUrl = await getDownloadURL(uploadResult.ref);
+                    const formData = new FormData();
+                    formData.append('image', qrCodeFile);
+                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error?.message || 'QR code upload failed');
+                    }
+                    dataToUpdate.upiQrCodeUrl = result.data.url;
                 } else if (!existingQrUrl) {
                      setError('Please upload a QR code image for UPI payments.');
                      setLoading(false);
@@ -276,16 +283,13 @@ export default function TeacherRevenuePage() {
              }
 
         } catch (serverError: any) {
-            if (serverError.code?.startsWith('storage/')) {
-                setError('Image upload failed. You may not have permission or your network connection is unstable.');
-                console.warn("Storage error:", serverError);
-            } else if (serverError.code === 'permission-denied') {
+            if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: detailsDocRef.path, operation: 'update', requestResourceData: dataToUpdate }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError("You don't have permission to perform this action.");
             } else {
                 console.warn("An unexpected error occurred:", serverError);
-                setError('An unexpected error occurred. Please try again.');
+                setError(serverError.message || 'An unexpected error occurred. Please try again.');
             }
         } finally {
              setLoading(false);
