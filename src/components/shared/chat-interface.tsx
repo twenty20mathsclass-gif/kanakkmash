@@ -44,13 +44,14 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
       setMessages(msgs);
       setLoading(false);
     }, (err: any) => {
-        console.error("Chat listener error:", err);
         if (err.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
                 path: `chats/${chatId}/messages`,
                 operation: 'list',
             }, { cause: err });
             errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.warn("Chat listener error:", err);
         }
         setLoading(false);
     });
@@ -83,14 +84,15 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
     
     addDoc(messagesCollection, messageData)
         .catch((err: any) => {
-            console.error("Error sending message:", err);
             if (err.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({
-                    path: `chats/${chatId}/messages`,
+                    path: messagesCollection.path,
                     operation: 'create',
-                    requestResourceData: {text: newMessage}
+                    requestResourceData: messageData
                 }, { cause: err });
                 errorEmitter.emit('permission-error', permissionError);
+            } else {
+              console.warn("Error sending message:", err);
             }
             // Re-set the message so user can try again
             setNewMessage(newMessage);
