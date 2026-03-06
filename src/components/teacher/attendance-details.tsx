@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, onSnapshot, query, getDocs, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, getDocs, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import type { Schedule, Exam, ExamSubmission, User } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
