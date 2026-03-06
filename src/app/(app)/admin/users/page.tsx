@@ -44,29 +44,33 @@ export default function AdminUsersPage() {
     if (!firestore) return;
     setLoading(true);
     try {
-      let usersQuery;
-      let pageTitle = 'User Management';
-      let pageDescription = 'View and manage all user accounts.';
+      let usersList: User[] = [];
 
-      if (roleFilter === 'student') {
-        usersQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
-        pageTitle = 'Student Data';
-        pageDescription = 'A list of all students in the system.';
-      } else if (roleFilter === 'teacher') {
-        usersQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
-        pageTitle = 'Teacher Data';
-        pageDescription = 'A list of all teachers in the system.';
+      if (roleFilter) {
+        const usersQuery = query(collection(firestore, 'users'), where('role', '==', roleFilter));
+        const usersSnapshot = await getDocs(usersQuery);
+        usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const pageTitle = `${roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)} Data`;
+        const pageDescription = `A list of all ${roleFilter}s in the system.`;
+        setTitle(pageTitle);
+        setDescription(pageDescription);
       } else {
-        usersQuery = collection(firestore, 'users');
-        pageTitle = 'All Users';
-        pageDescription = 'A list of all users in the system.';
+        const studentQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+        const teacherQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
+        const adminQuery = query(collection(firestore, 'users'), where('role', '==', 'admin'));
+        const [studentsSnap, teachersSnap, adminsSnap] = await Promise.all([
+            getDocs(studentQuery),
+            getDocs(teacherQuery),
+            getDocs(adminQuery),
+        ]);
+        usersList = [
+            ...studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
+            ...teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
+            ...adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
+        ];
+        setTitle('All Users');
+        setDescription('A list of all users in the system.');
       }
-      
-      setTitle(pageTitle);
-      setDescription(pageDescription);
-
-      const usersSnapshot = await getDocs(usersQuery);
-      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       
       // If we are fetching teachers or all users, we also need to get their private details
       if (roleFilter === 'teacher' || !roleFilter) {
