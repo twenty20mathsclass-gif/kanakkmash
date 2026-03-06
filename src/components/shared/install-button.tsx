@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { Download } from 'lucide-react';
 
 export default function InstallButton() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
@@ -48,23 +48,17 @@ export default function InstallButton() {
     );
   };
   
-  // By returning null until we're on the client, we ensure the initial server-rendered
-  // and client-rendered HTML match, preventing a hydration error.
-  if (!isClient) {
+  // By returning null until we're on the client and have an install prompt, 
+  // we prevent hydration errors and only show the button when it's usable.
+  if (!isClient || !installPrompt) {
     return null;
   }
 
   return (
     <div className="mt-6">
       <Button variant="secondary" onClick={handleInstallClick}>
-        <Image
-          src="/fv.png"
-          alt="PWA Icon"
-          width={20}
-          height={20}
-          className="mr-2"
-        />
-        Install Web App
+        <Download className="mr-2 h-4 w-4" />
+        Install App
       </Button>
     </div>
   );

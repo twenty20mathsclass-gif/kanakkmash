@@ -1,10 +1,9 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { Download } from 'lucide-react';
+import InstallButton from '@/components/shared/install-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,12 +43,7 @@ export default function Home() {
             </Button>
           </div>
           
-          <div className="mt-6">
-            <Button variant="secondary">
-              <Download className="mr-2 h-4 w-4" />
-              Download APK
-            </Button>
-          </div>
+          <InstallButton />
         
         </div>
       </div>
