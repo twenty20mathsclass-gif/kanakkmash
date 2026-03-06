@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, type User as AuthUser } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import Link from 'next/link';
@@ -33,6 +32,8 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { countries } from '@/lib/countries';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -112,17 +113,27 @@ export function SignUpForm() {
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
     setError(null);
+
+    if (!auth || !firestore) {
+      setError('Firebase is not available. Please try again later.');
+      setLoading(false);
+      return;
+    }
+
+    let authUser: AuthUser | undefined;
+    let userProfile: any;
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
-      const user = userCredential.user;
+      authUser = userCredential.user;
 
-      const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
+      const avatarUrl = `https://picsum.photos/seed/${authUser.uid}/100/100`;
 
-      await updateProfile(user, {
+      await updateProfile(authUser, {
         displayName: data.name,
         photoURL: avatarUrl,
       });
@@ -131,8 +142,8 @@ export function SignUpForm() {
       const phoneCode = selectedCountry ? selectedCountry.phone : data.countryCode;
 
       // Create user profile in Firestore
-      const userProfile: any = {
-        id: user.uid,
+      userProfile = {
+        id: authUser.uid,
         name: data.name,
         email: data.email,
         role: 'student' as 'student',
@@ -150,16 +161,26 @@ export function SignUpForm() {
         userProfile.referredBy = referralId;
       }
 
-      await setDoc(doc(firestore, 'users', user.uid), userProfile);
+      await setDoc(doc(firestore, 'users', authUser.uid), userProfile);
 
       // On success, the useUser hook will update, and the sign-up page will handle the redirect.
-    } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
-        setError('An account with this email already exists.');
-      } else {
-        setError(error.message);
-      }
-      setLoading(false);
+    } catch (err: any) {
+        // This single catch block will handle both auth and firestore errors
+        if (err.code === 'permission-denied' && authUser && userProfile) {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${authUser.uid}`,
+                operation: 'create',
+                requestResourceData: userProfile,
+            }, { cause: err });
+            errorEmitter.emit('permission-error', permissionError);
+            setError('You do not have permission to create a user profile.');
+        } else if (err.code === 'auth/email-already-in-use') {
+            setError('An account with this email already exists.');
+        } else {
+            console.warn('Sign up error:', err);
+            setError(err.message || 'An unexpected error occurred during sign up.');
+        }
+        setLoading(false);
     }
   };
   
