@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, collectionGroup, query, where } from 'firebase/firestore';
 import { Card, CardContent } from "@/components/ui/card";
-import { BrainCircuit, Clock, Flame, Loader2 } from "lucide-react";
+import { Clock, Loader2, BookOpen, FileText } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -36,6 +36,8 @@ export function LearningProgress() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const [totalMinutes, setTotalMinutes] = useState(0);
+  const [attendedClassesCount, setAttendedClassesCount] = useState(0);
+  const [attendedExamsCount, setAttendedExamsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,14 +45,21 @@ export function LearningProgress() {
         setLoading(false);
         return;
     };
+    setLoading(true);
 
     const attendanceQuery = collection(firestore, 'users', user.id, 'attendance');
-    const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
-        const total = snapshot.docs.reduce((sum, doc) => {
-                return sum + (doc.data().durationMinutes || 0);
-            }, 0);
-        setTotalMinutes(total);
-        setLoading(false);
+    const unsubAttendance = onSnapshot(attendanceQuery, (snapshot) => {
+        let totalMins = 0;
+        let classCount = 0;
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            totalMins += (data.durationMinutes || 0);
+            if (data.type === 'class' || !data.type) { 
+                classCount++;
+            }
+        });
+        setTotalMinutes(totalMins);
+        setAttendedClassesCount(classCount);
     }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
@@ -61,10 +70,29 @@ export function LearningProgress() {
         } else {
             console.warn("Firestore error fetching learning progress:", serverError);
         }
+    });
+    
+    const submissionsQuery = query(collectionGroup(firestore, 'submissions'), where('studentId', '==', user.id));
+    const unsubSubmissions = onSnapshot(submissionsQuery, (snapshot) => {
+        setAttendedExamsCount(snapshot.size);
+        setLoading(false);
+    }, (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `submissions collection group`,
+                operation: 'list',
+            }, { cause: serverError });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+             console.warn("Firestore error fetching exam submissions:", serverError);
+        }
         setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+        unsubAttendance();
+        unsubSubmissions();
+    };
   }, [firestore, user]);
 
   const formatTime = (minutes: number) => {
@@ -88,16 +116,16 @@ export function LearningProgress() {
           delay={0.1}
         />
         <ProgressCard 
-          title="Retention" 
-          value="88%" // Static for now
-          icon={<BrainCircuit className="h-5 w-5" />}
+          title="Total Class" 
+          value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : attendedClassesCount}
+          icon={<BookOpen className="h-5 w-5" />}
           color="hsl(270 80% 65%)"
           delay={0.2}
         />
         <ProgressCard 
-          title="Streak" 
-          value="03" // Static for now
-          icon={<Flame className="h-5 w-5" />}
+          title="Total Exam Attended" 
+          value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : attendedExamsCount}
+          icon={<FileText className="h-5 w-5" />}
           color="hsl(30 85% 50%)"
           delay={0.3}
         />

@@ -182,6 +182,7 @@ export default function ClassSchedulePage() {
             durationMinutes: duration,
             title: selectedEvent.title,
             date: selectedEvent.date,
+            type: selectedEvent.type || 'class',
         };
 
         const teacherAttendanceData = {
