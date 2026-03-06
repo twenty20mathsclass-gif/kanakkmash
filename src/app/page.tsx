@@ -3,14 +3,9 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import nextDynamic from 'next/dynamic';
+import { Download } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-
-const InstallButton = nextDynamic(
-  () => import('@/components/shared/install-button'),
-  { ssr: false }
-);
 
 export default function Home() {
   return (
@@ -48,7 +43,12 @@ export default function Home() {
             </Button>
           </div>
           
-          <InstallButton />
+          <div className="mt-6">
+            <Button variant="secondary">
+              <Download className="mr-2 h-4 w-4" />
+              Download APK
+            </Button>
+          </div>
         
         </div>
       </div>
