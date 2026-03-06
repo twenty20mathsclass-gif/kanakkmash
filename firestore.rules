@@ -40,8 +40,8 @@ service cloud.firestore {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
       
-      // Allow admins to list all users, and teachers to list their referred users.
-      allow list: if request.auth != null;
+      // Only admins can list all users. Other roles should use specific queries.
+      allow list: if isTheOneTrueAdmin();
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
@@ -70,16 +70,18 @@ service cloud.firestore {
 
       match /salaryPayments/{paymentId} {
         // Teacher can read their own payments. Admin can read any.
-        allow get: if isOwner(userId) || isAdmin();
-        allow list: if request.auth.uid == userId || request.auth.token.email == 'kanakkmash@gmail.com';
+        allow get: if isOwner(userId) || isTheOneTrueAdmin();
+        allow list: if request.auth.uid == userId || isTheOneTrueAdmin();
         // Only admins can create/update/delete payments.
-        allow write: if isAdmin();
+        allow write: if isTheOneTrueAdmin();
       }
     }
 
     match /schedules/{scheduleId} {
-      // Anyone logged in can see schedules
-      allow list, get: if request.auth != null;
+      // Only admin can list all schedules. Others must use specific queries.
+      allow list: if isTheOneTrueAdmin();
+      // Anyone logged in can get a specific schedule.
+      allow get: if request.auth != null;
 
       // Only teachers or admins can create schedules. Teachers must be the owner.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isRole('admin');
