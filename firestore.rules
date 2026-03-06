@@ -88,8 +88,8 @@ service cloud.firestore {
     }
 
     match /schedules/{scheduleId} {
-      // Any authenticated user can read schedules. The client filters them.
-      allow get, list: if request.auth != null;
+      // Any user can read schedules. The client filters them.
+      allow get, list: if true;
 
       // Only teachers or admins can create schedules. Teachers must be the owner.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
