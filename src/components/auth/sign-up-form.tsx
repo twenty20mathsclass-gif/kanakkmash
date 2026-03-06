@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -86,16 +86,8 @@ export function SignUpForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [referralId, setReferralId] = useState<string | null>(null);
-  const [isReferralChecked, setIsReferralChecked] = useState(false);
-
-  useEffect(() => {
-    // This effect will run on the client after the component mounts
-    // and has access to the searchParams.
-    const ref = searchParams.get('ref');
-    setReferralId(ref);
-    setIsReferralChecked(true);
-  }, [searchParams]);
+  
+  const referralId = searchParams.get('ref');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -120,11 +112,6 @@ export function SignUpForm() {
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
     setError(null);
-    if (!referralId) {
-        setError("A valid referral link is required to sign up.");
-        setLoading(false);
-        return;
-    }
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -157,8 +144,11 @@ export function SignUpForm() {
         syllabus: data.syllabus,
         competitiveExam: data.competitiveExam,
         createdAt: serverTimestamp(),
-        referredBy: referralId,
       };
+      
+      if (referralId) {
+        userProfile.referredBy = referralId;
+      }
 
       await setDoc(doc(firestore, 'users', user.uid), userProfile);
 
@@ -173,26 +163,6 @@ export function SignUpForm() {
     }
   };
   
-  if (!isReferralChecked) {
-    return (
-        <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
-  }
-
-  if (!referralId) {
-    return (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Referral Required</AlertTitle>
-          <AlertDescription>
-            Student sign-ups are by invitation only. Please use a valid referral link from one of our teachers to create an account.
-          </AlertDescription>
-        </Alert>
-    );
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
