@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -39,7 +40,7 @@ export default function Home() {
               <Link href="/sign-up">Enroll Now</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/sign-in">Student Login</Link>
+              <Link href="/sign-in">Login</Link>
             </Button>
           </div>
           
