@@ -34,17 +34,15 @@ export default function Home() {
               An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
             </p>
           </div>
-          <div className="mt-10 flex justify-center gap-4">
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Button size="lg" asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground transition-all hover:bg-gradient-to-br hover:shadow-lg">
               <Link href="/sign-up">Enroll Now</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/sign-in">Login</Link>
             </Button>
+            <InstallButton />
           </div>
-          
-          <InstallButton />
-        
         </div>
       </div>
     </section>

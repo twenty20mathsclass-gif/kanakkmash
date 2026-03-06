@@ -55,11 +55,9 @@ export default function InstallButton() {
   }
 
   return (
-    <div className="mt-6">
-      <Button variant="secondary" onClick={handleInstallClick}>
-        <Download className="mr-2 h-4 w-4" />
-        Install App
-      </Button>
-    </div>
+    <Button size="lg" variant="secondary" onClick={handleInstallClick}>
+      <Download className="mr-2 h-4 w-4" />
+      Install App
+    </Button>
   );
 }
