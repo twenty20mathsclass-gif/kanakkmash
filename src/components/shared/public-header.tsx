@@ -67,6 +67,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                         height={44}
                         className="h-auto w-36 object-contain"
                         priority
+                        unoptimized
                     />
                 </Link>
             </div>

@@ -20,6 +20,7 @@ export function MobileLogo({ user, onSignOut }: { user: User | null; onSignOut?:
               height={44}
               className="h-auto w-36 object-contain"
               priority
+              unoptimized
           />
       </Link>
       {showUserNav && (

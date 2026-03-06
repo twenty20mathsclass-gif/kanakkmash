@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
@@ -66,6 +67,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
                         height={39}
                         className={cn("w-32 h-auto transition-all duration-300", state === 'collapsed' && "w-10")}
                         priority
+                        unoptimized
                     />
                 </Link>
             </SidebarHeader>

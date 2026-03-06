@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export default function Home() {
                 height={78}
                 className="inline-block"
                 priority
+                unoptimized
               />
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-foreground/80">

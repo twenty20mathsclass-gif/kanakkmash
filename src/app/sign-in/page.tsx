@@ -56,6 +56,7 @@ export default function SignInPage() {
               height={62}
               className="inline-block"
               priority
+              unoptimized
             />
         </Link>
       </div>

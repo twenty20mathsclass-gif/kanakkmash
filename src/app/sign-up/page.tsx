@@ -49,6 +49,7 @@ export default function SignUpPage() {
               height={62}
               className="inline-block"
               priority
+              unoptimized
             />
         </Link>
         <div className='z-10 space-y-4'>
