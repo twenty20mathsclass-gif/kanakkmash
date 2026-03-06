@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -20,6 +21,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const passwordFormSchema = z.object({
@@ -69,11 +72,12 @@ export default function ProfilePage() {
         if (!file || !user || !storage || !firestore || !auth?.currentUser) return;
 
         setIsUploading(true);
+        let downloadURL = '';
 
         try {
             const storageRef = ref(storage, `avatars/${user.id}`);
             const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
+            downloadURL = await getDownloadURL(uploadResult.ref);
 
             // Update firestore document
             const userDocRef = doc(firestore, 'users', user.id);
@@ -86,20 +90,35 @@ export default function ProfilePage() {
                 title: 'Success',
                 description: 'Profile picture updated successfully.',
             });
-            // The useUser hook will automatically reflect the change
         } catch (error: any) {
-            console.warn('Error uploading profile picture:', error);
-            let description = 'Could not update your profile picture. Please try again.';
-            if (error.code === 'storage/unauthorized') {
-                description = 'You do not have permission to upload this file. Check storage rules.';
+            if (error.code === 'permission-denied') {
+                 const permissionError = new FirestorePermissionError(
+                    {
+                        path: `users/${user.id}`,
+                        operation: 'update',
+                        requestResourceData: { avatarUrl: downloadURL },
+                    },
+                    { cause: error }
+                );
+                errorEmitter.emit('permission-error', permissionError);
             } else if (error.code?.startsWith('storage/')) {
-                description = 'Image upload failed. Your network connection might be unstable.';
+                console.warn('Storage error uploading profile picture:', error);
+                const description = error.code === 'storage/unauthorized'
+                    ? 'You do not have permission to upload this file. Check storage rules.'
+                    : 'Image upload failed. Your network connection might be unstable.';
+                toast({
+                    variant: 'destructive',
+                    title: 'Upload Failed',
+                    description: description,
+                });
+            } else {
+                 console.warn('Error updating profile picture:', error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Update Failed',
+                    description: 'Could not update your profile picture. Please try again.',
+                });
             }
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description: description,
-            });
         } finally {
             setIsUploading(false);
         }
