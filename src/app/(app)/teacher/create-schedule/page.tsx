@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -258,11 +257,7 @@ export default function CreateSchedulePage() {
         if (data.courseModel === 'ONE TO ONE') {
             if (data.studentId) studentIds.push(data.studentId);
         } else {
-            const q = query(collection(firestore, 'users'), where('role', '==', 'student'));
-            const studentsSnapshot = await getDocs(q);
-            const allStudentsList = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
-            const targetStudents = allStudentsList.filter(student => {
+            const targetStudents = allStudents.filter(student => {
                 if (student.courseModel !== data.courseModel) return false;
                 if (data.courseModel === 'COMPETITIVE EXAM') {
                     return student.competitiveExam === data.competitiveExam;
