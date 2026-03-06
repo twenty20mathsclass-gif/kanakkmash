@@ -56,8 +56,8 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
   }
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-3xl px-4">
-        <div className="relative grid h-16 grid-cols-3 items-center gap-8 rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4">
+        <div className="relative grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-8 rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
             <div className="flex items-center justify-start">
                 <Link href={logoLink}>
                     <Image
