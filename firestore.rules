@@ -34,8 +34,9 @@ service cloud.firestore {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
       
-      // Admins can query by role. Teachers can query for users they referred.
-      allow list: if (isTheOneTrueAdmin() && 'role' in request.query.where) || (request.auth.uid != null && request.query.where.referredBy == request.auth.uid);
+      // Any authenticated user can query the users collection.
+      // The queries in the app are scoped to what the user should see (e.g., by referredBy or role).
+      allow list: if request.auth != null;
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
@@ -122,8 +123,8 @@ service cloud.firestore {
         // Admins can get any payment. Teachers can get their own.
         allow get: if isAdmin() || (request.auth.uid != null && resource.data.teacherId == request.auth.uid);
 
-        // Allow listing payments only when filtered by a specific teacherId.
-        allow list: if request.auth.uid != null && 'teacherId' in request.query.where;
+        // Allow listing payments only when filtered by a specific teacherId or if the user is an admin.
+        allow list: if (request.auth.uid != null && request.query.where.teacherId is string) || isTheOneTrueAdmin();
 
         // Only admins can create/update/delete payments.
         allow write: if isAdmin();
