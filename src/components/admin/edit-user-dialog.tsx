@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,6 +27,8 @@ import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User, TeacherPrivateDetails } from '@/lib/definitions';
 import { z } from 'zod';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -114,7 +115,18 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
         onUserUpdated();
         onOpenChange(false);
     } catch (e: any) {
-        setError(e.message || 'An unknown error occurred.');
+        if (e.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.id} or users/${user.id}/teacher_details/payment`,
+                operation: 'update',
+                requestResourceData: { name, role, hourlyRate: validatedFields.data.hourlyRate }
+            }, { cause: e });
+            errorEmitter.emit('permission-error', permissionError);
+            setError('You do not have permission to update this user.');
+        } else {
+            console.warn('Error updating user:', e);
+            setError(e.message || 'An unknown error occurred.');
+        }
     } finally {
         setLoading(false);
     }
