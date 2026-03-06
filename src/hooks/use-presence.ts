@@ -33,21 +33,6 @@ export function usePresence() {
         });
     };
 
-    const goOffline = () => {
-      const offlineData = { state: 'offline' as 'offline', last_changed: serverTimestamp() };
-      setDoc(statusRef, offlineData)
-      .catch(async (serverError) => {
-        if(serverError.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: statusRef.path,
-                operation: 'write',
-                requestResourceData: offlineData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        }
-    });
-    };
-
     goOnline();
 
     // Keep the user's status fresh by updating the timestamp every minute.
@@ -68,7 +53,7 @@ export function usePresence() {
         }
     }, 60 * 1000); // every 1 minute
 
-    // Use the visibility API to set status to offline when tab is in background
+    // Use the visibility API to set status to online when tab is in background
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
             goOnline();
@@ -80,11 +65,11 @@ export function usePresence() {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Set offline on unmount (e.g., tab close, navigation)
+    // On unmount (e.g., tab close, navigation), we stop updating the timestamp.
+    // The user will appear offline after the ONLINE_THRESHOLD_MS in use-online-status.ts.
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      goOffline();
     };
 
   }, [firestore, user]);
