@@ -30,7 +30,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '../ui/checkbox';
 import { countries } from '@/lib/countries';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -45,9 +44,6 @@ const formSchema = z.object({
   class: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
-  terms: z.boolean().refine((val) => val === true, {
-    message: 'You must accept the terms and conditions to continue.',
-  }),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
         if (!data.class) {
@@ -99,7 +95,6 @@ export function SignUpForm() {
       courseModel: '',
       countryCode: 'IN',
       mobile: '',
-      terms: false,
     },
   });
 
@@ -375,31 +370,13 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <FormField
-            control={form.control}
-            name="terms"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
-                <FormControl>
-                    <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="terms"
-                    />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                    <Label htmlFor="terms" className="font-normal">
-                    I agree to the{' '}
-                    <Link href="/terms-and-conditions" target="_blank" className="font-medium text-primary underline underline-offset-4 hover:text-primary/80">
-                        Terms and Conditions
-                    </Link>
-                    </Label>
-                    <FormMessage />
-                </div>
-                </FormItem>
-            )}
-        />
-
+        <div className="pt-2 text-center text-sm text-muted-foreground">
+          By continuing you agree to all our{' '}
+          <Link href="/terms-and-conditions" target="_blank" className="underline underline-offset-4 hover:text-primary">
+            Terms & Conditions
+          </Link>
+        </div>
+        
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
