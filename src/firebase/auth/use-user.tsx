@@ -4,6 +4,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase/provider';
 import type { User } from '@/lib/definitions';
+import { FirestorePermissionError } from '../errors';
+import { errorEmitter } from '../error-emitter';
 
 export function useUser() {
   const { auth, firestore } = useFirebase();
@@ -46,8 +48,16 @@ export function useUser() {
           // User is not authenticated.
           setUser(null);
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } catch (error: any) {
+        if (error.code === 'permission-denied' && authUser) {
+            const permissionError = new FirestorePermissionError(
+                { path: `users/${authUser.uid}`, operation: 'get' },
+                { cause: error }
+            );
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            console.error("Error fetching user profile:", error);
+        }
         setUser(null);
       } finally {
         setLoading(false);
