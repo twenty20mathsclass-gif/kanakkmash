@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, documentId } from 'firebase/firestore';
 import type { User, Schedule } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,73 +62,53 @@ export default function MyChatRoomPage() {
         const fetchContacts = async () => {
             try {
                 if (user.role === 'student') {
-                    // Fetch all schedules and all teachers
-                    const [schedulesSnapshot, teachersSnapshot] = await Promise.all([
-                        getDocs(collection(firestore, 'schedules')),
-                        getDocs(query(collection(firestore, 'users'), where('role', '==', 'teacher')))
-                    ]);
-                    
-                    const allSchedules = schedulesSnapshot.docs.map(doc => doc.data() as Schedule);
-                    const allTeachers = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
-                    // Filter schedules relevant to the student
-                    const relevantSchedules = allSchedules.filter(schedule => {
-                        if (schedule.studentId === user.id) return true;
-                        if (schedule.courseModel !== user.courseModel || schedule.studentId) return false;
-
-                        if (user.courseModel === 'COMPETITIVE EXAM') {
-                            return schedule.competitiveExam === user.competitiveExam;
-                        } else {
-                            return schedule.class === user.class && (user.class === 'DEGREE' || schedule.syllabus === user.syllabus);
+                    // A student's contact is the teacher who referred them.
+                    if (user.referredBy) {
+                        const teacherRef = doc(firestore, 'users', user.referredBy);
+                        const teacherSnap = await getDoc(teacherRef);
+                        if (teacherSnap.exists()) {
+                            setContacts([{ id: teacherSnap.id, ...teacherSnap.data() } as User]);
                         }
-                    });
-
-                    const teacherIds = new Set(relevantSchedules.map(s => s.teacherId));
-                    const studentContacts = allTeachers.filter(teacher => teacherIds.has(teacher.id));
-                    setContacts(studentContacts);
-
+                    }
                 } else if (user.role === 'teacher') {
-                    // Fetch all schedules by this teacher and all students
-                     const [schedulesSnapshot, studentsSnapshot] = await Promise.all([
-                        getDocs(query(collection(firestore, 'schedules'), where('teacherId', '==', user.id))),
-                        getDocs(query(collection(firestore, 'users'), where('role', '==', 'student')))
-                    ]);
-
-                    const teacherSchedules = schedulesSnapshot.docs.map(doc => doc.data() as Schedule);
-                    const allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                    // A teacher's contacts are the students they have referred.
+                    const referralsQuery = query(collection(firestore, 'users', user.id, 'referrals'));
+                    const referralsSnapshot = await getDocs(referralsQuery);
                     
-                    const studentIds = new Set<string>();
-                    teacherSchedules.forEach(schedule => {
-                        if (schedule.studentId) {
-                            studentIds.add(schedule.studentId);
-                        } else {
-                            // For group classes, find all matching students
-                            allStudents.forEach(student => {
-                                if (schedule.courseModel !== student.courseModel) return;
-    
-                                if (student.courseModel === 'COMPETITIVE EXAM') {
-                                    if (schedule.competitiveExam === student.competitiveExam) {
-                                        studentIds.add(student.id);
-                                    }
-                                } else {
-                                    if (schedule.class === student.class && (student.class === 'DEGREE' || schedule.syllabus === student.syllabus)) {
-                                        studentIds.add(student.id);
-                                    }
-                                }
-                            });
+                    if (referralsSnapshot.empty) {
+                        setContacts([]);
+                        setLoading(false);
+                        return;
+                    }
+            
+                    const affiliateIds = referralsSnapshot.docs.map(doc => doc.id);
+                    
+                    if (affiliateIds.length > 0) {
+                        const affiliatesData: User[] = [];
+                        // Firestore 'in' query is limited to 30 elements in array. Chunking is required.
+                        for (let i = 0; i < affiliateIds.length; i += 30) {
+                            const chunk = affiliateIds.slice(i, i + 30);
+                            if (chunk.length > 0) {
+                                const affiliatesQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+                                const querySnapshot = await getDocs(affiliatesQuery);
+                                const affiliatesChunk = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                                affiliatesData.push(...affiliatesChunk);
+                            }
                         }
-                    });
-
-                    const teacherContacts = allStudents.filter(student => studentIds.has(student.id));
-                    setContacts(teacherContacts);
+                        setContacts(affiliatesData);
+                    } else {
+                        setContacts([]);
+                    }
                 }
             } catch (err: any) {
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
-                        path: 'schedules or users',
+                        path: 'users or referrals',
                         operation: 'list',
                     }, { cause: err });
                     errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Error fetching contacts:", err);
                 }
             } finally {
                 setLoading(false);
