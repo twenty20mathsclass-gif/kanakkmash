@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -11,7 +10,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award } from "lucide-react";
+import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award, FileText } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -19,18 +18,19 @@ const iconMap: { [key: string]: React.ElementType } = {
   User: UserIcon,
   Award: Award,
   BookOpen: BookOpen,
+  FileText: FileText,
 };
 
-export function UpcomingClasses() {
+export function UpcomingExams() {
   const { firestore } = useFirebase();
   const { user } = useUser();
-  const [upcomingClasses, setUpcomingClasses] = useState<Schedule[]>([]);
+  const [upcomingExams, setUpcomingExams] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!firestore || !user) {
       setLoading(false);
-      setUpcomingClasses([]);
+      setUpcomingExams([]);
       return;
     }
 
@@ -38,8 +38,6 @@ export function UpcomingClasses() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Query all upcoming schedules, then filter client-side.
-    // This is more robust and avoids needing complex composite indexes.
     const schedulesQuery = query(
       collection(firestore, 'schedules'),
       where('date', '>=', Timestamp.fromDate(today)),
@@ -50,9 +48,9 @@ export function UpcomingClasses() {
       const allUpcomingSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allUpcomingSchedules.filter(schedule => {
-        // Only show classes
-        if (schedule.type && schedule.type !== 'class') {
-          return false;
+        // Only show exams
+        if (schedule.type !== 'exam') {
+            return false;
         }
 
         // Personal schedule check
@@ -79,16 +77,13 @@ export function UpcomingClasses() {
         return false;
       });
 
-      // Now, correctly sort by startTime and take the first 3 results.
-      // The primary sort by date is already handled by the query.
-      // This secondary sort handles multiple classes on the same day.
       filteredSchedules.sort((a, b) => {
         const dateA = a.date.toMillis();
         const dateB = b.date.toMillis();
-        if (dateA !== dateB) return dateA - dateB; // Should be redundant due to query orderBy, but safe
+        if (dateA !== dateB) return dateA - dateB;
         return a.startTime.localeCompare(b.startTime);
       });
-      setUpcomingClasses(filteredSchedules.slice(0, 3));
+      setUpcomingExams(filteredSchedules.slice(0, 3));
       setLoading(false);
     },
     (serverError: any) => {
@@ -99,10 +94,10 @@ export function UpcomingClasses() {
         }, { cause: serverError });
         errorEmitter.emit('permission-error', permissionError);
       } else {
-        console.warn("Firestore error fetching upcoming classes:", serverError);
+        console.warn("Firestore error fetching upcoming exams:", serverError);
       }
       setLoading(false);
-      setUpcomingClasses([]);
+      setUpcomingExams([]);
     });
 
     return () => unsubscribe();
@@ -111,8 +106,8 @@ export function UpcomingClasses() {
   return (
     <section>
         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold font-headline">Upcoming Classes</h2>
-            <Link href="/calendar" className="text-sm font-medium text-primary hover:underline">
+            <h2 className="text-xl font-bold font-headline">Upcoming Exams</h2>
+            <Link href="/courses" className="text-sm font-medium text-primary hover:underline">
                 View Schedule
             </Link>
         </div>
@@ -121,13 +116,13 @@ export function UpcomingClasses() {
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : upcomingClasses.length > 0 ? (
+        ) : upcomingExams.length > 0 ? (
             <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-                {upcomingClasses.map((item, index) => {
-                    const IconComponent = iconMap[item.icon] || BookOpen;
+                {upcomingExams.map((item, index) => {
+                    const IconComponent = iconMap[item.icon] || FileText;
                     return (
                         <Reveal key={item.id} delay={0.2 + index * 0.1} className="min-w-[280px] w-[280px] flex-shrink-0">
-                            <a href={item.meetLink} target="_blank" rel="noopener noreferrer" className="block h-full">
+                            <Link href={item.meetLink} className="block h-full">
                                 <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
                                     <CardContent className="p-6 flex flex-col justify-between h-full">
                                         <div>
@@ -155,7 +150,7 @@ export function UpcomingClasses() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            </a>
+                            </Link>
                         </Reveal>
                     )
                 })}
@@ -164,9 +159,9 @@ export function UpcomingClasses() {
             <Reveal>
                 <Card className="flex items-center justify-center h-40 bg-muted/50">
                     <CardContent className="p-6 text-center">
-                        <p className="text-muted-foreground">No upcoming classes scheduled.</p>
+                        <p className="text-muted-foreground">No upcoming exams scheduled.</p>
                         <Button asChild variant="link">
-                            <Link href="/calendar">View Full Schedule</Link>
+                            <Link href="/courses">View Full Schedule</Link>
                         </Button>
                     </CardContent>
                 </Card>

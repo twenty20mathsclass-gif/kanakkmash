@@ -3,11 +3,12 @@ export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
-import { UpcomingClasses } from '@/components/dashboard/upcoming-classes';
+import { UpcomingClasses } from '@/app/(app)/dashboard/upcoming-classes';
 import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
 import type { User } from '@/lib/definitions';
 import { NotificationBell } from '@/components/shared/notification-bell';
+import { UpcomingExams } from '@/components/dashboard/upcoming-exams';
 
 
 export default function DashboardPage() {
@@ -55,6 +56,8 @@ export default function DashboardPage() {
       <LearningProgress />
       
       <UpcomingClasses />
+
+      <UpcomingExams />
 
       <StudyHoursChart />
 
