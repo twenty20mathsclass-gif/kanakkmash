@@ -6,9 +6,7 @@ service cloud.firestore {
 
     // Safely check a user's role.
     function isRole(role) {
-      if (request.auth == null) { return false; }
-      let userDocPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(userDocPath) && get(userDocPath).data.role == role;
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
     // A user is an admin if their user document has role == 'admin'.
@@ -34,7 +32,7 @@ service cloud.firestore {
     // Allow users to query for their own submissions across all exams.
     // This is required for the student dashboard progress stats.
     match /{path=**}/submissions/{submissionId} {
-      allow list: if request.auth != null && request.auth.uid == resource.data.studentId;
+      allow list: if request.auth != null && resource.data.studentId == request.auth.uid;
     }
 
     match /users/{userId} {
@@ -89,7 +87,7 @@ service cloud.firestore {
 
     match /schedules/{scheduleId} {
       // Any user can read schedules. The client filters them.
-      allow get, list: if true;
+      allow read: if true;
 
       // Only teachers or admins can create schedules. Teachers must be the owner.
       allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
