@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
-    <section className="relative flex w-full items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)]">
+    <section className="relative flex w-full items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)] pt-16">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-10"
