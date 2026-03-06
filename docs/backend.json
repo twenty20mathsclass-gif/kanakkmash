@@ -140,6 +140,10 @@
       "schema": { "$ref": "#/entities/notification" },
       "description": "Stores notifications for a specific user."
     },
+    "/users/{userId}/salaryPayments/{paymentId}": {
+      "schema": { "$ref": "#/entities/salaryPayment" },
+      "description": "Stores teacher salary payment records."
+    },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/testimonial" },
       "description": "Stores student testimonials."
@@ -167,10 +171,6 @@
     "/invoices/{invoiceId}": {
       "schema": { "$ref": "#/entities/invoice" },
       "description": "Stores student invoices."
-    },
-    "/salaryPayments/{paymentId}": {
-      "schema": { "$ref": "#/entities/salaryPayment" },
-      "description": "Stores teacher salary payment records."
     },
     "/blogPosts/{postId}": {
         "schema": { "$ref": "#/entities/blogPost" },

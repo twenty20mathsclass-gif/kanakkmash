@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -59,8 +60,7 @@ function SalaryHistory() {
         setLoading(true);
 
         const paymentsQuery = query(
-            collection(firestore, 'salaryPayments'),
-            where('teacherId', '==', user.id)
+            collection(firestore, 'users', user.id, 'salaryPayments')
         );
 
         const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
@@ -82,7 +82,7 @@ function SalaryHistory() {
             setLoading(false);
         }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: 'salaryPayments', operation: 'list' }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: `users/${user.id}/salaryPayments`, operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
             } else {
                 console.warn("Error fetching salary history: ", serverError);

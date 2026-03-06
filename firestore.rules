@@ -67,6 +67,14 @@ service cloud.firestore {
         allow read, update: if isOwner(userId);
         allow create: if isRole('teacher') || isAdmin();
       }
+
+      match /salaryPayments/{paymentId} {
+        // Teacher can read their own payments. Admin can read any.
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isTheOneTrueAdmin();
+        // Only admins can create/update/delete payments.
+        allow write: if isAdmin();
+      }
     }
 
     match /schedules/{scheduleId} {
@@ -127,17 +135,6 @@ service cloud.firestore {
 
     match /invoices/{invoiceId} {
         allow read, write: if isAdmin();
-    }
-
-    match /salaryPayments/{paymentId} {
-        // Admins can get any payment. Teachers can get their own.
-        allow get: if isAdmin() || (request.auth.uid != null && resource.data.teacherId == request.auth.uid);
-
-        // Allow listing payments only when filtered by a specific teacherId or if the user is an admin.
-        allow list: if (request.auth.uid != null && request.query.where.teacherId is string) || isTheOneTrueAdmin();
-
-        // Only admins can create/update/delete payments.
-        allow write: if isAdmin();
     }
     
     match /blogPosts/{postId} {
