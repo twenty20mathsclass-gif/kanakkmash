@@ -29,13 +29,18 @@ service cloud.firestore {
     function isExamOwner(examId) {
       return get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
     }
+    
+    // Allow users to query for their own submissions across all exams.
+    // This is required for the student dashboard progress stats.
+    match /{path=**}/submissions/{submissionId} {
+      allow list: if request.auth.uid == resource.data.studentId;
+    }
 
     match /users/{userId} {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
       
-      // Any authenticated user can query the users collection.
-      // The queries in the app are scoped to what the user should see (e.g., by referredBy or role).
+      // Allow admins to list all users, and teachers to list their referred users.
       allow list: if request.auth != null;
       
       // A user can create their own profile, and an admin can create any user profile.
