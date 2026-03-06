@@ -4,6 +4,8 @@
 import { useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function usePresence() {
   const { firestore } = useFirebase();
@@ -17,11 +19,33 @@ export function usePresence() {
     const statusRef = doc(firestore, 'status', user.id);
 
     const goOnline = () => {
-      setDoc(statusRef, { state: 'online', last_changed: serverTimestamp() });
+      const onlineData = { state: 'online' as 'online', last_changed: serverTimestamp() };
+      setDoc(statusRef, onlineData)
+        .catch(async (serverError) => {
+            if(serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: statusRef.path,
+                    operation: 'write',
+                    requestResourceData: onlineData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            }
+        });
     };
 
     const goOffline = () => {
-      setDoc(statusRef, { state: 'offline', last_changed: serverTimestamp() });
+      const offlineData = { state: 'offline' as 'offline', last_changed: serverTimestamp() };
+      setDoc(statusRef, offlineData)
+      .catch(async (serverError) => {
+        if(serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: statusRef.path,
+                operation: 'write',
+                requestResourceData: offlineData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+    });
     };
 
     goOnline();
@@ -29,7 +53,18 @@ export function usePresence() {
     // Keep the user's status fresh by updating the timestamp every minute.
     const interval = setInterval(() => {
         if (document.visibilityState === 'visible') {
-            setDoc(statusRef, { last_changed: serverTimestamp() }, { merge: true });
+            const updateData = { last_changed: serverTimestamp() };
+            setDoc(statusRef, updateData, { merge: true })
+            .catch(async (serverError) => {
+                if(serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: statusRef.path,
+                        operation: 'update',
+                        requestResourceData: updateData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                }
+            });
         }
     }, 60 * 1000); // every 1 minute
 

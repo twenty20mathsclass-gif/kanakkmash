@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { Timestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface UserStatus {
   state: 'online' | 'offline';
@@ -42,6 +44,16 @@ export function useOnlineStatus(userId: string | null): boolean {
       } else {
         setIsOnline(false);
       }
+    },
+    async (serverError: any) => {
+        if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: statusRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+        setIsOnline(false);
     });
 
     return () => unsubscribe();
