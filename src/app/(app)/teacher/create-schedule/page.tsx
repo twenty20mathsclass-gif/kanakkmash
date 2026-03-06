@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Schedule } from '@/lib/definitions';
 
@@ -122,27 +122,29 @@ export default function CreateSchedulePage() {
   useEffect(() => {
     if (!firestore || !user) return;
     
-    const studentsQuery = query(
-        collection(firestore, 'users'),
-        where('referredBy', '==', user.id)
-    );
-    const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
-      const referredUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      const studentsList = referredUsers.filter(u => u.role === 'student');
-      setAllStudents(studentsList);
-    }, (serverError: any) => {
-        if (serverError.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: 'users',
-                operation: 'list',
-            }, { cause: serverError });
-            errorEmitter.emit('permission-error', permissionError);
-        } else {
-            console.warn("Firestore error:", serverError);
+    const fetchStudents = async () => {
+        const studentsQuery = query(
+            collection(firestore, 'users'),
+            where('referredBy', '==', user.id)
+        );
+        try {
+            const snapshot = await getDocs(studentsQuery);
+            const referredUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+            const studentsList = referredUsers.filter(u => u.role === 'student');
+            setAllStudents(studentsList);
+        } catch (serverError: any) {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({
+                    path: 'users',
+                    operation: 'list',
+                }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                console.warn("Firestore error:", serverError);
+            }
         }
-    });
-
-    return () => unsubscribe();
+    };
+    fetchStudents();
   }, [firestore, user]);
 
 
