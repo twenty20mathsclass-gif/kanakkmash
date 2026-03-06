@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -139,7 +138,7 @@ export default function MyChatRoomPage() {
     }, [firestore, user]);
 
     return (
-        <div className="h-[calc(100vh-14rem)] md:h-[calc(100vh-13rem)]">
+        <div className="h-full">
             <div className="grid grid-cols-1 md:grid-cols-3 h-full gap-4">
                 <Card className="md:col-span-1 flex flex-col">
                     <CardHeader>

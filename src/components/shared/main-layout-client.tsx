@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, Suspense, useState } from 'react';
@@ -171,7 +170,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background flex flex-col">
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
