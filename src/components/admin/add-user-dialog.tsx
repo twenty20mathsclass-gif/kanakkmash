@@ -26,12 +26,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, type UserCredential } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { useFirebase } from '@/firebase';
 import type { User, TeacherPrivateDetails } from '@/lib/definitions';
 import { z } from 'zod';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const createUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -83,9 +85,11 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
     const tempAppName = `temp-user-creation-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppName);
     const tempAuth = getAuth(tempApp);
+    
+    let userCredential: UserCredential | undefined;
 
     try {
-        const userCredential = await createUserWithEmailAndPassword(
+        userCredential = await createUserWithEmailAndPassword(
             tempAuth,
             email,
             password
@@ -118,14 +122,23 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         onUserAdded?.();
         setIsOpen(false);
 
-    } catch (error: any) {
-        let message = 'An unknown error occurred.';
-        if (error.code === 'auth/email-already-in-use') {
-            message = 'A user with this email already exists.';
-        } else if (error.message) {
-            message = error.message;
+    } catch (e: any) {
+        if (e.code === 'permission-denied' && userCredential?.user) {
+            // This is a Firestore permission error because auth succeeded.
+            const user = userCredential.user;
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.uid}`,
+                operation: 'create',
+                requestResourceData: { name, email, role, hourlyRate }
+            }, { cause: e });
+            errorEmitter.emit('permission-error', permissionError);
+            setError('Permission denied when creating the user profile in the database.');
+        } else if (e.code === 'auth/email-already-in-use') {
+            setError('A user with this email already exists.');
+        } else {
+            console.warn('Error creating user:', e);
+            setError(e.message || 'An unknown error occurred.');
         }
-        setError(message);
     } finally {
         await deleteApp(tempApp);
         setLoading(false);
