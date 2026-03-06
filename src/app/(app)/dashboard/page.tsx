@@ -3,12 +3,13 @@ export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
 import { UpcomingClasses } from '@/components/dashboard/upcoming-classes';
 import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
 import type { User } from '@/lib/definitions';
+import { NotificationBell } from '@/components/shared/notification-bell';
 
 
 export default function DashboardPage() {
@@ -51,9 +52,7 @@ export default function DashboardPage() {
             <Button variant="ghost" size="icon" className="rounded-full">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <NotificationBell user={user} />
           </div>
         </header>
       </Reveal>

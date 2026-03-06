@@ -57,6 +57,11 @@ service cloud.firestore {
         // Teacher can manage their own private details. Admin can manage any.
         allow read, write: if (isOwner(userId) && isRole('teacher')) || isAdmin();
       }
+
+      match /notifications/{notificationId} {
+        allow read, update: if isOwner(userId);
+        allow create: if isRole('teacher') || isAdmin();
+      }
     }
 
     match /schedules/{scheduleId} {

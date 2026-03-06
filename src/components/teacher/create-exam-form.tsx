@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
@@ -240,7 +240,7 @@ export function CreateExamForm() {
             const uploadResult = await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(uploadResult.ref);
             
-            setValue(`questions.${questionIndex}.imageUrl`, downloadURL, { shouldValidate: true });
+            setValue(`questions.${index}.imageUrl`, downloadURL, { shouldValidate: true });
             setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'success' }));
             toast({ title: 'Image Uploaded', description: 'Your image has been successfully added to the question.' });
         } catch (error: any) {
@@ -346,6 +346,42 @@ export function CreateExamForm() {
             scheduleData.meetLink = `/exams/take/${examDocRef.id}`;
             await addDoc(collection(firestore, 'schedules'), scheduleData);
             
+            // Notification Logic
+            let studentIds: string[] = [];
+            if (data.courseModel === 'ONE TO ONE' && data.studentId) {
+                studentIds.push(data.studentId);
+            } else {
+                const targetStudents = allStudents.filter(student => {
+                    if (student.courseModel !== data.courseModel) return false;
+                    if (data.courseModel === 'COMPETITIVE EXAM') {
+                        return student.competitiveExam === data.competitiveExam;
+                    }
+                    if (data.class) {
+                         if (student.class !== data.class) return false;
+                         if (data.class !== 'DEGREE' && student.syllabus !== data.syllabus) return false;
+                         return true;
+                    }
+                    return false;
+                });
+                studentIds = targetStudents.map(s => s.id);
+            }
+
+            if (studentIds.length > 0) {
+                const notificationPayload = {
+                    title: `New Exam Scheduled`,
+                    body: `The exam "${data.title}" has been scheduled for ${format(data.date, 'PPP')}.`,
+                    href: '/courses',
+                    createdAt: serverTimestamp(),
+                    isRead: false,
+                };
+
+                const notificationPromises = studentIds.map(studentId => {
+                    const notificationsCollection = collection(firestore, 'users', studentId, 'notifications');
+                    return addDoc(notificationsCollection, notificationPayload);
+                });
+                await Promise.all(notificationPromises);
+            }
+
             toast({
                 title: 'Exam Created & Scheduled!',
                 description: `The exam "${data.title}" is now live.`,

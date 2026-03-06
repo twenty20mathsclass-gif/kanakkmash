@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Schedule } from '@/lib/definitions';
 
@@ -193,7 +193,7 @@ export default function CreateSchedulePage() {
   }, [firestore, user]);
 
 
-  const onSubmit = (data: ScheduleFormValues) => {
+  const onSubmit = async (data: ScheduleFormValues) => {
     if (!firestore || !user) {
       setError('You must be logged in to create a schedule.');
       return;
@@ -201,43 +201,84 @@ export default function CreateSchedulePage() {
     setLoading(true);
     setError(null);
 
-    const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
+    try {
+        const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
 
-    const scheduleData: any = {
-      type: 'class',
-      courseModel: data.courseModel,
-      title: data.title,
-      date: Timestamp.fromDate(data.date),
-      startTime: data.startTime,
-      endTime: data.endTime,
-      meetLink: data.meetLink,
-      teacherId: user.id,
-      ...selectedVisuals,
-    };
-    
-    if (data.courseModel === 'ONE TO ONE') {
-        const student = allStudents.find(s => s.id === data.studentId);
-        if (student) {
-            scheduleData.studentId = student.id;
-            if (student.class) scheduleData.class = student.class;
-            if (student.syllabus) scheduleData.syllabus = student.syllabus;
+        const scheduleData: any = {
+          type: 'class',
+          courseModel: data.courseModel,
+          title: data.title,
+          date: Timestamp.fromDate(data.date),
+          startTime: data.startTime,
+          endTime: data.endTime,
+          meetLink: data.meetLink,
+          teacherId: user.id,
+          ...selectedVisuals,
+        };
+        
+        if (data.courseModel === 'ONE TO ONE') {
+            const student = allStudents.find(s => s.id === data.studentId);
+            if (student) {
+                scheduleData.studentId = student.id;
+                if (student.class) scheduleData.class = student.class;
+                if (student.syllabus) scheduleData.syllabus = student.syllabus;
+            }
+        } else if (data.courseModel === 'COMPETITIVE EXAM') {
+            scheduleData.competitiveExam = data.competitiveExam;
+        } else {
+            if (data.class) {
+                scheduleData.class = data.class;
+            }
+            if (data.syllabus) {
+                scheduleData.syllabus = data.syllabus;
+            }
         }
-    } else if (data.courseModel === 'COMPETITIVE EXAM') {
-        scheduleData.competitiveExam = data.competitiveExam;
-    } else {
-        if (data.class) {
-            scheduleData.class = data.class;
+
+
+        const schedulesCollection = collection(firestore, 'schedules');
+        await addDoc(schedulesCollection, scheduleData);
+
+        // Notification Logic
+        let studentIds: string[] = [];
+        if (data.courseModel === 'ONE TO ONE') {
+            if (data.studentId) studentIds.push(data.studentId);
+        } else {
+            const q = query(collection(firestore, 'users'), where('role', '==', 'student'));
+            const studentsSnapshot = await getDocs(q);
+            const allStudentsList = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+
+            const targetStudents = allStudentsList.filter(student => {
+                if (student.courseModel !== data.courseModel) return false;
+                if (data.courseModel === 'COMPETITIVE EXAM') {
+                    return student.competitiveExam === data.competitiveExam;
+                }
+                if (data.class) {
+                     if (student.class !== data.class) return false;
+                     if (data.class !== 'DEGREE' && student.syllabus !== data.syllabus) return false;
+                     return true;
+                }
+                return false;
+            });
+            studentIds = targetStudents.map(s => s.id);
         }
-        if (data.syllabus) {
-            scheduleData.syllabus = data.syllabus;
+
+        if (studentIds.length > 0) {
+            const notificationPayload = {
+              title: `New Class Scheduled`,
+              body: `"${data.title}" has been scheduled for ${format(data.date, 'PPP')}.`,
+              href: '/calendar',
+              createdAt: serverTimestamp(),
+              isRead: false,
+            };
+
+            const notificationPromises = studentIds.map(studentId => {
+              const notificationsCollection = collection(firestore, 'users', studentId, 'notifications');
+              return addDoc(notificationsCollection, notificationPayload);
+            });
+
+            await Promise.all(notificationPromises);
         }
-    }
-
-
-    const schedulesCollection = collection(firestore, 'schedules');
-
-    addDoc(schedulesCollection, scheduleData)
-      .then(() => {
+        
         toast({
           title: 'Schedule Created!',
           description: `Your class "${data.title}" has been successfully scheduled.`,
@@ -254,28 +295,25 @@ export default function CreateSchedulePage() {
             studentId: '',
             competitiveExam: '',
         });
-      })
-      .catch((serverError: any) => {
+    } catch (serverError: any) {
         if (serverError.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError(
               {
-                path: schedulesCollection.path,
+                path: 'schedules or users',
                 operation: 'create',
-                requestResourceData: scheduleData,
+                requestResourceData: data,
               },
               { cause: serverError }
             );
             errorEmitter.emit('permission-error', permissionError);
+             setError('Failed to create schedule due to a permission error.');
         } else {
             console.warn("Firestore error:", serverError);
+            setError('Failed to create schedule. Check the developer console for details.');
         }
-        setError(
-          'Failed to create schedule. Check the developer console for details.'
-        );
-      })
-      .finally(() => {
+    } finally {
         setLoading(false);
-      });
+    }
   };
 
   const showClassField = courseModel === 'MATHS ONLINE TUITION';

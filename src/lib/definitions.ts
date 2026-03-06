@@ -202,3 +202,12 @@ export type ChatMessage = {
   senderId: string;
   timestamp: Timestamp;
 };
+
+export type Notification = {
+  id: string;
+  title: string;
+  body: string;
+  href: string;
+  createdAt: Timestamp;
+  isRead: boolean;
+};

@@ -109,6 +109,19 @@
         "last_changed": { "type": "object", "description": "The server timestamp of the last status change." }
       },
       "required": ["state", "last_changed"]
+    },
+    "notification": {
+      "title": "Notification",
+      "description": "Represents a notification for a user.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the notification." },
+        "body": { "type": "string", "description": "The main content of the notification." },
+        "href": { "type": "string", "description": "The link to navigate to when clicked." },
+        "createdAt": { "type": "object", "description": "The date and time the notification was created." },
+        "isRead": { "type": "boolean", "description": "Whether the user has read the notification." }
+      },
+      "required": ["title", "body", "href", "createdAt", "isRead"]
     }
   },
   "auth": {
@@ -122,6 +135,10 @@
     "/users/{userId}/teacher_details/payment": {
         "schema": { "$ref": "#/entities/teacherPrivateDetails" },
         "description": "Stores a teacher's private payment details."
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/notification" },
+      "description": "Stores notifications for a specific user."
     },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/testimonial" },
