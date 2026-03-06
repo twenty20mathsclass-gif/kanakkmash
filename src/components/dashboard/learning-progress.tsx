@@ -126,7 +126,7 @@ export function LearningProgress() {
           title="Total Exam Attended" 
           value={loading ? <Loader2 className="h-6 w-6 animate-spin" /> : attendedExamsCount}
           icon={<FileText className="h-5 w-5" />}
-          color="hsl(30 85% 50%)"
+          color="hsl(140 60% 50%)"
           delay={0.3}
         />
         <ProgressCard 
