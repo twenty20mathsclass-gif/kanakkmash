@@ -61,7 +61,6 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: categoriesCol.path, operation: 'create', requestResourceData: newCategoryData }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to add a category." });
             } else {
                 console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to add category." });
@@ -78,7 +77,6 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: categoryRef.path, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete this category." });
             } else {
                 console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
