@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
@@ -169,24 +169,39 @@ export function CreateExamForm() {
 
     
     useEffect(() => {
-        if (!firestore) return;
-        const studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
-        const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
-            const studentsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-            setAllStudents(studentsList);
-        }, (serverError: any) => {
-            if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({
-                    path: 'users',
-                    operation: 'list',
-                }, { cause: serverError });
-                errorEmitter.emit('permission-error', permissionError);
-            } else {
-                console.warn("Firestore error:", serverError);
+        if (!firestore || !user) return;
+        const fetchStudents = async () => {
+            try {
+                const referralsQuery = query(
+                    collection(firestore, 'users', user.id, 'referrals'),
+                    orderBy('referredAt', 'desc')
+                );
+                const referralsSnapshot = await getDocs(referralsQuery);
+                const studentsList = referralsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: data.studentId,
+                        name: data.studentName,
+                        avatarUrl: data.studentAvatarUrl,
+                        courseModel: data.courseModel,
+                        role: 'student'
+                    } as User;
+                });
+                setAllStudents(studentsList);
+            } catch (serverError: any) {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: `users/${user.id}/referrals`,
+                        operation: 'list',
+                    }, { cause: serverError });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    console.warn("Firestore error:", serverError);
+                }
             }
-        });
-        return () => unsubscribe();
-    }, [firestore]);
+        };
+        fetchStudents();
+    }, [firestore, user]);
 
     useEffect(() => {
         if (courseModel === 'ONE TO ONE') {
@@ -707,3 +722,4 @@ function OptionsFieldArray({ questionIndex, control }: { questionIndex: number; 
     </div>
   );
 }
+
