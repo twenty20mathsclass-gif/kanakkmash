@@ -194,6 +194,16 @@ export type BlogPost = {
   authorAvatarUrl: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  likes?: string[];
+};
+
+export type BlogComment = {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl: string;
+  text: string;
+  createdAt: Timestamp;
 };
 
 export type ChatMessage = {

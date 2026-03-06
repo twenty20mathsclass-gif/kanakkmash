@@ -12,7 +12,7 @@ service cloud.firestore {
     // A user is an admin if their user document has role == 'admin'.
     // This function is NOT safe for list queries because it uses get().
     function isAdmin() {
-      return isRole('admin');
+      return request.auth != null && isRole('admin');
     }
 
     // This checks for the main admin email. Safe for list queries.
@@ -148,8 +148,15 @@ service cloud.firestore {
     match /blogPosts/{postId} {
       allow get, list: if true;
       allow create: if isRole('admin') || isRole('teacher');
-      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin();
+      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
       allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
+
+      match /comments/{commentId} {
+        allow list, get: if true;
+        allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+        allow delete: if isAdmin() || (request.auth != null && resource.data.authorId == request.auth.uid);
+        allow update: if false;
+      }
     }
 
     match /chats/{chatId} {

@@ -97,10 +97,24 @@
         "authorId": { "type": "string", "description": "The UID of the author." },
         "authorName": { "type": "string", "description": "The name of the author." },
         "authorAvatarUrl": { "type": "string", "format": "uri", "description": "URL of the author's avatar." },
+        "likes": { "type": "array", "items": { "type": "string" }, "description": "A list of user IDs who liked the post." },
         "createdAt": { "type": "object", "description": "The date and time the post was created." },
         "updatedAt": { "type": "object", "description": "The date and time the post was last updated." }
       },
       "required": ["title", "content", "authorId", "authorName", "createdAt", "updatedAt"]
+    },
+    "blogComment": {
+        "title": "Blog Comment",
+        "description": "A comment on a blog post.",
+        "type": "object",
+        "properties": {
+            "authorId": { "type": "string" },
+            "authorName": { "type": "string" },
+            "authorAvatarUrl": { "type": "string", "format": "uri" },
+            "text": { "type": "string" },
+            "createdAt": { "type": "object" }
+        },
+        "required": ["authorId", "authorName", "authorAvatarUrl", "text", "createdAt"]
     },
     "chatMessage": {
       "title": "Chat Message",
@@ -192,6 +206,10 @@
     "/blogPosts/{postId}": {
         "schema": { "$ref": "#/entities/blogPost" },
         "description": "Stores blog post articles."
+    },
+    "/blogPosts/{postId}/comments/{commentId}": {
+        "schema": { "$ref": "#/entities/blogComment" },
+        "description": "Stores comments for a specific blog post."
     },
     "/chats/{chatId}/messages/{messageId}": {
       "schema": { "$ref": "#/entities/chatMessage" },
