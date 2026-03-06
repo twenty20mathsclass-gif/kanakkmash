@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -70,7 +71,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                 </Link>
             </div>
             
-            <nav className="hidden items-center md:flex absolute left-1/2 -translate-x-1/2">
+            <nav className="hidden items-center justify-center md:flex absolute left-1/2 -translate-x-1/2">
             {navItems.map(item => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
