@@ -81,7 +81,7 @@ export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOu
                     variant={active ? 'default' : 'ghost'}
                     asChild
                     className={cn(
-                    "rounded-full",
+                    "rounded-full px-2",
                     active && "text-primary-foreground"
                     )}
                 >
