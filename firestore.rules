@@ -6,6 +6,7 @@ service cloud.firestore {
 
     // Safely check a user's role.
     function isRole(role) {
+      if (request.auth == null) { return false; }
       let userDocPath = /databases/$(database)/documents/users/$(request.auth.uid);
       return exists(userDocPath) && get(userDocPath).data.role == role;
     }
@@ -18,22 +19,22 @@ service cloud.firestore {
 
     // This checks for the main admin email. Safe for list queries.
     function isTheOneTrueAdmin() {
-      return request.auth.token.email == 'kanakkmash@gmail.com';
+      return request.auth != null && request.auth.token.email == 'kanakkmash@gmail.com';
     }
 
     // The requesting user is the owner of the data.
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
     function isExamOwner(examId) {
-      return get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
+      return request.auth != null && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
     }
     
     // Allow users to query for their own submissions across all exams.
     // This is required for the student dashboard progress stats.
     match /{path=**}/submissions/{submissionId} {
-      allow list: if request.auth.uid == resource.data.studentId;
+      allow list: if request.auth != null && request.auth.uid == resource.data.studentId;
     }
 
     match /users/{userId} {
@@ -80,7 +81,7 @@ service cloud.firestore {
         allow read, list: if isOwner(userId);
         // A new student can create an entry in their referrer's list.
         // studentId here is the ID of the new student being created.
-        allow create: if request.auth.uid == studentId;
+        allow create: if request.auth != null && request.auth.uid == studentId;
         // Only admin can modify/delete.
         allow update, delete: if isAdmin();
       }
@@ -89,7 +90,7 @@ service cloud.firestore {
     match /schedules/{scheduleId} {
       // `list` is for queries. Only admins can query for all schedules.
       // Teachers can only query for schedules they own.
-      allow list: if isTheOneTrueAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
+      allow list: if isTheOneTrueAdmin() || (isRole('teacher') && request.query.where.teacherId == request.auth.uid);
       // Anyone logged in can get a specific schedule.
       allow get: if request.auth != null;
 
@@ -103,7 +104,7 @@ service cloud.firestore {
         // Student can create their own attendance record for a schedule
         allow create: if isOwner(userId);
         // Teacher who owns the schedule, the student, or an admin can read attendance
-        allow get, list: if get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid || isOwner(userId) || isAdmin();
+        allow get, list: if (request.auth != null && get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid) || isOwner(userId) || isAdmin();
         // No one can update or delete from here to preserve attendance record.
         allow update, delete: if false;
       }
