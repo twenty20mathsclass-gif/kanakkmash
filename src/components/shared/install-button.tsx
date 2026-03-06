@@ -4,15 +4,19 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function InstallButton() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect runs only on the client, after the component has mounted.
     setIsClient(true);
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        setIsStandalone(true);
+    }
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -21,8 +25,15 @@ export default function InstallButton() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+      setIsStandalone(true);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -31,33 +42,38 @@ export default function InstallButton() {
       toast({
         title: 'Installation not available',
         description:
-          "Your browser hasn't made the app installable. You may have already installed it or recently dismissed the prompt.",
+          "Your browser may not support app installation or you may have dismissed the prompt.",
       });
       return;
     }
     (installPrompt as any).prompt();
-    (installPrompt as any).userChoice.then(
-      (choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
-        if (choiceResult.outcome === 'accepted') {
-          // The app was installed.
-        } else {
-          // The user dismissed the prompt.
-        }
-        setInstallPrompt(null);
+     // Wait for the user to respond to the prompt
+    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+      if (choiceResult.outcome === 'accepted') {
+        // No need to do anything here, 'appinstalled' event will handle it
+      } else {
+        // User dismissed the prompt
       }
-    );
+    });
   };
-  
-  // By returning null until we're on the client and have an install prompt, 
-  // we prevent hydration errors and only show the button when it's usable.
-  if (!isClient || !installPrompt) {
-    return null;
-  }
+
+  const showButton = isClient && !isStandalone && installPrompt;
 
   return (
-    <Button size="lg" variant="secondary" onClick={handleInstallClick}>
-      <Download className="mr-2 h-4 w-4" />
-      Install App
-    </Button>
+    <AnimatePresence>
+      {showButton && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Button size="lg" variant="secondary" onClick={handleInstallClick}>
+            <Download className="mr-2 h-4 w-4" />
+            Install App
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
