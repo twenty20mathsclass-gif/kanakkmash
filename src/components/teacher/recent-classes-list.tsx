@@ -48,38 +48,24 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
 
         const fetchAttendance = async () => {
             setLoading(true);
-            let total = 0;
-            let count = 0;
 
             try {
                 // Get attendees count
                 const attendeesQuery = query(collection(firestore, 'schedules', schedule.id, 'attendees'));
                 const attendeesSnapshot = await getDocs(attendeesQuery);
-                count = attendeesSnapshot.size;
+                const count = attendeesSnapshot.size;
 
-                // Get total students
-                let studentsQuery;
-                if (schedule.studentId) {
-                     total = 1;
-                } else {
-                    if (schedule.courseModel === 'COMPETITIVE EXAM') {
-                        studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('courseModel', '==', 'COMPETITIVE EXAM'), where('competitiveExam', '==', schedule.competitiveExam));
-                    } else if (schedule.class === 'DEGREE') {
-                        studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', 'DEGREE'));
-                    } else {
-                        studentsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', schedule.class), where('syllabus', '==', schedule.syllabus));
-                    }
-                    const studentsSnapshot = await getDocs(studentsQuery);
-                    total = studentsSnapshot.size;
-                }
-                
+                // For one-on-one, total is 1. For group, we can't query all students due to permissions,
+                // so we'll use a special value (-1) to indicate we should only show the count.
+                const total = schedule.studentId ? 1 : -1;
+
                 if (!cancelled) {
                     setAttendance({ count, total });
                 }
 
             } catch (e: any) {
                 if (e.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: `schedules/${schedule.id}/attendees or users`, operation: 'list' }, { cause: e });
+                    const permissionError = new FirestorePermissionError({ path: `schedules/${schedule.id}/attendees`, operation: 'list' }, { cause: e });
                     errorEmitter.emit('permission-error', permissionError);
                 } else {
                     console.warn("Error fetching attendance for schedule item", e);
@@ -90,6 +76,7 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                 }
             }
         };
+
 
         fetchAttendance();
 
@@ -136,8 +123,14 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                                 ) : attendance ? (
                                     <div className="flex items-center gap-1 font-medium">
                                         <UsersIcon className="h-3 w-3" />
-                                        <span>{attendance.count} / {attendance.total} attended</span>
-                                        {attendance.total > 0 && <span className="text-primary">({Math.round(attendance.count / attendance.total * 100)}%)</span>}
+                                        {attendance.total !== -1 ? (
+                                            <>
+                                                <span>{attendance.count} / {attendance.total} attended</span>
+                                                {attendance.total > 0 && <span className="text-primary"> ({Math.round(attendance.count / attendance.total * 100)}%)</span>}
+                                            </>
+                                        ) : (
+                                             <span>{attendance.count} attended</span>
+                                        )}
                                     </div>
                                 ) : (
                                     <p>No attendance data.</p>
