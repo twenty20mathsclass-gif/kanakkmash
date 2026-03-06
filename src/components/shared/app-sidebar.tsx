@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
@@ -53,21 +54,20 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
         return pathname.startsWith(href) && href !== '/';
     };
 
-    const homeHref = user.role === 'admin' ? '/admin' : '/teacher';
+    const homeHref = "/";
 
     return (
         <Sidebar>
             <SidebarHeader>
-                <Link href={homeHref} className={cn("flex items-center gap-2 font-bold p-2", state === 'collapsed' && "justify-center p-0")}>
+                <Link href={homeHref} className={cn("flex items-center p-2 justify-center")}>
                     <Image
                         src="/logo mlm@4x.png"
                         alt="kanakkmash"
-                        width={32}
-                        height={10}
-                        className="w-8 h-auto"
+                        width={140}
+                        height={43}
+                        className={cn("w-32 h-auto transition-all duration-300", state === 'collapsed' && "w-10")}
                         priority
                     />
-                    <span className={cn("text-lg", state === 'collapsed' && "hidden")}>kanakkmash</span>
                 </Link>
             </SidebarHeader>
             <SidebarContent>
