@@ -64,7 +64,7 @@ const data = {
     {
       "id": "fida-shirin",
       "description": "A portrait of Fida Shirin G, founder of Kanakkmash.",
-      "imageUrl": "https://picsum.photos/seed/fida-shirin/500/500",
+      "imageUrl": "https://i.ibb.co/hX4S0vC/photo-2026-03-07-21-25-44.jpg",
       "imageHint": "woman mentor"
     }
   ]
