@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -56,26 +57,24 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
 
   const form = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserSchema),
-    defaultValues: {
-      name: '',
-      role: 'student',
-      hourlyRate: 0,
-    }
+    // The `values` property ensures the form is re-populated when the `user` prop changes,
+    // avoiding the problematic useEffect/reset pattern that caused the freezing.
+    values: {
+      name: user.name,
+      role: user.role,
+      hourlyRate: user.hourlyRate || 0,
+    },
   });
 
-  const { reset, watch } = form;
+  const { watch } = form;
   const role = watch('role');
 
+  // This useEffect is to clear errors when the dialog is reopened with a different user.
   useEffect(() => {
-    if (isOpen && user) {
-      reset({
-        name: user.name,
-        role: user.role,
-        hourlyRate: user.hourlyRate || 0,
-      });
-      setError(null);
+    if(isOpen) {
+        setError(null);
     }
-  }, [isOpen, user, reset]);
+  }, [isOpen]);
 
   const onSubmit = async (data: UpdateUserFormValues) => {
     setLoading(true);
@@ -128,15 +127,8 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     }
   };
   
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setError(null);
-    }
-    onOpenChange(open);
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit User: {user.name}</DialogTitle>

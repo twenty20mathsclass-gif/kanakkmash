@@ -75,7 +75,7 @@ export default function AdminUsersPage() {
       // If we are fetching teachers or all users, we also need to get their private details
       if (roleFilter === 'teacher' || !roleFilter) {
           const usersWithDetails = await Promise.all(usersList.map(async (user) => {
-              if (user.role === 'teacher') {
+              if (user && user.role === 'teacher') {
                   const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
                   const detailsSnap = await getDoc(detailsRef);
                   if (detailsSnap.exists()) {
@@ -84,7 +84,7 @@ export default function AdminUsersPage() {
               }
               return user;
           }));
-          setUsers(usersWithDetails);
+          setUsers(usersWithDetails.filter(Boolean) as User[]);
       } else {
           setUsers(usersList);
       }
