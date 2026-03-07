@@ -135,20 +135,14 @@ export default function MyChatRoomPage() {
                     const allStudentIds = Array.from(studentIdSet);
 
                     if (allStudentIds.length > 0) {
-                        const studentContacts: User[] = [];
-                        // Batch fetch in chunks of 30 for safety
-                        for (let i = 0; i < allStudentIds.length; i += 30) {
-                            const chunk = allStudentIds.slice(i, i + 30);
-                            if (chunk.length > 0) {
-                                const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-                                const querySnapshot = await getDocs(studentsQuery);
-                                querySnapshot.forEach(doc => {
-                                    if (doc.exists()) {
-                                        studentContacts.push({ id: doc.id, ...doc.data() } as User);
-                                    }
-                                });
-                            }
-                        }
+                        // Fetch each user document individually because of security rules
+                        const studentPromises = allStudentIds.map(id => getDoc(doc(firestore, 'users', id)));
+                        const studentSnaps = await Promise.all(studentPromises);
+                        
+                        const studentContacts = studentSnaps
+                            .filter(snap => snap.exists())
+                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                            
                         studentContacts.sort((a, b) => a.name.localeCompare(b.name));
                         setContacts(studentContacts);
                     } else {
