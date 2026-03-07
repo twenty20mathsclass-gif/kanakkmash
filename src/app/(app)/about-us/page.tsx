@@ -230,7 +230,7 @@ export default function AboutUsPage() {
         <section className="grid items-center gap-12 md:grid-cols-2">
           <div className="relative flex items-center justify-center">
             <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-            <div className="relative aspect-square h-[400px]">
+            <div className="relative aspect-square h-[400px] -mt-8">
               {founderImage && (
                 <Image
                   src={founderImage.imageUrl}
