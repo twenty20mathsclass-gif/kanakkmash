@@ -125,8 +125,9 @@ export default function AboutUsPage() {
                   alt={heroImage.description}
                   width={500}
                   height={500}
-                  className="h-full w-full rounded-full border-8 border-background object-cover shadow-2xl"
+                  className="h-full w-full rounded-full border-8 border-background object-contain p-8 shadow-2xl"
                   data-ai-hint={heroImage.imageHint}
+                  unoptimized
                 />
               )}
               <div className="absolute inset-0 z-10 rounded-full border-[10px] border-dashed border-primary/20" />

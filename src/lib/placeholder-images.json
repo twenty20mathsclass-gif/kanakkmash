@@ -26,9 +26,9 @@
     },
     {
       "id": "about-hero-woman",
-      "description": "A smiling woman in a yellow sweater with social media icons around her.",
-      "imageUrl": "https://picsum.photos/seed/about-hero/500/500",
-      "imageHint": "smiling woman"
+      "description": "Kanakkmash logo.",
+      "imageUrl": "/logo eng@4x.png",
+      "imageHint": "kanakkmash logo"
     },
     {
       "id": "about-experience-woman",
