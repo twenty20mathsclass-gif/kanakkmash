@@ -106,24 +106,42 @@ export default function MyChatRoomPage() {
                         setContacts([]);
                     }
                 } else if (user.role === 'teacher') {
-                    // A teacher's contacts are the students they have referred.
+                    // A teacher's contacts are students they have referred AND their one-on-one students.
+                    const studentIdSet = new Set<string>();
+
+                    // 1. Get students from referrals
                     const referralsQuery = query(collection(firestore, 'users', user.id, 'referrals'));
                     const referralsSnapshot = await getDocs(referralsQuery);
+                    referralsSnapshot.docs.forEach(doc => studentIdSet.add(doc.id));
                     
-                    if (referralsSnapshot.empty) {
-                        setContacts([]);
-                        setLoading(false);
-                        return;
-                    }
-            
-                    const affiliateIds = referralsSnapshot.docs.map(doc => doc.id);
-                    
-                    if (affiliateIds.length > 0) {
-                        const studentPromises = affiliateIds.map(id => getDoc(doc(firestore, 'users', id)));
-                        const studentSnaps = await Promise.all(studentPromises);
-                        const studentContacts = studentSnaps
-                            .filter(snap => snap.exists())
-                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                    // 2. Get students from one-to-one schedules
+                    const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', user.id));
+                    const schedulesSnapshot = await getDocs(schedulesQuery);
+                    schedulesSnapshot.docs.forEach(doc => {
+                        const schedule = doc.data();
+                        if (schedule.studentId) {
+                            studentIdSet.add(schedule.studentId);
+                        }
+                    });
+
+                    const allStudentIds = Array.from(studentIdSet);
+
+                    if (allStudentIds.length > 0) {
+                        const studentContacts: User[] = [];
+                        // Batch fetch in chunks of 30 for safety
+                        for (let i = 0; i < allStudentIds.length; i += 30) {
+                            const chunk = allStudentIds.slice(i, i + 30);
+                            if (chunk.length > 0) {
+                                const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+                                const querySnapshot = await getDocs(studentsQuery);
+                                querySnapshot.forEach(doc => {
+                                    if (doc.exists()) {
+                                        studentContacts.push({ id: doc.id, ...doc.data() } as User);
+                                    }
+                                });
+                            }
+                        }
+                        studentContacts.sort((a, b) => a.name.localeCompare(b.name));
                         setContacts(studentContacts);
                     } else {
                         setContacts([]);
