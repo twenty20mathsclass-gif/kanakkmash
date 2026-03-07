@@ -164,7 +164,9 @@ export default function MainLayoutClient({
                     <h1 className="font-semibold text-lg">{pageTitle}</h1>
                 </header>
                 <main className="flex-grow p-4 md:p-6 bg-muted/30">
-                    {children}
+                    <div className="mx-auto w-full max-w-screen-2xl">
+                        {children}
+                    </div>
                 </main>
             </div>
         </div>
