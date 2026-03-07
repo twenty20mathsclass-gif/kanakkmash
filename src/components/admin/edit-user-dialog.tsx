@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -58,24 +57,25 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   const form = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      name: user.name,
-      role: user.role,
-      hourlyRate: user.hourlyRate || 0,
+      name: '',
+      role: 'student',
+      hourlyRate: 0,
     }
   });
 
-  const role = form.watch('role');
+  const { reset, watch } = form;
+  const role = watch('role');
 
   useEffect(() => {
-    if (isOpen) {
-      form.reset({
+    if (isOpen && user) {
+      reset({
         name: user.name,
         role: user.role,
         hourlyRate: user.hourlyRate || 0,
       });
       setError(null);
     }
-  }, [isOpen, user, form]);
+  }, [isOpen, user, reset]);
 
   const onSubmit = async (data: UpdateUserFormValues) => {
     setLoading(true);
