@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, Suspense, useState } from 'react';
@@ -33,6 +34,7 @@ import {
     Receipt,
     MessagesSquare,
     Share2,
+    Award,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -61,7 +63,7 @@ export default function MainLayoutClient({
 
   useEffect(() => {
     const authPages = ['/sign-in', '/sign-up'];
-    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
+    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
 
@@ -105,7 +107,7 @@ export default function MainLayoutClient({
     router.push('/sign-in');
   };
 
-  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions'];
+  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
   
@@ -113,8 +115,8 @@ export default function MainLayoutClient({
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/calendar', label: 'Class Schedule', icon: Calendar },
     { href: '/courses', label: 'Exam Schedule', icon: FileText },
+    { href: '/my-results', label: 'My Results', icon: Award },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
-    { href: '/cart', label: 'Cart', icon: ShoppingCart },
   ];
 
   const teacherNav = [
