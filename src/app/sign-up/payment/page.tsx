@@ -257,12 +257,12 @@ export default function SignUpPaymentPage() {
                 </Link>
                 <div className='z-10 space-y-4'>
                     <Image 
-                        src="https://picsum.photos/seed/signup-illustration/600/400"
+                        src="https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg"
                         width={600}
                         height={400}
                         alt="Illustration"
                         className="mx-auto rounded-lg shadow-lg"
-                        data-ai-hint="online education teaching"
+                        data-ai-hint="maths elements"
                     />
                     <h1 className="font-headline text-4xl font-bold mt-4">One Last Step!</h1>
                     <p className="text-muted-foreground mt-2 max-w-md mx-auto">Secure your spot by completing the registration payment.</p>
