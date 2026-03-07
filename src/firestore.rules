@@ -1,0 +1,193 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Safely check a user's role.
+    function isRole(role) {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    // A user is an admin if their user document has role == 'admin'.
+    // This function is NOT safe for list queries because it uses get().
+    function isAdmin() {
+      return request.auth != null && isRole('admin');
+    }
+
+    // This checks for the main admin email. Safe for list queries.
+    function isTheOneTrueAdmin() {
+      return request.auth != null && request.auth.token.email == 'kanakkmash@gmail.com';
+    }
+
+    // The requesting user is the owner of the data.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isExamOwner(examId) {
+      return request.auth != null && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
+    }
+    
+    // Allow users to query for their own submissions across all exams.
+    // This is required for the student dashboard progress stats.
+    match /{path=**}/submissions/{submissionId} {
+      allow list: if request.auth != null && resource.data.studentId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      // Any authenticated user can read public user profiles.
+      allow get: if request.auth != null;
+      
+      // Only admins can list all users.
+      allow list: if isTheOneTrueAdmin();
+      
+      // A user can create their own profile, and an admin can create any user profile.
+      allow create: if isOwner(userId) || isAdmin();
+
+      // Admins can update any profile. Users can only update their own.
+      // A user cannot change their own role.
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
+      
+      // Admins can delete users. Users can delete their own account.
+      allow delete: if isAdmin() || isOwner(userId);
+
+      match /attendance/{attendanceId} {
+        // A user can create/read/update/delete their own attendance records.
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /teacher_details/{detailsDoc} {
+        // Teacher can manage their own private details. Admin can manage any.
+        allow read, write: if (isOwner(userId) && isRole('teacher')) || isAdmin();
+      }
+
+      match /notifications/{notificationId} {
+        allow read, update: if isOwner(userId);
+        allow create: if isRole('teacher') || isAdmin();
+      }
+
+      match /salaryPayments/{paymentId} {
+        // Teacher can read their own payments. Admin can read any.
+        allow get, list: if isOwner(userId) || isTheOneTrueAdmin();
+        // Only admins can create/update/delete payments.
+        allow write: if isTheOneTrueAdmin();
+      }
+
+      match /referrals/{studentId} {
+        // A teacher can read their own referral list.
+        allow read, list: if isOwner(userId) && isRole('teacher');
+        // A new student can create an entry in their referrer's list.
+        // studentId here is the ID of the new student being created.
+        allow create: if request.auth != null && request.auth.uid == studentId;
+        // Only admin can modify/delete.
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /schedules/{scheduleId} {
+      // Any user can read schedules.
+      allow read: if true;
+
+      // Only teachers or admins can create schedules. Teachers must be the owner.
+      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
+
+      // Only the teacher who owns the schedule or an admin can update/delete it
+      allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
+
+      match /attendees/{userId} {
+        // Student can create their own attendance record for a schedule
+        allow create: if isOwner(userId);
+        // Teacher who owns the schedule, the student, or an admin can read attendance
+        allow get, list: if (request.auth != null && get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid) || isOwner(userId) || isAdmin();
+        // No one can update or delete from here to preserve attendance record.
+        allow update, delete: if false;
+      }
+    }
+
+    match /exams/{examId} {
+      // Any authenticated user can read an exam.
+      allow get, list: if request.auth != null;
+      // Teachers and admins can create exams. Teachers must own them.
+      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
+      // Teacher who owns it or admin can manage.
+      allow read, update, delete: if isExamOwner(examId) || isAdmin();
+
+      match /submissions/{userId} {
+        // A student can create their own submission.
+        allow create: if isOwner(userId);
+        // Student can read their own submission.
+        // Teacher who owns the exam or admin can read any submission for that exam.
+        allow get, list: if isOwner(userId) || isExamOwner(examId) || isAdmin();
+        // Submissions cannot be updated or deleted.
+        allow update, delete: if false;
+      }
+    }
+
+    match /cartContent/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /courseCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() || isRole('teacher');
+    }
+    match /popularCourses/{popularId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+        allow read, write: if isAdmin();
+    }
+
+    match /courseFees/{feeId} {
+      // Admins can manage all fees.
+      allow write: if isAdmin();
+      // Anyone can read/list fees (needed for sign-up page).
+      allow read, list: if true;
+    }
+    
+    match /blogPosts/{postId} {
+      allow get, list: if true;
+      allow create: if isRole('admin') || isRole('teacher');
+      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+      allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
+
+      match /comments/{commentId} {
+        allow list, get: if true;
+        allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+        allow delete: if isAdmin() || (request.auth != null && resource.data.authorId == request.auth.uid);
+        allow update: if false;
+      }
+    }
+
+    match /chats/{chatId} {
+      // A user is a participant if their UID is in the parent chatId.
+      // The chatId is a composite of two UIDs, sorted and joined by '_'
+      function isParticipant() {
+        return request.auth != null && request.auth.uid in chatId.split('_');
+      }
+
+      match /messages/{messageId} {
+        allow read: if isParticipant();
+        // A user can create a message if they are a participant and the sender.
+        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
+        
+        // Messages are immutable.
+        allow update, delete: if false;
+      }
+    }
+
+    match /status/{userId} {
+      // Any authenticated user can see presence status.
+      allow read: if request.auth != null;
+      // A user can only write to their own status document.
+      allow write: if isOwner(userId);
+    }
+  }
+}

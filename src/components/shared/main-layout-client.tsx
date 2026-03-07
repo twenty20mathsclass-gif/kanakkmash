@@ -142,6 +142,7 @@ export default function MainLayoutClient({
     { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
     { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
+    { href: '/admin/fees', label: 'Fee Management', icon: DollarSign },
     { href: '/admin/accountant/salaries', label: 'Teacher Salaries', icon: Banknote },
     { href: '/admin/accountant/invoices', label: 'Student Invoices', icon: Receipt },
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },

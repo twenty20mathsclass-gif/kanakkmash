@@ -9,6 +9,7 @@ import { useFirebase } from '@/firebase';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,9 +29,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, IndianRupee } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { countries } from '@/lib/countries';
+import type { CourseFee } from '@/lib/definitions';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -75,13 +77,17 @@ type FormValues = z.infer<typeof formSchema>;
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const DEFAULT_FEE = 99;
 
 export function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
+  const [loadingFee, setLoadingFee] = useState(false);
   
   const referralId = searchParams.get('ref');
 
@@ -97,12 +103,61 @@ export function SignUpForm() {
     },
   });
 
-  const courseModel = form.watch('courseModel');
-  const selectedClass = form.watch('class');
+  const { watch } = form;
+  const courseModel = watch('courseModel');
+  const selectedClass = watch('class');
+  const selectedSyllabus = watch('syllabus');
+  const selectedCompetitiveExam = watch('competitiveExam');
   
   const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
   const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
+  
+  useEffect(() => {
+    if (!firestore || !courseModel) return;
+
+    const fetchFee = async () => {
+        setLoadingFee(true);
+        let q = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModel));
+
+        if (courseModel === 'COMPETITIVE EXAM' && selectedCompetitiveExam) {
+            q = query(q, where('competitiveExam', '==', selectedCompetitiveExam));
+        } else if (courseModel === 'MATHS ONLINE TUITION' && selectedClass) {
+            q = query(q, where('class', '==', selectedClass));
+            if (selectedClass !== 'DEGREE' && selectedSyllabus) {
+                q = query(q, where('syllabus', '==', selectedSyllabus));
+            }
+        }
+        
+        try {
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const feeData = querySnapshot.docs[0].data() as CourseFee;
+                setFee(feeData.amount);
+            } else {
+                // If no specific rule found, check for a general rule for the course model
+                const generalQuery = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModel));
+                const generalSnapshot = await getDocs(generalQuery);
+                if (!generalSnapshot.empty && !generalSnapshot.docs[0].data().class && !generalSnapshot.docs[0].data().competitiveExam) {
+                    setFee(generalSnapshot.docs[0].data().amount);
+                } else {
+                    setFee(DEFAULT_FEE); // Fallback to default
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching fee:", error);
+            setFee(DEFAULT_FEE);
+        } finally {
+            setLoadingFee(false);
+        }
+    };
+    
+    // Debounce the fetch
+    const timeoutId = setTimeout(fetchFee, 500);
+    return () => clearTimeout(timeoutId);
+
+  }, [firestore, courseModel, selectedClass, selectedSyllabus, selectedCompetitiveExam]);
+
 
   const handleContinue = async () => {
     const isValid = await form.trigger();
@@ -117,9 +172,9 @@ export function SignUpForm() {
 
     setLoading(true);
     const data = form.getValues();
+    const dataWithFee = { ...data, registrationAmount: fee };
     
-    // Store data in sessionStorage to pass to the payment page
-    sessionStorage.setItem('kanakkmash_signup_data', JSON.stringify(data));
+    sessionStorage.setItem('kanakkmash_signup_data', JSON.stringify(dataWithFee));
     if (referralId) {
         sessionStorage.setItem('kanakkmash_referral_id', referralId);
     }
@@ -318,6 +373,19 @@ export function SignUpForm() {
           </div>
         </div>
 
+        <div className="border rounded-lg p-4 space-y-2 text-center">
+            <Label className="text-muted-foreground">Registration Fee</Label>
+            <div className="flex justify-center items-center font-bold text-2xl">
+                {loadingFee ? <Loader2 className="h-6 w-6 animate-spin"/> : (
+                    <>
+                        <IndianRupee className="h-6 w-6 mr-1" />
+                        <span>{fee !== null ? fee.toFixed(2) : DEFAULT_FEE.toFixed(2)}</span>
+                    </>
+                )}
+            </div>
+        </div>
+
+
         <div className="pt-2 text-center text-sm text-muted-foreground">
           By continuing you agree to all our{' '}
           <Link href="/terms-and-conditions" target="_blank" className="underline underline-offset-4 hover:text-primary">
@@ -333,8 +401,8 @@ export function SignUpForm() {
           </Alert>
         )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? <Loader2 className="animate-spin" /> : 'Continue'}
+        <Button type="submit" className="w-full" disabled={loading || loadingFee}>
+          {loading ? <Loader2 className="animate-spin" /> : 'Continue to Payment'}
         </Button>
       </form>
     </Form>

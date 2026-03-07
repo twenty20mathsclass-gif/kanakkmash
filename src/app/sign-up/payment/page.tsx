@@ -33,7 +33,7 @@ function PaymentComponent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpData, setSignUpData] = useState<any | null>(null);
-  const registrationAmount = 99; // in INR
+  const registrationAmount = signUpData?.registrationAmount ?? 99;
 
   useEffect(() => {
     // Load Razorpay script
@@ -209,7 +209,7 @@ function PaymentComponent() {
         <div className="border rounded-lg p-4 space-y-2">
             <div className="flex justify-between items-center font-bold text-lg pt-2">
                 <span>Registration Fee</span>
-                <span className="flex items-center"><IndianRupee className="h-5 w-5" /> {registrationAmount}.00</span>
+                <span className="flex items-center"><IndianRupee className="h-5 w-5" /> {registrationAmount.toFixed(2)}</span>
             </div>
         </div>
 

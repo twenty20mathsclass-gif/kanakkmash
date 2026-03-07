@@ -151,6 +151,20 @@
         "isRead": { "type": "boolean", "description": "Whether the user has read the notification." }
       },
       "required": ["title", "body", "href", "createdAt", "isRead"]
+    },
+    "courseFee": {
+      "title": "Course Fee",
+      "description": "Defines a registration fee for a specific course configuration.",
+      "type": "object",
+      "properties": {
+        "courseModel": { "type": "string", "enum": ["MATHS ONLINE TUITION", "ONE TO ONE", "COMPETITIVE EXAM"] },
+        "class": { "type": "string" },
+        "syllabus": { "type": "string" },
+        "competitiveExam": { "type": "string" },
+        "amount": { "type": "number" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["courseModel", "amount", "createdAt"]
     }
   },
   "auth": {
@@ -220,6 +234,10 @@
     "/status/{userId}": {
       "schema": { "$ref": "#/entities/userStatus" },
       "description": "Stores real-time user presence information."
+    },
+    "/courseFees/{feeId}": {
+      "schema": { "$ref": "#/entities/courseFee" },
+      "description": "Stores the registration fee rules."
     }
   }
 }

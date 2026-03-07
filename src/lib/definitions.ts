@@ -222,3 +222,13 @@ export type Notification = {
   createdAt: Timestamp;
   isRead: boolean;
 };
+
+export type CourseFee = {
+  id: string;
+  courseModel: 'MATHS ONLINE TUITION' | 'ONE TO ONE' | 'COMPETITIVE EXAM';
+  class?: string;
+  syllabus?: string;
+  competitiveExam?: string;
+  amount: number;
+  createdAt: Timestamp;
+};
