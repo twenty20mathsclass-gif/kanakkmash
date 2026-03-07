@@ -106,7 +106,7 @@ export default function MyChatRoomPage() {
                         setContacts([]);
                     }
                 } else if (user.role === 'teacher') {
-                    // A teacher's contacts are students they have referred AND their one-on-one students.
+                    // A teacher's contacts are any student they have referred or any student who has attended one of their classes.
                     const studentIdSet = new Set<string>();
 
                     // 1. Get students from referrals
@@ -114,15 +114,23 @@ export default function MyChatRoomPage() {
                     const referralsSnapshot = await getDocs(referralsQuery);
                     referralsSnapshot.docs.forEach(doc => studentIdSet.add(doc.id));
                     
-                    // 2. Get students from one-to-one schedules
+                    // 2. Get students from schedule attendees
                     const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', user.id));
                     const schedulesSnapshot = await getDocs(schedulesQuery);
-                    schedulesSnapshot.docs.forEach(doc => {
-                        const schedule = doc.data();
-                        if (schedule.studentId) {
-                            studentIdSet.add(schedule.studentId);
-                        }
+                    
+                    const attendeePromises = schedulesSnapshot.docs.map(scheduleDoc => {
+                        const attendeesQuery = query(collection(firestore, 'schedules', scheduleDoc.id, 'attendees'));
+                        return getDocs(attendeesQuery);
                     });
+                    
+                    const attendeeSnapshots = await Promise.all(attendeePromises);
+                    
+                    attendeeSnapshots.forEach(attendeeSnapshot => {
+                        attendeeSnapshot.docs.forEach(attendeeDoc => {
+                            studentIdSet.add(attendeeDoc.id);
+                        });
+                    });
+
 
                     const allStudentIds = Array.from(studentIdSet);
 
@@ -150,7 +158,7 @@ export default function MyChatRoomPage() {
             } catch (err: any) {
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
-                        path: 'schedules or users',
+                        path: 'referrals, schedules, attendees, or users',
                         operation: 'list',
                     }, { cause: err });
                     errorEmitter.emit('permission-error', permissionError);
