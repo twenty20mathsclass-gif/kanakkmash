@@ -64,8 +64,8 @@ const data = {
     {
       "id": "fida-shirin",
       "description": "A portrait of Fida Shirin G, founder of Kanakkmash.",
-      "imageUrl": "https://images.unsplash.com/photo-1543313884-39c445a65c89?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaWVyJTIwYmxhY2slMjBhbmQlMjB3aGl0ZXxlbnwwfHx8fDE3MjgxNDU4MDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "pier sea"
+      "imageUrl": "https://i.ibb.co/7r2sWj4/photo-2026-03-07-21-25-44.jpg",
+      "imageHint": "woman portrait"
     }
   ]
 }
