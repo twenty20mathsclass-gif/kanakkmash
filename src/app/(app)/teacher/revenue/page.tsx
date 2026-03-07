@@ -209,7 +209,7 @@ export default function TeacherRevenuePage() {
             }
         };
         fetchDetails();
-    }, [user, firestore, form, toast]);
+    }, [user, firestore, form]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

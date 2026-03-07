@@ -95,7 +95,7 @@ export default function MyReferralsPage() {
         };
 
         fetchAffiliates();
-    }, [firestore, user, toast]);
+    }, [firestore, user]);
 
     const copyToClipboard = () => {
         if (!referralLink) return;
