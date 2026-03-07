@@ -354,6 +354,7 @@ export function CreateExamForm() {
                 startTime: data.startTime,
                 endTime: data.endTime,
                 courseModel: data.courseModel,
+                createdAt: serverTimestamp(),
                 ...selectedVisuals,
             };
 

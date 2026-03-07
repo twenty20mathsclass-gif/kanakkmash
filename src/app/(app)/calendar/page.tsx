@@ -321,7 +321,7 @@ export default function ClassSchedulePage() {
             const isAttended = attendedClasses.includes(event.id);
             return (
               <div key={event.id} className="flex gap-4 items-stretch min-h-[4rem]">
-                <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{getFormattedTime(event.startTime)}</div>
+                <div className="text-xs font-medium text-muted-foreground w-16 text-right pt-1">{event.createdAt ? format(event.createdAt.toDate(), 'hh:mmaaa') : getFormattedTime(event.startTime)}</div>
                 <div className="relative flex-1 border-l-2 border-dashed border-border pl-6 py-2">
                   <div
                     onClick={() => !isAttended && setSelectedEvent(event)}

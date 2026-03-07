@@ -78,6 +78,7 @@ export type Schedule = {
   examId?: string;
   duration?: number; // in minutes, for exam countdown
   competitiveExam?: string;
+  createdAt?: Timestamp;
 };
 
 export type StudentProgress = {

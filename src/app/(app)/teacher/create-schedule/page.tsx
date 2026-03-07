@@ -227,6 +227,7 @@ export default function CreateSchedulePage() {
           endTime: data.endTime,
           meetLink: data.meetLink,
           teacherId: user.id,
+          createdAt: serverTimestamp(),
           ...selectedVisuals,
         };
         
