@@ -60,6 +60,7 @@ export default function SignUpPage() {
                 alt="Illustration"
                 className="mx-auto rounded-lg shadow-lg"
                 data-ai-hint="maths elements"
+                unoptimized
             />
             <h1 className="font-headline text-4xl font-bold mt-4">Welcome to Your Learning Journey</h1>
             <p className="text-muted-foreground mt-2 max-w-md mx-auto">Unlock your potential with our expert-led math courses for all levels.</p>
