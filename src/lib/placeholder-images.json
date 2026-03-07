@@ -38,9 +38,9 @@
     },
     {
       "id": "about-service-1",
-      "description": "A person using a laptop with charts on the screen.",
-      "imageUrl": "https://picsum.photos/seed/about-service1/600/400",
-      "imageHint": "laptop charts"
+      "description": "A person teaching during an online group tuition class.",
+      "imageUrl": "/photo_2026-03-07_22-21-30.jpg",
+      "imageHint": "online tuition"
     },
     {
       "id": "about-service-2",
