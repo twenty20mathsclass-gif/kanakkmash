@@ -69,9 +69,11 @@
         "type": { "type": "string", "enum": ["fee", "cart"], "description": "The type of invoice." },
         "createdAt": { "type": "object", "description": "The date the invoice was created." },
         "dueDate": { "type": "object", "description": "The date the invoice is due." },
-        "paidAt": { "type": "object", "description": "The date the invoice was paid." }
+        "paidAt": { "type": "object", "description": "The date the invoice was paid." },
+        "paymentId": { "type": "string", "description": "The transaction ID from the payment gateway." },
+        "paymentMethod": { "type": "string", "description": "The payment gateway used (e.g., 'razorpay')." }
       },
-      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate"]
+      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate", "paymentId", "paymentMethod"]
     },
     "salaryPayment": {
       "title": "Salary Payment",
