@@ -373,19 +373,6 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <div className="border rounded-lg p-4 space-y-2 text-center">
-            <Label className="text-muted-foreground">Registration Fee</Label>
-            <div className="flex justify-center items-center font-bold text-2xl">
-                {loadingFee ? <Loader2 className="h-6 w-6 animate-spin"/> : (
-                    <>
-                        <IndianRupee className="h-6 w-6 mr-1" />
-                        <span>{fee !== null ? fee.toFixed(2) : DEFAULT_FEE.toFixed(2)}</span>
-                    </>
-                )}
-            </div>
-        </div>
-
-
         <div className="pt-2 text-center text-sm text-muted-foreground">
           By continuing you agree to all our{' '}
           <Link href="/terms-and-conditions" target="_blank" className="underline underline-offset-4 hover:text-primary">
@@ -402,7 +389,7 @@ export function SignUpForm() {
         )}
 
         <Button type="submit" className="w-full" disabled={loading || loadingFee}>
-          {loading ? <Loader2 className="animate-spin" /> : 'Continue to Payment'}
+          {loading || loadingFee ? <Loader2 className="animate-spin" /> : 'Continue to Payment'}
         </Button>
       </form>
     </Form>
