@@ -1,3 +1,4 @@
+
 'use client';
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Reveal>
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -55,11 +56,15 @@ export default function DashboardPage() {
 
       <LearningProgress />
       
-      <UpcomingClasses />
-
-      <UpcomingExams />
-
-      <StudyHoursChart />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+            <UpcomingClasses />
+            <UpcomingExams />
+        </div>
+        <div className="lg:col-span-1">
+            <StudyHoursChart />
+        </div>
+      </div>
 
     </div>
   );
