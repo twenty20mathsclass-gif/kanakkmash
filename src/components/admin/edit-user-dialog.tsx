@@ -1,6 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -21,12 +25,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { User, TeacherPrivateDetails } from '@/lib/definitions';
-import { z } from 'zod';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -35,6 +39,8 @@ const updateUserSchema = z.object({
     role: z.enum(['student', 'teacher', 'admin']),
     hourlyRate: z.coerce.number().optional(),
 });
+type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
+
 
 interface EditUserDialogProps {
   user: User;
@@ -48,43 +54,33 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   const { firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
-  
-  const [name, setName] = useState(user.name);
-  const [role, setRole] = useState(user.role);
-  const [hourlyRate, setHourlyRate] = useState(user.hourlyRate || 0);
+
+  const form = useForm<UpdateUserFormValues>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      name: user.name,
+      role: user.role,
+      hourlyRate: user.hourlyRate || 0,
+    }
+  });
+
+  const role = form.watch('role');
 
   useEffect(() => {
     if (isOpen) {
-        setName(user.name);
-        setRole(user.role);
-        setHourlyRate(user.hourlyRate || 0);
-        setError(null);
-        setValidationErrors({});
+      form.reset({
+        name: user.name,
+        role: user.role,
+        hourlyRate: user.hourlyRate || 0,
+      });
+      setError(null);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, form]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = async (data: UpdateUserFormValues) => {
     setLoading(true);
     setError(null);
-    setValidationErrors({});
-
-    const formObject = {
-        name,
-        role,
-        hourlyRate: role === 'teacher' ? hourlyRate : undefined,
-    }
-
-    const validatedFields = updateUserSchema.safeParse(formObject);
-
-    if (!validatedFields.success) {
-        const fieldErrors = validatedFields.error.flatten().fieldErrors;
-        setValidationErrors(fieldErrors);
-        setLoading(false);
-        return;
-    }
-
+    
     if (!firestore) {
         setError("Firestore is not available.");
         setLoading(false);
@@ -96,20 +92,20 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
 
     try {
         const dataToUpdate: Partial<User> = {
-            name: validatedFields.data.name,
-            role: validatedFields.data.role,
+            name: data.name,
+            role: data.role,
         };
 
         await updateDoc(userDocRef, dataToUpdate);
 
-        if (validatedFields.data.role === 'teacher') {
-            const privateDetails: TeacherPrivateDetails = { hourlyRate: validatedFields.data.hourlyRate };
+        if (data.role === 'teacher') {
+            const privateDetails: TeacherPrivateDetails = { hourlyRate: data.hourlyRate };
             await setDoc(privateDetailsRef, privateDetails, { merge: true });
         }
 
         toast({
             title: 'Success',
-            description: `Successfully updated user ${name}.`,
+            description: `Successfully updated user ${data.name}.`,
         });
         
         onUserUpdated();
@@ -119,7 +115,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             const permissionError = new FirestorePermissionError({
                 path: `users/${user.id} or users/${user.id}/teacher_details/payment`,
                 operation: 'update',
-                requestResourceData: { name, role, hourlyRate: validatedFields.data.hourlyRate }
+                requestResourceData: data
             }, { cause: e });
             errorEmitter.emit('permission-error', permissionError);
             setError('You do not have permission to update this user.');
@@ -135,7 +131,6 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setError(null);
-      setValidationErrors({});
     }
     onOpenChange(open);
   }
@@ -149,62 +144,83 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             Modify the user's details below.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-            {validationErrors?.name && (
-              <p className="text-sm text-destructive">{validationErrors.name[0]}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={user.email} disabled />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as 'student' | 'teacher' | 'admin')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="student">Student</SelectItem>
-                <SelectItem value="teacher">Teacher</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            {validationErrors?.role && (
-                <p className="text-sm text-destructive">{validationErrors.role[0]}</p>
-            )}
-          </div>
-
-          {role === 'teacher' && (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="space-y-2">
-                <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
-                <Input id="hourlyRate" name="hourlyRate" type="number" value={hourlyRate} onChange={(e) => setHourlyRate(Number(e.target.value))} />
-                {validationErrors?.hourlyRate && (
-                    <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
-                )}
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={user.email} disabled />
             </div>
-          )}
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost">Cancel</Button>
-            </DialogClose>
-            <Button type="submit" disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" /> : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </form>
+            {role === 'teacher' && (
+                <FormField
+                control={form.control}
+                name="hourlyRate"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Hourly Rate (INR)</FormLabel>
+                    <FormControl>
+                        <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+
+            {error && (
+                <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
+            <DialogFooter>
+                <DialogClose asChild>
+                <Button variant="ghost" type="button">Cancel</Button>
+                </DialogClose>
+                <Button type="submit" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : 'Save Changes'}
+                </Button>
+            </DialogFooter>
+            </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
