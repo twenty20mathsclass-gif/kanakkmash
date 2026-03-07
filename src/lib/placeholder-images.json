@@ -44,9 +44,9 @@
     },
     {
       "id": "about-service-2",
-      "description": "A person having a video call on a laptop.",
-      "imageUrl": "https://picsum.photos/seed/about-service2/600/400",
-      "imageHint": "video call"
+      "description": "Dubai cityscape for one-to-one classes.",
+      "imageUrl": "/dubai-1.jpg",
+      "imageHint": "dubai cityscape"
     },
     {
       "id": "about-service-3",
