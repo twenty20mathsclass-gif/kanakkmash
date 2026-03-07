@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
-import type { Schedule } from '@/lib/definitions';
+import { collection, query, where, Timestamp, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import type { Schedule, User as UserType } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -29,13 +29,15 @@ const iconMap: { [key: string]: React.ElementType } = {
   BookOpen
 };
 
+type ScheduleWithTeacher = Schedule & { teacherName?: string };
+
 export default function ExamSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleWithTeacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
 
@@ -56,7 +58,7 @@ export default function ExamSchedulePage() {
       where('date', '<=', Timestamp.fromDate(end))
     );
 
-    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(schedulesQuery, async (snapshot) => {
       const allSchedulesForDay = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allSchedulesForDay.filter(schedule => {
@@ -85,8 +87,32 @@ export default function ExamSchedulePage() {
         return false;
       });
 
-      filteredSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime));
-      setSchedules(filteredSchedules);
+      if (filteredSchedules.length === 0) {
+        setSchedules([]);
+        setLoading(false);
+        return;
+      }
+      
+      const teacherIds = [...new Set(filteredSchedules.map(s => s.teacherId))];
+      const teacherDocs = await Promise.all(
+        teacherIds.map(id => getDoc(doc(firestore, 'users', id)))
+      );
+      
+      const teachersMap = new Map<string, string>();
+      teacherDocs.forEach(docSnap => {
+        if (docSnap.exists()) {
+          teachersMap.set(docSnap.id, docSnap.data().name);
+        }
+      });
+      
+      const schedulesWithTeacherNames: ScheduleWithTeacher[] = filteredSchedules.map(schedule => ({
+        ...schedule,
+        teacherName: teachersMap.get(schedule.teacherId) || 'Unknown'
+      }));
+
+
+      schedulesWithTeacherNames.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      setSchedules(schedulesWithTeacherNames);
       setLoading(false);
     }, (serverError: any) => {
         if (serverError.code === 'permission-denied') {
@@ -187,6 +213,7 @@ export default function ExamSchedulePage() {
                                   <div>
                                       <p className="text-xs opacity-80">{event.subject}</p>
                                       <p className="font-bold text-sm leading-tight">{event.title}</p>
+                                      <p className="text-xs opacity-80 font-medium">by {event.teacherName}</p>
                                       <div className="flex items-center gap-1 text-xs opacity-80 mt-1">
                                           <Clock className="h-3 w-3" />
                                           <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
