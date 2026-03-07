@@ -134,8 +134,7 @@ export default function MainLayoutClient({
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
-    { href: '/admin/users?role=student', label: 'Students', icon: Users },
-    { href: '/admin/users?role=teacher', label: 'Teachers', icon: Users },
+    { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
