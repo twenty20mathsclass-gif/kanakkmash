@@ -50,9 +50,9 @@
     },
     {
       "id": "about-service-3",
-      "description": "A person writing in a notebook during an online class.",
-      "imageUrl": "https://picsum.photos/seed/about-service3/600/400",
-      "imageHint": "online class"
+      "description": "Illustration for competitive exam preparation.",
+      "imageUrl": "/competitive exam.png",
+      "imageHint": "exam illustration"
     },
     {
       "id": "fida-shirin",
