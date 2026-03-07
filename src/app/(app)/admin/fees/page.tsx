@@ -42,8 +42,11 @@ const feeSchema = z.object({
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION') {
+    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
         if (!data.class) ctx.addIssue({ code: 'custom', message: 'Class is required.', path: ['class'] });
+        else if (data.class !== 'DEGREE' && !data.syllabus) {
+             ctx.addIssue({ code: 'custom', message: 'Syllabus is required for this class.', path: ['syllabus'] });
+        }
     }
     if (data.courseModel === 'COMPETITIVE EXAM') {
         if (!data.competitiveExam) ctx.addIssue({ code: 'custom', message: 'Competitive exam is required.', path: ['competitiveExam'] });
@@ -130,9 +133,9 @@ export default function AdminFeesPage() {
     };
     
     const getConditionText = (fee: CourseFee) => {
-        if (fee.courseModel === 'ONE TO ONE') return 'N/A';
         if (fee.courseModel === 'COMPETITIVE EXAM') return fee.competitiveExam || '-';
-        if (fee.courseModel === 'MATHS ONLINE TUITION') {
+        if (fee.courseModel === 'MATHS ONLINE TUITION' || fee.courseModel === 'ONE TO ONE') {
+            if (!fee.class) return 'General';
             if (fee.class === 'DEGREE') return 'Degree';
             return `${fee.class || ''} - ${fee.syllabus || ''}`;
         }
@@ -167,7 +170,7 @@ export default function AdminFeesPage() {
                                     <FormMessage /></FormItem>
                                 )}/>
                                 
-                                {courseModel === 'MATHS ONLINE TUITION' && (
+                                {(courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE') && (
                                     <>
                                         <FormField control={form.control} name="class" render={({ field }) => (
                                             <FormItem><FormLabel>Class</FormLabel>

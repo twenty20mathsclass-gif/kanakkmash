@@ -122,7 +122,7 @@ export function SignUpForm() {
 
         if (courseModel === 'COMPETITIVE EXAM' && selectedCompetitiveExam) {
             q = query(q, where('competitiveExam', '==', selectedCompetitiveExam));
-        } else if (courseModel === 'MATHS ONLINE TUITION' && selectedClass) {
+        } else if ((courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE') && selectedClass) {
             q = query(q, where('class', '==', selectedClass));
             if (selectedClass !== 'DEGREE' && selectedSyllabus) {
                 q = query(q, where('syllabus', '==', selectedSyllabus));
