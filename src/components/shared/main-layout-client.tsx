@@ -67,7 +67,7 @@ export default function MainLayoutClient({
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
 
-    if (loading || authPages.includes(pathname)) {
+    if (loading || authPages.some(p => pathname.startsWith(p))) {
       return;
     }
 
@@ -90,7 +90,7 @@ export default function MainLayoutClient({
   }, []);
 
   const authPages = ['/sign-in', '/sign-up'];
-  if (authPages.includes(pathname)) {
+  if (authPages.some(p => pathname.startsWith(p))) {
     return <>{children}</>;
   }
 
