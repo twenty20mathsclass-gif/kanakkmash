@@ -144,6 +144,13 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
         allow read, write: if isAdmin();
     }
+
+    match /courseFees/{feeId} {
+      // Admins can manage all fees.
+      allow write: if isAdmin();
+      // Anyone can read/list fees (needed for sign-up page).
+      allow read, list: if true;
+    }
     
     match /blogPosts/{postId} {
       allow get, list: if true;
