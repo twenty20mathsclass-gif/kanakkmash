@@ -16,6 +16,16 @@ import { courses } from '@/lib/data';
 import type { CartOffer, CourseCategory, PopularCourse } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function ManageOffers({ firestore }: { firestore: Firestore }) {
     const { toast } = useToast();
@@ -83,6 +93,8 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
     const { toast } = useToast();
     const [categories, setCategories] = useState<CourseCategory[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
+    const [categoryToDelete, setCategoryToDelete] = useState<CourseCategory | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!firestore) return;
@@ -130,12 +142,14 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
         });
     };
     
-    const handleDeleteCategory = (id: string) => {
-        if (!firestore) return;
-        const categoryRef = doc(firestore, 'courseCategories', id);
-        deleteDoc(categoryRef).then(() => {
+    const handleDeleteCategory = async () => {
+        if (!firestore || !categoryToDelete) return;
+        setIsDeleting(true);
+        const categoryRef = doc(firestore, 'courseCategories', categoryToDelete.id!);
+        try {
+            await deleteDoc(categoryRef);
             toast({ title: "Success", description: "Category deleted." });
-        }).catch((serverError: any) => {
+        } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: categoryRef.path, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
@@ -143,7 +157,10 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                 console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete category." });
             }
-        });
+        } finally {
+            setIsDeleting(false);
+            setCategoryToDelete(null);
+        }
     };
 
     return (
@@ -157,7 +174,7 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                             {categories.map(cat => (
                                 <div key={cat.id} className="flex items-center justify-between p-2 border rounded-md">
                                     <span>{cat.name}</span>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id!)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setCategoryToDelete(cat)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                 </div>
                             ))}
                             {categories.length === 0 && <p className="text-muted-foreground text-sm">No categories yet.</p>}
@@ -183,6 +200,22 @@ function ManageCategories({ firestore }: { firestore: Firestore }) {
                     <Button type="submit">Add Category</Button>
                 </form>
             </CardContent>
+             <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the "{categoryToDelete?.name}" category. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteCategory} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 }
@@ -191,6 +224,8 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
     const { toast } = useToast();
     const [popularCourses, setPopularCourses] = useState<PopularCourse[]>([]);
     const [loadingPopular, setLoadingPopular] = useState(true);
+    const [popularCourseToDelete, setPopularCourseToDelete] = useState<PopularCourse | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!firestore) return;
@@ -231,12 +266,14 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
             }
         });
     };
-    const handleDeletePopularCourse = async (id: string) => {
-        if (!firestore) return;
-        const popularCourseRef = doc(firestore, 'popularCourses', id);
-        deleteDoc(popularCourseRef).then(() => {
+    const handleDeletePopularCourse = async () => {
+        if (!firestore || !popularCourseToDelete) return;
+        setIsDeleting(true);
+        const popularCourseRef = doc(firestore, 'popularCourses', popularCourseToDelete.id!);
+        try {
+            await deleteDoc(popularCourseRef);
             toast({ title: "Success", description: "Popular course removed." });
-        }).catch((serverError: any) => {
+        } catch (serverError: any) {
              if (serverError.code === 'permission-denied') {
                 const permissionError = new FirestorePermissionError({ path: popularCourseRef.path, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
@@ -244,8 +281,13 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                 console.warn(serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to remove popular course." });
             }
-        });
+        } finally {
+            setIsDeleting(false);
+            setPopularCourseToDelete(null);
+        }
     };
+
+    const courseToDeleteDetails = popularCourseToDelete ? courses.find(c => c.id === popularCourseToDelete.courseId) : null;
 
     return (
         <Card>
@@ -260,7 +302,7 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                                 return (
                                     <div key={pc.id} className="flex items-center justify-between p-2 border rounded-md">
                                         <span>{course?.title || 'Unknown Course'}</span>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeletePopularCourse(pc.id!)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setPopularCourseToDelete(pc)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                     </div>
                                 )
                             })}
@@ -281,6 +323,22 @@ function ManagePopularCourses({ firestore }: { firestore: Firestore }) {
                     </Select>
                 </div>
             </CardContent>
+            <AlertDialog open={!!popularCourseToDelete} onOpenChange={(open) => !open && setPopularCourseToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           This will permanently remove "{courseToDeleteDetails?.title}" from the popular courses list. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeletePopularCourse} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 }

@@ -19,6 +19,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, PlusCircle, Trash2, Edit, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
@@ -174,6 +184,8 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [classToEdit, setClassToEdit] = useState<RecordedClass | null>(null);
+  const [classToDelete, setClassToDelete] = useState<RecordedClass | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -234,10 +246,19 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
     }
   };
 
-  const handleDelete = async (classId: string) => {
-    if (!firestore || !window.confirm('Are you sure you want to delete this class?')) return;
-    await deleteDoc(doc(firestore, 'recordedClasses', classId));
-    toast({ title: 'Deleted', description: 'Recorded class has been removed.' });
+  const handleDelete = async () => {
+    if (!firestore || !classToDelete) return;
+    setIsDeleting(true);
+    try {
+        await deleteDoc(doc(firestore, 'recordedClasses', classToDelete.id));
+        toast({ title: 'Deleted', description: 'Recorded class has been removed.' });
+    } catch(e: any) {
+        console.error("Failed to delete recorded class", e);
+        toast({ title: 'Error', description: 'Failed to delete recorded class.', variant: 'destructive' });
+    } finally {
+        setIsDeleting(false);
+        setClassToDelete(null);
+    }
   };
 
   const openEditDialog = (rc: RecordedClass) => {
@@ -281,7 +302,7 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
                     {isAdmin && <p className="text-xs text-muted-foreground pt-2 border-t">By: {rc.teacherName}</p>}
                     <div className="flex gap-2 pt-2">
                       <Button size="sm" variant="outline" onClick={() => openEditDialog(rc)}><Edit className="mr-2 h-3 w-3"/>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(rc.id)}><Trash2 className="mr-2 h-3 w-3"/>Delete</Button>
+                      <Button size="sm" variant="destructive" onClick={() => setClassToDelete(rc)}><Trash2 className="mr-2 h-3 w-3"/>Delete</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -291,6 +312,21 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
           {!loading && classes.length === 0 && <p className="text-muted-foreground text-center p-8">No recorded classes found.</p>}
         </CardContent>
       </Card>
+      
+      <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>This will permanently delete the recorded class "{classToDelete?.title}". This action cannot be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

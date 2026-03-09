@@ -17,6 +17,16 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type PageProps = {
     params: {
@@ -41,6 +51,8 @@ export default function BlogPostPage({ params }: PageProps) {
     const [newComment, setNewComment] = useState('');
     const [isLiking, setIsLiking] = useState(false);
     const [isCommenting, setIsCommenting] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<BlogComment | null>(null);
+    const [isDeletingComment, setIsDeletingComment] = useState(false);
 
     useEffect(() => {
         if (!firestore || !postId) return;
@@ -154,16 +166,20 @@ export default function BlogPostPage({ params }: PageProps) {
         }
     };
 
-    const handleDeleteComment = async (commentId: string) => {
-        if (!firestore || !window.confirm('Are you sure you want to delete this comment?')) return;
+    const handleDeleteComment = async () => {
+        if (!firestore || !commentToDelete) return;
+        setIsDeletingComment(true);
         
-        const commentRef = doc(firestore, 'blogPosts', postId, 'comments', commentId);
+        const commentRef = doc(firestore, 'blogPosts', postId, 'comments', commentToDelete.id);
         try {
             await deleteDoc(commentRef);
             toast({ title: 'Comment deleted' });
         } catch (e: any) {
              console.warn("Error deleting comment:", e);
              toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the comment.' });
+        } finally {
+            setIsDeletingComment(false);
+            setCommentToDelete(null);
         }
     }
 
@@ -287,7 +303,7 @@ export default function BlogPostPage({ params }: PageProps) {
                                             </p>
                                         </div>
                                         {user && (user.role === 'admin' || user.id === comment.authorId) && (
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteComment(comment.id)}>
+                                            <Button variant="ghost" size="icon" onClick={() => setCommentToDelete(comment)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         )}
@@ -299,6 +315,21 @@ export default function BlogPostPage({ params }: PageProps) {
                     </div>
                 </div>
             </Reveal>
+
+            <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>This will permanently delete this comment. This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteComment} disabled={isDeletingComment} className="bg-destructive hover:bg-destructive/90">
+                             {isDeletingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </article>
     )
 }

@@ -18,6 +18,16 @@ import type { Testimonial } from '@/lib/definitions';
 import Image from 'next/image';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Firestore, onTestimonialAdded: () => void }) {
@@ -174,6 +184,8 @@ export default function AdminTestimonialsPage() {
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [testimonialToDelete, setTestimonialToDelete] = useState<Testimonial | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!firestore) return;
@@ -197,16 +209,13 @@ export default function AdminTestimonialsPage() {
         return () => unsubscribe();
     }, [firestore]);
     
-    const handleDelete = async (testimonial: Testimonial) => {
-        if (!firestore) return;
-
-        if (!window.confirm(`Are you sure you want to delete the testimonial from ${testimonial.studentName}?`)) {
-            return;
-        }
+    const handleDelete = async () => {
+        if (!firestore || !testimonialToDelete) return;
+        setIsDeleting(true);
 
         try {
             // Delete firestore doc
-            const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
+            const testimonialRef = doc(firestore, 'testimonials', testimonialToDelete.id);
             await deleteDoc(testimonialRef);
 
             // Note: Image on imgbb is not deleted.
@@ -214,13 +223,16 @@ export default function AdminTestimonialsPage() {
             toast({ title: "Success", description: "Testimonial deleted." });
         } catch (serverError: any) {
              if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonial.id}`, operation: 'delete' }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: `testimonials/${testimonialToDelete.id}`, operation: 'delete' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You don't have permission to delete testimonials." });
             } else {
                 console.warn("Firestore error:", serverError);
                 toast({ variant: 'destructive', title: "Error", description: "Failed to delete testimonial." });
             }
+        } finally {
+            setIsDeleting(false);
+            setTestimonialToDelete(null);
         }
     };
 
@@ -245,7 +257,7 @@ export default function AdminTestimonialsPage() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button><PlusCircle className="mr-2"/>Add Testimonial</Button>
+                    <Button onClick={() => setIsDialogOpen(true)}><PlusCircle className="mr-2"/>Add Testimonial</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
@@ -276,7 +288,7 @@ export default function AdminTestimonialsPage() {
                                         {t.link && <a href={t.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-4 w-4"/> Link</a>}
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete(t)}>
+                                <Button variant="ghost" size="icon" onClick={() => setTestimonialToDelete(t)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
@@ -290,6 +302,22 @@ export default function AdminTestimonialsPage() {
                 )}
             </CardContent>
         </Card>
+
+        <AlertDialog open={!!testimonialToDelete} onOpenChange={(open) => !open && setTestimonialToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>This action cannot be undone. This will permanently delete the testimonial from {testimonialToDelete?.studentName}.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
