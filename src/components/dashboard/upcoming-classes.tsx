@@ -1,17 +1,19 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { format, parse } from 'date-fns';
-import type { Schedule } from '@/lib/definitions';
+import type { Schedule, User } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award } from "lucide-react";
-import { Reveal } from "../shared/reveal";
+import { Reveal } from "@/components/shared/reveal";
+import { Badge } from '@/components/ui/badge';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText: BookOpen,
@@ -20,10 +22,12 @@ const iconMap: { [key: string]: React.ElementType } = {
   BookOpen: BookOpen,
 };
 
+type ScheduleWithTeacher = Schedule & { teacherName?: string };
+
 export function UpcomingClasses() {
   const { firestore } = useFirebase();
   const { user } = useUser();
-  const [upcomingClasses, setUpcomingClasses] = useState<Schedule[]>([]);
+  const [upcomingClasses, setUpcomingClasses] = useState<ScheduleWithTeacher[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +49,15 @@ export function UpcomingClasses() {
       orderBy('date', 'asc')
     );
 
-    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(schedulesQuery, async (snapshot) => {
       const allUpcomingSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allUpcomingSchedules.filter(schedule => {
+        // Only show classes
+        if (schedule.type && schedule.type !== 'class') {
+          return false;
+        }
+
         // Personal schedule check
         if (schedule.studentId === user.id) {
           return true;
@@ -57,7 +66,7 @@ export function UpcomingClasses() {
         // Group schedule check
         if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
-                return true;
+                return schedule.competitiveExam === user.competitiveExam;
             }
 
             if (schedule.class === user.class) {
@@ -73,16 +82,39 @@ export function UpcomingClasses() {
         return false;
       });
 
+      if (filteredSchedules.length === 0) {
+        setUpcomingClasses([]);
+        setLoading(false);
+        return;
+      }
+
+      const teacherIds = [...new Set(filteredSchedules.map(s => s.teacherId))];
+      const teacherDocs = await Promise.all(
+        teacherIds.map(id => getDoc(doc(firestore, 'users', id)))
+      );
+      
+      const teachersMap = new Map<string, string>();
+      teacherDocs.forEach(docSnap => {
+        if (docSnap.exists()) {
+          teachersMap.set(docSnap.id, docSnap.data().name);
+        }
+      });
+      
+      const schedulesWithTeacherNames: ScheduleWithTeacher[] = filteredSchedules.map(schedule => ({
+        ...schedule,
+        teacherName: teachersMap.get(schedule.teacherId) || 'Unknown'
+      }));
+
       // Now, correctly sort by startTime and take the first 3 results.
       // The primary sort by date is already handled by the query.
       // This secondary sort handles multiple classes on the same day.
-      filteredSchedules.sort((a, b) => {
+      schedulesWithTeacherNames.sort((a, b) => {
         const dateA = a.date.toMillis();
         const dateB = b.date.toMillis();
         if (dateA !== dateB) return dateA - dateB; // Should be redundant due to query orderBy, but safe
         return a.startTime.localeCompare(b.startTime);
       });
-      setUpcomingClasses(filteredSchedules.slice(0, 3));
+      setUpcomingClasses(schedulesWithTeacherNames.slice(0, 3));
       setLoading(false);
     },
     (serverError: any) => {
@@ -106,7 +138,7 @@ export function UpcomingClasses() {
     <section>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold font-headline">Upcoming Classes</h2>
-            <Link href="/calendar" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/class-schedule" className="text-sm font-medium text-primary hover:underline">
                 View Schedule
             </Link>
         </div>
@@ -124,7 +156,7 @@ export function UpcomingClasses() {
                             <a href={item.meetLink} target="_blank" rel="noopener noreferrer" className="block h-full">
                                 <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
                                     <CardContent className="p-6 flex flex-col justify-between h-full">
-                                        <div>
+                                        <div className="space-y-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
                                                     <IconComponent className="h-5 w-5" />
@@ -132,10 +164,16 @@ export function UpcomingClasses() {
                                                 <div>
                                                     <p className="text-xs opacity-80">{item.subject}</p>
                                                     <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
+                                                    <p className="text-xs opacity-80 font-medium">by {item.teacherName}</p>
                                                 </div>
                                             </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {item.class && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.class}</Badge>}
+                                                {item.syllabus && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.syllabus}</Badge>}
+                                                {item.competitiveExam && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.competitiveExam}</Badge>}
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between items-end mt-6">
+                                        <div className="flex justify-between items-end mt-4">
                                             <div>
                                                 <p className="text-sm font-medium">{format(item.date.toDate(), 'MMM d, yyyy')}</p>
                                                 <div className="flex items-center gap-1 text-sm opacity-80">
@@ -160,7 +198,7 @@ export function UpcomingClasses() {
                     <CardContent className="p-6 text-center">
                         <p className="text-muted-foreground">No upcoming classes scheduled.</p>
                         <Button asChild variant="link">
-                            <Link href="/calendar">View Full Schedule</Link>
+                            <Link href="/class-schedule">View Full Schedule</Link>
                         </Button>
                     </CardContent>
                 </Card>

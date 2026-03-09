@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, Timestamp, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, Timestamp, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 import { format, parse } from 'date-fns';
-import type { Schedule } from '@/lib/definitions';
+import type { Schedule, User } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -23,10 +23,12 @@ const iconMap: { [key: string]: React.ElementType } = {
   FileText: FileText,
 };
 
+type ScheduleWithTeacher = Schedule & { teacherName?: string };
+
 export function UpcomingExams() {
   const { firestore } = useFirebase();
   const { user } = useUser();
-  const [upcomingExams, setUpcomingExams] = useState<Schedule[]>([]);
+  const [upcomingExams, setUpcomingExams] = useState<ScheduleWithTeacher[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export function UpcomingExams() {
       orderBy('date', 'asc')
     );
 
-    const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(schedulesQuery, async (snapshot) => {
       const allUpcomingSchedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
 
       const filteredSchedules = allUpcomingSchedules.filter(schedule => {
@@ -79,13 +81,36 @@ export function UpcomingExams() {
         return false;
       });
 
-      filteredSchedules.sort((a, b) => {
+      if (filteredSchedules.length === 0) {
+        setUpcomingExams([]);
+        setLoading(false);
+        return;
+      }
+
+      const teacherIds = [...new Set(filteredSchedules.map(s => s.teacherId))];
+      const teacherDocs = await Promise.all(
+        teacherIds.map(id => getDoc(doc(firestore, 'users', id)))
+      );
+      
+      const teachersMap = new Map<string, string>();
+      teacherDocs.forEach(docSnap => {
+        if (docSnap.exists()) {
+          teachersMap.set(docSnap.id, docSnap.data().name);
+        }
+      });
+      
+      const schedulesWithTeacherNames: ScheduleWithTeacher[] = filteredSchedules.map(schedule => ({
+        ...schedule,
+        teacherName: teachersMap.get(schedule.teacherId) || 'Unknown'
+      }));
+
+      schedulesWithTeacherNames.sort((a, b) => {
         const dateA = a.date.toMillis();
         const dateB = b.date.toMillis();
         if (dateA !== dateB) return dateA - dateB;
         return a.startTime.localeCompare(b.startTime);
       });
-      setUpcomingExams(filteredSchedules.slice(0, 3));
+      setUpcomingExams(schedulesWithTeacherNames.slice(0, 3));
       setLoading(false);
     },
     (serverError: any) => {
@@ -109,7 +134,7 @@ export function UpcomingExams() {
     <section>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold font-headline">Upcoming Exams</h2>
-            <Link href="/courses" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/exam-schedule" className="text-sm font-medium text-primary hover:underline">
                 View Schedule
             </Link>
         </div>
@@ -135,6 +160,7 @@ export function UpcomingExams() {
                                                 <div>
                                                     <p className="text-xs opacity-80">{item.subject}</p>
                                                     <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
+                                                    <p className="text-xs opacity-80 font-medium">by {item.teacherName}</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-1">
@@ -168,7 +194,7 @@ export function UpcomingExams() {
                     <CardContent className="p-6 text-center">
                         <p className="text-muted-foreground">No upcoming exams scheduled.</p>
                         <Button asChild variant="link">
-                            <Link href="/courses">View Full Schedule</Link>
+                            <Link href="/exam-schedule">View Full Schedule</Link>
                         </Button>
                     </CardContent>
                 </Card>

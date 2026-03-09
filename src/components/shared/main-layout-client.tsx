@@ -35,6 +35,7 @@ import {
     MessagesSquare,
     Share2,
     Award,
+    Newspaper,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -65,7 +66,7 @@ export default function MainLayoutClient({
     const authPages = ['/sign-in', '/sign-up'];
     const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
-    const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
+    const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
 
     if (loading || authPages.some(p => pathname.startsWith(p))) {
       return;
@@ -109,12 +110,21 @@ export default function MainLayoutClient({
 
   const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
-  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || isPublicBlogPost;
+  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
   
+  const publicNav = [
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/blog', label: 'Blog', icon: Newspaper },
+    { href: '/testimonials', label: 'Testimonials', icon: Quote },
+    { href: '/cart', label: 'Cart', icon: ShoppingCart },
+    { href: '/about-us', label: 'About Us', icon: Users },
+  ];
+
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/calendar', label: 'Class Schedule', icon: Calendar },
-    { href: '/courses', label: 'Exam Schedule', icon: FileText },
+    { href: '/class-schedule', label: 'Class Schedule', icon: Calendar },
+    { href: '/exam-schedule', label: 'Exam Schedule', icon: FileText },
+    { href: '/courses', label: 'All Courses', icon: BookOpen },
     { href: '/my-results', label: 'My Results', icon: Award },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
   ];
@@ -150,7 +160,7 @@ export default function MainLayoutClient({
 
   if (user && (user.role === 'admin' || user.role === 'teacher')) {
     const navItems = user.role === 'admin' ? adminNav : teacherNav;
-    const pageTitle = navItems.find(item => currentUrl.startsWith(item.href) && item.href !== '/')?.label || 'Dashboard';
+    const pageTitle = navItems.find(item => currentUrl.startsWith(item.href) && item.href !== '/admin' && item.href !== '/teacher')?.label || 'Dashboard';
 
     return (
       <SidebarProvider>
@@ -181,7 +191,7 @@ export default function MainLayoutClient({
         {user ? (
           <>
             <div className="hidden md:block">
-              <PublicHeader user={user} onSignOut={handleSignOut} />
+              <PublicHeader user={user} onSignOut={handleSignOut} navItems={studentNav} />
             </div>
             <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
               <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
@@ -190,10 +200,10 @@ export default function MainLayoutClient({
         ) : (
           <>
             <div className="hidden md:block">
-              <PublicHeader />
+              <PublicHeader navItems={publicNav} />
             </div>
             <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-              <HomePageDock />
+              <HomePageDock navItems={publicNav} />
             </div>
           </>
         )}

@@ -277,7 +277,7 @@ export default function CreateSchedulePage() {
             const notificationPayload = {
               title: `New Class Scheduled`,
               body: `"${data.title}" has been scheduled for ${format(data.date, 'PPP')}.`,
-              href: '/calendar',
+              href: '/class-schedule',
               createdAt: serverTimestamp(),
               isRead: false,
             };

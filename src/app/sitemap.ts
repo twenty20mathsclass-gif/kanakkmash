@@ -8,6 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/', priority: 1.0, changeFrequency: 'weekly' },
     { url: '/about-us', priority: 0.8, changeFrequency: 'monthly' },
     { url: '/courses', priority: 0.8, changeFrequency: 'weekly' },
+    { url: '/exam-schedule', priority: 0.7, changeFrequency: 'weekly' },
+    { url: '/class-schedule', priority: 0.7, changeFrequency: 'weekly' },
     { url: '/blog', priority: 0.8, changeFrequency: 'weekly' },
     { url: '/testimonials', priority: 0.8, changeFrequency: 'weekly' },
     { url: '/practice', priority: 0.7, changeFrequency: 'monthly' },

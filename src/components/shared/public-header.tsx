@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { House, Newspaper, Quote, Users, Calendar, FileText, ShoppingCart, MessagesSquare, Award } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { UserNav } from './user-nav';
 
@@ -25,26 +25,14 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-const publicNavItems = [
-    { href: '/', label: 'Home', icon: House },
-    { href: '/blog', label: 'Blog', icon: Newspaper },
-    { href: '/testimonials', label: 'Testimonials', icon: Quote },
-    { href: '/cart', label: 'Cart', icon: ShoppingCart },
-    { href: '/about-us', label: 'About Us', icon: Users },
-];
+type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+};
 
-const studentNavItems = [
-    { href: '/dashboard', label: 'Home', icon: House },
-    { href: '/calendar', label: 'Class Schedule', icon: Calendar },
-    { href: '/courses', label: 'Exam Schedule', icon: FileText },
-    { href: '/my-results', label: 'My Results', icon: Award },
-    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
-];
-
-
-export function PublicHeader({ user, onSignOut }: { user?: User | null; onSignOut?: () => void }) {
+export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[], user?: User | null; onSignOut?: () => void }) {
   const pathname = usePathname();
-  const navItems = user ? studentNavItems : publicNavItems;
   const logoLink = user ? '/dashboard' : '/';
 
   const isActive = (href: string) => {

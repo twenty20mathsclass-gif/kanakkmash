@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useUser } from '@/firebase';
 import { LearningProgress } from '@/components/dashboard/learning-progress';
-import { UpcomingClasses } from '@/app/(app)/dashboard/upcoming-classes';
+import { UpcomingClasses } from '@/components/dashboard/upcoming-classes';
 import { StudyHoursChart } from '@/components/dashboard/study-hours-chart';
 import { Reveal } from '@/components/shared/reveal';
 import type { User } from '@/lib/definitions';
