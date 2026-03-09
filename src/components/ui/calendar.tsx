@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -27,12 +26,12 @@ function Calendar({
         caption_label: "text-lg font-bold font-headline",
         nav: "space-x-2 flex items-center",
         nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-8 w-8 bg-transparent p-0 rounded-full"
+          buttonVariants({ variant: "ghost" }),
+          "h-8 w-8 bg-transparent p-0 rounded-full hover:bg-accent"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1 mt-4",
+        table: "w-full border-collapse space-y-2 mt-4",
         head_row: "flex justify-around",
         head_cell:
           "text-muted-foreground rounded-md w-10 font-medium text-sm",
