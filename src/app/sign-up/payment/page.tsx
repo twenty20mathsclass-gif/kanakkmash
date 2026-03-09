@@ -88,7 +88,7 @@ function PaymentComponent() {
           const authUser = userCredential.user;
           const referralId = sessionStorage.getItem('kanakkmash_referral_id');
 
-          const avatarUrl = `https://picsum.photos/seed/${authUser.uid}/100/100`;
+          const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
           await updateProfile(authUser, { displayName: data.name, photoURL: avatarUrl });
 
           const selectedCountry = countries.find(c => c.code === data.countryCode);

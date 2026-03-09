@@ -96,7 +96,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         );
         const user = userCredential.user;
 
-        const avatarUrl = `https://picsum.photos/seed/${user.uid}/100/100`;
+        const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
 
         const userProfile: Omit<User, 'hourlyRate' | 'paymentMethod'> = {
             id: user.uid,

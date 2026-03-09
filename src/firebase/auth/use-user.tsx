@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -34,7 +35,7 @@ export function useUser() {
               name: authUser.displayName || 'Kanakkmash Admin',
               email: authUser.email!,
               role: 'admin',
-              avatarUrl: authUser.photoURL || `https://picsum.photos/seed/${authUser.uid}/100/100`,
+              avatarUrl: authUser.photoURL || `https://i.ibb.co/688z9X5/user.png`,
             };
             await setDoc(userDocRef, adminProfile);
             setUser(adminProfile);
