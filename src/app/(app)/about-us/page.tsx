@@ -68,12 +68,15 @@ const SocialIcon = ({
 
 function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
   return (
-    <section className="container mx-auto flex min-h-screen justify-center items-center px-4 md:px-6">
+    <section className="container mx-auto flex h-screen min-h-[700px] items-center justify-center px-4 md:px-6">
       <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
         <div className="space-y-6">
-          <Badge variant="secondary" className="text-base font-semibold">
-            Welcome to Kanakkmash
-          </Badge>
+          <div className="inline-flex items-center gap-2 rounded-full border border-transparent bg-secondary px-3 py-1.5 text-base font-semibold text-secondary-foreground">
+            <span>Welcome to</span>
+            <span className="bg-gradient-to-r from-primary via-accent to-chart-3 bg-clip-text text-transparent animate-gradient-pan [background-size:200%_auto] font-bold">
+              Kanakkmash
+            </span>
+          </div>
           <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             Unlock Your Math Superpowers
           </h1>
@@ -324,7 +327,7 @@ const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string
     <div
       className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
       style={{
-        animation: `float ${duration}s ease-in-out infinite`,
+        animation: `float-down ${duration}s ease-in-out infinite`,
         animationDelay: `${delay}s`
       }}
     >
