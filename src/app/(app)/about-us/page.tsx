@@ -71,7 +71,7 @@ export default function AboutUsPage() {
   const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
 
   return (
-    <div className="space-y-24 md:space-y-32">
+    <div className="mx-auto max-w-7xl space-y-24 md:space-y-32">
       {/* Hero Section */}
       <Reveal>
         <section className="grid items-center gap-12 md:grid-cols-2">
