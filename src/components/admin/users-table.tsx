@@ -169,14 +169,14 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                         <span className="sr-only">Toggle menu</span>
                     </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
-                    <DropdownMenuItem onSelect={() => setUserToEdit(user)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setUserToReset(user)}>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setTimeout(() => setUserToEdit(user), 0)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setTimeout(() => setUserToReset(user), 0)}>
                         <Mail className="mr-2 h-4 w-4" />
                         Send Password Reset
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setUserToDelete(user)} className="text-destructive">Delete</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setTimeout(() => setUserToDelete(user), 0)} className="text-destructive">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 </TableCell>
