@@ -14,7 +14,7 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
           background: 'conic-gradient(from 90deg at 50% 50%, #F97917, #FAB422, #BF00B0, #F97917)',
         }}
       ></div>
-      <div className="absolute inset-2 rounded-full bg-background"></div>
+      <div className="absolute inset-3 rounded-full bg-background"></div>
       <div className="absolute inset-0 flex items-center justify-center">
         <Image
             src="/Loading Icon.png"
