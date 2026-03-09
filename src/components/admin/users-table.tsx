@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { User } from '@/lib/definitions';
 import { useFirebase } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import {
   Table,
   TableBody,
@@ -19,10 +20,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { Loader2, MoreHorizontal, IndianRupee } from 'lucide-react';
+import { Loader2, MoreHorizontal, IndianRupee, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
     AlertDialog, 
@@ -46,11 +48,13 @@ interface UsersTableProps {
 
 export function UsersTable({ users, onUserChanged }: UsersTableProps) {
     const { toast } = useToast();
-    const { firestore } = useFirebase();
+    const { auth, firestore } = useFirebase();
 
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
+    const [userToReset, setUserToReset] = useState<User | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
     
     const handleDeleteUser = async () => {
         if (!userToDelete || !firestore) return;
@@ -83,6 +87,30 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
         } finally {
             setIsDeleting(false);
             setUserToDelete(null);
+        }
+    };
+
+    const handleSendResetEmail = async () => {
+        if (!userToReset || !auth) return;
+        
+        setIsResetting(true);
+        
+        try {
+            await sendPasswordResetEmail(auth, userToReset.email);
+            toast({
+                title: 'Email Sent',
+                description: `A password reset email has been sent to ${userToReset.name}.`,
+            });
+        } catch (error: any) {
+            console.error("Error sending password reset email:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: `Failed to send email to ${userToReset.name}. See console for details.`,
+            });
+        } finally {
+            setIsResetting(false);
+            setUserToReset(null);
         }
     };
   
@@ -143,6 +171,11 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setUserToEdit(user)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setUserToReset(user)}>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Password Reset
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setUserToDelete(user)} className="text-destructive">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -166,6 +199,24 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                     <AlertDialogAction onClick={handleDeleteUser} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
                          {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                          Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        
+        <AlertDialog open={!!userToReset} onOpenChange={(open) => !open && setUserToReset(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Send Password Reset?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will send a password reset link to {userToReset?.name} at <strong>{userToReset?.email}</strong>. The user will be able to set a new password themselves.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSendResetEmail} disabled={isResetting}>
+                         {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         Send Email
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
