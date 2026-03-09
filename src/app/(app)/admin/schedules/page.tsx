@@ -7,10 +7,10 @@ import type { Firestore } from 'firebase/firestore';
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 
 import type { Schedule, User, Exam, ExamSubmission } from '@/lib/definitions';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Calendar, Clock, Users, FileText, CheckCircle, Percent } from 'lucide-react';
+import { Loader2, Calendar, Clock, Users, FileText, CheckCircle, Percent, Calendar as CalendarIcon, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,9 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
 
 type Attendee = { id: string; studentName: string; studentAvatar: string; attendedAt: { toDate: () => Date } };
 type SubmissionWithStudentInfo = ExamSubmission & { student?: User };
@@ -163,6 +166,7 @@ export default function AdminSchedulesHistoryPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     useEffect(() => {
         if (!firestore) return;
@@ -195,11 +199,27 @@ export default function AdminSchedulesHistoryPage() {
     }, [firestore]);
     
     const schedulesWithTeachers = useMemo(() => {
-        return schedules.map(schedule => {
+        const allSchedulesWithTeachers = schedules.map(schedule => {
             const teacher = users.find(u => u.id === schedule.teacherId);
             return { ...schedule, teacherName: teacher?.name || 'Unknown' };
         });
-    }, [schedules, users]);
+
+        if (!selectedDate) {
+            return allSchedulesWithTeachers;
+        }
+
+        return allSchedulesWithTeachers.filter(schedule => 
+            isSameDay(schedule.date.toDate(), selectedDate)
+        );
+    }, [schedules, users, selectedDate]);
+    
+    useEffect(() => {
+        // When the filtered list changes, if the currently selected schedule is no longer in the list, deselect it.
+        if (selectedSchedule && !schedulesWithTeachers.find(s => s.id === selectedSchedule.id)) {
+            setSelectedSchedule(null);
+        }
+    }, [schedulesWithTeachers, selectedSchedule]);
+
 
     if(loading) {
         return <div className="flex h-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -214,17 +234,47 @@ export default function AdminSchedulesHistoryPage() {
 
             <div className="grid md:grid-cols-3 gap-8 items-start">
                 <Card className="md:col-span-1">
-                    <CardHeader><CardTitle>All Scheduled Items</CardTitle><CardDescription>Select an item to view its details.</CardDescription></CardHeader>
+                    <CardHeader>
+                        <CardTitle>All Scheduled Items</CardTitle>
+                        <CardDescription>Select an item to view its details.</CardDescription>
+                         <div className="flex items-center gap-2 pt-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {selectedDate ? format(selectedDate, 'PPP') : <span>Filter by date...</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <CalendarComponent
+                                        mode="single"
+                                        selected={selectedDate || undefined}
+                                        onSelect={(date) => setSelectedDate(date || null)}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            {selectedDate && (
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedDate(null)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                    </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[70vh]">
                             <div className="space-y-2 pr-4">
-                                {schedulesWithTeachers.map(schedule => (
-                                    <button key={schedule.id} className={cn('w-full text-left p-3 rounded-lg border transition-colors', selectedSchedule?.id === schedule.id ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50')} onClick={() => setSelectedSchedule(schedule)}>
-                                        <div className="flex items-center justify-between"><p className="font-semibold truncate">{schedule.title}</p><Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type || 'Item'}</Badge></div>
-                                        <p className="text-sm text-muted-foreground">{format(schedule.date.toDate(), 'MMM d, yyyy')}</p>
-                                        <p className="text-xs text-muted-foreground">By {schedule.teacherName}</p>
-                                    </button>
-                                ))}
+                                {schedulesWithTeachers.length > 0 ? (
+                                    schedulesWithTeachers.map(schedule => (
+                                        <button key={schedule.id} className={cn('w-full text-left p-3 rounded-lg border transition-colors', selectedSchedule?.id === schedule.id ? 'bg-accent border-primary ring-1 ring-primary' : 'hover:bg-accent/50')} onClick={() => setSelectedSchedule(schedule)}>
+                                            <div className="flex items-center justify-between"><p className="font-semibold truncate">{schedule.title}</p><Badge variant={schedule.type === 'exam' ? 'destructive' : 'default'} className="capitalize shrink-0">{schedule.type || 'Item'}</Badge></div>
+                                            <p className="text-sm text-muted-foreground">{format(schedule.date.toDate(), 'MMM d, yyyy')}</p>
+                                            <p className="text-xs text-muted-foreground">By {schedule.teacherName}</p>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted-foreground p-8">{selectedDate ? 'No schedules found for this date.' : 'No schedules found.'}</p>
+                                )}
                             </div>
                         </ScrollArea>
                     </CardContent>
