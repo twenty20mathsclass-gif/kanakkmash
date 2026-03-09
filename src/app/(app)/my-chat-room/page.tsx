@@ -62,45 +62,65 @@ export default function MyChatRoomPage() {
         const fetchContacts = async () => {
             try {
                 if (user.role === 'student') {
-                    // A student's contacts are their teachers from their schedules, plus their referrer.
-                    const schedulesQuery = query(collection(firestore, 'schedules'));
-                    const schedulesSnapshot = await getDocs(schedulesQuery);
-                    const allSchedules = schedulesSnapshot.docs.map(doc => doc.data() as Schedule);
-                    
-                    const studentSchedules = allSchedules.filter(schedule => {
-                        // Personal schedule check
-                        if (schedule.studentId === user.id) {
-                          return true;
-                        }
+                    const teacherIdSet = new Set<string>();
 
-                        // Group schedule check
-                        if (!schedule.studentId && schedule.courseModel === user.courseModel) {
-                            if (user.courseModel === 'COMPETITIVE EXAM') {
-                                return schedule.competitiveExam === user.competitiveExam;
-                            }
-
-                            if (schedule.class === user.class) {
-                                if (user.class !== 'DEGREE') {
-                                    return schedule.syllabus === user.syllabus;
-                                }
-                                return true;
-                            }
+                    // 1. Add referrer if they are a teacher
+                    if (user.referredBy) {
+                        const referrerDoc = await getDoc(doc(firestore, 'users', user.referredBy));
+                        if (referrerDoc.exists() && referrerDoc.data().role === 'teacher') {
+                            teacherIdSet.add(user.referredBy);
                         }
-                        
-                        return false;
-                    });
-                    
-                    const teacherIds = [...new Set(studentSchedules.map(s => s.teacherId))];
-                    if (user.referredBy && !teacherIds.includes(user.referredBy)) {
-                        teacherIds.push(user.referredBy);
                     }
 
-                    if (teacherIds.length > 0) {
-                        const teacherPromises = teacherIds.map(id => getDoc(doc(firestore, 'users', id)));
+                    // 2. Query for personal schedules to get teacher IDs
+                    const personalSchedulesQuery = query(collection(firestore, 'schedules'), where('studentId', '==', user.id));
+                    const personalSchedulesSnapshot = await getDocs(personalSchedulesQuery);
+                    personalSchedulesSnapshot.forEach(doc => teacherIdSet.add(doc.data().teacherId));
+
+                    // 3. Build and execute queries for group schedules
+                    const groupScheduleQueries = [];
+                    if (user.courseModel) {
+                        if (user.courseModel === 'COMPETITIVE EXAM' && user.competitiveExam) {
+                            groupScheduleQueries.push(query(
+                                collection(firestore, 'schedules'),
+                                where('courseModel', '==', user.courseModel),
+                                where('competitiveExam', '==', user.competitiveExam)
+                            ));
+                        } else if (user.class) {
+                             const baseGroupQuery = query(
+                                collection(firestore, 'schedules'),
+                                where('courseModel', '==', user.courseModel),
+                                where('class', '==', user.class)
+                            );
+                            if (user.class !== 'DEGREE' && user.syllabus) {
+                                groupScheduleQueries.push(query(baseGroupQuery, where('syllabus', '==', user.syllabus)));
+                            } else if (user.class === 'DEGREE') {
+                                groupScheduleQueries.push(baseGroupQuery);
+                            }
+                        }
+                    }
+
+                    const groupScheduleSnapshots = await Promise.all(groupScheduleQueries.map(q => getDocs(q)));
+                    groupScheduleSnapshots.forEach(snapshot => {
+                        snapshot.forEach(doc => {
+                            // Only add teachers from group schedules (where studentId is not set)
+                            if (!doc.data().studentId) {
+                                teacherIdSet.add(doc.data().teacherId);
+                            }
+                        });
+                    });
+                    
+                    const allTeacherIds = Array.from(teacherIdSet);
+                    
+                    if (allTeacherIds.length > 0) {
+                        // Fetch teacher user documents
+                        const teacherPromises = allTeacherIds.map(id => getDoc(doc(firestore, 'users', id)));
                         const teacherSnaps = await Promise.all(teacherPromises);
                         const teacherContacts = teacherSnaps
                             .filter(snap => snap.exists() && snap.data().role === 'teacher')
                             .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                        
+                        teacherContacts.sort((a,b) => a.name.localeCompare(b.name));
                         setContacts(teacherContacts);
                     } else {
                         setContacts([]);
