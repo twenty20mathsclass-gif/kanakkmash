@@ -169,7 +169,7 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                         <span className="sr-only">Toggle menu</span>
                     </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
                     <DropdownMenuItem onSelect={() => setUserToEdit(user)}>Edit</DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setUserToReset(user)}>
                         <Mail className="mr-2 h-4 w-4" />
