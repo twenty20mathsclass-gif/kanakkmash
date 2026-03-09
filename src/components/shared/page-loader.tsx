@@ -5,15 +5,15 @@ import Image from 'next/image';
 export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
   const loaderContent = (
     <div className="flex items-center justify-center">
-      <div className="relative h-32 w-32">
+      <div className="relative h-64 w-64">
         <div className="absolute inset-0 animate-spin rounded-full bg-gradient-to-r from-primary to-accent" />
-        <div className="absolute inset-1 flex items-center justify-center rounded-full bg-background">
+        <div className="absolute inset-4 flex items-center justify-center rounded-full bg-background">
           <Image
             src="/Loading Icon.png"
             alt="Loading..."
-            width={56}
-            height={56}
-            className="h-12 w-12"
+            width={112}
+            height={112}
+            className="h-24 w-24"
             priority
             unoptimized
           />

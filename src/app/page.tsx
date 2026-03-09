@@ -15,7 +15,7 @@ export default function Home() {
         aria-hidden="true"
         className="absolute inset-0 -z-10"
       >
-        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:8px_8px]"></div>
       </div>
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <div>
