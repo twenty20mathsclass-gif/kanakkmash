@@ -189,5 +189,11 @@ service cloud.firestore {
       // A user can only write to their own status document.
       allow write: if isOwner(userId);
     }
+
+    match /recordedClasses/{classId} {
+      allow read: if request.auth != null;
+      allow create: if isRole('teacher') || isAdmin();
+      allow update, delete: if (isRole('teacher') && resource.data.teacherId == request.auth.uid) || isAdmin();
+    }
   }
 }

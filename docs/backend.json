@@ -165,6 +165,26 @@
         "createdAt": { "type": "object" }
       },
       "required": ["courseModel", "amount", "createdAt"]
+    },
+    "recordedClass": {
+      "title": "Recorded Class",
+      "description": "A recorded class session, usually a YouTube video.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "youtubeUrl": { "type": "string", "format": "uri" },
+        "thumbnailUrl": { "type": "string", "format": "uri" },
+        "teacherId": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "teacherAvatarUrl": { "type": "string", "format": "uri" },
+        "courseModel": { "type": "string" },
+        "class": { "type": "string" },
+        "syllabus": { "type": "string" },
+        "competitiveExam": { "type": "string" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["title", "youtubeUrl", "thumbnailUrl", "teacherId", "teacherName", "courseModel", "createdAt"]
     }
   },
   "auth": {
@@ -238,6 +258,10 @@
     "/courseFees/{feeId}": {
       "schema": { "$ref": "#/entities/courseFee" },
       "description": "Stores the registration fee rules."
+    },
+    "/recordedClasses/{classId}": {
+      "schema": { "$ref": "#/entities/recordedClass" },
+      "description": "Stores recorded class videos."
     }
   }
 }

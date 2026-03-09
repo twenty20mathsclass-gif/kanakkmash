@@ -36,6 +36,7 @@ import {
     Share2,
     Award,
     Newspaper,
+    Youtube,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -123,6 +124,7 @@ export default function MainLayoutClient({
   const studentNav = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/class-schedule', label: 'Class Schedule', icon: Calendar },
+    { href: '/recorded-classes', label: 'Recorded', icon: Youtube },
     { href: '/exam-schedule', label: 'Exam Schedule', icon: FileText },
     { href: '/my-results', label: 'My Results', icon: Award },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
@@ -133,6 +135,7 @@ export default function MainLayoutClient({
     { href: '/teacher/attendance', label: 'Attendance', icon: UserCheck },
     { href: '/teacher/create-schedule', label: 'Create Class', icon: CalendarPlus },
     { href: '/teacher/create-exam-schedule', label: 'Create Exam', icon: FilePenLine },
+    { href: '/teacher/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/teacher/revenue', label: 'My Revenue', icon: Banknote },
     { href: '/teacher/my-referrals', label: 'My Referrals', icon: Share2 },
@@ -145,6 +148,7 @@ export default function MainLayoutClient({
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
     { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },

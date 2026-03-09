@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -230,5 +231,21 @@ export type CourseFee = {
   syllabus?: string;
   competitiveExam?: string;
   amount: number;
+  createdAt: Timestamp;
+};
+
+export type RecordedClass = {
+  id: string;
+  title: string;
+  description: string;
+  youtubeUrl: string;
+  thumbnailUrl: string;
+  teacherId: string;
+  teacherName: string;
+  teacherAvatarUrl: string;
+  courseModel: string;
+  class?: string;
+  syllabus?: string;
+  competitiveExam?: string;
   createdAt: Timestamp;
 };
