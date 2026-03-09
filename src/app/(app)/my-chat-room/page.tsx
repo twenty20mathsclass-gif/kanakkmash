@@ -79,13 +79,15 @@ export default function MyChatRoomPage() {
                     const scheduleIds = [...new Set(attendanceSnapshot.docs.map(doc => doc.data().scheduleId as string).filter(Boolean))];
 
                     if (scheduleIds.length > 0) {
-                        // Fetch the schedules to get teacherIds.
                         const schedulePromises = scheduleIds.map(id => getDoc(doc(firestore, 'schedules', id)));
-                        const scheduleSnapshots = await Promise.all(schedulePromises);
+                        const scheduleResults = await Promise.allSettled(schedulePromises);
                         
-                        scheduleSnapshots.forEach(snapshot => {
-                            if (snapshot.exists()) {
-                                teacherIdSet.add(snapshot.data().teacherId);
+                        scheduleResults.forEach(result => {
+                            if (result.status === 'fulfilled' && result.value.exists()) {
+                                const teacherId = result.value.data().teacherId;
+                                if (teacherId) {
+                                    teacherIdSet.add(teacherId);
+                                }
                             }
                         });
                     }
@@ -93,13 +95,17 @@ export default function MyChatRoomPage() {
                     const allTeacherIds = Array.from(teacherIdSet);
                     
                     if (allTeacherIds.length > 0) {
-                        // Fetch each teacher document individually because of security rules
                         const teacherPromises = allTeacherIds.map(id => getDoc(doc(firestore, 'users', id)));
-                        const teacherSnaps = await Promise.all(teacherPromises);
-                        
-                        const teacherContacts = teacherSnaps
-                            .filter(snap => snap.exists() && snap.data().role === 'teacher')
-                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                        const teacherResults = await Promise.allSettled(teacherPromises);
+
+                        const teacherContacts = teacherResults
+                            .map(result => {
+                                if (result.status === 'fulfilled' && result.value.exists() && result.value.data().role === 'teacher') {
+                                    return { id: result.value.id, ...result.value.data() } as User;
+                                }
+                                return null;
+                            })
+                            .filter((contact): contact is User => contact !== null);
                             
                         teacherContacts.sort((a,b) => a.name.localeCompare(b.name));
                         setContacts(teacherContacts);
@@ -107,7 +113,6 @@ export default function MyChatRoomPage() {
                         setContacts([]);
                     }
                 } else if (user.role === 'teacher') {
-                    // A teacher's contacts are any student they have referred or any student who has attended one of their classes.
                     const studentIdSet = new Set<string>();
 
                     // 1. Get students from referrals
@@ -132,17 +137,20 @@ export default function MyChatRoomPage() {
                         });
                     });
 
-
                     const allStudentIds = Array.from(studentIdSet);
 
                     if (allStudentIds.length > 0) {
-                        // Fetch each user document individually because of security rules
                         const studentPromises = allStudentIds.map(id => getDoc(doc(firestore, 'users', id)));
-                        const studentSnaps = await Promise.all(studentPromises);
+                        const studentResults = await Promise.allSettled(studentPromises);
                         
-                        const studentContacts = studentSnaps
-                            .filter(snap => snap.exists())
-                            .map(snap => ({ id: snap.id, ...snap.data() } as User));
+                        const studentContacts = studentResults
+                            .map(result => {
+                                if (result.status === 'fulfilled' && result.value.exists()) {
+                                    return { id: result.value.id, ...result.value.data() } as User;
+                                }
+                                return null;
+                            })
+                            .filter((contact): contact is User => contact !== null);
                             
                         studentContacts.sort((a, b) => a.name.localeCompare(b.name));
                         setContacts(studentContacts);
