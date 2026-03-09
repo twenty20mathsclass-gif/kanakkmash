@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -8,14 +7,42 @@ import InstallButton from '@/components/shared/install-button';
 
 export const dynamic = 'force-dynamic';
 
+const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
+    <div
+      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
+      style={{
+        animation: `float ${duration}s ease-in-out infinite`,
+        animationDelay: `${delay}s`
+      }}
+    >
+      {symbol}
+    </div>
+);
+
 export default function Home() {
+  const symbols = [
+    { symbol: '+', className: 'top-[20%] left-[10%] text-7xl', duration: 8, delay: 0 },
+    { symbol: '−', className: 'top-[50%] right-[12%] text-6xl', duration: 10, delay: 2 },
+    { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
+    { symbol: '÷', className: 'top-[15%] right-[25%] text-4xl', duration: 12, delay: 3 },
+    { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
+    { symbol: '√', className: 'top-[70%] left-[15%] text-6xl', duration: 11, delay: 2.5 },
+    { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
+    { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
+  ];
+
   return (
     <section className="relative flex w-full items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)] pt-16">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-10"
       >
-        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:8px_8px]"></div>
+        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]"></div>
+        <div className="hidden md:block">
+            {symbols.map((s, i) => (
+                <FloatingSymbol key={i} {...s} />
+            ))}
+        </div>
       </div>
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <div>
