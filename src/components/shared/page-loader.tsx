@@ -21,7 +21,7 @@ export function PageLoader({ fullScreen = true }: { fullScreen?: boolean }) {
             width={80}
             height={80}
             alt="Loading..."
-            className="w-20 h-20 md:w-24 md:w-24"
+            className="w-20 h-30 md:w-24 md:w-24"
             priority
             unoptimized
         />

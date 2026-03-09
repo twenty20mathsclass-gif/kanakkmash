@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -20,11 +21,10 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
-      captionLayout="buttons"
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex flex-col-reverse items-start gap-2 mb-4",
+        caption: "flex justify-between items-center relative mb-4",
         caption_label: "text-lg font-medium",
         nav: "flex items-center",
         nav_button: cn(
@@ -34,7 +34,7 @@ function Calendar({
         table: "w-full border-collapse",
         head_row: "grid grid-cols-7 mb-2",
         head_cell:
-          "text-muted-foreground w-9 font-normal text-[0.8rem] text-center",
+          "text-muted-foreground w-9 font-normal text-[0.8rem] text-center uppercase",
         row: "grid grid-cols-7 w-full",
         cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex justify-center items-center",
         day: cn(
@@ -53,9 +53,9 @@ function Calendar({
       }}
       formatters={{
         formatCaption: (month, options) =>
-          format(month, "MMMM yyyy", { locale: options?.locale }),
+          format(month, "MMMM, yyyy", { locale: options?.locale }),
         formatWeekdayName: (day, options) =>
-          format(day, "EEEEE", { locale: options?.locale }),
+          format(day, "EEE", { locale: options?.locale }),
       }}
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-5 w-5" />,
