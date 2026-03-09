@@ -71,10 +71,10 @@ export default function AboutUsPage() {
   const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
 
   return (
-    <div className="space-y-24 md:space-y-32">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 space-y-24 md:space-y-32">
       {/* Hero Section */}
       <Reveal>
-        <section className="grid items-center gap-12 md:grid-cols-2">
+        <section className="grid items-center gap-12 md:grid-cols-2 h-screen">
           <div className="space-y-6">
             <Badge variant="secondary" className="text-base font-semibold">
               Welcome to Kanakkmash
