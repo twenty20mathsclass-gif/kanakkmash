@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -33,7 +32,7 @@ type NavItem = {
 
 export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[], user?: User | null; onSignOut?: () => void }) {
   const pathname = usePathname();
-  const logoLink = user ? '/dashboard' : '/';
+  const logoLink = '/';
 
   const isActive = (href: string) => {
     if(user) {
