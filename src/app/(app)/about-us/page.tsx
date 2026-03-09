@@ -71,10 +71,10 @@ export default function AboutUsPage() {
   const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
 
   return (
-    <div className="container mx-auto px-4 md:px-6 lg:px-8 space-y-24 md:space-y-32">
+    <div className="space-y-24 md:space-y-32">
       {/* Hero Section */}
       <Reveal>
-        <section className="grid items-center gap-12 md:grid-cols-2 h-screen">
+        <section className="container mx-auto grid min-h-screen items-center gap-12 px-4 md:grid-cols-2 md:px-6 lg:px-8">
           <div className="space-y-6">
             <Badge variant="secondary" className="text-base font-semibold">
               Welcome to Kanakkmash
@@ -154,7 +154,7 @@ export default function AboutUsPage() {
 
       {/* Why Choose Us Section */}
       <Reveal>
-        <section className="space-y-8">
+        <section className="container mx-auto space-y-8 px-4 md:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="font-headline text-3xl font-bold sm:text-4xl">
               Why Choose Kanakkmash?
@@ -228,7 +228,7 @@ export default function AboutUsPage() {
 
       {/* Meet Our Mentor Section */}
       <Reveal>
-        <section className="grid items-center gap-12 md:grid-cols-2">
+        <section className="container mx-auto grid items-center gap-12 px-4 md:grid-cols-2 md:px-6 lg:px-8">
           <div className="relative flex items-center justify-center">
             <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
             <div className="relative aspect-square h-[400px] -mt-24">
@@ -267,7 +267,7 @@ export default function AboutUsPage() {
 
       {/* Services Section */}
       <Reveal>
-        <section className="space-y-8">
+        <section className="container mx-auto space-y-8 px-4 md:px-6 lg:px-8">
           <div className="text-center">
             <Badge>Our Services</Badge>
             <h2 className="mt-2 font-headline text-3xl font-bold sm:text-4xl">
