@@ -68,7 +68,7 @@ const SocialIcon = ({
 
 function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
   return (
-    <section className="container mx-auto flex h-screen min-h-[700px] items-center justify-center px-4 md:px-6">
+    <section className="container mx-auto flex h-screen min-h-[700px] items-start justify-center px-4 pt-32 md:px-6">
       <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-transparent bg-secondary px-3 py-1.5 text-base font-semibold text-secondary-foreground">
