@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -126,14 +127,13 @@ export default function TeacherDashboardPage() {
           where('teacherId', '==', user.id)
         );
         const salaryPaymentsQuery = query(
-          collection(firestore, 'salaryPayments'),
-          where('teacherId', '==', user.id)
+          collection(firestore, 'users', user.id, 'salaryPayments')
         );
 
         const [schedulesSnapshot, salaryPaymentsSnapshot] =
           await Promise.all([
             getDocs(schedulesQuery),
-            getDocs(salaryPaymentsSnapshot),
+            getDocs(salaryPaymentsQuery),
           ]);
 
         let totalClasses = 0;
