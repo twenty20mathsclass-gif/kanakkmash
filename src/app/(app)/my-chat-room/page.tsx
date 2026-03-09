@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc, documentId } from 'firebase/firestore';
-import type { User, Schedule } from '@/lib/definitions';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import type { User } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -52,116 +51,44 @@ export default function MyChatRoomPage() {
     const [contacts, setContacts] = useState<User[]>([]);
     const [selectedContact, setSelectedContact] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-
-    const contactListTitle = user?.role === 'student' ? 'My Teachers' : user?.role === 'teacher' ? 'My Students' : 'My Contacts';
-
+    
+    const [contactListTitle, setContactListTitle] = useState('My Contacts');
+    
     useEffect(() => {
         if (!firestore || !user) return;
         setLoading(true);
 
         const fetchContacts = async () => {
             try {
+                let contactsQuery;
                 if (user.role === 'student') {
-                    const teacherIdSet = new Set<string>();
-
-                    // 1. Add referrer if they are a teacher
-                    if (user.referredBy) {
-                        const referrerDoc = await getDoc(doc(firestore, 'users', user.referredBy));
-                        if (referrerDoc.exists() && referrerDoc.data().role === 'teacher') {
-                            teacherIdSet.add(user.referredBy);
-                        }
-                    }
-
-                    // 2. Get teachers from attended classes
-                    const attendanceQuery = query(collection(firestore, 'users', user.id, 'attendance'));
-                    const attendanceSnapshot = await getDocs(attendanceQuery);
-                    
-                    const scheduleIds = [...new Set(attendanceSnapshot.docs.map(doc => doc.data().scheduleId as string).filter(Boolean))];
-
-                    if (scheduleIds.length > 0) {
-                        const schedulePromises = scheduleIds.map(id => getDoc(doc(firestore, 'schedules', id)));
-                        const scheduleResults = await Promise.allSettled(schedulePromises);
-                        
-                        scheduleResults.forEach(result => {
-                            if (result.status === 'fulfilled' && result.value.exists()) {
-                                const teacherId = result.value.data().teacherId;
-                                if (teacherId) {
-                                    teacherIdSet.add(teacherId);
-                                }
-                            }
-                        });
-                    }
-
-                    const allTeacherIds = Array.from(teacherIdSet);
-                    
-                    if (allTeacherIds.length > 0) {
-                        const teacherPromises = allTeacherIds.map(id => getDoc(doc(firestore, 'users', id)));
-                        const teacherResults = await Promise.allSettled(teacherPromises);
-
-                        const teacherContacts = teacherResults
-                            .map(result => {
-                                if (result.status === 'fulfilled' && result.value.exists() && result.value.data().role === 'teacher') {
-                                    return { id: result.value.id, ...result.value.data() } as User;
-                                }
-                                return null;
-                            })
-                            .filter((contact): contact is User => contact !== null);
-                            
-                        teacherContacts.sort((a,b) => a.name.localeCompare(b.name));
-                        setContacts(teacherContacts);
-                    } else {
-                        setContacts([]);
-                    }
+                    setContactListTitle('My Teachers');
+                    contactsQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
                 } else if (user.role === 'teacher') {
-                    const studentIdSet = new Set<string>();
-
-                    // 1. Get students from referrals
-                    const referralsQuery = query(collection(firestore, 'users', user.id, 'referrals'));
-                    const referralsSnapshot = await getDocs(referralsQuery);
-                    referralsSnapshot.docs.forEach(doc => studentIdSet.add(doc.id));
-                    
-                    // 2. Get students from schedule attendees
-                    const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', user.id));
-                    const schedulesSnapshot = await getDocs(schedulesQuery);
-                    
-                    const attendeePromises = schedulesSnapshot.docs.map(scheduleDoc => {
-                        const attendeesQuery = query(collection(firestore, 'schedules', scheduleDoc.id, 'attendees'));
-                        return getDocs(attendeesQuery);
-                    });
-                    
-                    const attendeeSnapshots = await Promise.all(attendeePromises);
-                    
-                    attendeeSnapshots.forEach(attendeeSnapshot => {
-                        attendeeSnapshot.docs.forEach(attendeeDoc => {
-                            studentIdSet.add(attendeeDoc.id);
-                        });
-                    });
-
-                    const allStudentIds = Array.from(studentIdSet);
-
-                    if (allStudentIds.length > 0) {
-                        const studentPromises = allStudentIds.map(id => getDoc(doc(firestore, 'users', id)));
-                        const studentResults = await Promise.allSettled(studentPromises);
-                        
-                        const studentContacts = studentResults
-                            .map(result => {
-                                if (result.status === 'fulfilled' && result.value.exists()) {
-                                    return { id: result.value.id, ...result.value.data() } as User;
-                                }
-                                return null;
-                            })
-                            .filter((contact): contact is User => contact !== null);
-                            
-                        studentContacts.sort((a, b) => a.name.localeCompare(b.name));
-                        setContacts(studentContacts);
-                    } else {
-                        setContacts([]);
-                    }
+                    setContactListTitle('My Students');
+                    contactsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+                } else if (user.role === 'admin') {
+                    setContactListTitle('All Users');
+                    contactsQuery = query(collection(firestore, 'users'));
+                } else {
+                     setContacts([]);
+                     setLoading(false);
+                     return;
                 }
+
+                const querySnapshot = await getDocs(contactsQuery);
+                const fetchedContacts = querySnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() } as User))
+                    // Filter out the current user from their own contact list
+                    .filter(contact => contact.id !== user.id);
+
+                fetchedContacts.sort((a, b) => a.name.localeCompare(b.name));
+                setContacts(fetchedContacts);
+
             } catch (err: any) {
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
-                        path: 'referrals, schedules, attendees, or users',
+                        path: 'users',
                         operation: 'list',
                     }, { cause: err });
                     errorEmitter.emit('permission-error', permissionError);
@@ -203,7 +130,7 @@ export default function MyChatRoomPage() {
                             </ScrollArea>
                         ) : (
                             <div className="flex justify-center items-center h-full text-center text-muted-foreground p-4">
-                                <p>No contacts found. Your teachers or students will appear here once classes are scheduled.</p>
+                                <p>No contacts found.</p>
                             </div>
                         )}
                     </CardContent>

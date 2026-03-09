@@ -39,8 +39,8 @@ service cloud.firestore {
       // Any authenticated user can read public user profiles.
       allow get: if request.auth != null;
       
-      // Only admins can list all users.
-      allow list: if isTheOneTrueAdmin();
+      // Any authenticated user can list other users, which is necessary for the chat feature.
+      allow list: if request.auth != null;
       
       // A user can create their own profile, and an admin can create any user profile.
       allow create: if isOwner(userId) || isAdmin();
@@ -191,5 +191,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
