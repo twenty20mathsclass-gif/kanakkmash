@@ -39,7 +39,7 @@ export function FloatingActionButtons() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
+    <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-3 md:bottom-4">
       <div
         className={cn(
           'transition-opacity duration-300',
