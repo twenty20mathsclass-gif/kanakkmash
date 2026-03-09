@@ -105,8 +105,8 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
             console.error("Error sending password reset email:", error);
             toast({
                 variant: 'destructive',
-                title: 'Error',
-                description: `Failed to send email to ${userToReset.name}. See console for details.`,
+                title: 'Error sending reset email',
+                description: error.message || `Failed to send email to ${userToReset.name}.`,
             });
         } finally {
             setIsResetting(false);
@@ -170,13 +170,13 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setUserToEdit(user)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setUserToReset(user)}>
+                    <DropdownMenuItem onSelect={() => setUserToEdit(user)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setUserToReset(user)}>
                         <Mail className="mr-2 h-4 w-4" />
                         Send Password Reset
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setUserToDelete(user)} className="text-destructive">Delete</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setUserToDelete(user)} className="text-destructive">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 </TableCell>
