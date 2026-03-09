@@ -179,11 +179,20 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
     if (!firestore || !user) return;
     setLoading(true);
     const q = isAdmin
-      ? query(collection(firestore, 'recordedClasses'), orderBy('createdAt', 'desc'))
-      : query(collection(firestore, 'recordedClasses'), where('teacherId', '==', user.id), orderBy('createdAt', 'desc'));
+      ? query(collection(firestore, 'recordedClasses'))
+      : query(collection(firestore, 'recordedClasses'), where('teacherId', '==', user.id));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setClasses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RecordedClass)));
+      const classList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RecordedClass));
+      classList.sort((a,b) => {
+        if (a.createdAt && b.createdAt) {
+          return b.createdAt.toMillis() - a.createdAt.toMillis();
+        }
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return 0;
+      });
+      setClasses(classList);
       setLoading(false);
     });
 
