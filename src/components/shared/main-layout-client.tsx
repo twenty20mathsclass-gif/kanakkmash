@@ -5,7 +5,7 @@ import { useEffect, Suspense, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
-
+import { PageLoader } from '@/components/shared/page-loader';
 import { AppSidebar } from '@/components/shared/app-sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -96,7 +96,7 @@ export default function MainLayoutClient({
   }
 
   if (loading) {
-    return null;
+    return <PageLoader />;
   }
 
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
