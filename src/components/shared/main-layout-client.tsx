@@ -42,7 +42,6 @@ import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
-import { PageLoader } from '@/components/shared/page-loader';
 import { usePresence } from '@/hooks/use-presence';
 
 
@@ -97,7 +96,7 @@ export default function MainLayoutClient({
   }
 
   if (loading) {
-    return <PageLoader />;
+    return null;
   }
 
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
