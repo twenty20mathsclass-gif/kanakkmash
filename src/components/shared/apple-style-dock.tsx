@@ -60,7 +60,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
               {isActive && (
                 <motion.div
                   layoutId="active-dock-item"
-                  className="absolute inset-0 rounded-full bg-primary"
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-primary via-accent to-chart-3 animate-gradient-pan [background-size:200%_auto]"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}

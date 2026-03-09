@@ -70,7 +70,7 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
                     asChild
                     className={cn(
                     "rounded-full px-4 font-bold",
-                    active && "text-primary-foreground"
+                    active && "text-primary-foreground bg-gradient-to-r from-primary via-accent to-chart-3 animate-gradient-pan [background-size:200%_auto] transition-all"
                     )}
                 >
                     <Link href={item.href}>
