@@ -54,7 +54,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
         return pathname.startsWith(href) && href !== '/';
     };
 
-    const homeHref = "/";
+    const homeHref = user.role === 'admin' ? '/admin' : '/teacher';
 
     return (
         <Sidebar>
