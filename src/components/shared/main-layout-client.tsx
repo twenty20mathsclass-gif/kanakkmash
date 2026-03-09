@@ -124,7 +124,6 @@ export default function MainLayoutClient({
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/class-schedule', label: 'Class Schedule', icon: Calendar },
     { href: '/exam-schedule', label: 'Exam Schedule', icon: FileText },
-    { href: '/courses', label: 'All Courses', icon: BookOpen },
     { href: '/my-results', label: 'My Results', icon: Award },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
   ];
