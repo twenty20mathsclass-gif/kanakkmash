@@ -20,6 +20,18 @@ import {
 } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 
+const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
+    <div
+      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
+      style={{
+        animation: `float ${duration}s ease-in-out infinite`,
+        animationDelay: `${delay}s`
+      }}
+    >
+      {symbol}
+    </div>
+);
+
 const StatBubble = ({
   icon,
   label,
@@ -71,11 +83,32 @@ export default function AboutUsPage() {
   const service2Image = PlaceHolderImages.find((img) => img.id === 'about-service-2');
   const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
 
+  const symbols = [
+    { symbol: '+', className: 'top-[20%] left-[10%] text-7xl', duration: 8, delay: 0 },
+    { symbol: '−', className: 'top-[50%] right-[12%] text-6xl', duration: 10, delay: 2 },
+    { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
+    { symbol: '÷', className: 'top-[15%] right-[25%] text-4xl', duration: 12, delay: 3 },
+    { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
+    { symbol: '√', className: 'top-[70%] left-[15%] text-6xl', duration: 11, delay: 2.5 },
+    { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
+    { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
+  ];
+
   return (
-    <div className="space-y-24 md:space-y-32">
+    <div className="space-y-24 md:space-y-32 relative overflow-hidden">
+       <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10"
+      >
+        <div className="hidden md:block">
+            {symbols.map((s, i) => (
+                <FloatingSymbol key={i} {...s} />
+            ))}
+        </div>
+      </div>
       {/* Hero Section */}
       <Reveal>
-        <section className="container mx-auto flex min-h-screen justify-center px-4 pt-24 md:px-6 lg:pt-32 lg:px-8">
+        <section className="container mx-auto flex min-h-screen justify-center items-center px-4 pt-24 md:px-6 lg:pt-0">
           <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
             <div className="space-y-6">
               <Badge variant="secondary" className="text-base font-semibold">
