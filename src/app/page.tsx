@@ -64,7 +64,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Button size="lg" asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground transition-all hover:bg-gradient-to-br hover:shadow-lg">
+            <Button size="lg" asChild className="bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg">
               <Link href="/sign-up">Enroll Now</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
