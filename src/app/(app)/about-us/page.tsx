@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
 import {
   PlayCircle,
   Users,
@@ -20,17 +20,7 @@ import {
 } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 
-const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
-    <div
-      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
-      style={{
-        animation: `float ${duration}s ease-in-out infinite`,
-        animationDelay: `${delay}s`
-      }}
-    >
-      {symbol}
-    </div>
-);
+// --- Hero Section Component and its helpers ---
 
 const StatBubble = ({
   icon,
@@ -76,194 +66,170 @@ const SocialIcon = ({
   );
 };
 
-export default function AboutUsPage() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === 'about-hero-woman');
-  const founderImage = PlaceHolderImages.find((img) => img.id === 'fida-shirin');
-  const service1Image = PlaceHolderImages.find((img) => img.id === 'about-service-1');
-  const service2Image = PlaceHolderImages.find((img) => img.id === 'about-service-2');
-  const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
-
-  const symbols = [
-    { symbol: '+', className: 'top-[20%] left-[10%] text-7xl', duration: 8, delay: 0 },
-    { symbol: '−', className: 'top-[50%] right-[12%] text-6xl', duration: 10, delay: 2 },
-    { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
-    { symbol: '÷', className: 'top-[15%] right-[25%] text-4xl', duration: 12, delay: 3 },
-    { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
-    { symbol: '√', className: 'top-[70%] left-[15%] text-6xl', duration: 11, delay: 2.5 },
-    { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
-    { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
-  ];
-
+function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
   return (
-    <div className="space-y-24 md:space-y-32 relative overflow-hidden">
-       <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10"
-      >
-        <div className="hidden md:block">
-            {symbols.map((s, i) => (
-                <FloatingSymbol key={i} {...s} />
-            ))}
-        </div>
-      </div>
-      {/* Hero Section */}
-      <Reveal>
-        <section className="container mx-auto flex min-h-screen justify-center items-center px-4 pt-24 md:px-6 lg:pt-0">
-          <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
-            <div className="space-y-6">
-              <Badge variant="secondary" className="text-base font-semibold">
-                Welcome to Kanakkmash
-              </Badge>
-              <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                Unlock Your Math Superpowers
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                We provide top-quality mathematics classes for students of all
-                levels, from primary school to competitive exams, helping them
-                excel and build a strong foundation for the future.
-              </p>
-              <div className="flex flex-wrap items-center gap-4">
-                <Button size="lg" asChild>
-                  <Link href="/sign-up">Get Started</Link>
-                </Button>
-                <Button size="lg" variant="ghost">
-                  <PlayCircle className="mr-2" />
-                  Watch Intro
-                </Button>
-              </div>
-              <div className="flex items-center gap-4 pt-4">
-                <div className="flex -space-x-2">
-                  <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/avatar1/40/40" />
-                    <AvatarFallback>S1</AvatarFallback>
-                  </Avatar>
-                  <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/avatar2/40/40" />
-                    <AvatarFallback>S2</AvatarFallback>
-                  </Avatar>
-                  <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/avatar3/40/40" />
-                    <AvatarFallback>S3</AvatarFallback>
-                  </Avatar>
-                </div>
-                <p className="font-medium text-muted-foreground">
-                  3460+ Satisfied Students
-                </p>
-              </div>
-            </div>
-            <div className="relative flex items-center justify-center">
-              <div className="absolute z-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-              <div className="relative aspect-square h-[400px]">
-                {heroImage && (
-                  <Image
-                    src={heroImage.imageUrl}
-                    alt={heroImage.description}
-                    width={500}
-                    height={500}
-                    className="h-full w-full rounded-full border-8 border-background object-contain p-8 shadow-2xl"
-                    data-ai-hint={heroImage.imageHint}
-                    unoptimized
-                  />
-                )}
-                <div className="absolute inset-0 z-10 rounded-full border-[10px] border-dashed border-primary/20" />
-                <div className="absolute inset-0 z-10 animate-spin-slow rounded-full border-[10px] border-dashed border-primary/20 border-t-transparent" />
-                <StatBubble
-                  icon={TrendingUp}
-                  label="Success Rate"
-                  value="98%"
-                  className="bottom-8 -left-12"
-                />
-                <StatBubble
-                  icon={Users}
-                  label="Graduates"
-                  value="180+"
-                  className="right-0 top-16"
-                />
-                <SocialIcon icon={Facebook} className="-top-4 left-1/4" />
-                <SocialIcon icon={Youtube} className="left-[-5%] top-1/3" />
-                <SocialIcon icon={Twitter} className="right-[-5%] bottom-1/4" />
-              </div>
-            </div>
+    <section className="container mx-auto flex min-h-screen justify-center items-center px-4 pt-24 md:px-6 lg:pt-0">
+      <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
+        <div className="space-y-6">
+          <Badge variant="secondary" className="text-base font-semibold">
+            Welcome to Kanakkmash
+          </Badge>
+          <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            Unlock Your Math Superpowers
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            We provide top-quality mathematics classes for students of all
+            levels, from primary school to competitive exams, helping them
+            excel and build a strong foundation for the future.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Button size="lg" asChild>
+              <Link href="/sign-up">Get Started</Link>
+            </Button>
+            <Button size="lg" variant="ghost">
+              <PlayCircle className="mr-2" />
+              Watch Intro
+            </Button>
           </div>
-        </section>
-      </Reveal>
-
-      {/* Why Choose Us Section */}
-      <Reveal>
-        <section className="container mx-auto space-y-8 px-4 md:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="font-headline text-3xl font-bold sm:text-4xl">
-              Why Choose Kanakkmash?
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              We're dedicated to providing the best learning experience with a
-              focus on results and student satisfaction.
+          <div className="flex items-center gap-4 pt-4">
+            <div className="flex -space-x-2">
+              <Avatar>
+                <AvatarImage src="https://picsum.photos/seed/avatar1/40/40" />
+                <AvatarFallback>S1</AvatarFallback>
+              </Avatar>
+              <Avatar>
+                <AvatarImage src="https://picsum.photos/seed/avatar2/40/40" />
+                <AvatarFallback>S2</AvatarFallback>
+              </Avatar>
+              <Avatar>
+                <AvatarImage src="https://picsum.photos/seed/avatar3/40/40" />
+                <AvatarFallback>S3</AvatarFallback>
+              </Avatar>
+            </div>
+            <p className="font-medium text-muted-foreground">
+              3460+ Satisfied Students
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: Award,
-                title: 'Expert Tutors',
-                text: 'Learn from experienced educators who are masters in mathematics.',
-              },
-              {
-                icon: Clock,
-                title: 'Flexible Timing',
-                text: 'Our schedules are designed to fit your busy life, not the other way around.',
-              },
-              {
-                icon: DollarSign,
-                title: 'Affordable Pricing',
-                text: 'High-quality education that doesn’t break the bank.',
-                isPrimary: true,
-              },
-              {
-                icon: Target,
-                title: 'Proven Strategy',
-                text: 'Our teaching methods are tested and proven to deliver great results.',
-              },
-            ].map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card
-                  key={index}
-                  className={`h-full text-center ${
+        </div>
+        <div className="relative flex items-center justify-center">
+          <div className="absolute z-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative aspect-square h-[400px]">
+            {heroImage && (
+              <Image
+                src={heroImage.imageUrl}
+                alt={heroImage.description}
+                width={500}
+                height={500}
+                className="h-full w-full rounded-full border-8 border-background object-contain p-8 shadow-2xl"
+                data-ai-hint={heroImage.imageHint}
+                unoptimized
+              />
+            )}
+            <div className="absolute inset-0 z-10 rounded-full border-[10px] border-dashed border-primary/20" />
+            <div className="absolute inset-0 z-10 animate-spin-slow rounded-full border-[10px] border-dashed border-primary/20 border-t-transparent" />
+            <StatBubble
+              icon={TrendingUp}
+              label="Success Rate"
+              value="98%"
+              className="bottom-8 -left-12"
+            />
+            <StatBubble
+              icon={Users}
+              label="Graduates"
+              value="180+"
+              className="right-0 top-16"
+            />
+            <SocialIcon icon={Facebook} className="-top-4 left-1/4" />
+            <SocialIcon icon={Youtube} className="left-[-5%] top-1/3" />
+            <SocialIcon icon={Twitter} className="right-[-5%] bottom-1/4" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// --- Why Choose Us Section ---
+
+function WhyChooseUsSection() {
+  return (
+    <section className="container mx-auto space-y-8 px-4 md:px-6 lg:px-8">
+      <div className="text-center">
+        <h2 className="font-headline text-3xl font-bold sm:text-4xl">
+          Why Choose Kanakkmash?
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+          We're dedicated to providing the best learning experience with a
+          focus on results and student satisfaction.
+        </p>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            icon: Award,
+            title: 'Expert Tutors',
+            text: 'Learn from experienced educators who are masters in mathematics.',
+          },
+          {
+            icon: Clock,
+            title: 'Flexible Timing',
+            text: 'Our schedules are designed to fit your busy life, not the other way around.',
+          },
+          {
+            icon: DollarSign,
+            title: 'Affordable Pricing',
+            text: 'High-quality education that doesn’t break the bank.',
+            isPrimary: true,
+          },
+          {
+            icon: Target,
+            title: 'Proven Strategy',
+            text: 'Our teaching methods are tested and proven to deliver great results.',
+          },
+        ].map((feature, index) => {
+          const Icon = feature.icon;
+          return (
+            <Card
+              key={index}
+              className={`h-full text-center ${
+                feature.isPrimary
+                  ? 'bg-primary text-primary-foreground'
+                  : ''
+              }`}
+            >
+              <CardContent className="p-8">
+                <Icon
+                  className={`mx-auto h-12 w-12 ${
                     feature.isPrimary
-                      ? 'bg-primary text-primary-foreground'
-                      : ''
+                      ? 'text-primary-foreground'
+                      : 'text-primary'
+                  }`}
+                />
+                <h3 className="mt-4 font-headline text-xl font-bold">
+                  {feature.title}
+                </h3>
+                <p
+                  className={`mt-2 text-sm ${
+                    feature.isPrimary
+                      ? 'text-primary-foreground/80'
+                      : 'text-muted-foreground'
                   }`}
                 >
-                  <CardContent className="p-8">
-                    <Icon
-                      className={`mx-auto h-12 w-12 ${
-                        feature.isPrimary
-                          ? 'text-primary-foreground'
-                          : 'text-primary'
-                      }`}
-                    />
-                    <h3 className="mt-4 font-headline text-xl font-bold">
-                      {feature.title}
-                    </h3>
-                    <p
-                      className={`mt-2 text-sm ${
-                        feature.isPrimary
-                          ? 'text-primary-foreground/80'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {feature.text}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-      </Reveal>
+                  {feature.text}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
-      {/* Meet Our Mentor Section */}
-      <Reveal>
+// --- Mentor Section ---
+
+function MentorSection({ founderImage }: { founderImage?: ImagePlaceholder }) {
+    return (
         <section className="container mx-auto grid items-center gap-12 px-4 md:grid-cols-2 md:px-6 lg:px-8">
           <div className="relative flex items-center justify-center">
             <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
@@ -299,10 +265,19 @@ export default function AboutUsPage() {
             </div>
           </div>
         </section>
-      </Reveal>
+    );
+}
 
-      {/* Services Section */}
-      <Reveal>
+// --- Services Section ---
+
+type Service = {
+    title: string;
+    text: string;
+    image?: ImagePlaceholder;
+}
+
+function ServicesSection({ services }: { services: Service[] }) {
+    return (
         <section className="container mx-auto space-y-8 px-4 md:px-6 lg:px-8">
           <div className="text-center">
             <Badge>Our Services</Badge>
@@ -315,23 +290,7 @@ export default function AboutUsPage() {
             </p>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: 'Online Group Tuition',
-                text: 'Interactive group classes covering various syllabuses.',
-                image: service1Image,
-              },
-              {
-                title: 'One-to-One Classes',
-                text: 'Personalized attention and a curriculum tailored just for you.',
-                image: service2Image,
-              },
-              {
-                title: 'Competitive Exam Prep',
-                text: 'Specialized coaching to help you ace competitive exams.',
-                image: service3Image,
-              },
-            ].map((service, index) => (
+            {services.map((service, index) => (
               <Card key={index} className="overflow-hidden">
                 {service.image && (
                   <div className="aspect-video overflow-hidden">
@@ -357,6 +316,85 @@ export default function AboutUsPage() {
             ))}
           </div>
         </section>
+    );
+}
+
+
+const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
+    <div
+      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
+      style={{
+        animation: `float ${duration}s ease-in-out infinite`,
+        animationDelay: `${delay}s`
+      }}
+    >
+      {symbol}
+    </div>
+);
+
+export default function AboutUsPage() {
+  const heroImage = PlaceHolderImages.find((img) => img.id === 'about-hero-woman');
+  const founderImage = PlaceHolderImages.find((img) => img.id === 'fida-shirin');
+  const service1Image = PlaceHolderImages.find((img) => img.id === 'about-service-1');
+  const service2Image = PlaceHolderImages.find((img) => img.id === 'about-service-2');
+  const service3Image = PlaceHolderImages.find((img) => img.id === 'about-service-3');
+
+  const services = [
+    {
+      title: 'Online Group Tuition',
+      text: 'Interactive group classes covering various syllabuses.',
+      image: service1Image,
+    },
+    {
+      title: 'One-to-One Classes',
+      text: 'Personalized attention and a curriculum tailored just for you.',
+      image: service2Image,
+    },
+    {
+      title: 'Competitive Exam Prep',
+      text: 'Specialized coaching to help you ace competitive exams.',
+      image: service3Image,
+    },
+  ];
+
+  const symbols = [
+    { symbol: '+', className: 'top-[20%] left-[10%] text-7xl', duration: 8, delay: 0 },
+    { symbol: '−', className: 'top-[50%] right-[12%] text-6xl', duration: 10, delay: 2 },
+    { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
+    { symbol: '÷', className: 'top-[15%] right-[25%] text-4xl', duration: 12, delay: 3 },
+    { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
+    { symbol: '√', className: 'top-[70%] left-[15%] text-6xl', duration: 11, delay: 2.5 },
+    { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
+    { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
+  ];
+
+  return (
+    <div className="space-y-24 md:space-y-32 relative overflow-hidden">
+       <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10"
+      >
+        <div className="hidden md:block">
+            {symbols.map((s, i) => (
+                <FloatingSymbol key={i} {...s} />
+            ))}
+        </div>
+      </div>
+      
+      <Reveal>
+        <HeroSection heroImage={heroImage} />
+      </Reveal>
+
+      <Reveal>
+        <WhyChooseUsSection />
+      </Reveal>
+
+      <Reveal>
+        <MentorSection founderImage={founderImage} />
+      </Reveal>
+      
+      <Reveal>
+        <ServicesSection services={services.filter(s => s.image)} />
       </Reveal>
     </div>
   );
