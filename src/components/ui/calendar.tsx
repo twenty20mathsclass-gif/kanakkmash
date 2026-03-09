@@ -24,26 +24,26 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-between items-center relative mb-4",
-        caption_label: "text-lg font-medium",
-        nav: "flex items-center",
+        caption: "flex justify-between items-center relative mb-4 px-1",
+        caption_label: "text-xl font-bold font-headline text-foreground",
+        nav: "flex items-center gap-1",
         nav_button: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-7 w-7 p-0"
+          buttonVariants({ variant: "outline" }),
+          "h-8 w-8 p-0 rounded-full hover:bg-accent"
         ),
         table: "w-full border-collapse",
         head_row: "grid grid-cols-7 mb-2",
         head_cell:
           "text-muted-foreground w-9 font-normal text-[0.8rem] text-center uppercase",
         row: "grid grid-cols-7 w-full",
-        cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex justify-center items-center",
+        cell: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex justify-center items-center",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal rounded-full"
+          "h-10 w-10 p-0 font-normal rounded-full transition-transform hover:scale-105"
         ),
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
+          "bg-primary text-primary-foreground rounded-full shadow-lg scale-105 hover:bg-primary/90 focus:bg-primary focus:text-primary-foreground",
+        day_today: "bg-accent/50 text-accent-foreground rounded-full ring-2 ring-primary/30",
         day_outside: "day-outside text-muted-foreground opacity-50",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
@@ -69,3 +69,4 @@ function Calendar({
 Calendar.displayName = "Calendar"
 
 export { Calendar }
+
