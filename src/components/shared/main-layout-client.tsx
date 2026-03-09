@@ -174,7 +174,7 @@ export default function MainLayoutClient({
                     <SidebarTrigger className="md:hidden" />
                     <h1 className="font-semibold text-lg">{pageTitle}</h1>
                 </header>
-                <main className="flex-grow p-4 md:p-6 bg-muted/30">
+                <main className="flex-grow p-4 md:p-6 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:16px_16px]">
                     <div className="mx-auto w-full max-w-screen-2xl">
                         {children}
                     </div>
@@ -186,7 +186,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className="relative min-h-[100svh] bg-background flex flex-col">
+    <div className="relative min-h-[100svh] bg-background flex flex-col bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:16px_16px]">
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
