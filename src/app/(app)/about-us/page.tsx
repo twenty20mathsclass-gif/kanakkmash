@@ -74,79 +74,81 @@ export default function AboutUsPage() {
     <div className="space-y-24 md:space-y-32">
       {/* Hero Section */}
       <Reveal>
-        <section className="container mx-auto grid min-h-screen items-center gap-12 px-4 md:grid-cols-2 md:px-6 lg:px-8">
-          <div className="space-y-6">
-            <Badge variant="secondary" className="text-base font-semibold">
-              Welcome to Kanakkmash
-            </Badge>
-            <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Unlock Your Math Superpowers
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              We provide top-quality mathematics classes for students of all
-              levels, from primary school to competitive exams, helping them
-              excel and build a strong foundation for the future.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Button size="lg" asChild>
-                <Link href="/sign-up">Get Started</Link>
-              </Button>
-              <Button size="lg" variant="ghost">
-                <PlayCircle className="mr-2" />
-                Watch Intro
-              </Button>
-            </div>
-            <div className="flex items-center gap-4 pt-4">
-              <div className="flex -space-x-2">
-                <Avatar>
-                  <AvatarImage src="https://picsum.photos/seed/avatar1/40/40" />
-                  <AvatarFallback>S1</AvatarFallback>
-                </Avatar>
-                <Avatar>
-                  <AvatarImage src="https://picsum.photos/seed/avatar2/40/40" />
-                  <AvatarFallback>S2</AvatarFallback>
-                </Avatar>
-                <Avatar>
-                  <AvatarImage src="https://picsum.photos/seed/avatar3/40/40" />
-                  <AvatarFallback>S3</AvatarFallback>
-                </Avatar>
-              </div>
-              <p className="font-medium text-muted-foreground">
-                3460+ Satisfied Students
+        <section className="container mx-auto flex min-h-screen items-center justify-center px-4 md:px-6 lg:px-8">
+          <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
+            <div className="space-y-6">
+              <Badge variant="secondary" className="text-base font-semibold">
+                Welcome to Kanakkmash
+              </Badge>
+              <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                Unlock Your Math Superpowers
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                We provide top-quality mathematics classes for students of all
+                levels, from primary school to competitive exams, helping them
+                excel and build a strong foundation for the future.
               </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <Button size="lg" asChild>
+                  <Link href="/sign-up">Get Started</Link>
+                </Button>
+                <Button size="lg" variant="ghost">
+                  <PlayCircle className="mr-2" />
+                  Watch Intro
+                </Button>
+              </div>
+              <div className="flex items-center gap-4 pt-4">
+                <div className="flex -space-x-2">
+                  <Avatar>
+                    <AvatarImage src="https://picsum.photos/seed/avatar1/40/40" />
+                    <AvatarFallback>S1</AvatarFallback>
+                  </Avatar>
+                  <Avatar>
+                    <AvatarImage src="https://picsum.photos/seed/avatar2/40/40" />
+                    <AvatarFallback>S2</AvatarFallback>
+                  </Avatar>
+                  <Avatar>
+                    <AvatarImage src="https://picsum.photos/seed/avatar3/40/40" />
+                    <AvatarFallback>S3</AvatarFallback>
+                  </Avatar>
+                </div>
+                <p className="font-medium text-muted-foreground">
+                  3460+ Satisfied Students
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="relative flex items-center justify-center">
-            <div className="absolute z-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-            <div className="relative aspect-square h-[400px]">
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  width={500}
-                  height={500}
-                  className="h-full w-full rounded-full border-8 border-background object-contain p-8 shadow-2xl"
-                  data-ai-hint={heroImage.imageHint}
-                  unoptimized
+            <div className="relative flex items-center justify-center">
+              <div className="absolute z-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative aspect-square h-[400px]">
+                {heroImage && (
+                  <Image
+                    src={heroImage.imageUrl}
+                    alt={heroImage.description}
+                    width={500}
+                    height={500}
+                    className="h-full w-full rounded-full border-8 border-background object-contain p-8 shadow-2xl"
+                    data-ai-hint={heroImage.imageHint}
+                    unoptimized
+                  />
+                )}
+                <div className="absolute inset-0 z-10 rounded-full border-[10px] border-dashed border-primary/20" />
+                <div className="absolute inset-0 z-10 animate-spin-slow rounded-full border-[10px] border-dashed border-primary/20 border-t-transparent" />
+                <StatBubble
+                  icon={TrendingUp}
+                  label="Success Rate"
+                  value="98%"
+                  className="bottom-8 -left-12"
                 />
-              )}
-              <div className="absolute inset-0 z-10 rounded-full border-[10px] border-dashed border-primary/20" />
-              <div className="absolute inset-0 z-10 animate-spin-slow rounded-full border-[10px] border-dashed border-primary/20 border-t-transparent" />
-              <StatBubble
-                icon={TrendingUp}
-                label="Success Rate"
-                value="98%"
-                className="bottom-8 -left-12"
-              />
-              <StatBubble
-                icon={Users}
-                label="Graduates"
-                value="180+"
-                className="right-0 top-16"
-              />
-              <SocialIcon icon={Facebook} className="-top-4 left-1/4" />
-              <SocialIcon icon={Youtube} className="left-[-5%] top-1/3" />
-              <SocialIcon icon={Twitter} className="right-[-5%] bottom-1/4" />
+                <StatBubble
+                  icon={Users}
+                  label="Graduates"
+                  value="180+"
+                  className="right-0 top-16"
+                />
+                <SocialIcon icon={Facebook} className="-top-4 left-1/4" />
+                <SocialIcon icon={Youtube} className="left-[-5%] top-1/3" />
+                <SocialIcon icon={Twitter} className="right-[-5%] bottom-1/4" />
+              </div>
             </div>
           </div>
         </section>
