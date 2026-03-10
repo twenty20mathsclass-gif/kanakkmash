@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -508,7 +509,7 @@ export default function CreateSchedulePage() {
                                 </Button>
                             </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent className="w-80 p-0" align="start">
                             <Calendar
                                 mode="single"
                                 selected={field.value}

@@ -161,7 +161,7 @@ export default function ExamSchedulePage() {
                         <CalendarDays className="h-6 w-6" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-80 p-0" align="end">
                     <Calendar
                         mode="single"
                         selected={selectedDate}
