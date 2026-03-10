@@ -515,17 +515,15 @@ export default function CreateSchedulePage() {
                                                     align="start"
                                                     className="w-auto p-0"
                                                 >
-                                                    <div className="flex justify-center">
-                                                        <Calendar
-                                                            mode="single"
-                                                            selected={field.value}
-                                                            onSelect={field.onChange}
-                                                            disabled={(date) =>
-                                                                date < new Date(new Date().setHours(0, 0, 0, 0))
-                                                            }
-                                                            initialFocus
-                                                        />
-                                                    </div>
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) =>
+                                                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                                                        }
+                                                        initialFocus
+                                                    />
                                                 </PopoverContent>
                                             </Popover>
 
