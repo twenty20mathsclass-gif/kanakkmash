@@ -36,14 +36,14 @@ const StatBubble = ({
   const Icon = icon;
   return (
     <div
-      className={`absolute flex items-center gap-2 rounded-full border bg-background/80 p-2 pr-3 shadow-lg backdrop-blur-sm ${className}`}
+      className={`absolute flex items-center gap-1 rounded-full border bg-background/80 p-1.5 pr-2.5 shadow-lg backdrop-blur-sm md:gap-2 md:p-2 md:pr-3 ${className}`}
     >
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary md:h-8 md:w-8">
+        <Icon className="h-4 w-4 md:h-5 md:w-5" />
       </div>
       <div>
-        <p className="text-sm font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xs font-bold md:text-sm">{value}</p>
+        <p className="text-[10px] text-muted-foreground md:text-xs">{label}</p>
       </div>
     </div>
   );
@@ -59,18 +59,18 @@ const SocialIcon = ({
   const Icon = icon;
   return (
     <div
-      className={`absolute flex h-10 w-10 items-center justify-center rounded-full border bg-background/80 shadow-lg backdrop-blur-sm ${className}`}
+      className={`absolute flex h-8 w-8 items-center justify-center rounded-full border bg-background/80 shadow-lg backdrop-blur-sm md:h-10 md:w-10 ${className}`}
     >
-      <Icon className="h-6 w-6 text-primary" />
+      <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
     </div>
   );
 };
 
 function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
   return (
-    <section className="container mx-auto flex h-screen min-h-[700px] items-start justify-center px-4 pt-32 md:px-6">
-      <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-2">
-        <div className="space-y-6">
+    <section className="container mx-auto px-4 pt-24 pb-12 md:px-6 md:pt-32">
+      <div className="grid w-full max-w-6xl items-center gap-16 md:grid-cols-2">
+        <div className="space-y-6 text-center md:text-left">
           <div className="inline-flex items-center gap-2 rounded-full border border-transparent bg-secondary px-3 py-1.5 text-base font-semibold text-secondary-foreground">
             <span>Welcome to</span>
             <span className="bg-gradient-to-r from-primary via-accent to-chart-3 bg-clip-text text-transparent animate-gradient-pan [background-size:200%_auto] font-bold">
@@ -85,7 +85,7 @@ function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
             levels, from primary school to competitive exams, helping them
             excel and build a strong foundation for the future.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
             <Button size="lg" asChild>
               <Link href="/sign-up">Get Started</Link>
             </Button>
@@ -94,7 +94,7 @@ function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
               Watch Intro
             </Button>
           </div>
-          <div className="flex items-center gap-4 pt-4">
+          <div className="flex items-center justify-center gap-4 pt-4 md:justify-start">
             <div className="flex -space-x-2">
               <Avatar>
                 <AvatarImage src="https://picsum.photos/seed/avatar1/40/40" />
@@ -115,8 +115,8 @@ function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
           </div>
         </div>
         <div className="relative flex items-center justify-center">
-          <div className="absolute z-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-          <div className="relative aspect-square h-[400px]">
+          <div className="absolute z-0 h-64 w-64 rounded-full bg-primary/10 blur-3xl md:h-72 md:w-72" />
+          <div className="relative aspect-square h-[300px] md:h-[400px]">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}
@@ -134,17 +134,17 @@ function HeroSection({ heroImage }: { heroImage?: ImagePlaceholder }) {
               icon={TrendingUp}
               label="Success Rate"
               value="98%"
-              className="bottom-8 -left-12"
+              className="bottom-2 -left-2 md:bottom-8 md:-left-12"
             />
             <StatBubble
               icon={Users}
               label="Graduates"
               value="180+"
-              className="right-0 top-16"
+              className="right-0 top-12 md:top-16"
             />
-            <SocialIcon icon={Facebook} className="-top-4 left-1/4" />
-            <SocialIcon icon={Youtube} className="left-[-5%] top-1/3" />
-            <SocialIcon icon={Twitter} className="right-[-5%] bottom-1/4" />
+            <SocialIcon icon={Facebook} className="left-1/4 top-0 md:-top-4" />
+            <SocialIcon icon={Youtube} className="left-[-10%] top-1/3 md:left-[-5%]" />
+            <SocialIcon icon={Twitter} className="right-[-10%] bottom-1/4 md:right-[-5%]" />
           </div>
         </div>
       </div>
@@ -166,7 +166,7 @@ function WhyChooseUsSection() {
           focus on results and student satisfaction.
         </p>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
             icon: Award,
@@ -234,22 +234,7 @@ function WhyChooseUsSection() {
 function MentorSection({ founderImage }: { founderImage?: ImagePlaceholder }) {
     return (
         <section className="container mx-auto grid items-center gap-12 px-4 md:grid-cols-2 md:px-6 lg:px-8">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-            <div className="relative aspect-square h-[400px] -mt-24">
-              {founderImage && (
-                <Image
-                  src={founderImage.imageUrl}
-                  alt={founderImage.description}
-                  width={500}
-                  height={500}
-                  className="h-full w-full rounded-full object-cover shadow-2xl"
-                  data-ai-hint={founderImage.imageHint}
-                />
-              )}
-            </div>
-          </div>
-          <div className="space-y-6">
+          <div className="space-y-6 text-center md:text-left">
             <Badge variant="outline" className="font-semibold">
               Meet Our Head Mentor
             </Badge>
@@ -260,11 +245,26 @@ function MentorSection({ founderImage }: { founderImage?: ImagePlaceholder }) {
             <p className="text-muted-foreground">
               With 5+ years of experience, Fida Shirin G leads Kanakkmash with a passion for making math accessible. Holding a BSc in Mathematics, DElEd, and KTET qualifications, she developed the innovative "20-20 maths class" strategy, guiding numerous students to success.
             </p>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap justify-center gap-2 pt-2 md:justify-start">
                 <Badge>BSc Maths</Badge>
                 <Badge>DElEd</Badge>
                 <Badge>KTET Certified</Badge>
                 <Badge>5+ Years Experience</Badge>
+            </div>
+          </div>
+          <div className="relative flex items-center justify-center">
+            <div className="absolute z-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
+            <div className="relative mx-auto aspect-square h-[300px] w-[300px] md:h-[400px] md:w-[400px]">
+              {founderImage && (
+                <Image
+                  src={founderImage.imageUrl}
+                  alt={founderImage.description}
+                  width={500}
+                  height={500}
+                  className="h-full w-full rounded-full object-cover shadow-2xl"
+                  data-ai-hint={founderImage.imageHint}
+                />
+              )}
             </div>
           </div>
         </section>
@@ -292,7 +292,7 @@ function ServicesSection({ services }: { services: Service[] }) {
               needs of our students.
             </p>
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service, index) => (
               <Card key={index} className="overflow-hidden">
                 {service.image && (
@@ -372,7 +372,7 @@ export default function AboutUsPage() {
   ];
 
   return (
-    <div className="space-y-24 md:space-y-32 relative overflow-hidden">
+    <div className="space-y-16 md:space-y-24 lg:space-y-32 relative overflow-hidden">
        <div
         aria-hidden="true"
         className="absolute inset-0 -z-10"
