@@ -142,7 +142,12 @@ service cloud.firestore {
     }
 
     match /invoices/{invoiceId} {
-        allow read, write: if isAdmin();
+      // Students can create their own invoice during signup.
+      allow create: if request.auth.uid == request.resource.data.studentId;
+      // Students can read their own invoices, admins can read any.
+      allow get: if isAdmin() || isOwner(resource.data.studentId);
+      // Only admins can list all invoices or modify them.
+      allow list, update, delete: if isAdmin();
     }
 
     match /courseFees/{feeId} {
