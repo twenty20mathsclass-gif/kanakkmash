@@ -146,12 +146,8 @@ function PaymentComponent() {
           // Clean up session storage
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
-
-          toast({
-            title: 'Registration Successful!',
-            description: "Your account has been created. Welcome to kanakkmash!",
-          });
-          // useUser hook will handle the redirect to the dashboard
+          
+          router.push(`/invoice/${invoiceDocRef.id}`);
 
         } catch (err: any) {
           console.error("Registration failed:", err);

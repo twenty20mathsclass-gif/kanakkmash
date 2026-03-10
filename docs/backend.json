@@ -73,7 +73,7 @@
         "paymentId": { "type": "string", "description": "The transaction ID from the payment gateway." },
         "paymentMethod": { "type": "string", "description": "The payment gateway used (e.g., 'razorpay')." }
       },
-      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate", "paymentId", "paymentMethod"]
+      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate"]
     },
     "salaryPayment": {
       "title": "Salary Payment",

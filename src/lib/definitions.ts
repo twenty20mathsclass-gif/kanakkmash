@@ -234,6 +234,19 @@ export type CourseFee = {
   createdAt: Timestamp;
 };
 
+export type Invoice = {
+  id: string;
+  studentId: string;
+  amount: number;
+  status: 'paid' | 'unpaid' | 'overdue';
+  type: 'fee' | 'cart';
+  createdAt: Timestamp;
+  dueDate: Timestamp;
+  paidAt?: Timestamp;
+  paymentId: string;
+  paymentMethod: string;
+};
+
 export type RecordedClass = {
   id: string;
   title: string;
