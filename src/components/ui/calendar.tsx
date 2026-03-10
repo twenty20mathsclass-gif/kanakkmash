@@ -88,7 +88,7 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        months: "flex flex-col",
+        months: "flex flex-col space-y-4",
         month: "space-y-4",
 
         caption: "flex justify-center pt-1 relative items-center",
@@ -99,28 +99,26 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
-
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
 
         table: "w-full border-collapse",
 
-        head_row: "grid grid-cols-7",
+        head_row: "",
         head_cell:
-          "text-muted-foreground rounded-md w-9 h-9 font-normal text-[0.8rem] flex items-center justify-center",
+          "text-muted-foreground rounded-md w-10 h-10 font-normal text-[0.8rem] text-center",
 
-        row: "grid grid-cols-7 mt-2",
-
+        row: "",
         cell:
-          "h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center",
+          "w-10 h-10 text-center text-sm p-0 relative",
 
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "w-10 h-10 p-0 font-normal"
         ),
 
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
 
         day_today: "bg-accent text-accent-foreground",
 
