@@ -18,10 +18,11 @@ import { ArrowLeft, Loader2, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/lib/countries';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { User } from '@/lib/definitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,9 +85,20 @@ function PaymentComponent() {
         try {
           if (!auth || !firestore) throw new Error('Firebase not initialized.');
 
+          const referralId = sessionStorage.getItem('kanakkmash_referral_id');
+
+          let referrer: User | null = null;
+          if (referralId) {
+              const referrerDocRef = doc(firestore, 'users', referralId);
+              const referrerDocSnap = await getDoc(referrerDocRef);
+              if (referrerDocSnap.exists()) {
+                  referrer = referrerDocSnap.data() as User;
+              }
+          }
+
           const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
           const authUser = userCredential.user;
-          const referralId = sessionStorage.getItem('kanakkmash_referral_id');
+          
 
           const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
           await updateProfile(authUser, { displayName: data.name, photoURL: avatarUrl });
@@ -123,6 +135,21 @@ function PaymentComponent() {
               referredAt: serverTimestamp()
             };
             batch.set(referralDocRef, referralData);
+            
+            if(referrer && referrer.role === 'promoter') {
+                const rewardAmount = registrationAmount * 0.10;
+                const rewardData = {
+                    promoterId: referralId,
+                    studentId: authUser.uid,
+                    studentName: data.name,
+                    feeAmount: registrationAmount,
+                    rewardAmount: rewardAmount,
+                    paidOut: false,
+                    createdAt: serverTimestamp()
+                };
+                const rewardDocRef = doc(collection(firestore, 'rewards'));
+                batch.set(rewardDocRef, rewardData);
+            }
           }
 
           batch.set(userDocRef, userProfile);
@@ -153,7 +180,7 @@ function PaymentComponent() {
           console.error("Registration failed:", err);
           setError(err.message || 'An unknown error occurred during registration.');
           if (err.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({ path: 'users or invoices', operation: 'create' }, { cause: err });
+            const permissionError = new FirestorePermissionError({ path: 'users or invoices or rewards', operation: 'create' }, { cause: err });
             errorEmitter.emit('permission-error', permissionError);
           }
           setLoading(false);

@@ -75,8 +75,8 @@ service cloud.firestore {
       }
 
       match /referrals/{studentId} {
-        // A teacher can read their own referral list.
-        allow read, list: if isOwner(userId) && isRole('teacher');
+        // A teacher or promoter can read their own referral list.
+        allow read, list: if isOwner(userId) && (isRole('teacher') || isRole('promoter'));
         // A new student can create an entry in their referrer's list.
         // studentId here is the ID of the new student being created.
         allow create: if request.auth != null && request.auth.uid == studentId;
@@ -199,6 +199,18 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if isRole('teacher') || isAdmin();
       allow update, delete: if (isRole('teacher') && resource.data.teacherId == request.auth.uid) || isAdmin();
+    }
+
+    match /rewards/{rewardId} {
+      // A promoter can read their own rewards.
+      allow list: if request.auth != null && request.auth.uid == request.query.promoterId;
+      allow get: if request.auth != null && request.auth.uid == resource.data.promoterId;
+
+      // A student can create a reward for their promoter referrer upon signup.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId && get(/databases/$(database)/documents/users/$(request.resource.data.promoterId)).data.role == 'promoter';
+      
+      // Only admin can update (e.g. mark as paid) or delete.
+      allow update, delete: if isAdmin();
     }
   }
 }

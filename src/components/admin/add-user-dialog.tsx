@@ -39,7 +39,7 @@ const createUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     email: z.string().email('Invalid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.enum(['student', 'teacher']),
+    role: z.enum(['student', 'teacher', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
 });
 
@@ -102,7 +102,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
             id: user.uid,
             name: name,
             email: email,
-            role: role as 'student' | 'teacher',
+            role: role as 'student' | 'teacher' | 'promoter',
             avatarUrl: avatarUrl,
             createdAt: serverTimestamp(),
         };
@@ -201,7 +201,10 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
               <SelectContent>
                 <SelectItem value="student">Student</SelectItem>
                 {creatorRole === 'admin' && (
-                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="promoter">Promoter</SelectItem>
+                  </>
                 )}
               </SelectContent>
             </Select>

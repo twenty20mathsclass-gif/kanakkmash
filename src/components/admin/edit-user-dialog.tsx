@@ -36,7 +36,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
-    role: z.enum(['student', 'teacher', 'admin']),
+    role: z.enum(['student', 'teacher', 'admin', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
 });
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
@@ -172,6 +172,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                       <SelectItem value="student">Student</SelectItem>
                       <SelectItem value="teacher">Teacher</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="promoter">Promoter</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

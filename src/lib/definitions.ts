@@ -5,7 +5,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'admin' | 'teacher';
+  role: 'student' | 'admin' | 'teacher' | 'promoter';
   avatarUrl: string;
   countryCode?: string;
   mobile?: string;
@@ -35,6 +35,17 @@ export type TeacherPrivateDetails = {
     upiId?: string;
     upiQrCodeUrl?: string;
     hourlyRate?: number;
+};
+
+export type Reward = {
+  id?: string;
+  promoterId: string;
+  studentId: string;
+  studentName: string;
+  feeAmount: number;
+  rewardAmount: number;
+  paidOut: boolean;
+  createdAt: Timestamp;
 };
 
 

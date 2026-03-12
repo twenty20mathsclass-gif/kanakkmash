@@ -79,10 +79,22 @@ export default function MainLayoutClient({
       return;
     }
 
+    let targetPath: string;
+    if (user.role === 'admin') targetPath = '/admin';
+    else if (user.role === 'teacher') targetPath = '/teacher';
+    else if (user.role === 'promoter') targetPath = '/promoter';
+    else targetPath = '/dashboard';
+
+    if (pathname === '/dashboard' || pathname === '/teacher' || pathname === '/admin' || pathname === '/promoter') {
+        router.replace(targetPath);
+    }
+    
     if (pathname.startsWith('/admin') && user.role !== 'admin') {
       router.replace('/dashboard');
     } else if (pathname.startsWith('/teacher') && user.role !== 'teacher') {
       router.replace('/dashboard');
+    } else if (pathname.startsWith('/promoter') && user.role !== 'promoter') {
+        router.replace('/dashboard');
     }
   }, [loading, user, router, pathname]);
 
@@ -137,9 +149,16 @@ export default function MainLayoutClient({
     { href: '/teacher/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/teacher/revenue', label: 'My Revenue', icon: Banknote },
-    { href: '/teacher/my-referrals', label: 'My Referrals', icon: Share2 },
+    { href: '/my-referrals', label: 'My Referrals', icon: Share2 },
     { href: '/teacher/blog/create', label: 'Blog Creation', icon: PenSquare },
     { href: '/teacher/course-cart', label: 'Course Cart', icon: ShoppingBag },
+  ];
+  
+  const promoterNav = [
+    { href: '/promoter', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/my-referrals', label: 'My Referrals', icon: Share2 },
+    { href: '/promoter/rewards', label: 'Reward History', icon: Banknote },
+    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
   ];
 
   const adminNav = [
@@ -160,8 +179,12 @@ export default function MainLayoutClient({
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
   ];
 
-  if (user && (user.role === 'admin' || user.role === 'teacher')) {
-    const navItems = user.role === 'admin' ? adminNav : teacherNav;
+  if (user && (user.role === 'admin' || user.role === 'teacher' || user.role === 'promoter')) {
+    let navItems;
+    if (user.role === 'admin') navItems = adminNav;
+    else if (user.role === 'teacher') navItems = teacherNav;
+    else navItems = promoterNav;
+    
     const pageTitle = navItems.find(item => currentUrl.startsWith(item.href) && item.href !== '/admin' && item.href !== '/teacher')?.label || 'Dashboard';
 
     return (
