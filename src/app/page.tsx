@@ -78,7 +78,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-grow">
       <section className="relative flex-grow flex w-full flex-col items-center justify-center">
         <div
           aria-hidden="true"
