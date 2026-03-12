@@ -158,7 +158,6 @@ export default function MainLayoutClient({
     { href: '/promoter', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/my-referrals', label: 'My Referrals', icon: Share2 },
     { href: '/promoter/rewards', label: 'Reward History', icon: Banknote },
-    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
   ];
 
   const adminNav = [
