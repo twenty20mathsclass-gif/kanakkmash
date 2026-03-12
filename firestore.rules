@@ -202,8 +202,8 @@ service cloud.firestore {
     }
 
     match /rewards/{rewardId} {
-      // A promoter can read their own rewards.
-      allow list: if request.auth != null && request.auth.uid == request.query.promoterId;
+      // A promoter can read their own rewards, but only when querying by their own promoterId.
+      allow list: if request.auth != null && request.auth.uid == resource.data.promoterId;
       allow get: if request.auth != null && request.auth.uid == resource.data.promoterId;
 
       // A student can create a reward for their promoter referrer upon signup.
