@@ -9,6 +9,10 @@ service cloud.firestore {
       return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
     // A user is an admin if their user document has role == 'admin'.
     // This function is NOT safe for list queries because it uses get().
     function isAdmin() {
@@ -86,6 +90,15 @@ service cloud.firestore {
         // studentId here is the ID of the new student being created.
         allow create: if request.auth != null && request.auth.uid == studentId;
         // Only admin can modify/delete.
+        allow update, delete: if isAdmin();
+      }
+      
+      match /rewards/{rewardId} {
+        // Promoter can read their own rewards.
+        allow get, list: if isOwner(userId) && isRole('promoter');
+        // Student can create a reward in promoter's subcollection upon signup.
+        allow create: if request.auth.uid == request.resource.data.studentId && userId == request.resource.data.promoterId && getUserRole(userId) == 'promoter';
+        // Only admin can update (e.g. mark as paid) or delete.
         allow update, delete: if isAdmin();
       }
     }
@@ -204,18 +217,6 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if isRole('teacher') || isAdmin();
       allow update, delete: if (isRole('teacher') && resource.data.teacherId == request.auth.uid) || isAdmin();
-    }
-
-    match /rewards/{rewardId} {
-      // A promoter can read their own rewards, but only when querying by their own promoterId.
-      allow list: if request.auth != null && request.query.where.promoterId == request.auth.uid;
-      allow get: if request.auth != null && resource.data.promoterId == request.auth.uid;
-
-      // A student can create a reward for their promoter referrer upon signup.
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId && get(/databases/$(database)/documents/users/$(request.resource.data.promoterId)).data.role == 'promoter';
-      
-      // Only admin can update (e.g. mark as paid) or delete.
-      allow update, delete: if isAdmin();
     }
   }
 }

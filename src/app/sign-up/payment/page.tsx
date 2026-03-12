@@ -157,7 +157,7 @@ function PaymentComponent() {
                     paidOut: false,
                     createdAt: serverTimestamp()
                 };
-                const rewardDocRef = doc(collection(firestore, 'rewards'));
+                const rewardDocRef = doc(collection(firestore, 'users', referralId, 'rewards'));
                 batch.set(rewardDocRef, rewardData);
             }
           }

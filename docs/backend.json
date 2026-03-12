@@ -246,6 +246,10 @@
       "schema": { "$ref": "#/entities/referredStudent" },
       "description": "Stores a list of students referred by a teacher."
     },
+    "/users/{userId}/rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/reward" },
+      "description": "Stores referral rewards for a specific promoter."
+    },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/testimonial" },
       "description": "Stores student testimonials."
@@ -297,10 +301,6 @@
     "/recordedClasses/{classId}": {
       "schema": { "$ref": "#/entities/recordedClass" },
       "description": "Stores recorded class videos."
-    },
-    "/rewards/{rewardId}": {
-      "schema": { "$ref": "#/entities/reward" },
-      "description": "Stores referral rewards for promoters."
     }
   }
 }

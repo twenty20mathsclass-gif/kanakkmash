@@ -295,8 +295,7 @@ export default function RewardHistoryPage() {
         setLoading(true);
 
         const rewardsQuery = query(
-            collection(firestore, 'rewards'),
-            where('promoterId', '==', user.id),
+            collection(firestore, 'users', user.id, 'rewards'),
             orderBy('createdAt', 'desc')
         );
 
@@ -306,7 +305,7 @@ export default function RewardHistoryPage() {
             setLoading(false);
         }, (serverError: any) => {
             if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: `rewards`, operation: 'list' }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: `users/${user.id}/rewards`, operation: 'list' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ title: 'Error', description: "You don't have permission to view rewards.", variant: 'destructive' });
             } else {
