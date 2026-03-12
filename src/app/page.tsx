@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -77,7 +78,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col h-full">
       <section className="relative flex-grow flex w-full flex-col items-center justify-center">
         <div
           aria-hidden="true"
