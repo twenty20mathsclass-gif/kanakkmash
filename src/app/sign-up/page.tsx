@@ -41,25 +41,15 @@ export default function SignUpPage() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
       <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">
         <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        <Link href="/" className="absolute top-8 left-8 z-10">
-            <Image
-              src="/logo eng@4x.png"
-              alt="kanakkmash"
-              width={200}
-              height={62}
-              className="inline-block"
-              priority
-              unoptimized
-            />
-        </Link>
-        <div className='z-10 space-y-4'>
+      
+        <div className=' space-y-4'>
             <Image 
-                src="/kanakkmash logo.png"
-                width={600}
+                src="/fv.png"
+                width={400}
                 height={400}
-                alt="Illustration"
-                className="mx-auto rounded-lg shadow-lg"
-                data-ai-hint="maths elements"
+                alt="Kanakkmash Logo"
+                className="mx-auto"
+                data-ai-hint="kanakkmash logo"
                 unoptimized
             />
             <h1 className="font-headline text-4xl font-bold mt-4">Welcome to Your Learning Journey</h1>
