@@ -215,7 +215,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className={cn("relative flex flex-col min-h-[100svh] bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]")}>
+    <div className={cn("relative flex flex-col min-h-screen bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]")}>
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
@@ -240,7 +240,10 @@ export default function MainLayoutClient({
         )}
       </Suspense>
       
-      <main className={cn("flex-grow flex flex-col", isHomepage ? "" : "p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8")}>
+      <main className={cn(
+        "flex-1 flex flex-col",
+        isHomepage ? "" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
+      )}>
         {children}
       </main>
 
