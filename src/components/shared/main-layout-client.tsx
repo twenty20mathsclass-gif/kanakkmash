@@ -38,6 +38,7 @@ import {
     Newspaper,
     Youtube,
     Settings,
+    Megaphone,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -167,6 +168,7 @@ export default function MainLayoutClient({
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
+    { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },

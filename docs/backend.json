@@ -216,6 +216,18 @@
         "createdAt": { "type": "object", "description": "The date the reward was generated." }
       },
       "required": ["promoterId", "studentId", "studentName", "feeAmount", "rewardAmount", "paidOut", "createdAt"]
+    },
+    "announcement": {
+      "title": "Announcement",
+      "description": "A sitewide announcement banner that appears on the homepage.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "The announcement text." },
+        "link": { "type": "string", "format": "uri", "description": "Optional URL for the announcement to link to." },
+        "isActive": { "type": "boolean", "description": "Whether the announcement is currently active and visible." },
+        "createdAt": { "type": "object", "description": "The date and time the announcement was created." }
+      },
+      "required": ["text", "isActive", "createdAt"]
     }
   },
   "auth": {
@@ -301,6 +313,10 @@
     "/recordedClasses/{classId}": {
       "schema": { "$ref": "#/entities/recordedClass" },
       "description": "Stores recorded class videos."
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/announcement" },
+      "description": "Stores sitewide announcements."
     }
   }
 }

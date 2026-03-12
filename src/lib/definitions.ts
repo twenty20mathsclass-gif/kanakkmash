@@ -294,3 +294,11 @@ export type RecordedClass = {
   competitiveExam?: string;
   createdAt: Timestamp;
 };
+
+export type Announcement = {
+  id: string;
+  text: string;
+  link?: string;
+  isActive: boolean;
+  createdAt: Timestamp;
+};

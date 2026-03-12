@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import InstallButton from '@/components/shared/install-button';
-
-export const dynamic = 'force-dynamic';
+import { useState, useEffect } from 'react';
+import { useFirebase } from '@/firebase';
+import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import type { Announcement } from '@/lib/definitions';
+import { Megaphone } from 'lucide-react';
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
@@ -19,20 +22,64 @@ const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string
     </div>
 );
 
+function AnnouncementBanner() {
+    const { firestore } = useFirebase();
+    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+
+    useEffect(() => {
+        if (!firestore) return;
+        
+        const q = query(collection(firestore, 'announcements'), where('isActive', '==', true), orderBy('createdAt', 'desc'), limit(1));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                setAnnouncement({ id: doc.id, ...doc.data() } as Announcement);
+            } else {
+                setAnnouncement(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [firestore]);
+
+    if (!announcement) {
+        return null;
+    }
+
+    const content = (
+        <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary to-destructive text-primary-foreground shadow-lg">
+            <Megaphone className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-bold text-center">{announcement.text}</p>
+        </div>
+    );
+    
+    if (announcement.link) {
+        return (
+            <Link href={announcement.link} target="_blank" rel="noopener noreferrer" className="block w-full">
+                {content}
+            </Link>
+        )
+    }
+
+    return <div className="w-full">{content}</div>;
+}
+
+
 export default function Home() {
   const symbols = [
-    { symbol: '+', className: 'top-[20%] left-[10%] text-7xl', duration: 8, delay: 0 },
-    { symbol: '−', className: 'top-[50%] right-[12%] text-6xl', duration: 10, delay: 2 },
+    { symbol: '+', className: 'top-[20%] left-[10%]', duration: 8, delay: 0 },
+    { symbol: '−', className: 'top-[50%] right-[12%]', duration: 10, delay: 2 },
     { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
-    { symbol: '÷', className: 'top-[15%] right-[25%] text-4xl', duration: 12, delay: 3 },
+    { symbol: '÷', className: 'top-[15%] right-[25%]', duration: 12, delay: 3 },
     { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
-    { symbol: '√', className: 'top-[70%] left-[15%] text-6xl', duration: 11, delay: 2.5 },
+    { symbol: '√', className: 'top-[70%] left-[15%]', duration: 11, delay: 2.5 },
     { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
     { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
   ];
 
   return (
-    <section className="relative flex w-full items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)] pt-16">
+    <section className="relative flex w-full flex-col items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)] pt-16">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-10"
@@ -72,6 +119,9 @@ export default function Home() {
             </Button>
             <InstallButton />
           </div>
+           <div className="mt-10 w-full max-w-4xl mx-auto">
+             <AnnouncementBanner />
+           </div>
         </div>
       </div>
     </section>
