@@ -37,6 +37,7 @@ import {
     Award,
     Newspaper,
     Youtube,
+    Settings,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
@@ -158,12 +159,14 @@ export default function MainLayoutClient({
     { href: '/promoter', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/my-referrals', label: 'My Referrals', icon: Share2 },
     { href: '/promoter/rewards', label: 'Reward History', icon: Banknote },
+    { href: '/profile', label: 'Settings', icon: Settings },
   ];
 
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
