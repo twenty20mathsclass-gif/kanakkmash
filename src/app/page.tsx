@@ -78,7 +78,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col h-full">
       <section className="relative flex-grow flex w-full flex-col items-center justify-center overflow-hidden">
         <div
           aria-hidden="true"
@@ -122,7 +122,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-10">
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4">
         <AnnouncementBanner />
       </div>
     </div>
