@@ -45,6 +45,7 @@ import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { usePresence } from '@/hooks/use-presence';
+import { cn } from '@/lib/utils';
 
 
 function PresenceManager() {
@@ -125,6 +126,7 @@ export default function MainLayoutClient({
   const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
+  const isHomepage = pathname === '/';
   
   const publicNav = [
     { href: '/', label: 'Home', icon: Home },
@@ -237,9 +239,9 @@ export default function MainLayoutClient({
           </>
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
+      <main className="flex flex-col flex-grow p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
       {isPubliclyAccessible && (
-        <footer className="bg-background py-6">
+        <footer className={cn("bg-background py-6", isHomepage && "pt-0")}>
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             {year && (
               <p className="text-sm text-foreground/60">
