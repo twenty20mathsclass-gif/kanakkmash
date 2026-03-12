@@ -45,6 +45,7 @@ import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { usePresence } from '@/hooks/use-presence';
 import { cn } from '@/lib/utils';
+import { AnnouncementBanner } from '@/components/home/announcement-banner';
 
 
 function PresenceManager() {
@@ -214,7 +215,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className={cn("relative bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]", isHomepage ? "flex flex-col min-h-[100svh]" : "min-h-[100svh]")}>
+    <div className={cn("relative flex flex-col min-h-[100svh] bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]")}>
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
@@ -238,15 +239,24 @@ export default function MainLayoutClient({
           </>
         )}
       </Suspense>
-      <main className={cn("flex-grow", isHomepage ? "flex flex-col" : "p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8")}>{children}</main>
-      {isPubliclyAccessible && !isHomepage && (
-        <footer className="bg-background py-6">
-          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-            {year && (
-              <p className="text-sm text-foreground/60">
-                © {year} kanakkmash. All rights reserved.
-              </p>
-            )}
+      
+      <main className={cn("flex-grow flex flex-col", isHomepage ? "" : "p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8")}>
+        {children}
+      </main>
+
+      {isPubliclyAccessible && (
+        <footer className="w-full shrink-0">
+          <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4">
+            <AnnouncementBanner />
+          </div>
+          <div className="py-6">
+            <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
+              {year && (
+                <p className="text-sm text-foreground/60">
+                  © {year} kanakkmash. All rights reserved.
+                </p>
+              )}
+            </div>
           </div>
         </footer>
       )}
