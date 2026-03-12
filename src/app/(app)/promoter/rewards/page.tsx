@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,12 +10,12 @@ import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, IndianRupee, Save, X, Banknote } from 'lucide-react';
+import { Loader2, IndianRupee, Save, X, Banknote, Calendar as CalendarIcon } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { Reward, PromoterPrivateDetails } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,8 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 const paymentDetailsSchema = z.object({
   paymentMethod: z.enum(['bank', 'upi'], { required_error: 'Please select a payment method.' }),
@@ -289,6 +291,7 @@ export default function RewardHistoryPage() {
     const { toast } = useToast();
     const [rewards, setRewards] = useState<Reward[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     useEffect(() => {
         if (!firestore || !user) return;
@@ -318,8 +321,17 @@ export default function RewardHistoryPage() {
         return () => unsubscribe();
     }, [firestore, user, toast]);
 
-    const totalEarned = rewards.reduce((acc, reward) => acc + reward.rewardAmount, 0);
-    const totalPaid = rewards.filter(r => r.paidOut).reduce((acc, reward) => acc + reward.rewardAmount, 0);
+    const filteredRewards = useMemo(() => {
+        if (!selectedDate) {
+            return rewards;
+        }
+        return rewards.filter(reward => 
+            reward.createdAt && isSameDay(reward.createdAt.toDate(), selectedDate)
+        );
+    }, [rewards, selectedDate]);
+
+    const totalEarned = filteredRewards.reduce((acc, reward) => acc + reward.rewardAmount, 0);
+    const totalPaid = filteredRewards.filter(r => r.paidOut).reduce((acc, reward) => acc + reward.rewardAmount, 0);
     const totalUnpaid = totalEarned - totalPaid;
 
     const handleRedeem = () => {
@@ -340,6 +352,7 @@ export default function RewardHistoryPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Total Rewards Earned</CardTitle>
+                        <CardDescription>Total rewards for the selected period.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold flex items-center gap-2">
@@ -373,15 +386,42 @@ export default function RewardHistoryPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Reward Details</CardTitle>
-                    <CardDescription>A record of all rewards you have received.</CardDescription>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <CardTitle>Reward Details</CardTitle>
+                            <CardDescription>A record of all rewards you have received.</CardDescription>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal">
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {selectedDate ? format(selectedDate, 'PPP') : <span>Filter by date...</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                        mode="single"
+                                        selected={selectedDate || undefined}
+                                        onSelect={(date) => setSelectedDate(date || null)}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            {selectedDate && (
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedDate(null)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                          <div className="flex justify-center items-center h-40">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
-                    ) : rewards.length > 0 ? (
+                    ) : filteredRewards.length > 0 ? (
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -393,7 +433,7 @@ export default function RewardHistoryPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {rewards.map(reward => (
+                                {filteredRewards.map(reward => (
                                     <TableRow key={reward.id}>
                                         <TableCell>{reward.createdAt ? format(reward.createdAt.toDate(), 'PPP') : 'Processing...'}</TableCell>
                                         <TableCell>{reward.studentName}</TableCell>
@@ -416,7 +456,7 @@ export default function RewardHistoryPage() {
                         </Table>
                     ) : (
                         <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                            <p>No rewards earned yet. Share your referral link to get started!</p>
+                            <p>{selectedDate ? 'No rewards found for the selected date.' : 'No rewards earned yet. Share your referral link to get started!'}</p>
                         </div>
                     )}
                 </CardContent>
