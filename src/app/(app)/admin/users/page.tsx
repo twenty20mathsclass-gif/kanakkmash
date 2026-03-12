@@ -58,15 +58,18 @@ export default function AdminUsersPage() {
         const studentQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
         const teacherQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
         const adminQuery = query(collection(firestore, 'users'), where('role', '==', 'admin'));
-        const [studentsSnap, teachersSnap, adminsSnap] = await Promise.all([
+        const promoterQuery = query(collection(firestore, 'users'), where('role', '==', 'promoter'));
+        const [studentsSnap, teachersSnap, adminsSnap, promotersSnap] = await Promise.all([
             getDocs(studentQuery),
             getDocs(teacherQuery),
             getDocs(adminQuery),
+            getDocs(promoterQuery),
         ]);
         usersList = [
             ...studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
             ...teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
             ...adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
+            ...promotersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
         ];
         setTitle('All Users');
         setDescription('A list of all users in the system.');

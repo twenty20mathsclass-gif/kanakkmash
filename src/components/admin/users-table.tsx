@@ -146,6 +146,7 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                 <Badge variant={
                     user.role === 'admin' ? 'destructive' : 
                     user.role === 'teacher' ? 'default' : 
+                    user.role === 'promoter' ? 'outline' :
                     'secondary'
                 }>
                     {user.role}
