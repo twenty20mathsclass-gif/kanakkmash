@@ -54,7 +54,7 @@ export default function SignUpPage() {
         </Link>
         <div className='z-10 space-y-4'>
             <Image 
-                src="https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg"
+                src="/kanakkmash logo.png"
                 width={600}
                 height={400}
                 alt="Illustration"
