@@ -78,8 +78,8 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col flex-grow items-center justify-center">
-      <section className="relative flex w-full flex-col items-center justify-center overflow-hidden pt-16">
+    <div className="flex flex-col h-full">
+      <section className="relative flex-grow flex w-full flex-col items-center justify-center overflow-hidden">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
