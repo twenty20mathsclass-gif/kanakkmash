@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -165,8 +166,8 @@ export default function AdminAnnouncementsPage() {
                         announcements.length > 0 ? (
                              <div className="space-y-4">
                                 {announcements.map(item => (
-                                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg">
-                                        <div className="flex-1 space-y-1">
+                                    <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-4 p-4 border rounded-lg">
+                                        <div className="space-y-1 overflow-hidden">
                                             <p className="font-bold">{item.text}</p>
                                             {item.link && <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all">{item.link}</a>}
                                             <p className="text-xs text-muted-foreground">Created: {item.createdAt ? format(item.createdAt.toDate(), 'PPP p') : 'N/A'}</p>
