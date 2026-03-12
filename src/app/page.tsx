@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import type { Announcement } from '@/lib/definitions';
-import { Megaphone } from 'lucide-react';
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
@@ -48,8 +47,7 @@ function AnnouncementBanner() {
     }
 
     const content = (
-        <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary to-destructive text-primary-foreground shadow-lg">
-            <Megaphone className="h-5 w-5 shrink-0" />
+        <div className="flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-primary to-destructive text-primary-foreground shadow-lg">
             <p className="text-sm font-bold text-center">{announcement.text}</p>
         </div>
     );
@@ -79,51 +77,53 @@ export default function Home() {
   ];
 
   return (
-    <section className="relative flex w-full flex-col items-center justify-center overflow-hidden min-h-[calc(100svh-22rem)] pt-16">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10"
-      >
-        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]"></div>
-        <div className="hidden md:block">
-            {symbols.map((s, i) => (
-                <FloatingSymbol key={i} {...s} />
-            ))}
-        </div>
-      </div>
-      <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
-        <div>
-          <div className="mx-auto max-w-4xl">
-            <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
-              Unlock Your <span>Math Potential</span> with{' '}
-              <Image
-                src="/logo mlm@4x.png"
-                alt="kanakkmash"
-                width={250}
-                height={78}
-                className="inline-block"
-                priority
-                unoptimized
-              />
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-foreground/80">
-              An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
-            </p>
+    <div className="flex flex-col flex-grow">
+      <section className="relative flex w-full flex-col items-center justify-center overflow-hidden flex-grow pt-16">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10"
+        >
+          <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]"></div>
+          <div className="hidden md:block">
+              {symbols.map((s, i) => (
+                  <FloatingSymbol key={i} {...s} />
+              ))}
           </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Button size="lg" asChild className="bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg">
-              <Link href="/sign-up">Enroll Now</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/sign-in">Login</Link>
-            </Button>
-            <InstallButton />
-          </div>
-           <div className="mt-10 w-full max-w-4xl mx-auto">
-             <AnnouncementBanner />
-           </div>
         </div>
+        <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
+          <div>
+            <div className="mx-auto max-w-4xl">
+              <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
+                Unlock Your <span>Math Potential</span> with{' '}
+                <Image
+                  src="/logo mlm@4x.png"
+                  alt="kanakkmash"
+                  width={250}
+                  height={78}
+                  className="inline-block"
+                  priority
+                  unoptimized
+                />
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-foreground/80">
+                An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
+              </p>
+            </div>
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
+              <Button size="lg" asChild className="bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg">
+                <Link href="/sign-up">Enroll Now</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/sign-in">Login</Link>
+              </Button>
+              <InstallButton />
+            </div>
+          </div>
+        </div>
+      </section>
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 pb-10">
+        <AnnouncementBanner />
       </div>
-    </section>
+    </div>
   );
 }
