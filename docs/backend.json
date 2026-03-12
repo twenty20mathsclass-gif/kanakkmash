@@ -31,6 +31,20 @@
         "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
       }
     },
+    "promoterPrivateDetails": {
+      "title": "Promoter Private Details",
+      "description": "Stores private payment and bank account information for a promoter.",
+      "type": "object",
+      "properties": {
+        "paymentMethod": { "type": "string", "enum": ["bank", "upi"], "description": "The promoter's preferred payment method." },
+        "accountHolderName": { "type": "string", "description": "The account holder's name for bank details." },
+        "bankName": { "type": "string", "description": "The name of the bank." },
+        "accountNumber": { "type": "string", "description": "The bank account number." },
+        "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch." },
+        "upiId": { "type": "string", "description": "The promoter's UPI ID." },
+        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the promoter's UPI QR code image." }
+      }
+    },
     "referredStudent": {
       "title": "Referred Student",
       "description": "A record of a student referred by a teacher.",
@@ -213,6 +227,10 @@
     "/users/{userId}/teacher_details/payment": {
         "schema": { "$ref": "#/entities/teacherPrivateDetails" },
         "description": "Stores a teacher's private payment details."
+    },
+    "/users/{userId}/promoter_details/payment": {
+      "schema": { "$ref": "#/entities/promoterPrivateDetails" },
+      "description": "Stores a promoter's private payment details."
     },
     "/users/{userId}/notifications/{notificationId}": {
       "schema": { "$ref": "#/entities/notification" },

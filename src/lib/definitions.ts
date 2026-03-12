@@ -37,6 +37,16 @@ export type TeacherPrivateDetails = {
     hourlyRate?: number;
 };
 
+export type PromoterPrivateDetails = {
+    paymentMethod?: 'bank' | 'upi';
+    accountHolderName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    upiId?: string;
+    upiQrCodeUrl?: string;
+};
+
 export type Reward = {
   id?: string;
   promoterId: string;

@@ -62,6 +62,11 @@ service cloud.firestore {
         allow read, write: if (isOwner(userId) && isRole('teacher')) || isAdmin();
       }
 
+      match /promoter_details/{detailsDoc} {
+        // Promoter can manage their own private details. Admin can manage any.
+        allow read, write: if (isOwner(userId) && isRole('promoter')) || isAdmin();
+      }
+
       match /notifications/{notificationId} {
         allow read, update: if isOwner(userId);
         allow create: if isRole('teacher') || isAdmin();
@@ -203,8 +208,8 @@ service cloud.firestore {
 
     match /rewards/{rewardId} {
       // A promoter can read their own rewards, but only when querying by their own promoterId.
-      allow list: if request.auth != null && request.auth.uid == resource.data.promoterId;
-      allow get: if request.auth != null && request.auth.uid == resource.data.promoterId;
+      allow list: if request.auth != null && request.query.where.promoterId == request.auth.uid;
+      allow get: if request.auth != null && resource.data.promoterId == request.auth.uid;
 
       // A student can create a reward for their promoter referrer upon signup.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId && get(/databases/$(database)/documents/users/$(request.resource.data.promoterId)).data.role == 'promoter';
