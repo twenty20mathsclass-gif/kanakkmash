@@ -48,7 +48,7 @@ function AnnouncementBanner() {
     }
 
     const content = (
-        <div className="flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-primary to-destructive text-primary-foreground shadow-lg">
+        <div className="flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-primary via-accent to-destructive text-primary-foreground shadow-lg">
             <p className="font-bold text-center uppercase tracking-wider">{announcement.text}</p>
         </div>
     );
@@ -78,7 +78,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-grow">
       <section className="relative flex-grow flex w-full flex-col items-center justify-center overflow-hidden">
         <div
           aria-hidden="true"
