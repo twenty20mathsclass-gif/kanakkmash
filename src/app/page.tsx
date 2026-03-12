@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -48,7 +49,7 @@ function AnnouncementBanner() {
 
     const content = (
         <div className="flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-primary to-destructive text-primary-foreground shadow-lg">
-            <p className="text-sm font-bold text-center">{announcement.text}</p>
+            <p className="font-bold text-center uppercase tracking-wider">{announcement.text}</p>
         </div>
     );
     
@@ -77,8 +78,8 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col flex-grow">
-      <section className="relative flex w-full flex-col items-center justify-center overflow-hidden flex-grow pt-16">
+    <div className="flex flex-col flex-grow items-center justify-center">
+      <section className="relative flex w-full flex-col items-center justify-center overflow-hidden pt-16">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -121,7 +122,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 pb-10">
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-10">
         <AnnouncementBanner />
       </div>
     </div>
