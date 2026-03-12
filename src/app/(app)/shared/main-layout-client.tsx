@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, Suspense, useState } from 'react';
@@ -38,12 +37,14 @@ import {
     Newspaper,
     Youtube,
     Settings,
+    Megaphone,
 } from 'lucide-react';
 import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { usePresence } from '@/hooks/use-presence';
+import { cn } from '@/lib/utils';
 
 
 function PresenceManager() {
@@ -124,6 +125,7 @@ export default function MainLayoutClient({
   const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
   const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
   const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
+  const isHomepage = pathname === '/';
   
   const publicNav = [
     { href: '/', label: 'Home', icon: Home },
@@ -167,6 +169,7 @@ export default function MainLayoutClient({
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
+    { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
@@ -211,7 +214,7 @@ export default function MainLayoutClient({
   }
     
   return (
-    <div className="relative min-h-[100svh] bg-background flex flex-col bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]">
+    <div className={cn("relative bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]", isHomepage ? "flex flex-col min-h-[100svh]" : "min-h-[100svh]")}>
       {user && <PresenceManager />}
       <Suspense fallback={null}>
         <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
@@ -235,8 +238,8 @@ export default function MainLayoutClient({
           </>
         )}
       </Suspense>
-      <main className="flex-grow p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
-      {isPubliclyAccessible && (
+      <main className={cn("flex-grow", isHomepage ? "flex flex-col" : "p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8")}>{children}</main>
+      {isPubliclyAccessible && !isHomepage && (
         <footer className="bg-background py-6">
           <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
             {year && (
