@@ -30,7 +30,7 @@ import { getAuth, createUserWithEmailAndPassword, type UserCredential } from 'fi
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { useFirebase } from '@/firebase';
-import type { User, TeacherPrivateDetails } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { z } from 'zod';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -41,6 +41,7 @@ const createUserSchema = z.object({
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['student', 'teacher', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
+    rewardPercentage: z.coerce.number().optional(),
 });
 
 export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorRole?: 'admin' | 'teacher', onUserAdded?: () => void }) {
@@ -64,6 +65,10 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
     if (formObject.role !== 'teacher') {
         delete formObject.hourlyRate;
     }
+    if (formObject.role !== 'promoter') {
+        delete formObject.rewardPercentage;
+    }
+
 
     const validatedFields = createUserSchema.safeParse(formObject);
 
@@ -74,7 +79,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         return;
     }
 
-    const { name, email, password, role, hourlyRate } = validatedFields.data;
+    const { name, email, password, role, hourlyRate, rewardPercentage } = validatedFields.data;
 
     if (!firestore) {
         setError("Firestore is not available. Please try again later.");
@@ -98,7 +103,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
         const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
 
-        const userProfile: Omit<User, 'hourlyRate' | 'paymentMethod'> = {
+        const userProfile: Omit<User, 'hourlyRate' | 'paymentMethod' | 'rewardPercentage'> = {
             id: user.uid,
             name: name,
             email: email,
@@ -112,6 +117,11 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         if(role === 'teacher' && (hourlyRate || hourlyRate === 0)) {
             const privateDetails: TeacherPrivateDetails = { hourlyRate };
             await setDoc(doc(firestore, 'users', user.uid, 'teacher_details', 'payment'), privateDetails);
+        }
+        
+        if(role === 'promoter' && (rewardPercentage || rewardPercentage === 0)) {
+            const privateDetails: PromoterPrivateDetails = { rewardPercentage };
+            await setDoc(doc(firestore, 'users', user.uid, 'promoter_details', 'payment'), privateDetails, { merge: true });
         }
         
         toast({
@@ -129,7 +139,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
             const permissionError = new FirestorePermissionError({
                 path: `users/${user.uid}`,
                 operation: 'create',
-                requestResourceData: { name, email, role, hourlyRate }
+                requestResourceData: { name, email, role, hourlyRate, rewardPercentage }
             }, { cause: e });
             errorEmitter.emit('permission-error', permissionError);
             setError('Permission denied when creating the user profile in the database.');
@@ -219,6 +229,16 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
                 <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={0} />
                 {validationErrors?.hourlyRate && (
                     <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
+                )}
+            </div>
+          )}
+
+          {selectedRole === 'promoter' && (
+            <div className="space-y-2">
+                <Label htmlFor="rewardPercentage">Reward Percentage (%)</Label>
+                <Input id="rewardPercentage" name="rewardPercentage" type="number" defaultValue={10} />
+                {validationErrors?.rewardPercentage && (
+                    <p className="text-sm text-destructive">{validationErrors.rewardPercentage[0]}</p>
                 )}
             </div>
           )}

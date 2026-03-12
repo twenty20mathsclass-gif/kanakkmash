@@ -12,7 +12,8 @@
         "role": { "type": "string", "enum": ["student", "teacher", "admin", "promoter"], "description": "The user's role." },
         "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
         "createdAt": { "type": "object", "description": "The date and time the user account was created." },
-        "referredBy": { "type": "string", "description": "The UID of the user who referred this user." }
+        "referredBy": { "type": "string", "description": "The UID of the user who referred this user." },
+        "rewardPercentage": { "type": "number", "description": "The custom reward percentage for a promoter." }
       },
       "required": ["id", "name", "email", "role"]
     },
@@ -42,7 +43,8 @@
         "accountNumber": { "type": "string", "description": "The bank account number." },
         "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch." },
         "upiId": { "type": "string", "description": "The promoter's UPI ID." },
-        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the promoter's UPI QR code image." }
+        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the promoter's UPI QR code image." },
+        "rewardPercentage": { "type": "number", "description": "The custom reward percentage for the promoter." }
       }
     },
     "referredStudent": {

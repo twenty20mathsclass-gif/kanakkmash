@@ -22,7 +22,7 @@ import { doc, getDoc, setDoc, serverTimestamp, writeBatch, collection } from 'fi
 import { useFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { User } from '@/lib/definitions';
+import type { User, PromoterPrivateDetails } from '@/lib/definitions';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,11 +88,20 @@ function PaymentComponent() {
           const referralId = sessionStorage.getItem('kanakkmash_referral_id');
 
           let referrer: User | null = null;
+          let promoterDetails: PromoterPrivateDetails | null = null;
+
           if (referralId) {
               const referrerDocRef = doc(firestore, 'users', referralId);
               const referrerDocSnap = await getDoc(referrerDocRef);
               if (referrerDocSnap.exists()) {
                   referrer = referrerDocSnap.data() as User;
+                  if (referrer.role === 'promoter') {
+                      const promoterDetailsRef = doc(firestore, 'users', referralId, 'promoter_details', 'payment');
+                      const promoterDetailsSnap = await getDoc(promoterDetailsRef);
+                      if (promoterDetailsSnap.exists()) {
+                          promoterDetails = promoterDetailsSnap.data() as PromoterPrivateDetails;
+                      }
+                  }
               }
           }
 
@@ -137,7 +146,8 @@ function PaymentComponent() {
             batch.set(referralDocRef, referralData);
             
             if(referrer && referrer.role === 'promoter') {
-                const rewardAmount = registrationAmount * 0.10;
+                const rewardPercentage = (promoterDetails?.rewardPercentage || 10) / 100;
+                const rewardAmount = registrationAmount * rewardPercentage;
                 const rewardData = {
                     promoterId: referralId,
                     studentId: authUser.uid,

@@ -24,6 +24,7 @@ export type User = {
   upiId?: string;
   upiQrCodeUrl?: string;
   hourlyRate?: number;
+  rewardPercentage?: number;
 };
 
 export type TeacherPrivateDetails = {
@@ -45,6 +46,7 @@ export type PromoterPrivateDetails = {
     ifscCode?: string;
     upiId?: string;
     upiQrCodeUrl?: string;
+    rewardPercentage?: number;
 };
 
 export type Reward = {

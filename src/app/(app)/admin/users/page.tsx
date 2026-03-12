@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
-import type { User, TeacherPrivateDetails } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,14 +75,22 @@ export default function AdminUsersPage() {
         setDescription('A list of all users in the system.');
       }
       
-      // If we are fetching teachers or all users, we also need to get their private details
-      if (roleFilter === 'teacher' || !roleFilter) {
+      // If we are fetching teachers, promoters, or all users, we also need to get their private details
+      if (roleFilter === 'teacher' || roleFilter === 'promoter' || !roleFilter) {
           const usersWithDetails = await Promise.all(usersList.map(async (user) => {
-              if (user && user.role === 'teacher') {
-                  const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
-                  const detailsSnap = await getDoc(detailsRef);
-                  if (detailsSnap.exists()) {
-                      return { ...user, ...(detailsSnap.data() as TeacherPrivateDetails) };
+              if (user) {
+                  if (user.role === 'teacher') {
+                      const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+                      const detailsSnap = await getDoc(detailsRef);
+                      if (detailsSnap.exists()) {
+                          return { ...user, ...(detailsSnap.data() as TeacherPrivateDetails) };
+                      }
+                  } else if (user.role === 'promoter') {
+                      const detailsRef = doc(firestore, 'users', user.id, 'promoter_details', 'payment');
+                      const detailsSnap = await getDoc(detailsRef);
+                      if (detailsSnap.exists()) {
+                          return { ...user, ...(detailsSnap.data() as PromoterPrivateDetails) };
+                      }
                   }
               }
               return user;
@@ -95,7 +103,7 @@ export default function AdminUsersPage() {
     } catch (e: any) {
       if (e.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
-          path: 'users or users/{userId}/teacher_details/payment',
+          path: 'users or subcollections',
           operation: 'list',
         }, { cause: e });
         errorEmitter.emit('permission-error', permissionError);

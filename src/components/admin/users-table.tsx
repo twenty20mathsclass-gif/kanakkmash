@@ -125,7 +125,7 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Hourly Rate</TableHead>
+            <TableHead>Hourly Rate / Reward %</TableHead>
             <TableHead>
                 <span className="sr-only">Actions</span>
             </TableHead>
@@ -157,6 +157,10 @@ export function UsersTable({ users, onUserChanged }: UsersTableProps) {
                         <div className="flex items-center gap-1">
                             <IndianRupee className="h-4 w-4" />
                             {user.hourlyRate.toLocaleString('en-IN')}
+                        </div>
+                    ) : user.role === 'promoter' && user.rewardPercentage ? (
+                        <div className="flex items-center gap-1">
+                            {user.rewardPercentage}%
                         </div>
                     ) : (
                         <span className="text-muted-foreground">-</span>

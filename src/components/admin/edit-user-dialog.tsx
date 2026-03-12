@@ -30,7 +30,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
-import type { User, TeacherPrivateDetails } from '@/lib/definitions';
+import type { User, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -38,6 +38,7 @@ const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     role: z.enum(['student', 'teacher', 'admin', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
+    rewardPercentage: z.coerce.number().optional(),
 });
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 
@@ -57,19 +58,17 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
 
   const form = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserSchema),
-    // The `values` property ensures the form is re-populated when the `user` prop changes,
-    // avoiding the problematic useEffect/reset pattern that caused the freezing.
     values: {
       name: user.name,
       role: user.role,
       hourlyRate: user.hourlyRate || 0,
+      rewardPercentage: user.rewardPercentage || 10,
     },
   });
 
   const { watch } = form;
   const role = watch('role');
 
-  // This useEffect is to clear errors when the dialog is reopened with a different user.
   useEffect(() => {
     if(isOpen) {
         setError(null);
@@ -87,7 +86,8 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     }
 
     const userDocRef = doc(firestore, 'users', user.id);
-    const privateDetailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+    const teacherPrivateDetailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+    const promoterPrivateDetailsRef = doc(firestore, 'users', user.id, 'promoter_details', 'payment');
 
     try {
         const dataToUpdate: Partial<User> = {
@@ -99,7 +99,12 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
 
         if (data.role === 'teacher') {
             const privateDetails: TeacherPrivateDetails = { hourlyRate: data.hourlyRate };
-            await setDoc(privateDetailsRef, privateDetails, { merge: true });
+            await setDoc(teacherPrivateDetailsRef, privateDetails, { merge: true });
+        }
+        
+        if (data.role === 'promoter') {
+            const privateDetails: PromoterPrivateDetails = { rewardPercentage: data.rewardPercentage };
+            await setDoc(promoterPrivateDetailsRef, privateDetails, { merge: true });
         }
 
         toast({
@@ -112,7 +117,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     } catch (e: any) {
         if (e.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
-                path: `users/${user.id} or users/${user.id}/teacher_details/payment`,
+                path: `users/${user.id} or related subcollection`,
                 operation: 'update',
                 requestResourceData: data
             }, { cause: e });
@@ -187,6 +192,22 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Hourly Rate (INR)</FormLabel>
+                    <FormControl>
+                        <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+            
+            {role === 'promoter' && (
+                <FormField
+                control={form.control}
+                name="rewardPercentage"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Reward Percentage (%)</FormLabel>
                     <FormControl>
                         <Input type="number" {...field} />
                     </FormControl>
