@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -58,6 +59,14 @@ export type Reward = {
   rewardAmount: number;
   paidOut: boolean;
   createdAt: Timestamp;
+};
+
+export type ReferredStudent = {
+  studentId: string;
+  studentName: string;
+  studentAvatarUrl?: string;
+  courseModel: string;
+  referredAt: Timestamp;
 };
 
 
