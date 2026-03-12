@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -56,14 +55,14 @@ export default function SignUpPage() {
             <p className="text-muted-foreground mt-2 max-w-md mx-auto">Unlock your potential with our expert-led math courses for all levels.</p>
         </div>
       </div>
-      <div className="flex items-center justify-center p-6 min-h-screen relative">
+      <div className="flex items-center justify-center min-h-screen relative">
          <Link href="/" className="absolute top-4 left-4 z-10 lg:hidden">
             <Button variant="ghost">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
             </Button>
         </Link>
-        <div className="w-full">
+        <div className="w-full p-6">
           <Card className="mx-auto w-full max-w-xl shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">Create an account</CardTitle>
