@@ -166,6 +166,7 @@ export default function MainLayoutClient({
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
