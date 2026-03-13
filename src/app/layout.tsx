@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/shared/theme-provider';
 import { PwaInstaller } from '@/components/shared/pwa-installer';
 import MainLayoutClient from '@/components/shared/main-layout-client';
 import { Suspense } from 'react';
+import { PageLoader } from '@/components/shared/page-loader';
 
 export const metadata: Metadata = {
   title: 'kanakkmash',
@@ -69,7 +70,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <Suspense>
+            <Suspense fallback={<PageLoader />}>
               <MainLayoutClient>{children}</MainLayoutClient>
             </Suspense>
           </FirebaseClientProvider>

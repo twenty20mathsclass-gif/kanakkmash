@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect, Suspense, useState } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { PageLoader } from '@/components/shared/page-loader';
-import { AppSidebar } from '@/components/shared/app-sidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { usePresence } from '@/hooks/use-presence';
+import dynamic from 'next/dynamic';
 
 import { 
     BookPlus,
@@ -40,13 +40,13 @@ import {
     Settings,
     Megaphone,
 } from 'lucide-react';
-import { HomePageDock } from '@/components/shared/home-page-dock';
-import { MobileLogo } from '@/components/shared/mobile-logo';
-import { AppleStyleDock } from '@/components/shared/apple-style-dock';
-import { PublicHeader } from '@/components/shared/public-header';
-import { usePresence } from '@/hooks/use-presence';
-import { cn } from '@/lib/utils';
 
+const AdminPromoterTeacherLayout = dynamic(() => import('./admin-promoter-teacher-layout'), {
+    loading: () => <PageLoader />,
+});
+const PublicStudentLayout = dynamic(() => import('./public-student-layout'), {
+    loading: () => <PageLoader />,
+});
 
 function PresenceManager() {
     usePresence();
@@ -63,7 +63,6 @@ export default function MainLayoutClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
     const authPages = ['/sign-in', '/sign-up'];
@@ -101,20 +100,6 @@ export default function MainLayoutClient({
     }
   }, [loading, user, router, pathname]);
 
-  useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
-
-  const authPages = ['/sign-in', '/sign-up'];
-  if (authPages.some(p => pathname.startsWith(p))) {
-    return <>{children}</>;
-  }
-
-  if (loading) {
-    return <PageLoader />;
-  }
-
-  const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
   const handleSignOut = async () => {
     if (auth) {
@@ -123,10 +108,14 @@ export default function MainLayoutClient({
     router.push('/sign-in');
   };
 
-  const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
-  const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
-  const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
-  const isHomepage = pathname === '/';
+  if (loading) {
+    return <PageLoader />;
+  }
+  
+  const authPages = ['/sign-in', '/sign-up'];
+  if (authPages.some(p => pathname.startsWith(p))) {
+    return <>{children}</>;
+  }
   
   const publicNav = [
     { href: '/', label: 'Home', icon: Home },
@@ -184,6 +173,8 @@ export default function MainLayoutClient({
     { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
     { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
   ];
+  
+  let layout;
 
   if (user && (user.role === 'admin' || user.role === 'teacher' || user.role === 'promoter')) {
     let navItems;
@@ -191,66 +182,34 @@ export default function MainLayoutClient({
     else if (user.role === 'teacher') navItems = teacherNav;
     else navItems = promoterNav;
     
-    const pageTitle = navItems.find(item => currentUrl.startsWith(item.href) && item.href !== '/admin' && item.href !== '/teacher')?.label || 'Dashboard';
+    const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const pageTitle = navItems.find(item => {
+        if (item.href === '/admin' || item.href === '/teacher' || item.href === '/promoter') {
+            return pathname === item.href;
+        }
+        // Handle nested routes, e.g., /admin/users should match "User Management"
+        return pathname.startsWith(item.href) && item.href !== '/';
+    })?.label || 'Dashboard';
 
-    return (
-      <SidebarProvider>
-        <PresenceManager />
-        <div className="flex min-h-screen">
-            <AppSidebar items={navItems} user={user} onSignOut={handleSignOut} />
-            <div className="flex flex-col flex-1 md:ml-[--sidebar-width-icon] group-data-[state=expanded]:md:ml-[--sidebar-width] transition-[margin-left] duration-300 ease-in-out">
-                <header className="p-4 border-b h-16 flex items-center gap-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-                    <SidebarTrigger className="md:hidden" />
-                    <h1 className="font-semibold text-lg">{pageTitle}</h1>
-                </header>
-                <main className="flex-grow p-4 md:p-6 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]">
-                    <div className="mx-auto w-full max-w-screen-2xl">
-                        {children}
-                    </div>
-                </main>
-            </div>
-        </div>
-      </SidebarProvider>
+    layout = (
+        <AdminPromoterTeacherLayout navItems={navItems} user={user} onSignOut={handleSignOut} pageTitle={pageTitle}>
+            {children}
+        </AdminPromoterTeacherLayout>
+    );
+  } else {
+    layout = (
+        <PublicStudentLayout user={user} onSignOut={handleSignOut} publicNav={publicNav} studentNav={studentNav}>
+            {children}
+        </PublicStudentLayout>
     );
   }
-    
+
   return (
-    <div className="relative min-h-[100svh] bg-background flex flex-col bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]">
-      {user && <PresenceManager />}
-      <Suspense fallback={null}>
-        <MobileLogo user={user} onSignOut={user ? handleSignOut : undefined} />
-        {user ? (
-          <>
-            <div className="hidden md:block">
-              <PublicHeader user={user} onSignOut={handleSignOut} navItems={studentNav} />
-            </div>
-            <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-              <AppleStyleDock items={studentNav} user={user} onSignOut={handleSignOut} />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="hidden md:block">
-              <PublicHeader navItems={publicNav} />
-            </div>
-            <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-              <HomePageDock navItems={publicNav} />
-            </div>
-          </>
-        )}
-      </Suspense>
-      <main className="flex flex-col flex-grow p-4 pt-20 pb-28 md:pt-24 md:px-6 lg:px-8">{children}</main>
-      {isPubliclyAccessible && !isHomepage && (
-        <footer className="bg-background py-6">
-          <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-            {year && (
-              <p className="text-sm text-foreground/60">
-                © {year} kanakkmash. All rights reserved.
-              </p>
-            )}
-          </div>
-        </footer>
-      )}
-    </div>
+    <>
+        {user && <PresenceManager />}
+        <Suspense fallback={<PageLoader/>}>
+            {layout}
+        </Suspense>
+    </>
   );
 }
