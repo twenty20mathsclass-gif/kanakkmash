@@ -219,6 +219,7 @@ export type SalaryPayment = {
   paymentDate: Timestamp;
   startDate: Timestamp;
   endDate: Timestamp;
+  paymentMonth?: string;
 };
 
 export type BlogPost = {
