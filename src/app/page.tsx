@@ -30,7 +30,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex-1 flex w-full flex-col items-center justify-center">
+      <section className="relative w-full flex flex-col items-center justify-center">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
