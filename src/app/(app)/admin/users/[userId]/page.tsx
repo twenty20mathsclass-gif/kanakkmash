@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useFirebase } from '@/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { User, Schedule, SalaryPayment, Invoice, ReferredStudent, Reward, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
@@ -20,8 +19,8 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import Link from 'next/link';
 
 export default function UserProfilePage() {
-    const params = use(useParams() as Promise<{ userId: string; }>);
-    const userId = params.userId;
+    const params = useParams();
+    const userId = params.userId as string;
     const router = useRouter();
     const { firestore } = useFirebase();
 
