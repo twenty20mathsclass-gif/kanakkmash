@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, Suspense, useState } from 'react';
@@ -242,24 +243,22 @@ export default function MainLayoutClient({
       
       <main className={cn(
         "flex-grow flex flex-col",
-        isHomepage ? "justify-center" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
+        isHomepage ? "justify-center items-center" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
       )}>
         {children}
       </main>
 
       {isPubliclyAccessible && (
-        <footer className="w-full shrink-0">
-          <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4">
+        <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4">
+          <div className="w-full max-w-4xl px-4 md:px-6">
             <AnnouncementBanner />
           </div>
-          <div className="py-6">
-            <div className="container mx-auto flex items-center justify-center px-4 md:px-6">
-              {year && (
-                <p className="text-sm text-foreground/60">
-                  © {year} kanakkmash. All rights reserved.
-                </p>
-              )}
-            </div>
+          <div className="container px-4 md:px-6">
+            {year && (
+              <p className="text-center text-sm text-foreground/60">
+                © {year} kanakkmash. All rights reserved.
+              </p>
+            )}
           </div>
         </footer>
       )}
