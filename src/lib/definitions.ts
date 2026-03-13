@@ -217,6 +217,8 @@ export type SalaryPayment = {
   totalHours: number;
   amount: number;
   paymentDate: Timestamp;
+  startDate: Timestamp;
+  endDate: Timestamp;
 };
 
 export type BlogPost = {

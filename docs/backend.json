@@ -101,9 +101,11 @@
         "hourlyRate": { "type": "number", "description": "The hourly rate for the teacher." },
         "totalHours": { "type": "number", "description": "The total hours worked for this payment period." },
         "amount": { "type": "number", "description": "The total amount paid (calculated from hourlyRate * totalHours)." },
-        "paymentDate": { "type": "object", "description": "The date the payment was made." }
+        "paymentDate": { "type": "object", "description": "The date the payment was made." },
+        "startDate": { "type": "object", "description": "The start date of the payment period." },
+        "endDate": { "type": "object", "description": "The end date of the payment period." }
       },
-      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate"]
+      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate", "startDate", "endDate"]
     },
     "blogPost": {
       "title": "Blog Post",
@@ -321,5 +323,3 @@
     }
   }
 }
-
-    

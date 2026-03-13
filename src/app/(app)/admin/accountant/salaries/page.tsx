@@ -8,12 +8,12 @@ import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp,
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,11 +23,25 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import type { DateRange } from 'react-day-picker';
 
 const addPaymentSchema = z.object({
     hourlyRate: z.coerce.number().positive("Hourly rate must be positive."),
-    totalHours: z.coerce.number().positive("Total hours must be positive."),
+    totalHours: z.coerce.number().min(0, "Total hours cannot be negative."),
+    dateRange: z.object({
+        from: z.date({ required_error: "Start date is required." }),
+        to: z.date({ required_error: "End date is required." }),
+    }, { required_error: "Payment period is required."})
+}).superRefine((data, ctx) => {
+    if (data.dateRange.from > data.dateRange.to) {
+        ctx.addIssue({
+            path: ['dateRange'],
+            message: 'End date cannot be earlier than the start date.',
+        });
+    }
 });
 type AddPaymentValues = z.infer<typeof addPaymentSchema>;
 
@@ -51,7 +65,49 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     const hourlyRate = form.watch('hourlyRate');
     const totalHours = form.watch('totalHours');
+    const dateRange = form.watch('dateRange');
     const calculatedAmount = useMemo(() => hourlyRate * totalHours, [hourlyRate, totalHours]);
+
+    const calculatedHoursInRange = useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) {
+            return 0;
+        }
+
+        const rangeStart = startOfDay(dateRange.from);
+        const rangeEnd = endOfDay(dateRange.to);
+
+        const totalMinutes = allSchedules.reduce((acc, schedule) => {
+            const scheduleDate = schedule.date.toDate();
+
+            if (scheduleDate >= rangeStart && scheduleDate <= rangeEnd) {
+                if (schedule.type === 'exam' && typeof schedule.duration === 'number') {
+                    return acc + schedule.duration;
+                }
+                if (schedule.type === 'class' && schedule.startTime && schedule.endTime) {
+                    try {
+                        const start = new Date(`1970-01-01T${schedule.startTime}:00`);
+                        const end = new Date(`1970-01-01T${schedule.endTime}:00`);
+                        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                            const diff = end.getTime() - start.getTime();
+                            return acc + Math.round(diff / (1000 * 60));
+                        }
+                    } catch (e) {
+                         console.warn("Could not parse time for schedule:", schedule.id, e);
+                    }
+                }
+            }
+            return acc;
+        }, 0);
+
+        const hours = totalMinutes / 60;
+        return Math.round(hours * 100) / 100;
+    }, [allSchedules, dateRange]);
+
+    useEffect(() => {
+        if (calculatedHoursInRange >= 0) {
+            form.setValue('totalHours', calculatedHoursInRange);
+        }
+    }, [calculatedHoursInRange, form]);
 
 
     useEffect(() => {
@@ -104,66 +160,58 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         };
     }, [firestore, teacher]);
 
-    const calculatedMonthlyHours = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        const totalMinutes = allSchedules.reduce((acc, schedule) => {
-            const scheduleDate = schedule.date.toDate();
-            if (scheduleDate.getMonth() === currentMonth && scheduleDate.getFullYear() === currentYear) {
-                if (schedule.type === 'exam' && typeof schedule.duration === 'number') {
-                    return acc + schedule.duration;
-                }
-                if (schedule.type === 'class' && schedule.startTime && schedule.endTime) {
-                    try {
-                        const start = new Date(`1970-01-01T${schedule.startTime}:00`);
-                        const end = new Date(`1970-01-01T${schedule.endTime}:00`);
-                        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-                            const diff = end.getTime() - start.getTime();
-                            return acc + Math.round(diff / (1000 * 60));
-                        }
-                    } catch (e) {
-                         console.warn("Could not parse time for schedule:", schedule.id, e);
-                    }
-                }
-            }
-            return acc;
-        }, 0);
-
-        const hours = totalMinutes / 60;
-        return Math.round(hours * 100) / 100;
-    }, [allSchedules]);
-
     useEffect(() => {
         if (isOpen && teacher) {
             form.reset({
                 hourlyRate: teacher.hourlyRate || 0,
-                totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0,
+                totalHours: 0,
+                dateRange: undefined,
             });
+            setFormError(null);
         }
-    }, [isOpen, teacher, form, calculatedMonthlyHours]);
+    }, [isOpen, teacher, form]);
 
 
     if (!teacher) return null;
 
     const handleAddPayment = (data: AddPaymentValues) => {
-        if (!firestore || !teacher) return;
+        if (!firestore || !teacher || !data.dateRange?.from || !data.dateRange?.to) return;
         setIsSubmitting(true);
         setFormError(null);
 
+        // Overlap check
+        const newStart = data.dateRange.from.getTime();
+        const newEnd = data.dateRange.to.getTime();
+        const hasOverlap = payments.some(p => {
+            if (p.startDate && p.endDate) {
+                const oldStart = p.startDate.toDate().getTime();
+                const oldEnd = p.endDate.toDate().getTime();
+                return newStart <= oldEnd && newEnd >= oldStart;
+            }
+            return false;
+        });
+
+        if (hasOverlap) {
+            setFormError("The selected date range overlaps with a previously paid period. Please adjust the dates.");
+            setIsSubmitting(false);
+            return;
+        }
+
         const salaryPaymentsCollection = collection(firestore, 'users', teacher.id, 'salaryPayments');
         const paymentData = {
-            ...data,
-            amount: data.hourlyRate * data.totalHours,
             teacherId: teacher.id,
+            hourlyRate: data.hourlyRate,
+            totalHours: data.totalHours,
+            amount: data.hourlyRate * data.totalHours,
             paymentDate: serverTimestamp(),
+            startDate: data.dateRange.from,
+            endDate: data.dateRange.to,
         };
 
         addDoc(salaryPaymentsCollection, paymentData)
             .then(() => {
                 toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
-                form.reset({ hourlyRate: teacher.hourlyRate || 0, totalHours: calculatedMonthlyHours > 0 ? calculatedMonthlyHours : 0 });
+                form.reset();
             })
             .catch(async (serverError: any) => {
                 if (serverError.code === 'permission-denied') {
@@ -195,10 +243,15 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              {loading ? <div className="flex justify-center my-8"><Loader2 className="animate-spin" /></div> :
                              payments.length > 0 ? (
                                 <Table>
-                                    <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
+                                    <TableHeader><TableRow><TableHead>Payment Period</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {payments.map(p => (
                                             <TableRow key={p.id}>
+                                                <TableCell>
+                                                    {p.startDate && p.endDate 
+                                                        ? `${format(p.startDate.toDate(), 'dd/MM/yy')} - ${format(p.endDate.toDate(), 'dd/MM/yy')}`
+                                                        : 'N/A'}
+                                                </TableCell>
                                                 <TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
                                                 <TableCell className="flex items-center gap-1"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
                                                 <TableCell>{p.totalHours}</TableCell>
@@ -217,7 +270,54 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                         <CardContent>
                            <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleAddPayment)} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                    <FormField
+                                        control={form.control}
+                                        name="dateRange"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Payment Period</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant={"outline"}
+                                                                className={cn(
+                                                                    "w-full justify-start text-left font-normal",
+                                                                    !field.value?.from && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                                {field.value?.from ? (
+                                                                    field.value.to ? (
+                                                                        <>
+                                                                            {format(field.value.from, "LLL dd, y")} -{" "}
+                                                                            {format(field.value.to, "LLL dd, y")}
+                                                                        </>
+                                                                    ) : (
+                                                                        format(field.value.from, "LLL dd, y")
+                                                                    )
+                                                                ) : (
+                                                                    <span>Pick a date range</span>
+                                                                )}
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            initialFocus
+                                                            mode="range"
+                                                            defaultMonth={field.value?.from}
+                                                            selected={field.value}
+                                                            onSelect={field.onChange}
+                                                            numberOfMonths={2}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                     <FormField name="hourlyRate" control={form.control} render={({field}) => (
                                         <FormItem>
                                             <FormLabel>Hourly Rate (INR)</FormLabel>
@@ -229,8 +329,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                     <FormField name="totalHours" control={form.control} render={({field}) => (
                                         <FormItem>
                                             <FormLabel>Total Hours</FormLabel>
-                                            <FormControl><Input type="number" {...field}/></FormControl>
-                                            <FormDescription>Auto-calculated for {format(new Date(), 'MMMM yyyy')}. You can override this.</FormDescription>
+                                            <FormControl><Input type="number" {...field} readOnly className="bg-muted"/></FormControl>
+                                            <FormDescription>Auto-calculated from date range.</FormDescription>
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
