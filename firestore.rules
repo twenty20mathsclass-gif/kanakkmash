@@ -84,8 +84,9 @@ service cloud.firestore {
       }
 
       match /referrals/{studentId} {
-        // A teacher or promoter can read their own referral list.
-        allow read, list: if isOwner(userId) && (isRole('teacher') || isRole('promoter'));
+        // A teacher or promoter can read their own referral list. Admin can read any.
+        allow get: if (isOwner(userId) && (isRole('teacher') || isRole('promoter'))) || isAdmin();
+        allow list: if (isOwner(userId) && (isRole('teacher') || isRole('promoter'))) || isTheOneTrueAdmin();
         // A new student can create an entry in their referrer's list.
         // studentId here is the ID of the new student being created.
         allow create: if request.auth != null && request.auth.uid == studentId;
@@ -94,8 +95,9 @@ service cloud.firestore {
       }
       
       match /rewards/{rewardId} {
-        // Promoter can read their own rewards.
-        allow get, list: if isOwner(userId) && isRole('promoter');
+        // Promoter can read their own rewards. Admin can read any.
+        allow get: if (isOwner(userId) && isRole('promoter')) || isAdmin();
+        allow list: if (isOwner(userId) && isRole('promoter')) || isTheOneTrueAdmin();
         // Student can create a reward in promoter's subcollection upon signup.
         allow create: if request.auth.uid == request.resource.data.studentId && userId == request.resource.data.promoterId && getUserRole(userId) == 'promoter';
         // Only admin can update (e.g. mark as paid) or delete.
@@ -165,7 +167,8 @@ service cloud.firestore {
       // Students can read their own invoices, admins can read any.
       allow get: if isAdmin() || isOwner(resource.data.studentId);
       // Only admins can list all invoices or modify them.
-      allow list, update, delete: if isAdmin();
+      allow list: if isTheOneTrueAdmin();
+      allow update, delete: if isAdmin();
     }
 
     match /courseFees/{feeId} {
