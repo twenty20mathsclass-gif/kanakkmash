@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -120,6 +120,15 @@ export function CreateExamForm() {
     const [imageUploadStatus, setImageUploadStatus] = useState<Record<number, 'idle' | 'uploading' | 'success' | 'error'>>({});
     const [questionPaperUpload, setQuestionPaperUpload] = useState<{ file: File | null, status: 'idle' | 'uploading' | 'success' | 'error', url?: string }>({ file: null, status: 'idle' });
 
+    const availableClasses = useMemo(() => {
+        if (user?.role === 'admin') {
+            return classes;
+        }
+        if (user?.role === 'teacher' && user.assignedClasses && user.assignedClasses.length > 0) {
+            return classes.filter(c => user.assignedClasses!.includes(c));
+        }
+        return [];
+    }, [user]);
 
     const form = useForm<ExamFormValues>({
         resolver: zodResolver(examFormSchema),
@@ -526,14 +535,14 @@ export function CreateExamForm() {
                                 <FormLabel>Classes</FormLabel>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild><FormControl>
-                                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                            {selectedCount > 0 ? `${selectedCount} selected` : 'Select classes'}
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal" disabled={availableClasses.length === 0}>
+                                            {selectedCount > 0 ? `${selectedCount} selected` : (availableClasses.length > 0 ? 'Select classes' : 'No classes assigned')}
                                         </Button>
                                     </FormControl></DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                                         <DropdownMenuLabel>Available Classes</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {classes.map(c => (
+                                        {availableClasses.map(c => (
                                             <DropdownMenuCheckboxItem key={c} checked={field.value?.includes(c)}
                                                 onCheckedChange={(checked) => {
                                                     const currentValues = field.value || [];
@@ -765,3 +774,5 @@ function OptionsFieldArray({ questionIndex, control }: { questionIndex: number; 
     </div>
   );
 }
+
+    

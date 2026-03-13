@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,6 +83,16 @@ export default function CreateSchedulePage() {
     const [allStudents, setAllStudents] = useState<User[]>([]);
     const [filteredStudents, setFilteredStudents] = useState<User[]>([]);
     const [scheduledClasses, setScheduledClasses] = useState<Schedule[]>([]);
+
+    const availableClasses = useMemo(() => {
+        if (user?.role === 'admin') {
+            return classes;
+        }
+        if (user?.role === 'teacher' && user.assignedClasses && user.assignedClasses.length > 0) {
+            return classes.filter(c => user.assignedClasses!.includes(c));
+        }
+        return [];
+    }, [user]);
 
     const form = useForm<ScheduleFormValues>({
         resolver: zodResolver(scheduleSchema),
@@ -380,15 +390,15 @@ export default function CreateSchedulePage() {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <FormControl>
-                                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select classes'}
+                                                                <Button variant="outline" className="w-full justify-start text-left font-normal" disabled={availableClasses.length === 0}>
+                                                                    {selectedCount > 0 ? `${selectedCount} selected` : (availableClasses.length > 0 ? 'Select classes' : 'No classes assigned')}
                                                                 </Button>
                                                             </FormControl>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                                                             <DropdownMenuLabel>Available Classes</DropdownMenuLabel>
                                                             <DropdownMenuSeparator />
-                                                            {classes.map(c => (
+                                                            {availableClasses.map(c => (
                                                                 <DropdownMenuCheckboxItem
                                                                     key={c}
                                                                     checked={field.value?.includes(c)}
@@ -599,3 +609,5 @@ export default function CreateSchedulePage() {
         </div>
     );
 }
+
+    

@@ -24,6 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -34,11 +42,14 @@ import type { User, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
+
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     role: z.enum(['student', 'teacher', 'admin', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
+    assignedClasses: z.array(z.string()).optional(),
 });
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 
@@ -63,6 +74,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
       role: user.role,
       hourlyRate: user.hourlyRate || 0,
       rewardPercentage: user.rewardPercentage || 10,
+      assignedClasses: user.assignedClasses || [],
     },
   });
 
@@ -72,8 +84,15 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   useEffect(() => {
     if(isOpen) {
         setError(null);
+        form.reset({
+            name: user.name,
+            role: user.role,
+            hourlyRate: user.hourlyRate || 0,
+            rewardPercentage: user.rewardPercentage || 10,
+            assignedClasses: user.assignedClasses || [],
+        });
     }
-  }, [isOpen]);
+  }, [isOpen, user, form]);
 
   const onSubmit = async (data: UpdateUserFormValues) => {
     setLoading(true);
@@ -90,10 +109,16 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     const promoterPrivateDetailsRef = doc(firestore, 'users', user.id, 'promoter_details', 'payment');
 
     try {
-        const dataToUpdate: Partial<User> = {
+        const dataToUpdate: any = {
             name: data.name,
             role: data.role,
         };
+
+        if (data.role === 'teacher') {
+            dataToUpdate.assignedClasses = data.assignedClasses || [];
+        } else {
+            dataToUpdate.assignedClasses = []; // Clear classes if not a teacher
+        }
 
         await updateDoc(userDocRef, dataToUpdate);
 
@@ -186,19 +211,62 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             />
 
             {role === 'teacher' && (
-                <FormField
-                control={form.control}
-                name="hourlyRate"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Hourly Rate (INR)</FormLabel>
-                    <FormControl>
-                        <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                <>
+                    <FormField
+                        control={form.control}
+                        name="hourlyRate"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Hourly Rate (INR)</FormLabel>
+                            <FormControl>
+                                <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="assignedClasses"
+                        render={({ field }) => {
+                            const selectedCount = field.value?.length || 0;
+                            return (
+                                <FormItem>
+                                    <FormLabel>Assigned Classes</FormLabel>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <FormControl>
+                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select classes'}
+                                                </Button>
+                                            </FormControl>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                            <DropdownMenuLabel>Available Classes</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {classes.map(c => (
+                                                <DropdownMenuCheckboxItem
+                                                    key={c}
+                                                    checked={field.value?.includes(c)}
+                                                    onCheckedChange={(checked) => {
+                                                        const currentValues = field.value || [];
+                                                        const newValues = checked
+                                                            ? [...currentValues, c]
+                                                            : currentValues.filter(val => val !== c);
+                                                        field.onChange(newValues);
+                                                    }}
+                                                >
+                                                    {c}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <FormMessage />
+                                </FormItem>
+                            )
+                        }}
+                    />
+                </>
             )}
             
             {role === 'promoter' && (
@@ -239,3 +307,5 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     </Dialog>
   );
 }
+
+    

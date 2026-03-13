@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -66,7 +67,18 @@ export default function MyChatRoomPage() {
                     contactsQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
                 } else if (user.role === 'teacher') {
                     setContactListTitle('My Students');
-                    contactsQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
+                    if (user.assignedClasses && user.assignedClasses.length > 0) {
+                        contactsQuery = query(
+                            collection(firestore, 'users'), 
+                            where('role', '==', 'student'), 
+                            where('class', 'in', user.assignedClasses)
+                        );
+                    } else {
+                        // If teacher has no assigned classes, show no students.
+                        setContacts([]);
+                        setLoading(false);
+                        return;
+                    }
                 } else if (user.role === 'admin') {
                     setContactListTitle('All Users');
                     contactsQuery = query(collection(firestore, 'users'));
@@ -148,3 +160,5 @@ export default function MyChatRoomPage() {
         </div>
     );
 }
+
+    

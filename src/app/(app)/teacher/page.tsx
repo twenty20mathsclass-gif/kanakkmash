@@ -130,15 +130,23 @@ export default function TeacherDashboardPage() {
           collection(firestore, 'users', user.id, 'salaryPayments')
         );
 
-        const [schedulesSnapshot, salaryPaymentsSnapshot] =
+        let studentQuery;
+        if (user.assignedClasses && user.assignedClasses.length > 0) {
+            studentQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', 'in', user.assignedClasses));
+        } else {
+            // Create a query that will always be empty if no classes are assigned
+            studentQuery = query(collection(firestore, 'users'), where('id', '==', 'nonExistent'));
+        }
+
+        const [schedulesSnapshot, salaryPaymentsSnapshot, studentsSnapshot] =
           await Promise.all([
             getDocs(schedulesQuery),
-            getDocs(salaryPaymentsQuery),
+            getDocs(salaryPaymentsSnapshot),
+            getDocs(studentQuery),
           ]);
 
         let totalClasses = 0;
         let totalExams = 0;
-        const studentIdsFromSchedules = new Set<string>();
         const allSchedules = schedulesSnapshot.docs.map(
           (doc) => {
             const schedule = { id: doc.id, ...doc.data() } as Schedule;
@@ -147,21 +155,12 @@ export default function TeacherDashboardPage() {
             } else if (schedule.type === 'exam') {
               totalExams++;
             }
-            if (schedule.studentId) {
-              studentIdsFromSchedules.add(schedule.studentId);
-            }
             return schedule;
           }
         );
         setSchedules(allSchedules);
         
-        let allStudents: User[] = [];
-        if (studentIdsFromSchedules.size > 0) {
-            const studentIdArray = Array.from(studentIdsFromSchedules);
-            const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', studentIdArray));
-            const studentsSnapshot = await getDocs(studentsQuery);
-            allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        }
+        const allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
         const totalRevenue = salaryPaymentsSnapshot.docs.reduce(
           (sum, doc) => sum + (doc.data().amount || 0),
@@ -169,7 +168,7 @@ export default function TeacherDashboardPage() {
         );
 
         setStats({
-          students: studentIdsFromSchedules.size,
+          students: allStudents.length,
           classes: totalClasses,
           exams: totalExams,
           revenue: totalRevenue,
@@ -388,7 +387,7 @@ export default function TeacherDashboardPage() {
           ) : (
               <Card className="flex items-center justify-center h-24 bg-muted/50 border-2 border-dashed">
                   <CardContent className="p-6 text-center">
-                      <p className="text-muted-foreground text-sm">Your students will appear here once you schedule classes for them.</p>
+                      <p className="text-muted-foreground text-sm">Your students will appear here once they are assigned to your classes by an admin.</p>
                   </CardContent>
               </Card>
           )}
@@ -402,3 +401,5 @@ export default function TeacherDashboardPage() {
     </div>
   );
 }
+
+    

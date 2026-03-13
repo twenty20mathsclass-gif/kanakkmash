@@ -13,7 +13,8 @@
         "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
         "createdAt": { "type": "object", "description": "The date and time the user account was created." },
         "referredBy": { "type": "string", "description": "The UID of the user who referred this user." },
-        "rewardPercentage": { "type": "number", "description": "The custom reward percentage for a promoter." }
+        "rewardPercentage": { "type": "number", "description": "The custom reward percentage for a promoter." },
+        "assignedClasses": { "type": "array", "items": { "type": "string" }, "description": "The classes a teacher is assigned to." }
       },
       "required": ["id", "name", "email", "role"]
     },
@@ -320,3 +321,5 @@
     }
   }
 }
+
+    

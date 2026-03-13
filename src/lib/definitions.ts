@@ -26,6 +26,7 @@ export type User = {
   upiQrCodeUrl?: string;
   hourlyRate?: number;
   rewardPercentage?: number;
+  assignedClasses?: string[];
 };
 
 export type TeacherPrivateDetails = {
@@ -302,3 +303,5 @@ export type Announcement = {
   isActive: boolean;
   createdAt: Timestamp;
 };
+
+    
