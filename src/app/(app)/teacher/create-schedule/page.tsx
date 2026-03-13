@@ -93,6 +93,16 @@ export default function CreateSchedulePage() {
         }
         return [];
     }, [user]);
+    
+    const availableCompetitiveExams = useMemo(() => {
+        if (user?.role === 'admin') {
+            return competitiveExams;
+        }
+        if (user?.role === 'teacher' && user.assignedClasses && user.assignedClasses.length > 0) {
+            return competitiveExams.filter(c => user.assignedClasses!.includes(c));
+        }
+        return [];
+    }, [user]);
 
     const form = useForm<ScheduleFormValues>({
         resolver: zodResolver(scheduleSchema),
@@ -470,26 +480,14 @@ export default function CreateSchedulePage() {
                                 )}
 
                                 {showCompetitiveExamField && (
-                                    <FormField
-                                        control={form.control}
-                                        name="competitiveExam"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Competitive Exam</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a competitive exam" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {competitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <FormField control={form.control} name="competitiveExam" render={({ field }) => (
+                                        <FormItem><FormLabel>Competitive Exam</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={availableCompetitiveExams.length === 0}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder={availableCompetitiveExams.length > 0 ? "Select an exam" : "No exams assigned"} /></SelectTrigger></FormControl>
+                                                <SelectContent>{availableCompetitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        <FormMessage /></FormItem>
+                                    )}/>
                                 )}
 
 
@@ -609,5 +607,3 @@ export default function CreateSchedulePage() {
         </div>
     );
 }
-
-    
