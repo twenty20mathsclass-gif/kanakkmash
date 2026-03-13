@@ -81,7 +81,7 @@ export default function ClassSchedulePage() {
                 return schedule.competitiveExam === user.competitiveExam;
             }
 
-            if (schedule.class === user.class) {
+            if (user.class && schedule.classes?.includes(user.class)) {
                 // For non-DEGREE classes, syllabus must also match
                 if (user.class !== 'DEGREE') {
                     return schedule.syllabus === user.syllabus;
@@ -383,7 +383,7 @@ export default function ClassSchedulePage() {
                                           <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
                                       </div>
                                       <div className="flex flex-wrap gap-1 pt-2">
-                                          {event.class && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.class}</Badge>}
+                                          {event.classes?.map(c => <Badge key={c} variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{c}</Badge>)}
                                           {event.syllabus && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.syllabus}</Badge>}
                                           {event.competitiveExam && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.competitiveExam}</Badge>}
                                       </div>

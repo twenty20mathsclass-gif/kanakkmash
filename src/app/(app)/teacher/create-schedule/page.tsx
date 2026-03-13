@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { RecentClassesList } from '@/components/teacher/recent-classes-list';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -43,44 +44,29 @@ const scheduleSchema = z.object({
     startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
     endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
     meetLink: z.string().url('Please enter a valid URL.'),
-    class: z.string().optional(),
+    classes: z.array(z.string()).optional(),
     syllabus: z.string().optional(),
     studentId: z.string().optional(),
     competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.courseModel === 'MATHS ONLINE TUITION') {
-        if (!data.class || data.class.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a class.',
-                path: ['class'],
-            });
-        } else if (data.class !== 'DEGREE') {
-            if (!data.syllabus || data.syllabus.trim() === '') {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: 'Please select a syllabus.',
-                    path: ['syllabus'],
-                });
+        if (!data.classes || data.classes.length === 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select at least one class.', path: ['classes'] });
+        } else {
+            const hasNonDegreeClass = data.classes.some(c => c !== 'DEGREE');
+            if (hasNonDegreeClass && (!data.syllabus || data.syllabus.trim() === '')) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Syllabus is required for non-degree classes.', path: ['syllabus'] });
             }
         }
     }
     if (data.courseModel === 'ONE TO ONE') {
         if (!data.studentId || data.studentId.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a student.',
-                path: ['studentId'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a student.', path: ['studentId'] });
         }
     }
     if (data.courseModel === 'COMPETITIVE EXAM') {
         if (!data.competitiveExam || data.competitiveExam.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a competitive exam.',
-                path: ['competitiveExam'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
         }
     }
 });
@@ -107,7 +93,7 @@ export default function CreateSchedulePage() {
             startTime: '',
             endTime: '',
             meetLink: 'https://meet.google.com/',
-            class: '',
+            classes: [],
             syllabus: '',
             studentId: '',
             competitiveExam: '',
@@ -117,7 +103,7 @@ export default function CreateSchedulePage() {
     const { watch, setValue } = form;
 
     const courseModel = watch('courseModel');
-    const selectedClass = watch('class');
+    const selectedClasses = watch('classes');
 
     useEffect(() => {
         if (!firestore || !user) return;
@@ -236,14 +222,14 @@ export default function CreateSchedulePage() {
                 const student = allStudents.find(s => s.id === data.studentId);
                 if (student) {
                     scheduleData.studentId = student.id;
-                    if (student.class) scheduleData.class = student.class;
+                    if (student.class) scheduleData.classes = [student.class];
                     if (student.syllabus) scheduleData.syllabus = student.syllabus;
                 }
             } else if (data.courseModel === 'COMPETITIVE EXAM') {
                 scheduleData.competitiveExam = data.competitiveExam;
             } else {
-                if (data.class) {
-                    scheduleData.class = data.class;
+                if (data.classes) {
+                    scheduleData.classes = data.classes;
                 }
                 if (data.syllabus) {
                     scheduleData.syllabus = data.syllabus;
@@ -264,9 +250,13 @@ export default function CreateSchedulePage() {
                     if (data.courseModel === 'COMPETITIVE EXAM') {
                         return student.competitiveExam === data.competitiveExam;
                     }
-                    if (data.class) {
-                        if (student.class !== data.class) return false;
-                        if (data.class !== 'DEGREE' && student.syllabus !== data.syllabus) return false;
+                    if (data.courseModel === 'MATHS ONLINE TUITION' && data.classes && data.classes.length > 0) {
+                        if (!student.class || !data.classes.includes(student.class)) return false;
+                        
+                        const hasNonDegree = data.classes.some(c => c !== 'DEGREE');
+                        if (hasNonDegree && student.class !== 'DEGREE' && data.syllabus) {
+                            return student.syllabus === data.syllabus;
+                        }
                         return true;
                     }
                     return false;
@@ -302,7 +292,7 @@ export default function CreateSchedulePage() {
                 startTime: '',
                 endTime: '',
                 meetLink: 'https://meet.google.com/',
-                class: '',
+                classes: [],
                 syllabus: '',
                 studentId: '',
                 competitiveExam: '',
@@ -329,7 +319,7 @@ export default function CreateSchedulePage() {
     };
 
     const showClassField = courseModel === 'MATHS ONLINE TUITION';
-    const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
+    const showSyllabusField = showClassField && selectedClasses && selectedClasses.some(c => c !== 'DEGREE');
     const showStudentField = courseModel === 'ONE TO ONE';
     const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
 
@@ -357,7 +347,7 @@ export default function CreateSchedulePage() {
                                             <FormLabel>Course Model</FormLabel>
                                             <Select onValueChange={(value) => {
                                                 field.onChange(value);
-                                                setValue('class', '');
+                                                setValue('classes', []);
                                                 setValue('syllabus', '');
                                                 setValue('studentId', '');
                                                 setValue('competitiveExam', '');
@@ -381,27 +371,44 @@ export default function CreateSchedulePage() {
                                 {showClassField && (
                                     <FormField
                                         control={form.control}
-                                        name="class"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Class</FormLabel>
-                                                <Select onValueChange={(value) => {
-                                                    field.onChange(value);
-                                                    setValue('syllabus', '');
-                                                    setValue('studentId', '');
-                                                }} value={field.value || ''}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a class" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                        name="classes"
+                                        render={({ field }) => {
+                                            const selectedCount = field.value?.length || 0;
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Classes</FormLabel>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <FormControl>
+                                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select classes'}
+                                                                </Button>
+                                                            </FormControl>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                                            <DropdownMenuLabel>Available Classes</DropdownMenuLabel>
+                                                            <DropdownMenuSeparator />
+                                                            {classes.map(c => (
+                                                                <DropdownMenuCheckboxItem
+                                                                    key={c}
+                                                                    checked={field.value?.includes(c)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        const currentValues = field.value || [];
+                                                                        const newValues = checked
+                                                                            ? [...currentValues, c]
+                                                                            : currentValues.filter(val => val !== c);
+                                                                        field.onChange(newValues);
+                                                                    }}
+                                                                >
+                                                                    {c}
+                                                                </DropdownMenuCheckboxItem>
+                                                            ))}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )
+                                        }}
                                     />
                                 )}
 

@@ -61,7 +61,7 @@ export function ScheduledItemsList({ schedules, title, description }: { schedule
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-1 pt-1">
-                                    {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
+                                    {schedule.classes?.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
                                     {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
                                     {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
                                 </div>

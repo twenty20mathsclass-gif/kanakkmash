@@ -105,7 +105,7 @@ export type Schedule = {
   icon: string; // lucide icon name
   color: string; // hsl color
   textColor: string;
-  class?: string;
+  classes?: string[];
   studentId?: string;
   syllabus?: string;
   examId?: string;
@@ -141,7 +141,7 @@ export type Exam = {
   teacherId: string;
   title: string;
   courseModel: string;
-  class?: string;
+  classes?: string[];
   syllabus?: string;
   studentId?: string;
   competitiveExam?: string;

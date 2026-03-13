@@ -80,7 +80,7 @@ const ScheduleDetails = ({ schedule, firestore, users }: { schedule: Schedule; f
         </CardDescription>
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
             <div className="flex items-center gap-1.5"><Clock className="h-4 w-4"/><span>{schedule.startTime} - {schedule.endTime}</span></div>
-            {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
+            {schedule.classes?.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
             {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
             {schedule.courseModel && <Badge variant="secondary">{schedule.courseModel}</Badge>}
             {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
