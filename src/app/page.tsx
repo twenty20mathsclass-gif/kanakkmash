@@ -7,10 +7,10 @@ import InstallButton from '@/components/shared/install-button';
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
-      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
+      className={`absolute text-5xl font-bold text-primary/20 -z-10 animate-float-down ${className}`}
       style={{
-        animation: `float-down ${duration}s ease-in-out infinite`,
-        animationDelay: `${delay}s`
+        animationDuration: `${duration}s`,
+        animationDelay: `${delay}s`,
       }}
     >
       {symbol}
