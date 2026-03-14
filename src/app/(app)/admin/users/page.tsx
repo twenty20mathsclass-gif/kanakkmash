@@ -12,10 +12,11 @@ import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import Link from 'next/link';
 
 const AddUserDialog = nextDynamic(
     () => import('@/components/admin/add-user-dialog').then(mod => mod.AddUserDialog), 
@@ -123,9 +124,16 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
         <Reveal>
           <div className="flex items-center justify-between">
-              <div>
-                  <h1 className="text-3xl font-bold font-headline">{title}</h1>
-                  <p className="text-muted-foreground">{description}</p>
+              <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" asChild>
+                  <Link href="/admin">
+                    <ArrowLeft />
+                  </Link>
+                </Button>
+                <div>
+                    <h1 className="text-3xl font-bold font-headline">{title}</h1>
+                    <p className="text-muted-foreground">{description}</p>
+                </div>
               </div>
               <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
           </div>
