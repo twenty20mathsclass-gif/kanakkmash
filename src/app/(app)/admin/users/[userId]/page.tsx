@@ -79,7 +79,7 @@ export default function UserProfilePage() {
                 const [schedulesSnap, salarySnap, referralsSnap] = await Promise.all([
                     getDocs(schedulesQuery),
                     getDocs(salaryQuery),
-                    getDocs(referralsQuery)
+                    getDocs(referralsSnap)
                 ]);
 
                 setSchedules(schedulesSnap.docs.map(d => ({id: d.id, ...d.data()} as Schedule)));
