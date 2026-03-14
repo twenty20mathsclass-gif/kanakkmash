@@ -106,7 +106,7 @@ export default {
             backgroundPosition: '0% 50%',
           },
         },
-        'float': {
+        'float-down': {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(20px)' },
         },
@@ -115,7 +115,7 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'gradient-pan': 'gradient-pan 8s ease infinite',
-        'float': 'float 6s ease-in-out infinite',
+        'float-down': 'float-down 6s ease-in-out infinite',
       },
     },
   },

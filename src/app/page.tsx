@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +9,7 @@ const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string
     <div
       className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
       style={{
-        animation: `float ${duration}s ease-in-out infinite`,
+        animation: `float-down ${duration}s ease-in-out infinite`,
         animationDelay: `${delay}s`
       }}
     >
