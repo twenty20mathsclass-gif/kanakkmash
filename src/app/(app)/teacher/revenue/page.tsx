@@ -1,8 +1,10 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, X, IndianRupee } from 'lucide-react';
+import { Loader2, Save, X, IndianRupee, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -111,6 +113,7 @@ function SalaryHistory() {
                                 <TableHead>Hourly Rate</TableHead>
                                 <TableHead>Total Hours</TableHead>
                                 <TableHead className="text-right">Amount Paid</TableHead>
+                                <TableHead className="text-right">Invoice</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -127,6 +130,13 @@ function SalaryHistory() {
                                     <TableCell className="text-right font-medium flex items-center justify-end gap-1">
                                         <IndianRupee className="h-4 w-4" />
                                         {payment.amount.toLocaleString('en-IN')}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {payment.invoiceId && (
+                                            <Button asChild variant="ghost" size="icon">
+                                                <Link href={`/salary-invoice/${payment.invoiceId}`} target="_blank"><FileText className="h-4 w-4"/></Link>
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

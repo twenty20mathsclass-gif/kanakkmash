@@ -103,9 +103,27 @@
         "amount": { "type": "number", "description": "The total amount paid (calculated from hourlyRate * totalHours)." },
         "paymentDate": { "type": "object", "description": "The date the payment was made." },
         "startDate": { "type": "object", "description": "The start date of the payment period." },
-        "endDate": { "type": "object", "description": "The end date of the payment period." }
+        "endDate": { "type": "object", "description": "The end date of the payment period." },
+        "invoiceId": { "type": "string", "description": "The ID of the associated salary invoice." }
       },
-      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate", "startDate", "endDate"]
+      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate", "startDate", "endDate", "invoiceId"]
+    },
+    "salaryInvoice": {
+      "title": "Salary Invoice",
+      "description": "Represents a salary payment invoice for a teacher.",
+      "type": "object",
+      "properties": {
+        "teacherId": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "teacherEmail": { "type": "string" },
+        "paymentDate": { "type": "object" },
+        "startDate": { "type": "object" },
+        "endDate": { "type": "object" },
+        "hourlyRate": { "type": "number" },
+        "totalHours": { "type": "number" },
+        "amount": { "type": "number" }
+      },
+      "required": ["teacherId", "teacherName", "paymentDate", "startDate", "endDate", "amount"]
     },
     "blogPost": {
       "title": "Blog Post",
@@ -292,6 +310,10 @@
     "/invoices/{invoiceId}": {
       "schema": { "$ref": "#/entities/invoice" },
       "description": "Stores student invoices."
+    },
+    "/salaryInvoices/{invoiceId}": {
+        "schema": { "$ref": "#/entities/salaryInvoice" },
+        "description": "Stores teacher salary payment invoices."
     },
     "/blogPosts/{postId}": {
         "schema": { "$ref": "#/entities/blogPost" },

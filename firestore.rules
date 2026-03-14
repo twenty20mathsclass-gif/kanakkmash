@@ -171,6 +171,14 @@ service cloud.firestore {
       allow list: if isTheOneTrueAdmin();
       allow update, delete: if isAdmin();
     }
+    
+    match /salaryInvoices/{invoiceId} {
+      // Admins can manage all salary invoices.
+      allow write: if isAdmin();
+      // Teacher can read their own salary invoice.
+      allow get: if isOwner(resource.data.teacherId) || isAdmin();
+      allow list: if isTheOneTrueAdmin();
+    }
 
     match /courseFees/{feeId} {
       // Admins can manage all fees.

@@ -220,7 +220,22 @@ export type SalaryPayment = {
   startDate: Timestamp;
   endDate: Timestamp;
   paymentMonth?: string;
+  invoiceId?: string;
 };
+
+export type SalaryInvoice = {
+    id: string;
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+    paymentDate: Timestamp;
+    startDate: Timestamp;
+    endDate: Timestamp;
+    hourlyRate: number;
+    totalHours: number;
+    amount: number;
+}
+
 
 export type BlogPost = {
   id: string;

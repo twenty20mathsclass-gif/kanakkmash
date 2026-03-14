@@ -4,12 +4,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useFirebase } from '@/firebase';
-import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc, writeBatch } from 'firebase/firestore';
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -188,7 +189,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     if (!teacher) return null;
 
-    const handleAddPayment = (data: AddPaymentValues) => {
+    const handleAddPayment = async (data: AddPaymentValues) => {
         if (!firestore || !teacher) return;
         setIsSubmitting(true);
         setFormError(null);
@@ -206,7 +207,22 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         const startDate = startOfMonth(new Date(year, month - 1));
         const endDate = endOfMonth(new Date(year, month - 1));
 
-        const salaryPaymentsCollection = collection(firestore, 'users', teacher.id, 'salaryPayments');
+        const batch = writeBatch(firestore);
+        const newInvoiceRef = doc(collection(firestore, 'salaryInvoices'));
+        const invoiceData = {
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            teacherEmail: teacher.email,
+            paymentDate: serverTimestamp(),
+            startDate: startDate,
+            endDate: endDate,
+            hourlyRate: data.hourlyRate,
+            totalHours: data.totalHours,
+            amount: data.hourlyRate * data.totalHours,
+        };
+        batch.set(newInvoiceRef, invoiceData);
+
+        const salaryPaymentRef = doc(collection(firestore, 'users', teacher.id, 'salaryPayments'));
         const paymentData = {
             teacherId: teacher.id,
             hourlyRate: data.hourlyRate,
@@ -216,27 +232,28 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             startDate: startDate,
             endDate: endDate,
             paymentMonth: data.paymentMonth,
+            invoiceId: newInvoiceRef.id,
         };
+        batch.set(salaryPaymentRef, paymentData);
 
-        addDoc(salaryPaymentsCollection, paymentData)
-            .then(() => {
-                toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded for ${teacher.name}.` });
-                form.reset();
-                setSelectedMonth(undefined);
-                setMonthlySchedules([]);
-            })
-            .catch(async (serverError: any) => {
-                if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: salaryPaymentsCollection.path, operation: 'create', requestResourceData: paymentData }, { cause: serverError });
-                    errorEmitter.emit('permission-error', permissionError);
-                    setFormError("You don't have permission to add payments.");
-                } else {
-                     setFormError("An unexpected error occurred.");
-                }
-            })
-            .finally(() => {
-                setIsSubmitting(false);
-            });
+
+        try {
+             await batch.commit();
+             toast({ title: "Success", description: `Payment of ${paymentData.amount.toLocaleString('en-IN')} recorded and invoice created for ${teacher.name}.` });
+             form.reset();
+             setSelectedMonth(undefined);
+             setMonthlySchedules([]);
+        } catch (serverError: any) {
+            if (serverError.code === 'permission-denied') {
+                const permissionError = new FirestorePermissionError({ path: `salaryInvoices or users/${teacher.id}/salaryPayments`, operation: 'create' }, { cause: serverError });
+                errorEmitter.emit('permission-error', permissionError);
+                setFormError("You don't have permission to add payments.");
+            } else {
+                    setFormError("An unexpected error occurred.");
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
     
     return (
@@ -255,7 +272,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              payments.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <Table>
-                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
+                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead><TableHead className="text-right">Invoice</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {payments.map(p => (
                                                 <TableRow key={p.id}>
@@ -269,6 +286,13 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                                     <TableCell className="flex items-center gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
                                                     <TableCell>{p.totalHours}</TableCell>
                                                     <TableCell className="text-right font-medium flex items-center justify-end gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        {p.invoiceId && (
+                                                            <Button asChild variant="ghost" size="icon">
+                                                                <Link href={`/salary-invoice/${p.invoiceId}`} target="_blank"><FileText className="h-4 w-4" /></Link>
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
