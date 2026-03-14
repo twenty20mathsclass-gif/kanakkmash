@@ -338,10 +338,9 @@ function ServicesSection({ services }: { services: Service[] }) {
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
-      className={`absolute text-5xl font-bold text-primary/20 -z-10 animate-float-down ${className}`}
+      className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
       style={{
-        animationDuration: `${duration}s`,
-        animationDelay: `${delay}s`
+        animation: `float-down ${duration}s ease-in-out ${delay}s infinite`,
       }}
     >
       {symbol}
