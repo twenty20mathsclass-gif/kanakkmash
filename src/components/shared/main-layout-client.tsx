@@ -13,9 +13,6 @@ import {
     BookPlus,
     FilePlus2,
     PenSquare,
-    TrendingDown,
-    TrendingUp,
-    PlusSquare,
     DollarSign,
     Users, 
     LayoutDashboard,
@@ -159,6 +156,7 @@ export default function MainLayoutClient({
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
+    { href: '/admin/student-results', label: 'Student Results', icon: Award },
     { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
@@ -166,12 +164,9 @@ export default function MainLayoutClient({
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
     { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
-    { href: '/admin/mock-tests/create', label: 'Mocktest Creator', icon: FilePlus2 },
     { href: '/admin/fees', label: 'Fee Management', icon: DollarSign },
     { href: '/admin/accountant/salaries', label: 'Teacher Salaries', icon: Banknote },
     { href: '/admin/accountant/invoices', label: 'Student Invoices', icon: Receipt },
-    { href: '/admin/revenue/students', label: 'Student Revenue', icon: TrendingUp },
-    { href: '/admin/revenue/teachers', label: 'Teacher Payouts', icon: TrendingDown },
   ];
   
   let layout;
