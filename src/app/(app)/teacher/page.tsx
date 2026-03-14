@@ -130,20 +130,37 @@ export default function TeacherDashboardPage() {
           collection(firestore, 'users', user.id, 'salaryPayments')
         );
 
-        let studentQuery;
-        if (user.assignedClasses && user.assignedClasses.length > 0) {
-            studentQuery = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', 'in', user.assignedClasses));
-        } else {
-            // Create a query that will always be empty if no classes are assigned
-            studentQuery = query(collection(firestore, 'users'), where('id', '==', 'nonExistent'));
-        }
-
-        const [schedulesSnapshot, salaryPaymentsSnapshot, studentsSnapshot] =
+        const [schedulesSnapshot, salaryPaymentsSnapshot] =
           await Promise.all([
             getDocs(schedulesQuery),
-            getDocs(salaryPaymentsSnapshot),
-            getDocs(studentQuery),
+            getDocs(salaryPaymentsQuery),
           ]);
+        
+        let allStudents: User[] = [];
+        if (user.assignedClasses && user.assignedClasses.length > 0) {
+            const studentPromises = user.assignedClasses.map(assignedItem => {
+                // A teacher's assignedItem can be a class or a competitive exam.
+                // We need to query both fields.
+                const q1 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', assignedItem));
+                const q2 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('competitiveExam', '==', assignedItem));
+                return Promise.all([getDocs(q1), getDocs(q2)]);
+            });
+
+            const studentSnapshotsArray = await Promise.all(studentPromises);
+            
+            const studentMap = new Map<string, User>();
+            studentSnapshotsArray.forEach(snapshots => {
+                snapshots.forEach(snapshot => {
+                     snapshot.forEach(doc => {
+                        if (!studentMap.has(doc.id)) {
+                            studentMap.set(doc.id, { id: doc.id, ...doc.data() } as User);
+                        }
+                    });
+                });
+            });
+
+            allStudents = Array.from(studentMap.values());
+        }
 
         let totalClasses = 0;
         let totalExams = 0;
@@ -160,8 +177,6 @@ export default function TeacherDashboardPage() {
         );
         setSchedules(allSchedules);
         
-        const allStudents = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
         const totalRevenue = salaryPaymentsSnapshot.docs.reduce(
           (sum, doc) => sum + (doc.data().amount || 0),
           0
@@ -401,5 +416,7 @@ export default function TeacherDashboardPage() {
     </div>
   );
 }
+
+    
 
     
