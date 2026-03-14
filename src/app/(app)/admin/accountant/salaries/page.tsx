@@ -253,25 +253,27 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                         <CardContent>
                              {loadingHistory ? <div className="flex justify-center my-8"><Loader2 className="animate-spin" /></div> :
                              payments.length > 0 ? (
-                                <Table>
-                                    <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
-                                    <TableBody>
-                                        {payments.map(p => (
-                                            <TableRow key={p.id}>
-                                                <TableCell>
-                                                    {p.paymentMonth 
-                                                        ? format(parse(p.paymentMonth, 'yyyy-MM', new Date()), 'MMMM yyyy')
-                                                        : (p.startDate && p.endDate ? `${format(p.startDate.toDate(), 'dd/MM/yy')} - ${format(p.endDate.toDate(), 'dd/MM/yy')}` : 'N/A')
-                                                    }
-                                                </TableCell>
-                                                <TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
-                                                <TableCell className="flex items-center gap-1"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
-                                                <TableCell>{p.totalHours}</TableCell>
-                                                <TableCell className="text-right font-medium flex items-center justify-end gap-1"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead></TableRow></TableHeader>
+                                        <TableBody>
+                                            {payments.map(p => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell className="whitespace-nowrap">
+                                                        {p.paymentMonth 
+                                                            ? format(parse(p.paymentMonth, 'yyyy-MM', new Date()), 'MMMM yyyy')
+                                                            : (p.startDate && p.endDate ? `${format(p.startDate.toDate(), 'dd/MM/yy')} - ${format(p.endDate.toDate(), 'dd/MM/yy')}` : 'N/A')
+                                                        }
+                                                    </TableCell>
+                                                    <TableCell className="whitespace-nowrap">{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
+                                                    <TableCell className="flex items-center gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell>{p.totalHours}</TableCell>
+                                                    <TableCell className="text-right font-medium flex items-center justify-end gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                              ) : <p className="text-sm text-center text-muted-foreground py-4">No payment records found.</p>
                             }
                         </CardContent>
@@ -321,23 +323,25 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                 ) : monthlySchedules.length > 0 ? (
                                      <div className="space-y-2">
                                         <h4 className="font-semibold">Schedules for {format(parse(selectedMonth!, 'yyyy-MM', new Date()), 'MMMM yyyy')}</h4>
-                                        <Table>
-                                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Time</TableHead><TableHead>Title</TableHead><TableHead>Hours</TableHead><TableHead>Attendees</TableHead></TableRow></TableHeader>
-                                            <TableBody>
-                                                {monthlySchedules.map(item => {
-                                                    const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
-                                                    return (
-                                                        <TableRow key={item.id}>
-                                                            <TableCell>{format(item.date.toDate(), 'MMM dd')}</TableCell>
-                                                            <TableCell>{format(parse(item.startTime, 'HH:mm', new Date()), 'p')}</TableCell>
-                                                            <TableCell>{item.title}</TableCell>
-                                                            <TableCell>{(duration / 60).toFixed(2)}</TableCell>
-                                                            <TableCell className="flex items-center gap-1"><UsersIconComponent className="h-4 w-4"/>{item.attendance}</TableCell>
-                                                        </TableRow>
-                                                    )
-                                                })}
-                                            </TableBody>
-                                        </Table>
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Time</TableHead><TableHead>Title</TableHead><TableHead>Hours</TableHead><TableHead>Attendees</TableHead></TableRow></TableHeader>
+                                                <TableBody>
+                                                    {monthlySchedules.map(item => {
+                                                        const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
+                                                        return (
+                                                            <TableRow key={item.id}>
+                                                                <TableCell className="whitespace-nowrap">{format(item.date.toDate(), 'MMM dd')}</TableCell>
+                                                                <TableCell className="whitespace-nowrap">{format(parse(item.startTime, 'HH:mm', new Date()), 'p')}</TableCell>
+                                                                <TableCell>{item.title}</TableCell>
+                                                                <TableCell>{(duration / 60).toFixed(2)}</TableCell>
+                                                                <TableCell className="flex items-center gap-1 whitespace-nowrap"><UsersIconComponent className="h-4 w-4"/>{item.attendance}</TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                      </div>
                                 ) : selectedMonth && <p className="text-sm text-center text-muted-foreground p-4 border rounded-md">No schedules found for this month.</p>}
 
@@ -416,7 +420,7 @@ export default function AccountantSalariesPage() {
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
             ) : teachers.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {teachers.map(teacher => (
                         <Card key={teacher.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedTeacher(teacher)}>
                             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4">
