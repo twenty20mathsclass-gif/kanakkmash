@@ -191,32 +191,45 @@ function WhyChooseUsSection() {
           },
         ].map((feature, index) => {
           const Icon = feature.icon;
+
+          if (feature.isPrimary) {
+            return (
+              <Link href="/fee-structure" key={index} className="block h-full">
+                <Card
+                  className={`h-full text-center bg-primary text-primary-foreground transition-all hover:shadow-xl hover:bg-primary/90`}
+                >
+                  <CardContent className="p-8">
+                    <Icon
+                      className={`mx-auto h-12 w-12 text-primary-foreground`}
+                    />
+                    <h3 className="mt-4 font-headline text-xl font-bold">
+                      {feature.title}
+                    </h3>
+                    <p
+                      className={`mt-2 text-sm text-primary-foreground/80`}
+                    >
+                      {feature.text}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          }
+
           return (
             <Card
               key={index}
-              className={`h-full text-center ${
-                feature.isPrimary
-                  ? 'bg-primary text-primary-foreground'
-                  : ''
-              }`}
+              className={`h-full text-center`}
             >
               <CardContent className="p-8">
                 <Icon
-                  className={`mx-auto h-12 w-12 ${
-                    feature.isPrimary
-                      ? 'text-primary-foreground'
-                      : 'text-primary'
-                  }`}
+                  className={`mx-auto h-12 w-12 text-primary`}
                 />
                 <h3 className="mt-4 font-headline text-xl font-bold">
                   {feature.title}
                 </h3>
                 <p
-                  className={`mt-2 text-sm ${
-                    feature.isPrimary
-                      ? 'text-primary-foreground/80'
-                      : 'text-muted-foreground'
-                  }`}
+                  className={`mt-2 text-sm text-muted-foreground`}
                 >
                   {feature.text}
                 </p>
