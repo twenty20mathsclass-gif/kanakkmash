@@ -72,17 +72,20 @@ export default function UserProfilePage() {
 
             // Fetch related data based on role
             if (userData.role === 'teacher') {
-                const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', userId), orderBy('date', 'desc'));
+                const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', userId));
                 const salaryQuery = query(collection(firestore, 'users', userId, 'salaryPayments'), orderBy('paymentDate', 'desc'));
                 const referralsQuery = query(collection(firestore, 'users', userId, 'referrals'), orderBy('referredAt', 'desc'));
 
                 const [schedulesSnap, salarySnap, referralsSnap] = await Promise.all([
                     getDocs(schedulesQuery),
                     getDocs(salaryQuery),
-                    getDocs(referralsSnap)
+                    getDocs(referralsQuery)
                 ]);
 
-                setSchedules(schedulesSnap.docs.map(d => ({id: d.id, ...d.data()} as Schedule)));
+                const schedulesList = schedulesSnap.docs.map(d => ({id: d.id, ...d.data()} as Schedule));
+                schedulesList.sort((a,b) => b.date.toMillis() - a.date.toMillis());
+
+                setSchedules(schedulesList);
                 setSalaryPayments(salarySnap.docs.map(d => ({id: d.id, ...d.data()} as SalaryPayment)));
                 setReferrals(referralsSnap.docs.map(d => d.data() as ReferredStudent));
             } else if (userData.role === 'student') {
