@@ -89,9 +89,9 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                 <TableRow>
                     <TableHead className="hidden w-[100px] sm:table-cell"><span className="sr-only">Avatar</span></TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead className="hidden md:table-cell">Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Info</TableHead>
+                    <TableHead className="hidden lg:table-cell">Info</TableHead>
                     <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
             </TableHeader>
@@ -106,8 +106,9 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     </TableCell>
                     <TableCell className="font-medium">
                         {user.name}
+                        <div className="text-muted-foreground text-xs md:hidden">{user.email}</div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                     <TableCell>
                     <Badge variant={
                         user.role === 'admin' ? 'destructive' : 
@@ -116,7 +117,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                         'secondary'
                     } className="capitalize">{user.role}</Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                         {user.role === 'teacher' && user.hourlyRate ? (
                             <div className="flex items-center gap-1 text-sm"><IndianRupee className="h-4 w-4" />{user.hourlyRate.toLocaleString('en-IN')}/hr</div>
                         ) : user.role === 'promoter' && user.rewardPercentage ? (
