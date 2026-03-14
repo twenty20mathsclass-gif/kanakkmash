@@ -158,7 +158,6 @@ export default function MainLayoutClient({
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
     { href: '/admin/student-results', label: 'Student Results', icon: Award },
     { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
-    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
