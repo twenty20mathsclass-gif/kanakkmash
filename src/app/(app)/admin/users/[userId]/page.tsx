@@ -89,9 +89,11 @@ export default function UserProfilePage() {
                 setSalaryPayments(salarySnap.docs.map(d => ({id: d.id, ...d.data()} as SalaryPayment)));
                 setReferrals(referralsSnap.docs.map(d => d.data() as ReferredStudent));
             } else if (userData.role === 'student') {
-                const invoicesQuery = query(collection(firestore, 'invoices'), where('studentId', '==', userId), orderBy('createdAt', 'desc'));
+                const invoicesQuery = query(collection(firestore, 'invoices'), where('studentId', '==', userId));
                 const invoicesSnap = await getDocs(invoicesQuery);
-                setInvoices(invoicesSnap.docs.map(d => ({id: d.id, ...d.data()} as Invoice)));
+                const invoicesList = invoicesSnap.docs.map(d => ({id: d.id, ...d.data()} as Invoice));
+                invoicesList.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                setInvoices(invoicesList);
             } else if (userData.role === 'promoter') {
                 const referralsQuery = query(collection(firestore, 'users', userId, 'referrals'), orderBy('referredAt', 'desc'));
                 const rewardsQuery = query(collection(firestore, 'users', userId, 'rewards'), orderBy('createdAt', 'desc'));
