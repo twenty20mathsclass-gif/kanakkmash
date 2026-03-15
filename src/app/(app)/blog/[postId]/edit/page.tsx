@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { BlogPost } from '@/lib/definitions';
@@ -23,8 +23,7 @@ export default function EditBlogPostPage({ params }: PageProps) {
     const { firestore } = useFirebase();
     const { user } = useUser();
     const router = useRouter();
-    const resolvedParams = use(params as Promise<{ postId: string; }>);
-    const { postId } = resolvedParams;
+    const { postId } = params;
 
     const [post, setPost] = useState<BlogPost | null>(null);
     const [loading, setLoading] = useState(true);

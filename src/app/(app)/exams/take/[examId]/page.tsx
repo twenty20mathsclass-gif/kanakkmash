@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
-import type { Exam, Schedule } from '@/lib/definitions';
+import type { Exam, Schedule, User } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ExamInterface } from '@/components/student/exam-interface';
@@ -23,8 +23,7 @@ export default function TakeExamPage({ params }: PageProps) {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
-  const resolvedParams = use(params as Promise<{ examId: string }>);
-  const { examId } = resolvedParams;
+  const { examId } = params;
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);

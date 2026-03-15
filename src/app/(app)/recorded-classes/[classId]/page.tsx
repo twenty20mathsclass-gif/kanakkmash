@@ -1,6 +1,6 @@
 
 'use client';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { RecordedClass } from '@/lib/definitions';
@@ -28,8 +28,7 @@ function getYouTubeVideoId(url: string): string | null {
 export default function RecordedClassPlayerPage({ params }: PageProps) {
   const { firestore } = useFirebase();
   const router = useRouter();
-  const resolvedParams = use(params as Promise<{ classId: string }>);
-  const { classId } = resolvedParams;
+  const { classId } = params;
 
   const [mainVideo, setMainVideo] = useState<RecordedClass | null>(null);
   const [playlist, setPlaylist] = useState<RecordedClass[]>([]);

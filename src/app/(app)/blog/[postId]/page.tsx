@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import type { BlogPost, BlogComment } from '@/lib/definitions';
@@ -40,8 +40,7 @@ export default function BlogPostPage({ params }: PageProps) {
     const { firestore } = useFirebase();
     const { user } = useUser();
     const { toast } = useToast();
-    const resolvedParams = use(params as Promise<{ postId: string; }>);
-    const { postId } = resolvedParams;
+    const { postId } = params;
 
     const [post, setPost] = useState<BlogPost | null>(null);
     const [loading, setLoading] = useState(true);

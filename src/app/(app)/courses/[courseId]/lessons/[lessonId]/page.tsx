@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import { courses } from '@/lib/data';
 import Link from 'next/link';
@@ -7,7 +8,6 @@ import { PracticeGenerator } from '@/components/practice/practice-generator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Reveal } from '@/components/shared/reveal';
-import { use } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,12 +19,11 @@ type PageProps = {
 };
 
 export default function LessonPage({ params }: PageProps) {
-  const resolvedParams = use(params as Promise<{ courseId: string; lessonId: string; }>);
-  const course = courses.find((c) => c.id === resolvedParams.courseId);
+  const course = courses.find((c) => c.id === params.courseId);
   if (!course) notFound();
 
   const allLessons = course.modules.flatMap((m) => m.lessons);
-  const lessonIndex = allLessons.findIndex((l) => l.id === resolvedParams.lessonId);
+  const lessonIndex = allLessons.findIndex((l) => l.id === params.lessonId);
   if (lessonIndex === -1) notFound();
 
   const lesson = allLessons[lessonIndex];
@@ -59,7 +58,7 @@ export default function LessonPage({ params }: PageProps) {
             </Button>
           ) : (
             <Button variant="outline" asChild>
-              <Link href={`/courses/${resolvedParams.courseId}`}>
+              <Link href={`/courses/${params.courseId}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Course
               </Link>
             </Button>

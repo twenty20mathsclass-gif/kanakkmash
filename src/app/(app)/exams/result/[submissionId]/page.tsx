@@ -1,7 +1,7 @@
 
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
@@ -214,8 +214,7 @@ function ResultDisplay({ submission, exam }: { submission: ExamSubmission, exam:
 export default function ExamResultPage({ params }: PageProps) {
   const { firestore } = useFirebase();
   const router = useRouter();
-  const resolvedParams = use(params as Promise<{ submissionId: string }>);
-  const { submissionId } = resolvedParams;
+  const { submissionId } = params;
 
   const [submission, setSubmission] = useState<ExamSubmission | null>(null);
   const [exam, setExam] = useState<Exam | null>(null);
