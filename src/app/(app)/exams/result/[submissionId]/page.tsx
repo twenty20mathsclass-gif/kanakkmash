@@ -36,15 +36,14 @@ const ActionButton = ({ icon: Icon, label, href, onClick, disabled }: { icon: Re
     const content = (
         <div className="flex flex-col items-center gap-2">
             <Button
-                variant="secondary"
                 size="icon"
-                className="h-16 w-16 rounded-full bg-primary/10 text-primary shadow-lg hover:bg-primary/20 disabled:bg-muted"
+                className="h-16 w-16 rounded-full bg-white/10 text-white shadow-lg hover:bg-white/20 disabled:bg-muted"
                 onClick={onClick}
                 disabled={disabled}
             >
                 <Icon className="h-7 w-7" />
             </Button>
-            <p className="text-xs font-semibold text-foreground/80">{label}</p>
+            <p className="text-xs font-semibold text-white/80">{label}</p>
         </div>
     );
 
@@ -117,10 +116,10 @@ function ResultDisplay({ submission, exam }: { submission: ExamSubmission, exam:
                         <CardContent className="p-4">
                             {isMcq ? (
                                 <div className="grid grid-cols-4 gap-y-4 text-center">
-                                    <StatItem color="bg-blue-500" value="100%" label="Completion" />
-                                    <StatItem color="bg-gray-400" value={totalQuestions} label="Total" />
-                                    <StatItem color="bg-green-500" value={score} label="Correct" />
-                                    <StatItem color="bg-red-500" value={wrongAnswers} label="Wrong" />
+                                    <StatItem color="bg-accent" value="100%" label="Completion" />
+                                    <StatItem color="bg-muted-foreground" value={totalQuestions} label="Total" />
+                                    <StatItem color="bg-success" value={score} label="Correct" />
+                                    <StatItem color="bg-destructive" value={wrongAnswers} label="Wrong" />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-y-4 text-center">
@@ -158,14 +157,14 @@ function ResultDisplay({ submission, exam }: { submission: ExamSubmission, exam:
                                     <div key={qIndex}>
                                         <div className="flex justify-between items-start">
                                             <p className="font-semibold">{qIndex + 1}. {question.questionText}</p>
-                                            {isCorrect ? <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 ml-4" /> : <XCircle className="h-6 w-6 text-destructive flex-shrink-0 ml-4" />}
+                                            {isCorrect ? <CheckCircle className="h-6 w-6 text-success flex-shrink-0 ml-4" /> : <XCircle className="h-6 w-6 text-destructive flex-shrink-0 ml-4" />}
                                         </div>
                                         <div className="mt-4 space-y-2 pl-6">
                                             {question.options.map((option, oIndex) => {
                                                 const isStudentAnswer = oIndex === studentAnswerIndex;
                                                 const isCorrectAnswer = oIndex === correctAnswerIndex;
                                                 return (
-                                                    <div key={oIndex} className={cn('p-3 rounded-md border text-sm', isCorrectAnswer ? 'bg-green-500/10 border-green-500/50 text-green-800 dark:text-green-300' : (isStudentAnswer ? 'bg-destructive/10 border-destructive/50 text-destructive' : ''))}>
+                                                    <div key={oIndex} className={cn('p-3 rounded-md border text-sm', isCorrectAnswer ? 'bg-success/10 border-success/50 text-success' : (isStudentAnswer ? 'bg-destructive/10 border-destructive/50 text-destructive' : ''))}>
                                                         <p>{option.text}{isCorrectAnswer && <span className="font-semibold ml-2">(Correct Answer)</span>}{!isCorrectAnswer && isStudentAnswer && <span className="font-semibold ml-2">(Your Answer)</span>}</p>
                                                     </div>
                                                 )
