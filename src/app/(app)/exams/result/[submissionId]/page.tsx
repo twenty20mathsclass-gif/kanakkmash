@@ -75,7 +75,7 @@ function ResultDisplay({ submission, exam }: { submission: ExamSubmission, exam:
     };
     
     return (
-        <div className="bg-gradient-to-b from-[#8E63E5] to-[#6A3BBC] min-h-[100svh] text-white -m-4 md:-m-6 lg:-m-8 p-4 font-body flex flex-col">
+        <div className="bg-gradient-to-b from-[#F59E0B] to-[#F97316] min-h-[100svh] text-white -m-4 md:-m-6 lg:-m-8 p-4 font-body flex flex-col">
             <div className="max-w-sm mx-auto w-full flex-grow flex flex-col">
                 <header className="relative flex items-center justify-center mb-6 pt-4">
                     <Button variant="ghost" size="icon" className="absolute left-0 text-white hover:bg-white/10 rounded-full" onClick={() => router.push('/my-results')}>
