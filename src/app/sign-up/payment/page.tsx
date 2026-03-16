@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -285,7 +284,7 @@ export default function SignUpPaymentPage() {
                 <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
                 <Link href="/" className="absolute top-8 left-8 z-10">
                     <Image
-                    src="/logo eng@4x.png"
+                    src="/logo mlm@4x.png"
                     alt="kanakkmash"
                     width={200}
                     height={62}
