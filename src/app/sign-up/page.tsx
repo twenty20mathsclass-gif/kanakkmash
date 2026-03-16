@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -37,7 +38,15 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+    <div className="relative w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      {/* Back to Home Button */}
+      <Button variant="ghost" asChild className="absolute top-4 left-4 z-50">
+        <Link href="/">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Link>
+      </Button>
+
       <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">
         <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--primary)/.1)_1px,transparent_1px)] [background-size:16px_16px]"></div>
       
@@ -55,14 +64,8 @@ export default function SignUpPage() {
             <p className="text-muted-foreground mt-2 max-w-md mx-auto">Unlock your potential with our expert-led math courses for all levels.</p>
         </div>
       </div>
-      <div className="flex items-center justify-center min-h-screen relative">
-         <Link href="/" className="absolute top-4 left-4 z-10 lg:hidden">
-            <Button variant="ghost">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-            </Button>
-        </Link>
-        <div className="w-full p-6">
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-full p-6 pt-16 lg:pt-6">
           <Card className="mx-auto w-full max-w-xl shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">Create an account</CardTitle>
