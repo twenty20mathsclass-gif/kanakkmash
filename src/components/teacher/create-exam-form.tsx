@@ -143,6 +143,14 @@ export function CreateExamForm() {
         return [];
     }, [user]);
 
+    const availableLevels = useMemo(() => {
+        if (user?.role === 'admin') return twenty20Levels;
+        if (user?.role === 'teacher' && user.assignedClasses) {
+            return twenty20Levels.filter(l => user.assignedClasses!.includes(l));
+        }
+        return [];
+    }, [user]);
+
     const form = useForm<ExamFormValues>({
         resolver: zodResolver(examFormSchema),
         defaultValues: {
@@ -195,9 +203,11 @@ export function CreateExamForm() {
                     const studentsList: User[] = [];
                     for (let i = 0; i < studentIds.length; i += 30) {
                         const chunk = studentIds.slice(i, i + 30);
-                        const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-                        const querySnapshot = await getDocs(studentsQuery);
-                        studentsList.push(...querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+                        if (chunk.length > 0) {
+                            const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+                            const querySnapshot = await getDocs(studentsQuery);
+                            studentsList.push(...querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+                        }
                     }
                     studentsList.sort((a, b) => a.name.localeCompare(b.name));
                     setAllStudents(studentsList);
@@ -394,7 +404,7 @@ export function CreateExamForm() {
                                             <FormField control={form.control} name="classes" render={({ field }) => (
                                                 <FormItem><FormLabel>Classes</FormLabel>
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between">{field.value?.length ? `${field.value.length} selected` : 'Select classes'}</Button></FormControl></DropdownMenuTrigger>
+                                                        <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableClasses.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select classes'}</Button></FormControl></DropdownMenuTrigger>
                                                         <DropdownMenuContent className="w-56">
                                                             {availableClasses.map(c => (
                                                                 <DropdownMenuCheckboxItem key={c} checked={field.value?.includes(c)} onCheckedChange={(checked) => {
@@ -409,16 +419,16 @@ export function CreateExamForm() {
                                                     <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select syllabus" /></SelectTrigger></FormControl>
                                                         <SelectContent>{syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                                                     </Select><FormMessage /></FormItem>
-                                            )} slice={1}/>
+                                            )}/>
                                         </div>
                                     )}
                                     {courseModel === 'TWENTY 20 BASIC MATHS' && (
                                         <FormField control={form.control} name="levels" render={({ field }) => (
                                             <FormItem><FormLabel>Levels</FormLabel>
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between">{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
+                                                    <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableLevels.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
                                                     <DropdownMenuContent className="w-56">
-                                                        {twenty20Levels.map(l => (
+                                                        {availableLevels.map(l => (
                                                             <DropdownMenuCheckboxItem key={l} checked={field.value?.includes(l)} onCheckedChange={(checked) => {
                                                                 const vals = field.value || []; field.onChange(checked ? [...vals, l] : vals.filter(v => v !== l));
                                                             }}>{l}</DropdownMenuCheckboxItem>
@@ -430,7 +440,7 @@ export function CreateExamForm() {
                                     {courseModel === 'COMPETITIVE EXAM' && (
                                         <FormField control={form.control} name="competitiveExam" render={({ field }) => (
                                             <FormItem><FormLabel>Competitive Exam</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger></FormControl>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={availableCompetitiveExams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger></FormControl>
                                                     <SelectContent>{availableCompetitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
                                                 </Select><FormMessage /></FormItem>
                                         )}/>

@@ -107,6 +107,14 @@ export default function CreateSchedulePage() {
         return [];
     }, [user]);
 
+    const availableLevels = useMemo(() => {
+        if (user?.role === 'admin') return twenty20Levels;
+        if (user?.role === 'teacher' && user.assignedClasses) {
+            return twenty20Levels.filter(l => user.assignedClasses!.includes(l));
+        }
+        return [];
+    }, [user]);
+
     const form = useForm<ScheduleFormValues>({
         resolver: zodResolver(scheduleSchema),
         defaultValues: {
@@ -160,12 +168,11 @@ export default function CreateSchedulePage() {
         const q = query(collection(firestore, 'schedules'), where('teacherId', '==', user.id));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const allSchedules = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-            setScheduledExams(allSchedules.filter(s => s.type === 'class').sort((a,b) => b.date.toMillis() - a.date.toMillis()).slice(0, 10));
+            setScheduledClasses(allSchedules.filter(s => s.type === 'class').sort((a,b) => b.date.toMillis() - a.date.toMillis()).slice(0, 10));
         });
         return () => unsubscribe();
     }, [firestore, user]);
 
-    const setScheduledExams = (classes: Schedule[]) => setScheduledClasses(classes);
 
     const onSubmit = async (data: ScheduleFormValues) => {
         if (!firestore || !user) return;
@@ -282,7 +289,7 @@ export default function CreateSchedulePage() {
                                                 <FormField control={form.control} name="classes" render={({ field }) => (
                                                     <FormItem><FormLabel>Classes</FormLabel>
                                                         <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between">{field.value?.length ? `${field.value.length} selected` : 'Select classes'}</Button></FormControl></DropdownMenuTrigger>
+                                                            <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableClasses.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select classes'}</Button></FormControl></DropdownMenuTrigger>
                                                             <DropdownMenuContent className="w-56"><DropdownMenuLabel>Classes</DropdownMenuLabel><DropdownMenuSeparator />
                                                                 {availableClasses.map(c => (
                                                                     <DropdownMenuCheckboxItem key={c} checked={field.value?.includes(c)} onCheckedChange={(checked) => {
@@ -305,9 +312,9 @@ export default function CreateSchedulePage() {
                                             <FormField control={form.control} name="levels" render={({ field }) => (
                                                 <FormItem><FormLabel>Levels</FormLabel>
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between">{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
+                                                        <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableLevels.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
                                                         <DropdownMenuContent className="w-56"><DropdownMenuLabel>Levels</DropdownMenuLabel><DropdownMenuSeparator />
-                                                            {twenty20Levels.map(l => (
+                                                            {availableLevels.map(l => (
                                                                 <DropdownMenuCheckboxItem key={l} checked={field.value?.includes(l)} onCheckedChange={(checked) => {
                                                                     const vals = field.value || [];
                                                                     field.onChange(checked ? [...vals, l] : vals.filter(v => v !== l));
@@ -320,7 +327,7 @@ export default function CreateSchedulePage() {
                                         {courseModel === 'COMPETITIVE EXAM' && (
                                             <FormField control={form.control} name="competitiveExam" render={({ field }) => (
                                                 <FormItem><FormLabel>Competitive Exam</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger></FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={availableCompetitiveExams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger></FormControl>
                                                         <SelectContent>{availableCompetitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
                                                     </Select><FormMessage /></FormItem>
                                             )}/>

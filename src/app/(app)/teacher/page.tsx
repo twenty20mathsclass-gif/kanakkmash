@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -139,11 +138,11 @@ export default function TeacherDashboardPage() {
         let allStudents: User[] = [];
         if (user.assignedClasses && user.assignedClasses.length > 0) {
             const studentPromises = user.assignedClasses.map(assignedItem => {
-                // A teacher's assignedItem can be a class or a competitive exam.
-                // We need to query both fields.
+                // A teacher's assignedItem can be a class, a level (Twenty 20), or a competitive exam.
                 const q1 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', assignedItem));
                 const q2 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('competitiveExam', '==', assignedItem));
-                return Promise.all([getDocs(q1), getDocs(q2)]);
+                const q3 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('level', '==', assignedItem));
+                return Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
             });
 
             const studentSnapshotsArray = await Promise.all(studentPromises);
@@ -416,7 +415,3 @@ export default function TeacherDashboardPage() {
     </div>
   );
 }
-
-    
-
-    

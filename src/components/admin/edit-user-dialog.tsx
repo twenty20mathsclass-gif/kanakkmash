@@ -43,6 +43,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -51,6 +52,7 @@ const updateUserSchema = z.object({
     rewardPercentage: z.coerce.number().optional(),
     assignedClasses: z.array(z.string()).optional(),
     assignedCompetitiveExams: z.array(z.string()).optional(),
+    assignedTwenty20Levels: z.array(z.string()).optional(),
 });
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 
@@ -77,6 +79,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
       rewardPercentage: user.rewardPercentage || 10,
       assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
       assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
+      assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.includes(c)) || [],
     },
   });
 
@@ -93,6 +96,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             rewardPercentage: user.rewardPercentage || 10,
             assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
             assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
+            assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.includes(c)) || [],
         });
     }
   }, [isOpen, user, form]);
@@ -118,9 +122,13 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
         };
 
         if (data.role === 'teacher') {
-            dataToUpdate.assignedClasses = [...(data.assignedClasses || []), ...(data.assignedCompetitiveExams || [])];
+            dataToUpdate.assignedClasses = [
+                ...(data.assignedClasses || []),
+                ...(data.assignedCompetitiveExams || []),
+                ...(data.assignedTwenty20Levels || [])
+            ];
         } else {
-            dataToUpdate.assignedClasses = []; // Clear classes if not a teacher
+            dataToUpdate.assignedClasses = []; // Clear if not a teacher
         }
 
         await updateDoc(userDocRef, dataToUpdate);
@@ -214,7 +222,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             />
 
             {role === 'teacher' && (
-                <>
+                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
                     <FormField
                         control={form.control}
                         name="hourlyRate"
@@ -310,7 +318,48 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                             )
                         }}
                     />
-                </>
+                    <FormField
+                        control={form.control}
+                        name="assignedTwenty20Levels"
+                        render={({ field }) => {
+                            const selectedCount = field.value?.length || 0;
+                            return (
+                                <FormItem>
+                                    <FormLabel>Assigned Twenty 20 Levels</FormLabel>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <FormControl>
+                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select levels'}
+                                                </Button>
+                                            </FormControl>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                            <DropdownMenuLabel>Available Levels</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {twenty20Levels.map(l => (
+                                                <DropdownMenuCheckboxItem
+                                                    key={l}
+                                                    checked={field.value?.includes(l)}
+                                                    onCheckedChange={(checked) => {
+                                                        const currentValues = field.value || [];
+                                                        const newValues = checked
+                                                            ? [...currentValues, l]
+                                                            : currentValues.filter(val => val !== l);
+                                                        field.onChange(newValues);
+                                                    }}
+                                                >
+                                                    {l}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <FormMessage />
+                                </FormItem>
+                            )
+                        }}
+                    />
+                </div>
             )}
             
             {role === 'promoter' && (
