@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,20 +32,25 @@ import {
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
 
 const feeSchema = z.object({
-  courseModel: z.enum(['MATHS ONLINE TUITION', 'ONE TO ONE', 'COMPETITIVE EXAM'], { required_error: 'Course model is required.'}),
+  courseModel: z.enum(['MATHS ONLINE TUITION', 'TWENTY 20 BASIC MATHS', 'COMPETITIVE EXAM'], { required_error: 'Course model is required.'}),
   amount: z.coerce.number().min(0, 'Amount must be a positive number.'),
   class: z.string().optional(),
+  level: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+    if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class) ctx.addIssue({ code: 'custom', message: 'Class is required.', path: ['class'] });
         else if (data.class !== 'DEGREE' && !data.syllabus) {
              ctx.addIssue({ code: 'custom', message: 'Syllabus is required for this class.', path: ['syllabus'] });
         }
+    }
+    if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
+        if (!data.level) ctx.addIssue({ code: 'custom', message: 'Level is required.', path: ['level'] });
     }
     if (data.courseModel === 'COMPETITIVE EXAM') {
         if (!data.competitiveExam) ctx.addIssue({ code: 'custom', message: 'Competitive exam is required.', path: ['competitiveExam'] });
@@ -98,6 +102,7 @@ export default function AdminFeesPage() {
                 createdAt: serverTimestamp(),
             };
             if (data.class) feeData.class = data.class;
+            if (data.level) feeData.level = data.level;
             if (data.syllabus) feeData.syllabus = data.syllabus;
             if (data.competitiveExam) feeData.competitiveExam = data.competitiveExam;
 
@@ -134,7 +139,8 @@ export default function AdminFeesPage() {
     
     const getConditionText = (fee: CourseFee) => {
         if (fee.courseModel === 'COMPETITIVE EXAM') return fee.competitiveExam || '-';
-        if (fee.courseModel === 'MATHS ONLINE TUITION' || fee.courseModel === 'ONE TO ONE') {
+        if (fee.courseModel === 'TWENTY 20 BASIC MATHS') return fee.level || 'General';
+        if (fee.courseModel === 'MATHS ONLINE TUITION') {
             if (!fee.class) return 'General';
             if (fee.class === 'DEGREE') return 'Degree';
             return `${fee.class || ''} - ${fee.syllabus || ''}`;
@@ -159,18 +165,18 @@ export default function AdminFeesPage() {
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <FormField control={form.control} name="courseModel" render={({ field }) => (
                                     <FormItem><FormLabel>Course Model</FormLabel>
-                                        <Select onValueChange={(value) => { field.onChange(value); form.reset({ ...form.getValues(), courseModel: value as any, class: '', syllabus: '', competitiveExam: '' }); }} value={field.value}>
+                                        <Select onValueChange={(value) => { field.onChange(value); form.reset({ ...form.getValues(), courseModel: value as any, class: '', level: '', syllabus: '', competitiveExam: '' }); }} value={field.value}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Select a course model" /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                                                <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
+                                                <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
                                                 <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     <FormMessage /></FormItem>
                                 )}/>
                                 
-                                {(courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE') && (
+                                {courseModel === 'MATHS ONLINE TUITION' && (
                                     <>
                                         <FormField control={form.control} name="class" render={({ field }) => (
                                             <FormItem><FormLabel>Class</FormLabel>
@@ -192,6 +198,18 @@ export default function AdminFeesPage() {
                                         )}
                                     </>
                                 )}
+
+                                {courseModel === 'TWENTY 20 BASIC MATHS' && (
+                                    <FormField control={form.control} name="level" render={({ field }) => (
+                                        <FormItem><FormLabel>Level</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Select a level" /></SelectTrigger></FormControl>
+                                                <SelectContent>{twenty20Levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        <FormMessage /></FormItem>
+                                    )}/>
+                                )}
+
                                 {courseModel === 'COMPETITIVE EXAM' && (
                                     <FormField control={form.control} name="competitiveExam" render={({ field }) => (
                                         <FormItem><FormLabel>Competitive Exam</FormLabel>
@@ -217,19 +235,21 @@ export default function AdminFeesPage() {
                 <CardHeader><CardTitle>Existing Fee Rules</CardTitle></CardHeader>
                 <CardContent>
                     {loadingFees ? <Loader2 className="animate-spin" /> : (
-                        <Table>
-                            <TableHeader><TableRow><TableHead>Course Model</TableHead><TableHead>Condition</TableHead><TableHead>Amount</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {fees.map(fee => (
-                                    <TableRow key={fee.id}>
-                                        <TableCell>{fee.courseModel}</TableCell>
-                                        <TableCell>{getConditionText(fee)}</TableCell>
-                                        <TableCell className="flex items-center"><IndianRupee className="h-4 w-4 mr-1"/>{fee.amount.toLocaleString('en-IN')}</TableCell>
-                                        <TableCell><Button variant="ghost" size="icon" onClick={() => setFeeToDelete(fee)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Course Model</TableHead><TableHead>Condition</TableHead><TableHead>Amount</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {fees.map(fee => (
+                                        <TableRow key={fee.id}>
+                                            <TableCell className="whitespace-nowrap">{fee.courseModel}</TableCell>
+                                            <TableCell>{getConditionText(fee)}</TableCell>
+                                            <TableCell className="flex items-center"><IndianRupee className="h-4 w-4 mr-1"/>{fee.amount.toLocaleString('en-IN')}</TableCell>
+                                            <TableCell><Button variant="ghost" size="icon" onClick={() => setFeeToDelete(fee)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>
