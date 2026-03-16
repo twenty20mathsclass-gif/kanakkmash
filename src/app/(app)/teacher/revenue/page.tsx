@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -219,7 +217,7 @@ export default function TeacherRevenuePage() {
             }
         };
         fetchDetails();
-    }, [user, firestore, form]);
+    }, [user, firestore, form, toast]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
