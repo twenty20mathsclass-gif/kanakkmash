@@ -37,18 +37,15 @@ function PaymentComponent() {
   const registrationAmount = signUpData?.registrationAmount ?? 99;
 
   useEffect(() => {
-    // Load Razorpay script
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     document.body.appendChild(script);
 
-    // Retrieve data from session storage
     const storedData = sessionStorage.getItem('kanakkmash_signup_data');
     if (storedData) {
       setSignUpData(JSON.parse(storedData));
     } else {
-      // If no data, user shouldn't be here. Redirect back.
       toast({ title: "Session expired", description: "Please fill out the sign-up form again.", variant: "destructive"});
       router.replace('/sign-up');
     }
@@ -76,7 +73,7 @@ function PaymentComponent() {
 
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: registrationAmount * 100, // Amount in the smallest currency unit (paise)
+      amount: Math.round(registrationAmount * 100),
       currency: 'INR',
       name: 'kanakkmash',
       description: 'Student Registration Fee',
@@ -121,12 +118,14 @@ function PaymentComponent() {
             email: data.email,
             role: 'student' as 'student',
             avatarUrl,
+            learningMode: data.learningMode,
             courseModel: data.courseModel,
             countryCode: phoneCode,
             mobile: data.mobile,
-            class: data.class,
-            syllabus: data.syllabus,
-            competitiveExam: data.competitiveExam,
+            class: data.class || undefined,
+            level: data.level || undefined,
+            syllabus: data.syllabus || undefined,
+            competitiveExam: data.competitiveExam || undefined,
             createdAt: serverTimestamp(),
           };
 
@@ -180,7 +179,6 @@ function PaymentComponent() {
           
           await batch.commit();
 
-          // Clean up session storage
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
           
@@ -239,8 +237,16 @@ function PaymentComponent() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="border rounded-lg p-4 space-y-2">
-            <div className="flex justify-between items-center font-bold text-lg pt-2">
+        <div className="border rounded-lg p-4 space-y-4">
+            <div className="space-y-1">
+                <p className="text-sm font-semibold uppercase text-muted-foreground">Registration For</p>
+                <p className="font-bold">{signUpData.courseModel}</p>
+                <p className="text-sm text-muted-foreground capitalize">{signUpData.learningMode} Mode</p>
+                {signUpData.class && <p className="text-sm">Class: {signUpData.class}</p>}
+                {signUpData.level && <p className="text-sm">Level: {signUpData.level}</p>}
+                {signUpData.competitiveExam && <p className="text-sm">Exam: {signUpData.competitiveExam}</p>}
+            </div>
+            <div className="flex justify-between items-center font-bold text-xl pt-4 border-t">
                 <span>Registration Fee</span>
                 <span className="flex items-center"><IndianRupee className="h-5 w-5" /> {registrationAmount.toFixed(2)}</span>
             </div>

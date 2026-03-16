@@ -36,37 +36,32 @@ import type { CourseFee } from '@/lib/definitions';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  courseModel: z.string({ required_error: 'Please select a course model.' }),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   countryCode: z.string().min(1, 'Country code is required.'),
   mobile: z.string().min(1, 'Mobile number is required.'),
+  learningMode: z.enum(['group', 'one to one'], { required_error: 'Please select a learning mode.' }),
+  courseModel: z.string({ required_error: 'Please select a course model.' }),
   class: z.string().optional(),
+  level: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION' || data.courseModel === 'ONE TO ONE') {
+    if (data.courseModel === 'MATHS ONLINE TUITION') {
         if (!data.class) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a class.',
-                path: ['class'],
-            });
-        } else if (data.class && data.class !== 'DEGREE' && !data.syllabus) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a syllabus.',
-                path: ['syllabus'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a class.', path: ['class'] });
+        } else if (data.class !== 'DEGREE' && !data.syllabus) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a syllabus.', path: ['syllabus'] });
+        }
+    }
+    if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
+        if (!data.level) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a level.', path: ['level'] });
         }
     }
     if (data.courseModel === 'COMPETITIVE EXAM') {
         if (!data.competitiveExam) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Please select a competitive exam.',
-                path: ['competitiveExam'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
         }
     }
 });
@@ -77,6 +72,14 @@ type FormValues = z.infer<typeof formSchema>;
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const twenty20Levels = [
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' },
+];
+
 const DEFAULT_FEE = 99;
 
 export function SignUpForm() {
@@ -84,7 +87,6 @@ export function SignUpForm() {
   const searchParams = useSearchParams();
   const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
   const [loadingFee, setLoadingFee] = useState(false);
@@ -97,6 +99,7 @@ export function SignUpForm() {
       name: '',
       email: '',
       password: '',
+      learningMode: 'group',
       courseModel: '',
       countryCode: 'IN',
       mobile: '',
@@ -107,10 +110,12 @@ export function SignUpForm() {
   const courseModel = watch('courseModel');
   const selectedClass = watch('class');
   const selectedSyllabus = watch('syllabus');
+  const selectedLevel = watch('level');
   const selectedCompetitiveExam = watch('competitiveExam');
   
-  const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showClassField = courseModel === 'MATHS ONLINE TUITION';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
+  const showLevelField = courseModel === 'TWENTY 20 BASIC MATHS';
   const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
   
   useEffect(() => {
@@ -122,11 +127,13 @@ export function SignUpForm() {
 
         if (courseModel === 'COMPETITIVE EXAM' && selectedCompetitiveExam) {
             q = query(q, where('competitiveExam', '==', selectedCompetitiveExam));
-        } else if ((courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE') && selectedClass) {
+        } else if (courseModel === 'MATHS ONLINE TUITION' && selectedClass) {
             q = query(q, where('class', '==', selectedClass));
             if (selectedClass !== 'DEGREE' && selectedSyllabus) {
                 q = query(q, where('syllabus', '==', selectedSyllabus));
             }
+        } else if (courseModel === 'TWENTY 20 BASIC MATHS' && selectedLevel) {
+            q = query(q, where('level', '==', selectedLevel));
         }
         
         try {
@@ -135,13 +142,13 @@ export function SignUpForm() {
                 const feeData = querySnapshot.docs[0].data() as CourseFee;
                 setFee(feeData.amount);
             } else {
-                // If no specific rule found, check for a general rule for the course model
                 const generalQuery = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModel));
                 const generalSnapshot = await getDocs(generalQuery);
-                if (!generalSnapshot.empty && !generalSnapshot.docs[0].data().class && !generalSnapshot.docs[0].data().competitiveExam) {
-                    setFee(generalSnapshot.docs[0].data().amount);
+                const generalFee = generalSnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level);
+                if (generalFee) {
+                    setFee(generalFee.data().amount);
                 } else {
-                    setFee(DEFAULT_FEE); // Fallback to default
+                    setFee(DEFAULT_FEE);
                 }
             }
         } catch (error) {
@@ -152,11 +159,10 @@ export function SignUpForm() {
         }
     };
     
-    // Debounce the fetch
     const timeoutId = setTimeout(fetchFee, 500);
     return () => clearTimeout(timeoutId);
 
-  }, [firestore, courseModel, selectedClass, selectedSyllabus, selectedCompetitiveExam]);
+  }, [firestore, courseModel, selectedClass, selectedSyllabus, selectedLevel, selectedCompetitiveExam]);
 
 
   const handleContinue = async () => {
@@ -199,34 +205,59 @@ export function SignUpForm() {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="courseModel"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Course Model</FormLabel>
-              <Select onValueChange={(value) => {
-                  field.onChange(value);
-                  form.setValue('class', '');
-                  form.setValue('syllabus', '');
-                  form.setValue('competitiveExam', '');
-                  form.clearErrors(['class', 'syllabus', 'competitiveExam']);
-              }} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a course model" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                  <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
-                  <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="learningMode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Learning Mode</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="group">Group Mode</SelectItem>
+                            <SelectItem value="one to one">One to One Mode</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="courseModel"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Course Model</FormLabel>
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('class', '');
+                        form.setValue('level', '');
+                        form.setValue('syllabus', '');
+                        form.setValue('competitiveExam', '');
+                        form.clearErrors(['class', 'level', 'syllabus', 'competitiveExam']);
+                    }} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select course" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
+                            <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
+                            <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         
         {showClassField && (
             <FormField
@@ -247,6 +278,29 @@ export function SignUpForm() {
                     </FormControl>
                     <SelectContent>
                         {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
+
+        {showLevelField && (
+            <FormField
+            control={form.control}
+            name="level"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Level</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a level" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {twenty20Levels.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -301,32 +355,34 @@ export function SignUpForm() {
             />
         )}
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                    <Input {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                    <Input type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         
         <div>
           <Label>Mobile Number</Label>
@@ -380,15 +436,7 @@ export function SignUpForm() {
           </Link>
         </div>
         
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <Button type="submit" className="w-full" disabled={loading || loadingFee}>
+        <Button type="submit" className="w-full" size="lg" disabled={loading || loadingFee}>
           {loading || loadingFee ? <Loader2 className="animate-spin" /> : 'Continue to Payment'}
         </Button>
       </form>

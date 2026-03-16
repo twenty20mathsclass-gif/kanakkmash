@@ -10,6 +10,7 @@
         "name": { "type": "string", "description": "The user's full name." },
         "email": { "type": "string", "format": "email", "description": "The user's email address." },
         "role": { "type": "string", "enum": ["student", "teacher", "admin", "promoter"], "description": "The user's role." },
+        "learningMode": { "type": "string", "enum": ["group", "one to one"], "description": "The student's preferred learning mode." },
         "avatarUrl": { "type": "string", "format": "uri", "description": "URL of the user's avatar image." },
         "createdAt": { "type": "object", "description": "The date and time the user account was created." },
         "referredBy": { "type": "string", "description": "The UID of the user who referred this user." },
@@ -194,8 +195,9 @@
       "description": "Defines a registration fee for a specific course configuration.",
       "type": "object",
       "properties": {
-        "courseModel": { "type": "string", "enum": ["MATHS ONLINE TUITION", "ONE TO ONE", "COMPETITIVE EXAM"] },
+        "courseModel": { "type": "string", "enum": ["MATHS ONLINE TUITION", "TWENTY 20 BASIC MATHS", "COMPETITIVE EXAM"] },
         "class": { "type": "string" },
+        "level": { "type": "string" },
         "syllabus": { "type": "string" },
         "competitiveExam": { "type": "string" },
         "amount": { "type": "number" },
@@ -217,6 +219,7 @@
         "teacherAvatarUrl": { "type": "string", "format": "uri" },
         "courseModel": { "type": "string" },
         "class": { "type": "string" },
+        "level": { "type": "string" },
         "syllabus": { "type": "string" },
         "competitiveExam": { "type": "string" },
         "createdAt": { "type": "object" }

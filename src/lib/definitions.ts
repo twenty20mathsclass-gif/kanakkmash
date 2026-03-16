@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -10,13 +9,14 @@ export type User = {
   avatarUrl: string;
   countryCode?: string;
   mobile?: string;
+  learningMode?: 'group' | 'one to one';
   courseModel?: string;
   class?: string;
+  level?: string;
   syllabus?: string;
   competitiveExam?: string;
   createdAt?: Timestamp;
   referredBy?: string;
-  // Private teacher details are now in a subcollection
   paymentMethod?: 'bank' | 'upi';
   accountHolderName?: string;
   bankName?: string;
@@ -99,18 +99,20 @@ export type Schedule = {
   subject: string;
   title: string;
   date: Timestamp;
-  startTime: string; // "HH:mm"
-  endTime: string; // "HH:mm"
+  startTime: string;
+  endTime: string;
   meetLink: string;
   teacherId: string;
-  icon: string; // lucide icon name
-  color: string; // hsl color
+  icon: string;
+  color: string;
   textColor: string;
+  learningMode?: 'group' | 'one to one';
   classes?: string[];
+  levels?: string[];
   studentId?: string;
   syllabus?: string;
   examId?: string;
-  duration?: number; // in minutes, for exam countdown
+  duration?: number;
   competitiveExam?: string;
   createdAt?: Timestamp;
 };
@@ -142,14 +144,14 @@ export type Exam = {
   teacherId: string;
   title: string;
   courseModel: string;
+  learningMode?: 'group' | 'one to one';
   classes?: string[];
+  levels?: string[];
   syllabus?: string;
   studentId?: string;
   competitiveExam?: string;
   examType: 'mcq' | 'descriptive';
-  // For MCQ
   questions?: McqQuestion[];
-  // For Descriptive
   questionPaperUrl?: string;
   questionPaperContent?: string;
   totalMarks?: number;
@@ -163,15 +165,9 @@ export type ExamSubmission = {
     examTitle: string;
     submittedAt: Timestamp;
     examType: 'mcq' | 'descriptive';
-    
-    // For MCQ
     answers?: (number | null)[];
     totalQuestions?: number;
-    
-    // score for MCQ, marks awarded for descriptive
     score?: number; 
-    
-    // For Descriptive
     answerFileUrl?: string;
     status?: 'submitted' | 'reviewed';
     feedback?: string;
@@ -277,8 +273,9 @@ export type Notification = {
 
 export type CourseFee = {
   id: string;
-  courseModel: 'MATHS ONLINE TUITION' | 'ONE TO ONE' | 'COMPETITIVE EXAM';
+  courseModel: 'MATHS ONLINE TUITION' | 'TWENTY 20 BASIC MATHS' | 'COMPETITIVE EXAM';
   class?: string;
+  level?: string;
   syllabus?: string;
   competitiveExam?: string;
   amount: number;
@@ -309,6 +306,7 @@ export type RecordedClass = {
   teacherAvatarUrl: string;
   courseModel: string;
   class?: string;
+  level?: string;
   syllabus?: string;
   competitiveExam?: string;
   createdAt: Timestamp;
@@ -321,5 +319,3 @@ export type Announcement = {
   isActive: boolean;
   createdAt: Timestamp;
 };
-
-    

@@ -33,6 +33,7 @@ import {
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
 const recordedClassSchema = z.object({
   title: z.string().min(3, 'Title is required.'),
@@ -41,6 +42,7 @@ const recordedClassSchema = z.object({
   courseModel: z.string().min(1, 'Course model is required.'),
   teacherId: z.string().optional(),
   class: z.string().optional(),
+  level: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
 });
@@ -66,6 +68,7 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
       courseModel: classToEdit.courseModel,
       teacherId: classToEdit.teacherId,
       class: classToEdit.class,
+      level: classToEdit.level,
       syllabus: classToEdit.syllabus,
       competitiveExam: classToEdit.competitiveExam,
     } : {
@@ -76,8 +79,9 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
   const courseModel = form.watch('courseModel');
   const selectedClass = form.watch('class');
   
-  const showClassField = courseModel === 'MATHS ONLINE TUITION' || courseModel === 'ONE TO ONE';
+  const showClassField = courseModel === 'MATHS ONLINE TUITION';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
+  const showLevelField = courseModel === 'TWENTY 20 BASIC MATHS';
   const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
 
   const handleSubmit = async (data: FormValues) => {
@@ -95,12 +99,6 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
       teacherId: isAdmin ? data.teacherId : user?.id,
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
-
-    if (isAdmin && !finalData.teacherId) {
-        setError('Please select a teacher.');
-        setLoading(false);
-        return;
-    }
 
     try {
       await onFormSubmit(finalData, !!classToEdit);
@@ -130,7 +128,7 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
             <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a course model" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                <SelectItem value="ONE TO ONE">ONE TO ONE</SelectItem>
+                <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
                 <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
               </SelectContent>
             </Select><FormMessage /></FormItem>
@@ -141,11 +139,17 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
               <SelectContent>{classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select><FormMessage /></FormItem>
         )} />}
+        {showLevelField && <FormField control={form.control} name="level" render={({ field }) => (
+          <FormItem><FormLabel>Level</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a level" /></SelectTrigger></FormControl>
+              <SelectContent>{twenty20Levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+            </Select><FormMessage /></FormItem>
+        )} />}
         {showSyllabusField && <FormField control={form.control} name="syllabus" render={({ field }) => (
             <FormItem><FormLabel>Syllabus</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a syllabus" /></SelectTrigger></FormControl>
                 <SelectContent>{syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select><FormMessage /></FormItem>
+            </Select><FormItem/></FormItem>
         )} />}
         {showCompetitiveExamField && <FormField control={form.control} name="competitiveExam" render={({ field }) => (
             <FormItem><FormLabel>Competitive Exam</FormLabel>
@@ -197,11 +201,7 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const classList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RecordedClass));
       classList.sort((a,b) => {
-        if (a.createdAt && b.createdAt) {
-          return b.createdAt.toMillis() - a.createdAt.toMillis();
-        }
-        if (!a.createdAt) return 1;
-        if (!b.createdAt) return -1;
+        if (a.createdAt && b.createdAt) return b.createdAt.toMillis() - a.createdAt.toMillis();
         return 0;
       });
       setClasses(classList);
@@ -251,9 +251,8 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
     setIsDeleting(true);
     try {
         await deleteDoc(doc(firestore, 'recordedClasses', classToDelete.id));
-        toast({ title: 'Deleted', description: 'Recorded class has been removed.' });
+        toast({ title: 'Deleted', description: 'Recorded class removed.' });
     } catch(e: any) {
-        console.error("Failed to delete recorded class", e);
         toast({ title: 'Error', description: 'Failed to delete recorded class.', variant: 'destructive' });
     } finally {
         setIsDeleting(false);
@@ -261,21 +260,11 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
     }
   };
 
-  const openEditDialog = (rc: RecordedClass) => {
-    setClassToEdit(rc);
-    setDialogOpen(true);
-  }
-
-  const openNewDialog = () => {
-    setClassToEdit(null);
-    setDialogOpen(true);
-  }
-
   return (
     <div className="space-y-6">
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button onClick={openNewDialog}><PlusCircle className="mr-2"/>Add New Recorded Class</Button>
+          <Button onClick={() => setClassToEdit(null)}><PlusCircle className="mr-2"/>Add New Recorded Class</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -299,9 +288,8 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
                   <CardContent className="p-4 space-y-2">
                     <h3 className="font-bold line-clamp-2">{rc.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-3">{rc.description}</p>
-                    {isAdmin && <p className="text-xs text-muted-foreground pt-2 border-t">By: {rc.teacherName}</p>}
                     <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="outline" onClick={() => openEditDialog(rc)}><Edit className="mr-2 h-3 w-3"/>Edit</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setClassToEdit(rc); setDialogOpen(true); }}><Edit className="mr-2 h-3 w-3"/>Edit</Button>
                       <Button size="sm" variant="destructive" onClick={() => setClassToDelete(rc)}><Trash2 className="mr-2 h-3 w-3"/>Delete</Button>
                     </div>
                   </CardContent>
@@ -309,16 +297,12 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
               ))}
             </div>
           )}
-          {!loading && classes.length === 0 && <p className="text-muted-foreground text-center p-8">No recorded classes found.</p>}
         </CardContent>
       </Card>
       
       <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently delete the recorded class "{classToDelete?.title}". This action cannot be undone.</AlertDialogDescription>
-            </AlertDialogHeader>
+            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
