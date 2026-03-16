@@ -42,6 +42,7 @@ const createUserSchema = z.object({
     role: z.enum(['student', 'teacher', 'promoter']),
     hourlyRate: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
+    teachingMode: z.enum(['group', 'one to one', 'both']).optional(),
 });
 
 export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorRole?: 'admin' | 'teacher', onUserAdded?: () => void }) {
@@ -64,6 +65,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
     
     if (formObject.role !== 'teacher') {
         delete formObject.hourlyRate;
+        delete formObject.teachingMode;
     }
     if (formObject.role !== 'promoter') {
         delete formObject.rewardPercentage;
@@ -79,7 +81,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         return;
     }
 
-    const { name, email, password, role, hourlyRate, rewardPercentage } = validatedFields.data;
+    const { name, email, password, role, hourlyRate, rewardPercentage, teachingMode } = validatedFields.data;
 
     if (!firestore) {
         setError("Firestore is not available. Please try again later.");
@@ -103,7 +105,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
 
         const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
 
-        const userProfile: Omit<User, 'hourlyRate' | 'paymentMethod' | 'rewardPercentage'> = {
+        const userProfile: any = {
             id: user.uid,
             name: name,
             email: email,
@@ -111,6 +113,10 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
             avatarUrl: avatarUrl,
             createdAt: serverTimestamp(),
         };
+
+        if (role === 'teacher') {
+            userProfile.teachingMode = teachingMode || 'both';
+        }
         
         await setDoc(doc(firestore, 'users', user.uid), userProfile);
         
@@ -224,13 +230,28 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
           </div>
 
           {selectedRole === 'teacher' && (
-            <div className="space-y-2">
-                <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
-                <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={0} />
-                {validationErrors?.hourlyRate && (
-                    <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
-                )}
-            </div>
+            <>
+                <div className="space-y-2">
+                    <Label htmlFor="teachingMode">Teaching Mode</Label>
+                    <Select name="teachingMode" defaultValue="both">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select teaching mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="group">Group Mode</SelectItem>
+                            <SelectItem value="one to one">One to One Mode</SelectItem>
+                            <SelectItem value="both">Both</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
+                    <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={0} />
+                    {validationErrors?.hourlyRate && (
+                        <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
+                    )}
+                </div>
+            </>
           )}
 
           {selectedRole === 'promoter' && (

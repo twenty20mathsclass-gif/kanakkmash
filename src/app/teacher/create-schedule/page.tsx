@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -239,6 +240,8 @@ export default function CreateSchedulePage() {
         }
     };
 
+    const isTeachingModeRestricted = user?.teachingMode && user.teachingMode !== 'both';
+
     return (
         <div className="grid md:grid-cols-2 gap-8 items-start">
             <div className="space-y-8">
@@ -257,8 +260,12 @@ export default function CreateSchedulePage() {
                                         <FormItem><FormLabel>Learning Mode</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="group">Group Mode</SelectItem>
-                                                    <SelectItem value="one to one">One to One Mode</SelectItem>
+                                                    {(user?.teachingMode === 'group' || user?.teachingMode === 'both' || !user?.teachingMode) && (
+                                                        <SelectItem value="group">Group Mode</SelectItem>
+                                                    )}
+                                                    {(user?.teachingMode === 'one to one' || user?.teachingMode === 'both' || !user?.teachingMode) && (
+                                                        <SelectItem value="one to one">One to One Mode</SelectItem>
+                                                    )}
                                                 </SelectContent>
                                             </Select><FormMessage /></FormItem>
                                     )}/>

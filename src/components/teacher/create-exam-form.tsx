@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -354,7 +355,14 @@ export function CreateExamForm() {
                                 <FormField control={form.control} name="learningMode" render={({ field }) => (
                                     <FormItem><FormLabel>Learning Mode</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                            <SelectContent><SelectItem value="group">Group Mode</SelectItem><SelectItem value="one to one">One to One Mode</SelectItem></SelectContent>
+                                            <SelectContent>
+                                                {(user?.teachingMode === 'group' || user?.teachingMode === 'both' || !user?.teachingMode) && (
+                                                    <SelectItem value="group">Group Mode</SelectItem>
+                                                )}
+                                                {(user?.teachingMode === 'one to one' || user?.teachingMode === 'both' || !user?.teachingMode) && (
+                                                    <SelectItem value="one to one">One to One Mode</SelectItem>
+                                                )}
+                                            </SelectContent>
                                         </Select><FormMessage /></FormItem>
                                 )}/>
                              </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -48,6 +49,7 @@ const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     role: z.enum(['student', 'teacher', 'admin', 'promoter']),
+    teachingMode: z.enum(['group', 'one to one', 'both']).optional(),
     hourlyRate: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
     assignedClasses: z.array(z.string()).optional(),
@@ -75,6 +77,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
     values: {
       name: user.name,
       role: user.role,
+      teachingMode: user.teachingMode || 'both',
       hourlyRate: user.hourlyRate || 0,
       rewardPercentage: user.rewardPercentage || 10,
       assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
@@ -92,6 +95,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
         form.reset({
             name: user.name,
             role: user.role,
+            teachingMode: user.teachingMode || 'both',
             hourlyRate: user.hourlyRate || 0,
             rewardPercentage: user.rewardPercentage || 10,
             assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
@@ -122,6 +126,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
         };
 
         if (data.role === 'teacher') {
+            dataToUpdate.teachingMode = data.teachingMode || 'both';
             dataToUpdate.assignedClasses = [
                 ...(data.assignedClasses || []),
                 ...(data.assignedCompetitiveExams || []),
@@ -129,6 +134,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             ];
         } else {
             dataToUpdate.assignedClasses = []; // Clear if not a teacher
+            delete dataToUpdate.teachingMode;
         }
 
         await updateDoc(userDocRef, dataToUpdate);
@@ -170,7 +176,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle>Edit User: {user.name}</DialogTitle>
           <DialogDescription>
@@ -222,7 +228,29 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             />
 
             {role === 'teacher' && (
-                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 px-1">
+                    <FormField
+                        control={form.control}
+                        name="teachingMode"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Teaching Mode</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select teaching mode" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="group">Group Mode</SelectItem>
+                                        <SelectItem value="one to one">One to One Mode</SelectItem>
+                                        <SelectItem value="both">Both</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="hourlyRate"

@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -9,6 +10,7 @@ export type User = {
   countryCode?: string;
   mobile?: string;
   learningMode?: 'group' | 'one to one';
+  teachingMode?: 'group' | 'one to one' | 'both';
   courseModel?: string;
   class?: string;
   level?: string;
