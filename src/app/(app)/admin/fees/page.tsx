@@ -199,7 +199,10 @@ export default function AdminFeesPage() {
                                     <>
                                         <FormField control={form.control} name="class" render={({ field }) => (
                                             <FormItem><FormLabel>Class</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    form.setValue('syllabus', '');
+                                                }} value={field.value}>
                                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger></FormControl>
                                                     <SelectContent>{classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                                 </Select>

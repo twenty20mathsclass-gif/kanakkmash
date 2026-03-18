@@ -258,7 +258,13 @@ export default function CreateSchedulePage() {
                                     )}/>
                                     <FormField control={form.control} name="courseModel" render={({ field }) => (
                                         <FormItem><FormLabel>Course Model</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl>
+                                            <Select onValueChange={(value) => {
+                                                field.onChange(value);
+                                                form.setValue('classes', []);
+                                                form.setValue('levels', []);
+                                                form.setValue('competitiveExam', '');
+                                                form.setValue('syllabus', '');
+                                            }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
                                                     <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
@@ -296,7 +302,7 @@ export default function CreateSchedulePage() {
                                                 )}/>
                                                 <FormField control={form.control} name="syllabus" render={({ field }) => (
                                                     <FormItem><FormLabel>Syllabus</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select syllabus" /></SelectTrigger></FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={!watch('classes')?.some(c => c !== 'DEGREE')}><FormControl><SelectTrigger><SelectValue placeholder="Select syllabus" /></SelectTrigger></FormControl>
                                                             <SelectContent>{syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                                                         </Select><FormMessage /></FormItem>
                                                 )}/>
