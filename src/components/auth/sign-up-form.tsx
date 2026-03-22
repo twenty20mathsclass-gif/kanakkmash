@@ -28,7 +28,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertCircle, Loader2, IndianRupee } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { countries } from '@/lib/countries';
 import type { CourseFee, CourseModel } from '@/lib/definitions';
@@ -104,7 +104,6 @@ export function SignUpForm() {
   
   useEffect(() => {
     if (!firestore) return;
-    // Removing orderBy to prevent composite index requirement for fresh projects
     const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
@@ -166,7 +165,6 @@ export function SignUpForm() {
 
 
   const handleContinue = async () => {
-    // Perform manual validation for dynamic fields since basic schema doesn't know about dynamic configTypes
     let hasError = false;
     if (activeModel) {
         if (activeModel.configType === 'class-syllabus') {
@@ -338,7 +336,7 @@ export function SignUpForm() {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {syllallabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -452,15 +450,7 @@ export function SignUpForm() {
         </div>
         
         <Button type="submit" className="w-full" size="lg" disabled={loading || loadingFee}>
-          {loading || loadingFee ? <Loader2 className="animate-spin" /> : (
-              <div className="flex items-center justify-center gap-2">
-                  <span>Continue to Payment</span>
-                  <div className="flex items-center text-xs opacity-80 border-l pl-2 ml-2">
-                      <IndianRupee className="h-3 w-3" />
-                      <span>{fee}</span>
-                  </div>
-              </div>
-          )}
+          {loading || loadingFee ? <Loader2 className="animate-spin" /> : "Continue to Payment"}
         </Button>
       </form>
     </Form>
