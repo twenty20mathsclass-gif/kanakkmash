@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { useFirebase } from '@/firebase';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,11 +45,7 @@ const formSchema = z.object({
   level: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
-}).superRefine((data, ctx) => {
-    // Logic here is now slightly more complex because courseModel behavior is dynamic.
-    // We'll validate based on common naming patterns or keep it loose.
 });
-
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -76,6 +71,7 @@ export function SignUpForm() {
   const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
   const [loadingFee, setLoadingFee] = useState(false);
   const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
   
   const referralId = searchParams.get('ref');
 
@@ -108,9 +104,16 @@ export function SignUpForm() {
   
   useEffect(() => {
     if (!firestore) return;
-    const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+    // Removing orderBy to prevent composite index requirement for fresh projects
+    const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        setCourseModels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        setCourseModels(list);
+        setModelsLoaded(true);
+    }, (err) => {
+        console.warn("Error loading models:", err);
+        setModelsLoaded(true);
     });
     return () => unsubscribe();
   }, [firestore]);
@@ -163,8 +166,21 @@ export function SignUpForm() {
 
 
   const handleContinue = async () => {
+    // Perform manual validation for dynamic fields since basic schema doesn't know about dynamic configTypes
+    let hasError = false;
+    if (activeModel) {
+        if (activeModel.configType === 'class-syllabus') {
+            if (!selectedClass) { form.setError('class', { message: 'Class is required' }); hasError = true; }
+            if (selectedClass !== 'DEGREE' && !selectedSyllabus) { form.setError('syllabus', { message: 'Syllabus is required' }); hasError = true; }
+        } else if (activeModel.configType === 'level') {
+            if (!selectedLevel) { form.setError('level', { message: 'Level is required' }); hasError = true; }
+        } else if (activeModel.configType === 'competitive-exam') {
+            if (!selectedCompetitiveExam) { form.setError('competitiveExam', { message: 'Exam is required' }); hasError = true; }
+        }
+    }
+
     const isValid = await form.trigger();
-    if (!isValid) {
+    if (!isValid || hasError) {
       toast({
         title: 'Please check your details',
         description: 'Fill in all required fields correctly before proceeding.',
@@ -238,7 +254,7 @@ export function SignUpForm() {
                         form.setValue('syllabus', '');
                         form.setValue('competitiveExam', '');
                         form.clearErrors(['class', 'level', 'syllabus', 'competitiveExam']);
-                    }} defaultValue={field.value}>
+                    }} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select course" />
@@ -248,7 +264,8 @@ export function SignUpForm() {
                             {courseModels.map(model => (
                                 <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>
                             ))}
-                            {courseModels.length === 0 && <SelectItem value="loading" disabled>Loading models...</SelectItem>}
+                            {!modelsLoaded && <SelectItem value="loading" disabled>Loading models...</SelectItem>}
+                            {modelsLoaded && courseModels.length === 0 && <SelectItem value="none" disabled>No active courses available</SelectItem>}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -268,7 +285,7 @@ export function SignUpForm() {
                     field.onChange(value);
                     form.setValue('syllabus', '');
                     form.clearErrors('syllabus');
-                }} defaultValue={field.value}>
+                }} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a class" />
@@ -291,7 +308,7 @@ export function SignUpForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Level</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a level" />
@@ -314,7 +331,7 @@ export function SignUpForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Syllabus</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a syllabus" />
@@ -337,7 +354,7 @@ export function SignUpForm() {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Competitive Exam</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select an exam" />
@@ -435,7 +452,15 @@ export function SignUpForm() {
         </div>
         
         <Button type="submit" className="w-full" size="lg" disabled={loading || loadingFee}>
-          {loading || loadingFee ? <Loader2 className="animate-spin" /> : 'Continue to Payment'}
+          {loading || loadingFee ? <Loader2 className="animate-spin" /> : (
+              <div className="flex items-center justify-center gap-2">
+                  <span>Continue to Payment</span>
+                  <div className="flex items-center text-xs opacity-80 border-l pl-2 ml-2">
+                      <IndianRupee className="h-3 w-3" />
+                      <span>{fee}</span>
+                  </div>
+              </div>
+          )}
         </Button>
       </form>
     </Form>

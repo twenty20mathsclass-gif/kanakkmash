@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -41,10 +40,11 @@ export default function AdminCourseModelControllerPage() {
     if (!firestore) return;
     setLoading(true);
 
-    const q = query(collection(firestore, 'courseModels'), orderBy('createdAt', 'desc'));
+    const q = query(collection(firestore, 'courseModels'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const modelsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
-      setModels(modelsData);
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+      list.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      setModels(list);
       setLoading(false);
     }, (err: any) => {
       if (err.code === 'permission-denied') {
@@ -156,8 +156,8 @@ export default function AdminCourseModelControllerPage() {
                     <p className="text-muted-foreground">Manage the foundational course categories available on the platform.</p>
                 </div>
                 {models.length === 0 && !loading && (
-                    <Button onClick={handleInitializeDefaults} disabled={isSubmitting} variant="outline">
-                        Initialize Defaults
+                    <Button onClick={handleInitializeDefaults} disabled={isSubmitting} variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                        Initialize Standard Defaults
                     </Button>
                 )}
             </div>
@@ -241,7 +241,7 @@ export default function AdminCourseModelControllerPage() {
                                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                                     <LayoutGrid className="h-10 w-10 mx-auto mb-2 opacity-20" />
                                     <p>No course models defined yet.</p>
-                                    <p className="text-xs">Click "Initialize Defaults" to start with standard options.</p>
+                                    <p className="text-xs">Click "Initialize Standard Defaults" to start with standard options.</p>
                                 </div>
                             )
                         }

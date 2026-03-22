@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -113,9 +112,12 @@ export default function CreateSchedulePage() {
 
     useEffect(() => {
         if (!firestore) return;
-        const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+        // Removing orderBy to prevent composite index requirement for fresh projects
+        const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
         const unsub = onSnapshot(q, (snap) => {
-            setCourseModels(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+            list.sort((a, b) => a.name.localeCompare(b.name));
+            setCourseModels(list);
         });
         return () => unsub();
     }, [firestore]);

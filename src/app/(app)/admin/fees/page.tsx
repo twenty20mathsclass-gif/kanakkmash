@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -71,9 +70,12 @@ export default function AdminFeesPage() {
 
     useEffect(() => {
         if (!firestore) return;
-        const qModels = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+        // Removing orderBy to prevent composite index requirement for fresh projects
+        const qModels = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
         const unsubModels = onSnapshot(qModels, (snap) => {
-            setCourseModels(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+            list.sort((a, b) => a.name.localeCompare(b.name));
+            setCourseModels(list);
         });
 
         const qFees = query(collection(firestore, 'courseFees'), orderBy('createdAt', 'desc'));
