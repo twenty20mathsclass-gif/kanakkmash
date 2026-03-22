@@ -91,19 +91,19 @@ export default function MyChatRoomPage() {
                     const teacherAssignments = user.assignedClasses || [];
                     
                     fetchedContacts = allUsers.filter(u => {
-                        // 1. Always show admins to teachers
+                        // 1. Always show admins to teachers for coordination
                         if (u.role === 'admin') return true;
                         
                         // 2. Only check students for the assignment logic
                         if (u.role !== 'student') return false;
 
-                        // 3. Show students referred by this teacher (typically One to One)
+                        // 3. Show students referred by this teacher (typically One to One or private leads)
                         if (u.referredBy === user.id) return true;
 
-                        // 4. Show students in groups assigned to this teacher
-                        if (u.learningMode === 'group') {
-                            const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
-                            return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
+                        // 4. Show students in groups/levels/exams assigned to this teacher
+                        const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
+                        if (studentContexts.some(ctx => teacherAssignments.includes(ctx!))) {
+                            return true;
                         }
 
                         return false;
