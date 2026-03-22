@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -90,7 +89,7 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
                     </div>
                 ) : (
                     <Link
-                        href="https://wa.me/919995315893"
+                        href="https://wa.me/917994875893"
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="Chat on WhatsApp"

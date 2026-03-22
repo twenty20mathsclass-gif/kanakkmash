@@ -85,7 +85,7 @@ export function AppleStyleDock({ items, user, onSignOut }: { items: NavItem[], u
 
       <DockItem>
         <Link
-          href="https://wa.me/919995315893"
+          href="https://wa.me/917994875893"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat on WhatsApp"
