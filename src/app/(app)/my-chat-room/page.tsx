@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, limit, orderBy, onSnapshot } from 'f
 import type { User, ChatMessage } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Search, Filter } from 'lucide-react';
+import { Loader2, Search, Filter, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
@@ -210,7 +210,10 @@ export default function MyChatRoomPage() {
         <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-2rem)] overflow-hidden bg-background border rounded-xl shadow-2xl">
             <div className="flex h-full divide-x">
                 {/* Contacts Sidebar */}
-                <div className="w-full md:w-[350px] lg:w-[400px] flex flex-col h-full bg-card shrink-0">
+                <div className={cn(
+                    "w-full md:w-[350px] lg:w-[400px] flex flex-col h-full bg-card shrink-0",
+                    selectedContact && "hidden md:flex"
+                )}>
                     <div className="p-4 border-b space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold font-headline">Messages</h2>
@@ -268,15 +271,15 @@ export default function MyChatRoomPage() {
 
                 {/* Chat Main Area */}
                 <div className={cn(
-                    "flex-1 flex flex-col h-full bg-muted/20 relative transition-transform duration-300",
+                    "flex-1 flex flex-col h-full bg-muted/20 relative transition-all duration-300",
                     !selectedContact && "hidden md:flex items-center justify-center"
                 )}>
                     {user && selectedContact ? (
                         <div className="flex flex-col h-full w-full">
                             {/* Mobile Back Button Overlay */}
-                            <div className="md:hidden absolute top-4 left-4 z-50">
-                                <Button variant="secondary" size="sm" className="rounded-full shadow-lg" onClick={() => setSelectedContact(null)}>
-                                    Back
+                            <div className="md:hidden absolute top-3.5 left-4 z-50">
+                                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-background/50 backdrop-blur-md" onClick={() => setSelectedContact(null)}>
+                                    <ArrowLeft className="h-5 w-5" />
                                 </Button>
                             </div>
                             <ChatInterface currentUser={user} chatPartner={selectedContact} />
@@ -287,7 +290,7 @@ export default function MyChatRoomPage() {
                                 <Loader2 className="h-10 w-10 text-primary opacity-20" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold font-headline">WhatsApp-style Messaging</h3>
+                                <h3 className="text-lg font-bold font-headline">Secure Messenger</h3>
                                 <p className="text-sm text-muted-foreground max-w-xs">
                                     Select a contact from the list to start a secure, real-time conversation.
                                 </p>
