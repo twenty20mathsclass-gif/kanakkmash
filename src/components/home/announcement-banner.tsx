@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -43,7 +42,7 @@ export function AnnouncementBanner() {
     const content = (
         <div className="flex items-center justify-center gap-3 p-2 bg-gradient-to-r from-primary via-accent to-destructive text-primary-foreground shadow-sm w-full border-b border-white/10">
             <Megaphone className="h-4 w-4 shrink-0 hidden sm:block animate-bounce" />
-            <p className="font-bold text-center uppercase tracking-wider text-[10px] sm:text-xs md:text-sm">{announcement.text}</p>
+            <p className="font-bold text-center uppercase tracking-wider text-xs sm:text-sm">{announcement.text}</p>
         </div>
     );
     

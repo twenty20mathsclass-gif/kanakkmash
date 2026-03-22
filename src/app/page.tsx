@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -32,7 +31,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex flex-col w-full h-full min-h-0 flex-grow">
+      <section className="relative flex flex-col w-full h-full min-h-0 flex-grow pt-16 md:pt-0">
         <div className="w-full z-40 shrink-0">
             <AnnouncementBanner />
         </div>
