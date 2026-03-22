@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
@@ -7,20 +6,36 @@ import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Mic } from 'lucide-react';
+import { Send, Loader2, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Mic, ArrowLeft, Info, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ChatInterfaceProps {
   currentUser: User;
   chatPartner: User | ChatGroup;
   isGroup?: boolean;
+  onBack?: () => void;
+  onHeaderClick?: () => void;
+  onDeleteGroup?: () => void;
 }
 
-export function ChatInterface({ currentUser, chatPartner, isGroup = false }: ChatInterfaceProps) {
+export function ChatInterface({ 
+    currentUser, 
+    chatPartner, 
+    isGroup = false, 
+    onBack, 
+    onHeaderClick,
+    onDeleteGroup 
+}: ChatInterfaceProps) {
   const { firestore } = useFirebase();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -48,7 +63,6 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
       setMessages(msgs);
       setLoading(false);
 
-      // Improved Read Status Logic: Mark messages as read when the chat is active
       const unreadMsgs = snapshot.docs.filter(d => {
           const data = d.data();
           return data.senderId !== currentUser.id && !data.isRead;
@@ -115,11 +129,9 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
         });
   };
 
-  const isGroupObj = isGroup && 'members' in chatPartner;
-
   return (
     <div className="flex flex-col h-full w-full bg-[#F0F2F5] dark:bg-[#0B141A] relative overflow-hidden">
-      {/* Background Pattern Overlay */}
+      {/* Pattern Overlay */}
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none z-0" 
            style={{ 
              backgroundImage: "url('https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg')",
@@ -130,22 +142,49 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 md:px-6 py-2.5 bg-background border-b shadow-sm z-10 shrink-0">
-        <div className="flex items-center gap-3 pl-10 md:pl-0 min-w-0">
-            <Avatar className={cn("h-10 w-10 border shadow-sm shrink-0", isGroup && "rounded-lg")}>
-                <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
-                <AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-                <h3 className="font-bold text-sm leading-tight truncate">{chatPartner.name}</h3>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold truncate">
-                    {isGroup ? `${(chatPartner as ChatGroup).members.length} members` : (chatPartner as User).role}
-                </p>
+        <div className="flex items-center gap-2 min-w-0">
+            {onBack && (
+                <Button variant="ghost" size="icon" className="rounded-full md:hidden" onClick={onBack}>
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+            )}
+            <div 
+                className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 p-1 rounded-lg transition-colors min-w-0"
+                onClick={onHeaderClick}
+            >
+                <Avatar className={cn("h-10 w-10 border shadow-sm shrink-0", isGroup && "rounded-lg")}>
+                    <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
+                    <AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                    <h3 className="font-bold text-sm leading-tight truncate">{chatPartner.name}</h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold truncate">
+                        {isGroup ? `${(chatPartner as ChatGroup).members?.length || 0} members` : (chatPartner as User).role}
+                    </p>
+                </div>
             </div>
         </div>
         <div className="flex items-center gap-4 text-muted-foreground shrink-0">
             <Video className="h-5 w-5 cursor-pointer hover:text-primary transition-colors hidden sm:block" />
             <Phone className="h-5 w-5 cursor-pointer hover:text-primary transition-colors hidden sm:block" />
-            <MoreVertical className="h-5 w-5 cursor-pointer hover:text-primary transition-colors" />
+            
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <MoreVertical className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={onHeaderClick}>
+                        <Info className="mr-2 h-4 w-4" /> {isGroup ? 'Group Info' : 'Chat Info'}
+                    </DropdownMenuItem>
+                    {isGroup && onDeleteGroup && (
+                        <DropdownMenuItem onClick={onDeleteGroup} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Group
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </header>
 
@@ -162,7 +201,7 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
                     const showDate = index === 0 || (msg.timestamp && messages[index-1].timestamp && format(msg.timestamp.toDate(), 'P') !== format(messages[index-1].timestamp.toDate(), 'P'));
 
                     return (
-                        <div key={msg.id} className="w-full flex flex-col">
+                        <div key={msg.id || index} className="w-full flex flex-col">
                             {showDate && msg.timestamp && (
                                 <div className="flex justify-center my-4">
                                     <span className="bg-background/90 backdrop-blur-sm text-[10px] uppercase font-black px-4 py-1 rounded-full text-muted-foreground shadow-sm border">
@@ -178,7 +217,7 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
                                         : 'bg-background text-foreground rounded-tl-none border border-border/50'
                                 )}>
                                     {isGroup && !isSentByCurrentUser && (
-                                        <p className="text-[10px] font-black text-primary mb-0.5 opacity-80">~ User</p>
+                                        <p className="text-[10px] font-black text-primary mb-0.5 opacity-80">~ Participant</p>
                                     )}
                                     <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                                     <div className={cn(
@@ -198,7 +237,7 @@ export function ChatInterface({ currentUser, chatPartner, isGroup = false }: Cha
         )}
       </ScrollArea>
 
-      {/* Modern Optimized Chat Bar */}
+      {/* Input Footer */}
       <footer className="p-3 bg-card/80 backdrop-blur-md border-t shrink-0 z-10 pb-20 md:pb-4">
         <form onSubmit={handleSendMessage} className="flex w-full items-end gap-2 max-w-5xl mx-auto">
             <div className="flex-1 flex items-center bg-background rounded-2xl px-2 py-1 shadow-sm border focus-within:ring-1 focus-within:ring-primary/30 transition-all min-h-[44px]">
