@@ -283,6 +283,7 @@ export type ChatMessage = {
   text: string;
   senderId: string;
   timestamp: Timestamp;
+  isRead?: boolean;
 };
 
 export type Notification = {

@@ -2,9 +2,8 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, where, getDocs, writeBatch } from 'firebase/firestore';
 import type { User, ChatMessage } from '@/lib/definitions';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,6 +43,21 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
       setMessages(msgs);
       setLoading(false);
+
+      // Mark incoming messages as read
+      const unreadMsgs = snapshot.docs.filter(d => {
+          const data = d.data();
+          return data.senderId !== currentUser.id && !data.isRead;
+      });
+
+      if (unreadMsgs.length > 0) {
+          const batch = writeBatch(firestore);
+          unreadMsgs.forEach(d => {
+              batch.update(d.ref, { isRead: true });
+          });
+          batch.commit().catch(err => console.warn("Failed to mark messages as read", err));
+      }
+
     }, (err: any) => {
         if (err.code === 'permission-denied') {
             const permissionError = new FirestorePermissionError({
@@ -56,7 +70,7 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
     });
 
     return () => unsubscribe();
-  }, [firestore, chatId]);
+  }, [firestore, chatId, currentUser.id]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -76,7 +90,8 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
     const messageData = {
         text: newMessage,
         senderId: currentUser.id,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        isRead: false
     };
     
     const currentMsg = newMessage;
@@ -109,19 +124,19 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 md:px-6 py-3 bg-card border-b shadow-sm z-10 shrink-0">
-        <div className="flex items-center gap-3 pl-10 md:pl-0">
-            <Avatar className="h-10 w-10 border shadow-sm">
+        <div className="flex items-center gap-3 pl-10 md:pl-0 min-w-0">
+            <Avatar className="h-10 w-10 border shadow-sm shrink-0">
                 <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
                 <AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            <div>
-                <h3 className="font-bold text-sm leading-tight">{chatPartner.name}</h3>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+            <div className="min-w-0">
+                <h3 className="font-bold text-sm leading-tight truncate">{chatPartner.name}</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold truncate">
                     {chatPartner.role === 'student' ? 'Student' : chatPartner.role}
                 </p>
             </div>
         </div>
-        <div className="flex items-center gap-4 text-muted-foreground">
+        <div className="flex items-center gap-4 text-muted-foreground shrink-0">
             <Video className="h-5 w-5 cursor-pointer hover:text-primary transition-colors hidden sm:block" />
             <Phone className="h-5 w-5 cursor-pointer hover:text-primary transition-colors hidden sm:block" />
             <MoreVertical className="h-5 w-5 cursor-pointer hover:text-primary transition-colors" />
@@ -175,7 +190,7 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
       </ScrollArea>
 
       {/* Input */}
-      <footer className="p-3 bg-card border-t shrink-0 z-10">
+      <footer className="p-3 bg-card border-t shrink-0 z-10 sticky bottom-0 md:relative">
         <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2 max-w-5xl mx-auto">
             <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 shrink-0">
                 <Smile className="h-6 w-6" />

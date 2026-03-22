@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic';
 type ContactWithMetadata = User & {
     lastMessage?: string;
     lastTimestamp?: any;
+    hasUnread?: boolean;
 };
 
 const ContactItem = ({ 
@@ -37,11 +38,29 @@ const ContactItem = ({
 }) => {
     const isOnline = useOnlineStatus(contact.id);
 
+    const getSubtitle = () => {
+        if (contact.role === 'student') {
+            const parts = [];
+            if (contact.class) parts.push(contact.class);
+            if (contact.syllabus) parts.push(contact.syllabus);
+            if (contact.level) parts.push(contact.level);
+            if (contact.competitiveExam) parts.push(contact.competitiveExam);
+            return parts.length > 0 ? parts.join(' - ') : 'Student';
+        }
+        if (contact.role === 'teacher') {
+            return contact.assignedClasses && contact.assignedClasses.length > 0 
+                ? `Assigned: ${contact.assignedClasses.join(', ')}` 
+                : 'Teacher';
+        }
+        return contact.role.charAt(0).toUpperCase() + contact.role.slice(1);
+    };
+
     return (
         <button
             className={cn(
                 'w-full text-left p-4 flex items-center gap-3 transition-all border-b last:border-b-0',
-                isSelected ? 'bg-primary/10' : 'hover:bg-muted/50'
+                isSelected ? 'bg-primary/10' : 'hover:bg-muted/50',
+                contact.hasUnread && !isSelected && 'bg-primary/5'
             )}
             onClick={onSelect}
         >
@@ -56,15 +75,25 @@ const ContactItem = ({
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5">
-                    <p className="font-bold text-sm truncate">{contact.name}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <p className={cn("text-sm truncate", contact.hasUnread && !isSelected ? "font-black" : "font-bold")}>{contact.name}</p>
+                        {contact.hasUnread && !isSelected && (
+                            <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                        )}
+                    </div>
                     {contact.lastTimestamp && (
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
                             {formatDistanceToNow(contact.lastTimestamp.toDate(), { addSuffix: false })}
                         </span>
                     )}
                 </div>
+                <div className="mb-1">
+                    <p className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter">
+                        {getSubtitle()}
+                    </p>
+                </div>
                 <div className="flex justify-between items-center">
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className={cn("text-xs truncate", contact.hasUnread && !isSelected ? "text-foreground font-semibold" : "text-muted-foreground")}>
                         {contact.lastMessage || (
                             <span className="italic opacity-70">Start a conversation</span>
                         )}
@@ -127,13 +156,10 @@ export default function MyChatRoomPage() {
                 }
 
                 const cleaned = fetchedContacts.filter(c => c.id !== user.id);
-                
-                // Initialize contacts with basic data
-                const initialContacts = cleaned.map(c => ({ ...c }));
-                setContacts(initialContacts);
+                setContacts(cleaned.map(c => ({ ...c })));
                 setLoading(false);
 
-                // Listen for last messages for each contact to handle sorting
+                // Listen for last messages and unread status
                 cleaned.forEach(contact => {
                     const chatId = [user.id, contact.id].sort().join('_');
                     const lastMsgQuery = query(
@@ -148,10 +174,14 @@ export default function MyChatRoomPage() {
                             setContacts(prev => {
                                 const updated = prev.map(c => 
                                     c.id === contact.id 
-                                        ? { ...c, lastMessage: lastMsg.text, lastTimestamp: lastMsg.timestamp } 
+                                        ? { 
+                                            ...c, 
+                                            lastMessage: lastMsg.text, 
+                                            lastTimestamp: lastMsg.timestamp,
+                                            hasUnread: lastMsg.senderId !== user.id && !lastMsg.isRead
+                                          } 
                                         : c
                                 );
-                                // Sort by timestamp desc
                                 return updated.sort((a, b) => {
                                     const timeA = a.lastTimestamp?.toMillis() || 0;
                                     const timeB = b.lastTimestamp?.toMillis() || 0;
@@ -177,10 +207,20 @@ export default function MyChatRoomPage() {
         fetchContacts();
     }, [firestore, user]);
 
+    // Handle Escape key to exit chat
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && selectedContact) {
+                setSelectedContact(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedContact]);
+
     const filterOptions = useMemo(() => {
         if (!user) return [];
         const options = [{ id: 'all', label: 'All' }];
-        
         if (user.role === 'admin') {
             options.push({ id: 'student', label: 'Students' });
             options.push({ id: 'teacher', label: 'Teachers' });
@@ -194,7 +234,6 @@ export default function MyChatRoomPage() {
         } else if (user.role === 'promoter') {
             options.push({ id: 'admin', label: 'Admin' });
         }
-        
         return options;
     }, [user]);
 
@@ -207,7 +246,7 @@ export default function MyChatRoomPage() {
     }, [contacts, filter, searchQuery]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-2rem)] overflow-hidden bg-background border rounded-xl shadow-2xl">
+        <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-2rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
             <div className="flex h-full divide-x">
                 {/* Contacts Sidebar */}
                 <div className={cn(
@@ -275,7 +314,7 @@ export default function MyChatRoomPage() {
                     !selectedContact && "hidden md:flex items-center justify-center"
                 )}>
                     {user && selectedContact ? (
-                        <div className="flex flex-col h-full w-full">
+                        <div className="flex flex-col h-full w-full pb-20 md:pb-0">
                             {/* Mobile Back Button Overlay */}
                             <div className="md:hidden absolute top-3.5 left-4 z-50">
                                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-background/50 backdrop-blur-md" onClick={() => setSelectedContact(null)}>

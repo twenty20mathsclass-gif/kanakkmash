@@ -177,7 +177,8 @@
       "properties": {
         "text": { "type": "string", "description": "The content of the message." },
         "senderId": { "type": "string", "description": "The UID of the user who sent the message." },
-        "timestamp": { "type": "object", "description": "The server timestamp when the message was sent." }
+        "timestamp": { "type": "object", "description": "The server timestamp when the message was sent." },
+        "isRead": { "type": "boolean", "description": "Whether the message has been read by the recipient." }
       },
       "required": ["text", "senderId", "timestamp"]
     },
