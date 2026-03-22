@@ -89,7 +89,7 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      function isMember() {
+      function isGroupMember() {
         return request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
       }
       
@@ -97,9 +97,9 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/groups/$(groupId)).data;
       }
 
-      allow read: if isMember();
+      allow read: if isGroupMember();
       allow create: if isRole('teacher') || isAdmin();
-      allow update: if isMember() || isAdmin();
+      allow update: if isGroupMember() || isAdmin();
       allow delete: if isAdmin() || (request.auth != null && request.auth.uid in resource.data.admins);
 
       match /messages/{messageId} {
