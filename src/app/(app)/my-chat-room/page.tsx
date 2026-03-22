@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon } from 'lucide-react';
@@ -94,7 +94,7 @@ const ContactItem = ({
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5">
                     <div className="flex items-center gap-2 min-w-0">
-                        <p className={cn("text-sm truncate", contact.hasUnread && !isSelected ? "font-black" : "font-bold")}>{contact.name}</p>
+                        <p className={cn("text-sm truncate font-bold", contact.hasUnread && !isSelected && "text-primary")}>{contact.name}</p>
                         {contact.hasUnread && !isSelected && (
                             <div className="h-2 w-2 rounded-full bg-primary shrink-0 animate-pulse" />
                         )}
@@ -125,11 +125,9 @@ const ContactItem = ({
 
 function CreateGroupDialog({ 
     students, 
-    currentUserId, 
     onCreate 
 }: { 
     students: User[]; 
-    currentUserId: string; 
     onCreate: (name: string, members: string[]) => Promise<void>; 
 }) {
     const [name, setName] = useState('');
@@ -226,6 +224,12 @@ export default function MyChatRoomPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'student' | 'teacher' | 'promoter' | 'admin' | 'group'>('all');
     const [searchQuery, setSearchTerm] = useState('');
+    const unsubsRef = useRef<Unsubscribe[]>([]);
+
+    const cleanupListeners = () => {
+        unsubsRef.current.forEach(unsub => unsub());
+        unsubsRef.current = [];
+    };
 
     useEffect(() => {
         if (!firestore || !user) return;
@@ -233,33 +237,44 @@ export default function MyChatRoomPage() {
 
         const fetchAll = async () => {
             try {
-                // 1. Fetch Users
+                cleanupListeners();
                 const usersCol = collection(firestore, 'users');
                 let fetchedUsers: User[] = [];
 
                 if (user.role === 'admin') {
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
-                    fetchedUsers = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                    fetchedUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                 } else if (user.role === 'student') {
                     const qTeachers = query(usersCol, where('role', '==', 'teacher'));
                     const qAdmins = query(usersCol, where('role', '==', 'admin'));
                     const [tSnap, aSnap] = await Promise.all([getDocs(qTeachers), getDocs(qAdmins)]);
+                    
+                    const allTeachers = tSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                    const allAdmins = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                    
+                    const studentContexts = [user.class, user.level, user.competitiveExam].filter(Boolean);
+                    
                     fetchedUsers = [
-                        ...tSnap.docs.map(d => ({ id: d.id, ...d.data() } as User)),
-                        ...aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User))
+                        ...allTeachers.filter(t => 
+                            t.assignedClasses?.some(c => studentContexts.includes(c)) || t.id === user.referredBy
+                        ),
+                        ...allAdmins
                     ];
                 } else if (user.role === 'teacher') {
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
                     const allUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                     const teacherAssignments = user.assignedClasses || [];
+                    
                     fetchedUsers = allUsers.filter(u => {
                         if (u.role === 'admin') return true;
-                        if (u.role !== 'student') return false;
-                        if (u.referredBy === user.id) return true;
-                        const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
-                        return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
+                        if (u.role === 'student') {
+                            if (u.referredBy === user.id) return true;
+                            const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
+                            return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
+                        }
+                        return false;
                     });
                 } else if (user.role === 'promoter') {
                     const qAdmins = query(usersCol, where('role', '==', 'admin'));
@@ -267,7 +282,6 @@ export default function MyChatRoomPage() {
                     fetchedUsers = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                 }
 
-                // 2. Fetch Groups where user is a member
                 const groupsQuery = query(collection(firestore, 'groups'), where('members', 'array-contains', user.id));
                 const groupsSnap = await getDocs(groupsQuery);
                 const fetchedGroups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
@@ -280,7 +294,7 @@ export default function MyChatRoomPage() {
                 setContacts(combined);
                 setLoading(false);
 
-                // 3. Listen for last messages and unread markers
+                // Setup real-time last message listeners
                 combined.forEach(contact => {
                     const chatId = contact.isGroup ? contact.id : [user.id, (contact as User).id].sort().join('_');
                     const collName = contact.isGroup ? 'groups' : 'chats';
@@ -291,7 +305,7 @@ export default function MyChatRoomPage() {
                         limit(1)
                     );
 
-                    onSnapshot(lastMsgQuery, (snap) => {
+                    const unsub = onSnapshot(lastMsgQuery, (snap) => {
                         if (!snap.empty) {
                             const lastMsg = snap.docs[0].data() as ChatMessage;
                             setContacts(prev => {
@@ -308,7 +322,7 @@ export default function MyChatRoomPage() {
                                     }
                                     return c;
                                 });
-                                return updated.sort((a, b) => {
+                                return [...updated].sort((a, b) => {
                                     const timeA = a.lastTimestamp?.toMillis() || 0;
                                     const timeB = b.lastTimestamp?.toMillis() || 0;
                                     if (timeA !== timeB) return timeB - timeA;
@@ -317,15 +331,17 @@ export default function MyChatRoomPage() {
                             });
                         }
                     });
+                    unsubsRef.current.push(unsub);
                 });
 
             } catch (err: any) {
-                console.error(err);
+                console.error("Error fetching chat data:", err);
                 setLoading(false);
             }
         };
 
         fetchAll();
+        return () => cleanupListeners();
     }, [firestore, user]);
 
     useEffect(() => {
@@ -342,31 +358,25 @@ export default function MyChatRoomPage() {
         if (!firestore || !user) return;
         
         try {
-            // Find all admins to add them to the group automatically
             const adminsQuery = query(collection(firestore, 'users'), where('role', '==', 'admin'));
             const adminsSnap = await getDocs(adminsQuery);
             const adminIds = adminsSnap.docs.map(d => d.id);
             
-            // Deduplicate all participants
             const allMembers = Array.from(new Set([...members, user.id, ...adminIds]));
             const groupAdmins = Array.from(new Set([user.id, ...adminIds]));
 
-            const groupData: Omit<ChatGroup, 'id'> = {
+            const groupData = {
                 name,
                 members: allMembers,
                 admins: groupAdmins,
                 createdBy: user.id,
-                createdAt: serverTimestamp() as any,
+                createdAt: serverTimestamp(),
                 isGroup: true,
                 avatarUrl: `https://picsum.photos/seed/${name.length}/200`
             };
 
             const docRef = await addDoc(collection(firestore, 'groups'), groupData);
-            const newGroup = { id: docRef.id, ...groupData } as ContactWithMetadata;
-            
-            setContacts(prev => [newGroup, ...prev]);
-            setSelectedContact(newGroup);
-            toast({ title: 'Group Created', description: `"${name}" is ready for chat.` });
+            toast({ title: 'Group Created', description: `"${name}" is ready.` });
         } catch (err) {
             toast({ title: 'Error', description: 'Failed to create group.', variant: 'destructive' });
         }
@@ -376,16 +386,11 @@ export default function MyChatRoomPage() {
         if (!user) return [];
         const options = [{ id: 'all', label: 'All' }];
         if (user.role === 'admin') {
-            options.push({ id: 'student', label: 'Students' });
-            options.push({ id: 'teacher', label: 'Teachers' });
-            options.push({ id: 'group', label: 'Groups' });
+            options.push({ id: 'student', label: 'Students' }, { id: 'teacher', label: 'Teachers' }, { id: 'promoter', label: 'Promoters' }, { id: 'group', label: 'Groups' });
         } else if (user.role === 'teacher') {
-            options.push({ id: 'student', label: 'Students' });
-            options.push({ id: 'group', label: 'Groups' });
-            options.push({ id: 'admin', label: 'Admin' });
+            options.push({ id: 'student', label: 'Students' }, { id: 'group', label: 'Groups' }, { id: 'admin', label: 'Admin' });
         } else {
-            options.push({ id: 'group', label: 'Groups' });
-            options.push({ id: 'admin', label: 'Admin' });
+            options.push({ id: 'group', label: 'Groups' }, { id: 'admin', label: 'Admin' });
         }
         return options;
     }, [user]);
@@ -405,9 +410,8 @@ export default function MyChatRoomPage() {
     }, [contacts]);
 
     return (
-        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-theme(spacing.16)-4rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
+        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-10rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
             <div className="flex h-full divide-x">
-                {/* Contacts Sidebar */}
                 <div className={cn(
                     "w-full md:w-[350px] lg:w-[400px] flex flex-col h-full bg-card shrink-0",
                     selectedContact && "hidden md:flex"
@@ -418,7 +422,6 @@ export default function MyChatRoomPage() {
                             {user?.role === 'teacher' && (
                                 <CreateGroupDialog 
                                     students={availableStudents} 
-                                    currentUserId={user.id} 
                                     onCreate={handleCreateGroup} 
                                 />
                             )}
@@ -457,7 +460,7 @@ export default function MyChatRoomPage() {
                                 <div className="flex flex-col">
                                     {filteredContacts.map(contact => (
                                         <ContactItem 
-                                            key={contact.id}
+                                            key={contact.isGroup ? contact.id : (contact as User).id}
                                             contact={contact}
                                             isSelected={selectedContact?.id === contact.id}
                                             onSelect={() => setSelectedContact(contact)}
@@ -475,7 +478,6 @@ export default function MyChatRoomPage() {
                     </div>
                 </div>
 
-                {/* Chat Main Area */}
                 <div className={cn(
                     "flex-1 flex flex-col h-full bg-muted/20 relative transition-all duration-300",
                     !selectedContact && "hidden md:flex items-center justify-center"
