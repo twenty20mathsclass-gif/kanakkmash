@@ -50,6 +50,11 @@ export default function PublicStudentLayout({
             isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
         )}>
             
+            {/* Sticky Announcement Banner - Positioned at the absolute top of the scroll container */}
+            <div className="sticky top-16 md:top-0 z-40 w-full shrink-0">
+                <AnnouncementBanner />
+            </div>
+
             <Suspense fallback={null}>
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
                 {user ? (
@@ -78,14 +83,9 @@ export default function PublicStudentLayout({
                 "flex-grow flex flex-col w-full",
                 isHomepage ? "overflow-hidden" : ""
             )}>
-                {/* Fixed Spacer for Navbars - prevents content being hidden behind fixed headers */}
+                {/* Fixed Spacer for Navbars - ensures main content starts below fixed/sticky navigation */}
                 <div className="h-16 md:hidden shrink-0" />
                 {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
-
-                {/* Sticky Announcement Banner - Pins to top or below mobile header */}
-                <div className="sticky top-16 md:top-0 z-40 w-full shrink-0">
-                    <AnnouncementBanner />
-                </div>
 
                 <main className={cn(
                     "flex-grow flex flex-col w-full",
