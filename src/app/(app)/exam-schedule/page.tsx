@@ -71,9 +71,14 @@ export default function ExamSchedulePage() {
           return true;
         }
 
+        // Group schedule check
         if (!schedule.studentId && schedule.courseModel === user.courseModel) {
             if (user.courseModel === 'COMPETITIVE EXAM') {
                 return schedule.competitiveExam === user.competitiveExam;
+            }
+
+            if (user.courseModel === 'TWENTY 20 BASIC MATHS') {
+                return user.level && schedule.levels?.includes(user.level);
             }
 
             if (user.class && schedule.classes?.includes(user.class)) {

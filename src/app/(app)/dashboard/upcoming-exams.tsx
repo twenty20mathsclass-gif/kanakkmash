@@ -68,6 +68,10 @@ export function UpcomingExams() {
                 return schedule.competitiveExam === user.competitiveExam;
             }
 
+            if (user.courseModel === 'TWENTY 20 BASIC MATHS') {
+                return user.level && schedule.levels?.includes(user.level);
+            }
+
             if (user.class && schedule.classes?.includes(user.class)) {
                 // For non-DEGREE classes, syllabus must also match
                 if (user.class !== 'DEGREE') {
@@ -149,7 +153,7 @@ export function UpcomingExams() {
                     const IconComponent = iconMap[item.icon] || FileText;
                     return (
                         <Reveal key={item.id} delay={0.2 + index * 0.1} className="min-w-[280px] w-[280px] flex-shrink-0">
-                            <Link href={`/exams/take/${item.examId}`} className="block h-full">
+                            <Link href={item.meetLink} className="block h-full">
                                 <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
                                     <CardContent className="p-6 flex flex-col justify-between h-full">
                                         <div className="space-y-2">
@@ -203,6 +207,3 @@ export function UpcomingExams() {
     </section>
   );
 }
-
-
-    

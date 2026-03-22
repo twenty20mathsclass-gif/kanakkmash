@@ -81,6 +81,10 @@ export default function ClassSchedulePage() {
                 return schedule.competitiveExam === user.competitiveExam;
             }
 
+            if (user.courseModel === 'TWENTY 20 BASIC MATHS') {
+                return user.level && schedule.levels?.includes(user.level);
+            }
+
             if (user.class && schedule.classes?.includes(user.class)) {
                 // For non-DEGREE classes, syllabus must also match
                 if (user.class !== 'DEGREE') {
