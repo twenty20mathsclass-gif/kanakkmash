@@ -107,6 +107,7 @@ export function SignUpForm() {
     const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+        // Client-side sort to avoid index requirement
         list.sort((a, b) => a.name.localeCompare(b.name));
         setCourseModels(list);
         setModelsLoaded(true);
@@ -259,11 +260,15 @@ export function SignUpForm() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {courseModels.map(model => (
-                                <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>
-                            ))}
-                            {!modelsLoaded && <SelectItem value="loading" disabled>Loading models...</SelectItem>}
-                            {modelsLoaded && courseModels.length === 0 && <SelectItem value="none" disabled>No active courses available</SelectItem>}
+                            {!modelsLoaded ? (
+                                <SelectItem value="loading" disabled>Loading models...</SelectItem>
+                            ) : courseModels.length > 0 ? (
+                                courseModels.map(model => (
+                                    <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="none" disabled>No active courses available</SelectItem>
+                            )}
                         </SelectContent>
                     </Select>
                     <FormMessage />
