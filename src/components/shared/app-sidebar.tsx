@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
@@ -43,7 +44,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
     const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   
     const isActive = (href: string) => {
-        if (href === '/admin' || href === '/teacher') {
+        if (href === '/admin' || href === '/teacher' || href === '/promoter') {
             return pathname === href;
         }
          // for query params like ?role=student
@@ -108,11 +109,6 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
                                 <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => router.push('/profile')} className="cursor-pointer">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Settings
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
                             <LogOut className="mr-2 h-4 w-4" />
