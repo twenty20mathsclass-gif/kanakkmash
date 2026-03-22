@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc, writeBatch } from 'firebase/firestore';
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -421,12 +421,13 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
 export default function AccountantSalariesPage() {
     const { firestore } = useFirebase();
+    const { user: currentUser } = useUser();
     const [teachers, setTeachers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
 
     useEffect(() => {
-        if (!firestore) return;
+        if (!firestore || !currentUser) return;
 
         const fetchTeachers = async () => {
             setLoading(true);
@@ -458,7 +459,7 @@ export default function AccountantSalariesPage() {
         };
 
         fetchTeachers();
-    }, [firestore]);
+    }, [firestore, currentUser]);
 
     return (
         <div className="space-y-8">
