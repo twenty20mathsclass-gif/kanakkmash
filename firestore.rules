@@ -22,9 +22,17 @@ service cloud.firestore {
     }
 
     // --- Collection Group Rules (CRITICAL for Dashboard/Results) ---
-    // Matches path: /exams/{examId}/submissions/{userId}
-    match /{path=**}/submissions/{userId} {
-      allow read: if isOwner(userId) || isAdmin() || (request.auth != null && get(/databases/$(database)/documents/exams/$(path[1])).data.teacherId == request.auth.uid);
+    // Matches path: /exams/{examId}/submissions/{submissionId}
+    match /{path=**}/submissions/{submissionId} {
+      allow read: if request.auth != null && (
+        // Allow if user is the owner (checking both doc ID and data field for query compatibility)
+        submissionId == request.auth.uid || 
+        (resource != null && resource.data.studentId == request.auth.uid) ||
+        // Allow if user is admin
+        isAdmin() || 
+        // Allow if user is the teacher who created the exam (assuming /exams/{examId}/submissions/{subId} structure)
+        (path.size() >= 2 && path[0] == 'exams' && get(/databases/$(database)/documents/exams/$(path[1])).data.teacherId == request.auth.uid)
+      );
     }
 
     // --- User Profiles & Details ---
