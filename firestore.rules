@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -22,7 +21,6 @@ service cloud.firestore {
     }
 
     // --- Collection Group Rules ---
-    // Required for "My Results" page which uses collectionGroup('submissions')
     match /{path=**}/submissions/{submissionId} {
       allow read: if request.auth != null && (
         submissionId == request.auth.uid || 
@@ -92,8 +90,10 @@ service cloud.firestore {
 
     match /groups/{groupId} {
       function isMember() {
+        // resource.data is the group document
         return request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
       }
+      
       function isGroupMember(gId) {
         let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
         return request.auth != null && (
@@ -101,6 +101,7 @@ service cloud.firestore {
           isAdmin()
         );
       }
+      
       function isGroupAdmin(gId) {
         let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
         return request.auth != null && (

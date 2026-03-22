@@ -390,7 +390,6 @@ export default function MyChatRoomPage() {
 
                 const adminsQuery = query(usersCol, where('role', '==', 'admin'));
                 const adminsSnap = await getDocs(adminsQuery);
-                const allAdmins = adminsSnap.docs.map(d => ({ id: d.id, ...doc.data() } as any)); // Helper mapping
 
                 if (user.role === 'admin') {
                     const qAll = query(usersCol);
