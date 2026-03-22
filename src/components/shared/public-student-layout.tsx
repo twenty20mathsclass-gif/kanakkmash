@@ -75,24 +75,24 @@ export default function PublicStudentLayout({
 
                 <main className={cn(
                     "flex-grow flex flex-col w-full min-h-0",
-                    isHomepage ? "overflow-y-auto" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
+                    isHomepage ? "overflow-hidden" : "pt-4 pb-12 px-4 md:px-8 lg:px-12 overflow-y-auto"
                 )}>
-                    {/* Mobile Spacer for fixed header */}
-                    <div className="h-16 md:hidden shrink-0" />
+                    {/* Mobile Spacer for fixed header - Only on subpages to save space on home */}
+                    {!isHomepage && <div className="h-16 md:hidden shrink-0" />}
 
                     <div className={cn(
-                        "w-full flex-grow flex flex-col",
-                        isHomepage ? "justify-center items-center py-4" : ""
+                        "w-full flex-grow flex flex-col min-h-0",
+                        isHomepage ? "justify-center items-center" : ""
                     )}>
                         {children}
                     </div>
                     
                     {/* Footer - Only visible at bottom of scroll on home, or standard on others */}
                     {isHomepage && isPubliclyAccessible && (
-                        <footer className="w-full shrink-0 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
+                        <footer className="w-full shrink-0 py-2 border-t mt-auto bg-background/50 backdrop-blur-sm">
                             <div className="container px-4 md:px-6">
                                 {year && (
-                                <p className="text-center text-xs text-foreground/60">
+                                <p className="text-center text-[10px] sm:text-xs text-foreground/60">
                                     © {year} kanakkmash. All rights reserved.
                                 </p>
                                 )}

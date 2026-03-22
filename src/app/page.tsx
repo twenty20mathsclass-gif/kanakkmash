@@ -32,8 +32,8 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex flex-col items-center justify-center w-full px-4 py-2 sm:py-8 lg:py-12 flex-grow">
-        <div className="absolute top-0 left-0 right-0 z-40">
+      <section className="relative flex flex-col w-full h-full min-h-0 flex-grow">
+        <div className="w-full z-40 shrink-0">
             <AnnouncementBanner />
         </div>
         
@@ -48,10 +48,11 @@ export default function Home() {
               ))}
           </div>
         </div>
-        <div className="container relative z-10 mx-auto text-center md:px-6">
-          <Reveal>
+
+        <div className="container relative z-10 mx-auto text-center px-4 flex flex-col justify-center items-center flex-grow overflow-hidden">
+          <Reveal className="w-full">
             <div className="mx-auto max-w-5xl">
-              <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-black dark:text-white">
+              <h1 className="font-headline text-2xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-black dark:text-white">
                 Unlock Your Math
                 <br className="hidden sm:block" />
                 Potential with{' '}
@@ -60,23 +61,23 @@ export default function Home() {
                   alt="kanakkmash"
                   width={350}
                   height={109}
-                  className="inline-block h-auto w-[140px] align-middle sm:w-[220px] md:w-[280px] lg:w-[320px] ml-1 sm:ml-2"
+                  className="inline-block h-auto w-[120px] align-middle sm:w-[220px] md:w-[280px] lg:w-[320px] ml-1 sm:ml-2"
                   priority
                   unoptimized
                 />
               </h1>
-              <p className="mx-auto mt-4 sm:mt-6 max-w-3xl text-sm sm:text-lg lg:text-xl text-foreground/80 leading-relaxed px-2">
+              <p className="mx-auto mt-2 sm:mt-6 max-w-3xl text-xs sm:text-lg lg:text-xl text-foreground/80 leading-relaxed px-2">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
               </p>
             </div>
           </Reveal>
           
-          <Reveal delay={0.2}>
-            <div className="mt-6 sm:mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
-              <Button size="lg" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
+          <Reveal delay={0.2} className="w-full">
+            <div className="mt-4 sm:mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
+              <Button size="lg" asChild className="h-9 sm:h-12 px-6 sm:px-8 text-xs sm:text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base rounded-full bg-background/50 backdrop-blur-sm">
+              <Button size="lg" variant="outline" asChild className="h-9 sm:h-12 px-6 sm:px-8 text-xs sm:text-base rounded-full bg-background/50 backdrop-blur-sm">
                 <Link href="/sign-in">Login</Link>
               </Button>
               <InstallButton />
