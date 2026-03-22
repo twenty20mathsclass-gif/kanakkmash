@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +30,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex min-h-[calc(100vh-160px)] w-full items-center justify-center overflow-hidden py-12 md:py-24">
+      <section className="relative flex flex-1 w-full flex-col items-center justify-center overflow-hidden py-12 md:py-24">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"

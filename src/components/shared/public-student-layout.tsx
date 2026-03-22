@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -71,7 +70,7 @@ export default function PublicStudentLayout({
             
             <main className={cn(
                 "flex-grow flex flex-col",
-                isHomepage ? "justify-center items-center" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
+                isHomepage ? "pt-24 justify-center items-center" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
             )}>
                 {children}
             </main>
