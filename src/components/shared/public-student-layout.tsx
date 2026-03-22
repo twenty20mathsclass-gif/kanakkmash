@@ -46,11 +46,11 @@ export default function PublicStudentLayout({
 
     return (
         <div className={cn(
-            "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full",
-            isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
+            "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full min-h-screen",
+            isHomepage ? "overflow-x-hidden" : ""
         )}>
             
-            {/* Sticky Announcement Banner - Positioned at the absolute top of the scroll container */}
+            {/* Sticky Announcement Banner - Positioned top-0 on desktop, top-16 (under fixed header) on mobile */}
             <div className="sticky top-16 md:top-0 z-40 w-full shrink-0">
                 <AnnouncementBanner />
             </div>
@@ -81,21 +81,21 @@ export default function PublicStudentLayout({
             {/* Layout content container */}
             <div className={cn(
                 "flex-grow flex flex-col w-full",
-                isHomepage ? "overflow-hidden" : ""
+                isHomepage ? "min-h-[calc(100svh-4rem)]" : ""
             )}>
-                {/* Fixed Spacer for Navbars - ensures main content starts below fixed/sticky navigation */}
+                {/* Fixed Spacer for Navbars - ensures main content starts below fixed navigation */}
                 <div className="h-16 md:hidden shrink-0" />
                 {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
 
                 <main className={cn(
                     "flex-grow flex flex-col w-full",
-                    isHomepage ? "justify-center items-center overflow-hidden" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
+                    isHomepage ? "justify-center items-center py-8" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
                 )}>
                     {children}
                 </main>
             </div>
 
-            {/* Footer only visible if page fits or on scrolling pages */}
+            {/* Footer visible on all public pages including homepage */}
             {isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
                     <div className="container px-4 md:px-6">

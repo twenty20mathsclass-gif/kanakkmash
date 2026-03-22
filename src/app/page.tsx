@@ -31,7 +31,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-4">
+      <section className="relative flex h-full w-full flex-col items-center justify-center px-4 py-12">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -60,14 +60,14 @@ export default function Home() {
                   unoptimized
                 />
               </h1>
-              <p className="mx-auto mt-4 max-w-2xl text-lg text-foreground/80 sm:text-xl line-clamp-3 md:line-clamp-none">
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground/80 sm:text-xl">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
               </p>
             </div>
           </Reveal>
           
           <Reveal delay={0.2}>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Button size="lg" asChild className="h-12 px-8 text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
