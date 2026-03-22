@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import InstallButton from '@/components/shared/install-button';
+import { Reveal } from '@/components/shared/reveal';
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
@@ -30,7 +31,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative w-full">
+      <section className="relative flex min-h-[calc(100vh-160px)] w-full items-center justify-center overflow-hidden py-12 md:py-24">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -43,34 +44,39 @@ export default function Home() {
           </div>
         </div>
         <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
-          <div>
+          <Reveal>
             <div className="mx-auto max-w-4xl">
-              <h1 className="font-headline text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
-                Unlock Your <span>Math Potential</span> with{' '}
-                <Image
-                  src="/logo mlm@4x.png"
-                  alt="kanakkmash"
-                  width={250}
-                  height={78}
-                  className="inline-block"
-                  priority
-                  unoptimized
-                />
+              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
+                Unlock Your <span className="text-primary">Math Potential</span> with{' '}
+                <div className="mt-4 block lg:mt-0 lg:inline-block">
+                    <Image
+                    src="/logo mlm@4x.png"
+                    alt="kanakkmash"
+                    width={350}
+                    height={109}
+                    className="mx-auto h-auto w-[200px] sm:w-[250px] md:w-[300px] lg:w-[350px]"
+                    priority
+                    unoptimized
+                    />
+                </div>
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-foreground/80">
+              <p className="mx-auto mt-8 max-w-2xl text-lg text-foreground/80 sm:text-xl">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
               </p>
             </div>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" asChild className="bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg">
+          </Reveal>
+          
+          <Reveal delay={0.2}>
+            <div className="mt-12 flex flex-wrap justify-center gap-4">
+              <Button size="lg" asChild className="h-12 px-8 text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild className="h-12 px-8 text-base rounded-full">
                 <Link href="/sign-in">Login</Link>
               </Button>
               <InstallButton />
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
   );
