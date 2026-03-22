@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, writeBatch, doc, deleteDoc } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,8 @@ import {
     ThumbsUp,
     CheckCircle2,
     XCircle,
-    MessageCircleQuestion
+    MessageCircleQuestion,
+    ChevronDown
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatInterfaceProps {
   currentUser: User;
@@ -68,6 +70,7 @@ export function ChatInterface({
     onDeleteGroup 
 }: ChatInterfaceProps) {
   const { firestore } = useFirebase();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -157,15 +160,33 @@ export function ChatInterface({
         });
   };
 
+  const handleDeleteMessage = async (msgId: string) => {
+    if (!firestore || !msgId) return;
+    const msgRef = doc(firestore, collectionPath, msgId);
+    try {
+        await deleteDoc(msgRef);
+        toast({ title: 'Message removed' });
+    } catch (err: any) {
+        if (err.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: msgRef.path,
+                operation: 'delete',
+            }, { cause: err });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+    }
+  }
+
   const handleDialerClick = () => {
       if (!isGroup && (chatPartner as User).mobile) {
           window.location.href = `tel:${(chatPartner as User).mobile}`;
       }
   };
 
+  const canDeleteForEveryone = currentUser.role === 'admin' || currentUser.role === 'teacher';
+
   return (
     <div className="flex flex-col h-full w-full bg-[#efeae2] dark:bg-[#0b141a] relative overflow-hidden">
-      {/* Background Pattern - WhatsApp Doodle */}
       <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.06] pointer-events-none z-0" 
            style={{ 
              backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
@@ -174,7 +195,6 @@ export function ChatInterface({
            }} 
       />
 
-      {/* Header */}
       <header className="flex items-center justify-between px-4 md:px-6 py-3 bg-card/95 backdrop-blur-md border-b-0 shadow-lg z-10 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
             {onBack && (
@@ -227,7 +247,6 @@ export function ChatInterface({
         </div>
       </header>
 
-      {/* Messages */}
       <ScrollArea className="flex-1 px-4 md:px-8 relative z-10" ref={scrollAreaRef}>
         {loading ? (
             <div className="flex justify-center items-center h-full">
@@ -242,6 +261,7 @@ export function ChatInterface({
                 </div>
                 {messages.map((msg, index) => {
                     const isSentByCurrentUser = msg.senderId === currentUser.id;
+                    const canDeleteThisMessage = isSentByCurrentUser || canDeleteForEveryone;
                     const showDate = index === 0 || (msg.timestamp && messages[index-1].timestamp && format(msg.timestamp.toDate(), 'P') !== format(messages[index-1].timestamp.toDate(), 'P'));
 
                     return (
@@ -263,7 +283,28 @@ export function ChatInterface({
                                     {isGroup && !isSentByCurrentUser && (
                                         <p className="text-[10px] font-black text-primary mb-1 opacity-90 tracking-tighter">~ {msg.senderId.substring(0, 5)}</p>
                                     )}
-                                    <p className="text-[14px] leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
+                                    <div className="flex items-start gap-2 justify-between min-w-[60px]">
+                                        <p className="text-[14px] leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
+                                        
+                                        {canDeleteThisMessage && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 -mr-1">
+                                                        <ChevronDown className="h-3 w-3" />
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align={isSentByCurrentUser ? 'end' : 'start'} className="rounded-xl border-none shadow-xl p-1 w-36">
+                                                    <DropdownMenuItem 
+                                                        onClick={() => handleDeleteMessage(msg.id!)}
+                                                        className="rounded-lg py-2 font-bold text-[10px] uppercase tracking-widest text-destructive"
+                                                    >
+                                                        <Trash2 className="mr-2 h-3.5 w-3.5" /> 
+                                                        {isSentByCurrentUser ? 'Unsend' : 'Delete'}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
+                                    </div>
                                     <div className={cn(
                                         'flex items-center justify-end gap-1.5 mt-1 opacity-60',
                                         isSentByCurrentUser ? 'text-foreground/70 dark:text-white/70' : 'text-muted-foreground'
@@ -295,8 +336,7 @@ export function ChatInterface({
         )}
       </ScrollArea>
 
-      {/* Input Footer */}
-      <footer className="p-4 bg-transparent shrink-0 z-10 pb-24 md:pb-6 safe-area-bottom">
+      <footer className="p-4 bg-transparent shrink-0 z-10 pb-20 md:pb-6 safe-area-bottom">
         <div className="flex w-full items-end gap-3 max-w-5xl mx-auto">
             <div className="flex-1 flex items-center bg-card rounded-[1.5rem] px-3 py-1.5 shadow-xl border-none focus-within:ring-2 focus-within:ring-primary/20 transition-all min-h-[52px]">
                 <Popover>

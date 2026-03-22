@@ -6,7 +6,7 @@ import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Search, Filter, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MessageSquare, Check, MessagesSquare, Calendar, User as UserIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Search, Filter, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MessageSquare, Check, MessagesSquare, Calendar, User as UserIcon, CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
@@ -517,6 +517,24 @@ export default function MyChatRoomPage() {
         }
     };
 
+    const handleToggleAdmin = async (targetId: string) => {
+        if (!firestore || !selectedContact?.isGroup || !user) return;
+        const group = selectedContact as ChatGroup;
+        const isAdmin = group.admins?.includes(targetId);
+        const newAdmins = isAdmin 
+            ? group.admins.filter(id => id !== targetId) 
+            : [...(group.admins || []), targetId];
+        
+        try {
+            const groupRef = doc(firestore, 'groups', group.id);
+            await updateDoc(groupRef, { admins: newAdmins });
+            setSelectedContact({ ...group, admins: newAdmins });
+            toast({ title: isAdmin ? 'Admin role revoked' : 'Admin added' });
+        } catch (err) {
+            toast({ title: 'Update failed', variant: 'destructive' });
+        }
+    };
+
     const handleDeleteGroup = async () => {
         if (!firestore || !selectedContact?.isGroup) return;
         setIsDeleting(true);
@@ -565,7 +583,7 @@ export default function MyChatRoomPage() {
     const canManageGroup = useMemo(() => {
         if (!selectedContact?.isGroup || !user) return false;
         const group = selectedContact as ChatGroup;
-        return user.role === 'admin' || group.createdBy === user.id || group.admins?.includes(user.id);
+        return user.role === 'admin' || group.createdBy === user.id || group.admins?.includes(user.id) || user.role === 'teacher';
     }, [selectedContact, user]);
 
     return (
@@ -632,7 +650,7 @@ export default function MyChatRoomPage() {
                                 <div className="flex flex-col py-2">
                                     {filteredContacts.map(contact => {
                                         const cId = contact.isGroup ? contact.id : (contact as User).id;
-                                        const isAuthorized = user?.role === 'admin' || (contact.isGroup && ((contact as ChatGroup).createdBy === user?.id || (contact as ChatGroup).admins?.includes(user?.id!)));
+                                        const isAuthorized = user?.role === 'admin' || user?.role === 'teacher' || (contact.isGroup && ((contact as ChatGroup).createdBy === user?.id || (contact as ChatGroup).admins?.includes(user?.id!)));
                                         
                                         return (
                                             <ContextMenu key={cId}>
@@ -785,7 +803,7 @@ export default function MyChatRoomPage() {
                                                         {(selectedContact as ChatGroup).members.map(memberId => {
                                                             const member = contacts.find(c => !c.isGroup && (c as User).id === memberId) as User;
                                                             if (!member && memberId === user.id) return (
-                                                                <div key={user.id} className="flex items-center gap-4 bg-background p-3 rounded-2xl shadow-sm border border-muted">
+                                                                <div key={user.id} className="flex items-center gap-4 bg-background p-3 rounded-2xl shadow-sm border border-muted group">
                                                                     <Avatar className="h-10 w-10 border-2 border-primary"><AvatarImage src={user.avatarUrl} /><AvatarFallback>ME</AvatarFallback></Avatar>
                                                                     <div className="flex-1">
                                                                         <p className="text-sm font-black">You</p>
@@ -794,13 +812,31 @@ export default function MyChatRoomPage() {
                                                                 </div>
                                                             );
                                                             if (!member) return null;
+                                                            
+                                                            const isMemberAdmin = (selectedContact as ChatGroup).admins?.includes(memberId);
+                                                            const canTarget = canManageGroup && memberId !== user.id && member.role !== 'admin';
+
                                                             return (
-                                                                <div key={memberId} className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-2xl transition-all">
+                                                                <div key={memberId} className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-2xl transition-all group">
                                                                     <Avatar className="h-10 w-10 border-2 border-background shadow-sm"><AvatarImage src={member.avatarUrl} /><AvatarFallback>{member.name[0]}</AvatarFallback></Avatar>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-sm font-bold truncate">{member.name}</p>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <p className="text-sm font-bold truncate">{member.name}</p>
+                                                                            {isMemberAdmin && <ShieldCheck className="h-3 w-3 text-primary" />}
+                                                                        </div>
                                                                         <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">{member.role}</p>
                                                                     </div>
+                                                                    {canTarget && (
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="icon" 
+                                                                            className={cn("h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity", isMemberAdmin ? "text-destructive" : "text-primary")}
+                                                                            onClick={() => handleToggleAdmin(memberId)}
+                                                                            title={isMemberAdmin ? "Revoke Admin" : "Make Admin"}
+                                                                        >
+                                                                            {isMemberAdmin ? <ShieldAlert className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                                                                        </Button>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}

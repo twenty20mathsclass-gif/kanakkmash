@@ -85,7 +85,7 @@ service cloud.firestore {
         allow read: if isParticipant();
         allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
         allow update: if isParticipant();
-        allow delete: if false;
+        allow delete: if isParticipant() && (resource.data.senderId == request.auth.uid || isAdmin() || isRole('teacher'));
       }
     }
 
@@ -94,19 +94,31 @@ service cloud.firestore {
         return request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
       }
       function isGroupMember(gId) {
+        let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
         return request.auth != null && (
-          request.auth.uid in get(/databases/$(database)/documents/groups/$(gId)).data.members || 
+          request.auth.uid in groupData.members || 
           isAdmin()
         );
       }
+      function isGroupAdmin(gId) {
+        let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
+        return request.auth != null && (
+          request.auth.uid in groupData.admins || 
+          isAdmin() ||
+          isRole('teacher')
+        );
+      }
+
       allow read: if isMember();
       allow create: if isRole('teacher') || isAdmin();
       allow update: if isMember() || isAdmin();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isGroupAdmin(groupId);
+
       match /messages/{messageId} {
         allow read: if isGroupMember(groupId);
         allow create: if isGroupMember(groupId) && request.resource.data.senderId == request.auth.uid;
         allow update: if isGroupMember(groupId);
+        allow delete: if isGroupAdmin(groupId) || (resource.data.senderId == request.auth.uid);
       }
     }
 
