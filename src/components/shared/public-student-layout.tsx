@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -39,24 +38,31 @@ export default function PublicStudentLayout({
         setYear(new Date().getFullYear());
     }, []);
 
+    const isHomepage = pathname === '/';
     const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results', '/fee-structure'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
-    const isHomepage = pathname === '/';
 
     return (
         <div className={cn(
-            "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full min-h-screen",
-            isHomepage ? "overflow-x-hidden" : ""
+            "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full",
+            isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
         )}>
             
-            {/* Sticky Announcement Banner - Positioned top-0 on desktop, top-16 (under fixed header) on mobile */}
-            <div className="sticky top-16 md:top-0 z-40 w-full shrink-0">
+            {/* Desktop Sticky Announcement Banner */}
+            <div className="sticky top-0 z-40 w-full shrink-0 hidden md:block">
                 <AnnouncementBanner />
             </div>
 
             <Suspense fallback={null}>
+                {/* Mobile fixed header */}
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
+                
+                {/* Mobile Sticky Announcement Banner - Positioned under fixed header */}
+                <div className="sticky top-16 z-40 w-full shrink-0 md:hidden">
+                    <AnnouncementBanner />
+                </div>
+
                 {user ? (
                 <>
                     <div className="hidden md:block">
@@ -80,23 +86,41 @@ export default function PublicStudentLayout({
 
             {/* Layout content container */}
             <div className={cn(
-                "flex-grow flex flex-col w-full",
-                isHomepage ? "min-h-[calc(100svh-4rem)]" : ""
+                "flex-grow flex flex-col w-full min-h-0",
+                isHomepage ? "" : ""
             )}>
-                {/* Fixed Spacer for Navbars - ensures main content starts below fixed navigation */}
+                {/* Fixed Spacers for Navbars */}
                 <div className="h-16 md:hidden shrink-0" />
                 {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
 
                 <main className={cn(
-                    "flex-grow flex flex-col w-full",
-                    isHomepage ? "justify-center items-center py-8" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
+                    "flex-grow flex flex-col w-full min-h-0",
+                    isHomepage ? "overflow-y-auto" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
                 )}>
-                    {children}
+                    <div className={cn(
+                        "w-full flex-grow flex flex-col",
+                        isHomepage ? "justify-center items-center py-4" : ""
+                    )}>
+                        {children}
+                    </div>
+                    
+                    {/* Footer - Only visible at bottom of scroll on home, or standard on others */}
+                    {isHomepage && isPubliclyAccessible && (
+                        <footer className="w-full shrink-0 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
+                            <div className="container px-4 md:px-6">
+                                {year && (
+                                <p className="text-center text-xs text-foreground/60">
+                                    © {year} kanakkmash. All rights reserved.
+                                </p>
+                                )}
+                            </div>
+                        </footer>
+                    )}
                 </main>
             </div>
 
-            {/* Footer visible on all public pages including homepage */}
-            {isPubliclyAccessible && (
+            {/* Standard Footer for other pages */}
+            {!isHomepage && isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
                     <div className="container px-4 md:px-6">
                         {year && (

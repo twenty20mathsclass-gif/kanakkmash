@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +30,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex h-full w-full flex-col items-center justify-center px-4 py-12">
+      <section className="relative flex min-h-0 w-full flex-col items-center justify-center px-4 py-4 sm:py-8 lg:py-12">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -46,32 +45,32 @@ export default function Home() {
         <div className="container relative z-10 mx-auto text-center md:px-6">
           <Reveal>
             <div className="mx-auto max-w-5xl">
-              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl leading-tight text-black dark:text-white">
+              <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-black dark:text-white">
                 Unlock Your Math
-                <br />
+                <br className="hidden sm:block" />
                 Potential with{' '}
                 <Image
                   src="/logo mlm@4x.png"
                   alt="kanakkmash"
                   width={350}
                   height={109}
-                  className="inline-block h-auto w-[180px] align-middle sm:w-[220px] md:w-[280px] lg:w-[320px] ml-2"
+                  className="inline-block h-auto w-[140px] align-middle sm:w-[220px] md:w-[280px] lg:w-[320px] ml-1 sm:ml-2"
                   priority
                   unoptimized
                 />
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground/80 sm:text-xl">
+              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg lg:text-xl text-foreground/80">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
               </p>
             </div>
           </Reveal>
           
           <Reveal delay={0.2}>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button size="lg" asChild className="h-12 px-8 text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
+            <div className="mt-6 sm:mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
+              <Button size="lg" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-12 px-8 text-base rounded-full">
+              <Button size="lg" variant="outline" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base rounded-full">
                 <Link href="/sign-in">Login</Link>
               </Button>
               <InstallButton />
