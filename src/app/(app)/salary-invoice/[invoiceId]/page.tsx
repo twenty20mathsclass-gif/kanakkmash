@@ -141,23 +141,51 @@ function SalaryInvoicePageContents() {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="border-b">
-                                <td className="p-3">
-                                    <p className="font-bold">Teaching Services Rendered</p>
-                                    <p className="text-sm text-muted-foreground">For period: {invoice.startDate ? format(invoice.startDate.toDate(), 'MMMM yyyy') : 'N/A'}</p>
-                                </td>
-                                <td className="p-3 text-center font-mono">₹{invoice.hourlyRate.toFixed(2)}/hr</td>
-                                <td className="p-3 text-center font-mono">{invoice.totalHours.toFixed(2)}</td>
-                                <td className="p-3 text-right font-mono">₹{invoice.amount.toFixed(2)}</td>
-                            </tr>
+                            {/* Check for modern structure with breakdown */}
+                            { (invoice.totalHoursGroup || 0) > 0 && (
+                                <tr className="border-b">
+                                    <td className="p-3">
+                                        <p className="font-bold">Group Sessions</p>
+                                        <p className="text-sm text-muted-foreground">Teaching Services (Group Mode)</p>
+                                    </td>
+                                    <td className="p-3 text-center font-mono">₹{(invoice.hourlyRateGroup || invoice.hourlyRate || 0).toFixed(2)}/hr</td>
+                                    <td className="p-3 text-center font-mono">{(invoice.totalHoursGroup || 0).toFixed(2)}</td>
+                                    <td className="p-3 text-right font-mono">₹{((invoice.totalHoursGroup || 0) * (invoice.hourlyRateGroup || invoice.hourlyRate || 0)).toFixed(2)}</td>
+                                </tr>
+                            )}
+
+                            { (invoice.totalHoursOneToOne || 0) > 0 && (
+                                <tr className="border-b">
+                                    <td className="p-3">
+                                        <p className="font-bold">One-to-One Sessions</p>
+                                        <p className="text-sm text-muted-foreground">Teaching Services (Personal Mode)</p>
+                                    </td>
+                                    <td className="p-3 text-center font-mono">₹{(invoice.hourlyRateOneToOne || invoice.hourlyRate || 0).toFixed(2)}/hr</td>
+                                    <td className="p-3 text-center font-mono">{(invoice.totalHoursOneToOne || 0).toFixed(2)}</td>
+                                    <td className="p-3 text-right font-mono">₹{((invoice.totalHoursOneToOne || 0) * (invoice.hourlyRateOneToOne || invoice.hourlyRate || 0)).toFixed(2)}</td>
+                                </tr>
+                            )}
+
+                            {/* Fallback for legacy invoices without mode breakdown */}
+                            { !(invoice.totalHoursGroup || invoice.totalHoursOneToOne) && (
+                                <tr className="border-b">
+                                    <td className="p-3">
+                                        <p className="font-bold">Teaching Services Rendered</p>
+                                        <p className="text-sm text-muted-foreground">Standard Teaching Session</p>
+                                    </td>
+                                    <td className="p-3 text-center font-mono">₹{(invoice.hourlyRate || 0).toFixed(2)}/hr</td>
+                                    <td className="p-3 text-center font-mono">{(invoice.totalHours || 0).toFixed(2)}</td>
+                                    <td className="p-3 text-right font-mono">₹{(invoice.amount || 0).toFixed(2)}</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </section>
 
                 <section className="flex justify-end my-8">
                     <div className="w-full max-w-xs space-y-2">
-                        <div className="flex justify-between font-bold text-2xl bg-primary text-primary-foreground p-4 rounded-lg">
-                            <span>Total Paid</span>
+                        <div className="flex justify-between items-center font-bold text-2xl bg-primary text-primary-foreground p-4 rounded-lg">
+                            <span className="text-base uppercase tracking-wider">Total Paid</span>
                             <span className="font-mono">₹{invoice.amount.toFixed(2)}</span>
                         </div>
                     </div>
