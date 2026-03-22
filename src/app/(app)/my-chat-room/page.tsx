@@ -1,11 +1,12 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MoreVertical, User as UserIcon, Calendar, Check, MessagesSquare } from 'lucide-react';
+import { Loader2, Search, Filter, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MessageSquare, Check, MessagesSquare, Calendar, User as UserIcon, CheckCircle2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
@@ -16,7 +17,6 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -39,6 +39,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 export const dynamic = 'force-dynamic';
 
@@ -138,18 +145,32 @@ function GroupFormDialog({
     availableMembers, 
     onConfirm,
     initialData,
-    trigger
+    trigger,
+    isOpen: controlledOpen,
+    onOpenChange: setControlledOpen
 }: { 
     availableMembers: User[]; 
     onConfirm: (name: string, members: string[]) => Promise<void>;
     initialData?: { name: string, members: string[] };
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }) {
     const [name, setName] = useState(initialData?.name || '');
     const [selectedMembers, setSelectedMembers] = useState<string[]>(initialData?.members || []);
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+
+    const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const setIsOpen = setControlledOpen !== undefined ? setControlledOpen : setInternalOpen;
+
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setName(initialData.name);
+            setSelectedMembers(initialData.members);
+        }
+    }, [isOpen, initialData]);
 
     const handleConfirm = async () => {
         if (!name.trim() || selectedMembers.length === 0) return;
@@ -176,9 +197,11 @@ function GroupFormDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                {trigger}
-            </DialogTrigger>
+            {trigger && (
+                <DialogTrigger asChild>
+                    {trigger}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[450px] h-[85vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
                 <DialogHeader className="p-6 pb-2 bg-gradient-to-br from-primary/10 to-accent/10">
                     <DialogTitle className="text-2xl font-black font-headline tracking-tighter">
@@ -282,6 +305,7 @@ export default function MyChatRoomPage() {
     const [showInfo, setShowInfo] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [isEditingGroup, setIsEditingGroup] = useState(false);
     
     // Unconditionally call the hook at the top level
     const isPartnerOnline = useOnlineStatus(selectedContact && !selectedContact.isGroup ? (selectedContact as User).id : null);
@@ -330,6 +354,31 @@ export default function MyChatRoomPage() {
             }
         });
         unsubsRef.current.push(unsub);
+    };
+
+    const handleMarkAsRead = async (id: string) => {
+        if (!firestore || !user) return;
+        const contact = contacts.find(c => (c.isGroup ? c.id : (c as User).id) === id);
+        if (!contact || !contact.hasUnread) return;
+
+        const chatId = contact.isGroup ? contact.id : [user.id, (contact as User).id].sort().join('_');
+        const collName = contact.isGroup ? 'groups' : 'chats';
+        
+        try {
+            const msgsQuery = query(
+                collection(firestore, collName, chatId, 'messages'),
+                where('senderId', '!=', user.id),
+                where('isRead', '==', false)
+            );
+            const snap = await getDocs(msgsQuery);
+            if (!snap.empty) {
+                const batch = writeBatch(firestore);
+                snap.docs.forEach(d => batch.update(d.ref, { isRead: true }));
+                await batch.commit();
+            }
+        } catch (err) {
+            console.error("Failed to mark as read:", err);
+        }
     };
 
     useEffect(() => {
@@ -583,15 +632,62 @@ export default function MyChatRoomPage() {
                         ) : filteredContacts.length > 0 ? (
                             <ScrollArea className="h-full">
                                 <div className="flex flex-col py-2">
-                                    {filteredContacts.map(contact => (
-                                        <ContactItem 
-                                            key={contact.isGroup ? contact.id : (contact as User).id}
-                                            contact={contact}
-                                            isSelected={selectedContact?.id === contact.id}
-                                            onSelect={() => { setSelectedContact(contact); setShowInfo(false); }}
-                                            currentUserId={user!.id}
-                                        />
-                                    ))}
+                                    {filteredContacts.map(contact => {
+                                        const cId = contact.isGroup ? contact.id : (contact as User).id;
+                                        const isAuthorized = user?.role === 'admin' || (contact.isGroup && ((contact as ChatGroup).createdBy === user?.id || (contact as ChatGroup).admins?.includes(user?.id!)));
+                                        
+                                        return (
+                                            <ContextMenu key={cId}>
+                                                <ContextMenuTrigger asChild>
+                                                    <ContactItem 
+                                                        contact={contact}
+                                                        isSelected={selectedContact?.id === cId}
+                                                        onSelect={() => { setSelectedContact(contact); setShowInfo(false); }}
+                                                        currentUserId={user!.id}
+                                                    />
+                                                </ContextMenuTrigger>
+                                                <ContextMenuContent className="w-56 rounded-2xl border-none shadow-2xl p-2 bg-card/95 backdrop-blur-md">
+                                                    <ContextMenuItem 
+                                                        onClick={() => { setSelectedContact(contact); setShowInfo(false); }}
+                                                        className="rounded-xl py-2.5 font-bold text-xs uppercase tracking-widest flex items-center gap-3 cursor-pointer"
+                                                    >
+                                                        <MessageSquare className="h-4 w-4 text-primary" /> Open Chat
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem 
+                                                        onClick={() => { setSelectedContact(contact); setShowInfo(true); }}
+                                                        className="rounded-xl py-2.5 font-bold text-xs uppercase tracking-widest flex items-center gap-3 cursor-pointer"
+                                                    >
+                                                        <Info className="h-4 w-4 text-primary" /> View Info
+                                                    </ContextMenuItem>
+                                                    {contact.hasUnread && (
+                                                        <ContextMenuItem 
+                                                            onClick={() => handleMarkAsRead(cId)}
+                                                            className="rounded-xl py-2.5 font-bold text-xs uppercase tracking-widest flex items-center gap-3 cursor-pointer"
+                                                        >
+                                                            <CheckCircle2 className="h-4 w-4 text-green-500" /> Mark as Read
+                                                        </ContextMenuItem>
+                                                    )}
+                                                    {contact.isGroup && isAuthorized && (
+                                                        <>
+                                                            <ContextMenuSeparator className="bg-muted/50 my-1" />
+                                                            <ContextMenuItem 
+                                                                onClick={() => { setSelectedContact(contact); setIsEditingGroup(true); }}
+                                                                className="rounded-xl py-2.5 font-bold text-xs uppercase tracking-widest flex items-center gap-3 cursor-pointer"
+                                                            >
+                                                                <Edit className="h-4 w-4 text-primary" /> Edit Group
+                                                            </ContextMenuItem>
+                                                            <ContextMenuItem 
+                                                                onClick={() => { setSelectedContact(contact); setConfirmDeleteOpen(true); }}
+                                                                className="rounded-xl py-2.5 font-bold text-xs uppercase tracking-widest flex items-center gap-3 cursor-pointer text-destructive"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" /> Delete Group
+                                                            </ContextMenuItem>
+                                                        </>
+                                                    )}
+                                                </ContextMenuContent>
+                                            </ContextMenu>
+                                        );
+                                    })}
                                 </div>
                             </ScrollArea>
                         ) : (
@@ -795,6 +891,19 @@ export default function MyChatRoomPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {isEditingGroup && selectedContact?.isGroup && (
+                <GroupFormDialog 
+                    isOpen={isEditingGroup}
+                    onOpenChange={setIsEditingGroup}
+                    availableMembers={availableGroupMembers} 
+                    onConfirm={handleUpdateGroup}
+                    initialData={{ 
+                        name: selectedContact.name, 
+                        members: (selectedContact as ChatGroup).members 
+                    }}
+                />
+            )}
         </div>
     );
 }
