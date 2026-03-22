@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -45,19 +46,17 @@ export default function Home() {
         <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
           <Reveal>
             <div className="mx-auto max-w-4xl">
-              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
+              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl leading-tight">
                 Unlock Your <span className="text-black dark:text-white">Math Potential</span> with{' '}
-                <div className="mt-4 block lg:mt-0 lg:inline-block">
-                    <Image
-                    src="/logo mlm@4x.png"
-                    alt="kanakkmash"
-                    width={350}
-                    height={109}
-                    className="mx-auto h-auto w-[200px] sm:w-[250px] md:w-[300px] lg:w-[350px]"
-                    priority
-                    unoptimized
-                    />
-                </div>
+                <Image
+                  src="/logo mlm@4x.png"
+                  alt="kanakkmash"
+                  width={350}
+                  height={109}
+                  className="inline-block h-auto w-[180px] align-middle sm:w-[220px] md:w-[280px] lg:w-[350px] ml-2"
+                  priority
+                  unoptimized
+                />
               </h1>
               <p className="mx-auto mt-8 max-w-2xl text-lg text-foreground/80 sm:text-xl">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
