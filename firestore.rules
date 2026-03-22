@@ -111,7 +111,7 @@ service cloud.firestore {
 
       allow read: if isMember();
       allow create: if isRole('teacher') || isAdmin();
-      allow update: if isMember() || isAdmin();
+      allow update: if isMember() || isAdmin() || isGroupAdmin(groupId);
       allow delete: if isAdmin() || isGroupAdmin(groupId);
 
       match /messages/{messageId} {
