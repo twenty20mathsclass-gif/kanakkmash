@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -124,10 +123,10 @@ const ContactItem = ({
 };
 
 function CreateGroupDialog({ 
-    students, 
+    availableMembers, 
     onCreate 
 }: { 
-    students: User[]; 
+    availableMembers: User[]; 
     onCreate: (name: string, members: string[]) => Promise<void>; 
 }) {
     const [name, setName] = useState('');
@@ -159,7 +158,7 @@ function CreateGroupDialog({
             <DialogContent className="sm:max-w-[425px] h-[80vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Create Group</DialogTitle>
-                    <DialogDescription>Create a group with your students. Admins will be added automatically.</DialogDescription>
+                    <DialogDescription>Create a group with students or teachers. Admins will be added automatically.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4 flex-grow flex flex-col min-h-0">
                     <div className="space-y-2">
@@ -172,31 +171,34 @@ function CreateGroupDialog({
                         />
                     </div>
                     <div className="space-y-2 flex-grow flex flex-col min-h-0">
-                        <Label>Select Students ({selectedMembers.length})</Label>
+                        <Label>Select Members ({selectedMembers.length})</Label>
                         <ScrollArea className="flex-1 border rounded-md p-2">
                             <div className="space-y-3">
-                                {students.map(student => (
-                                    <div key={student.id} className="flex items-center space-x-3">
+                                {availableMembers.map(member => (
+                                    <div key={member.id} className="flex items-center space-x-3">
                                         <Checkbox 
-                                            id={`member-${student.id}`} 
-                                            checked={selectedMembers.includes(student.id)}
+                                            id={`member-${member.id}`} 
+                                            checked={selectedMembers.includes(member.id)}
                                             onCheckedChange={(checked) => {
                                                 setSelectedMembers(prev => 
                                                     checked 
-                                                        ? [...prev, student.id] 
-                                                        : prev.filter(id => id !== student.id)
+                                                        ? [...prev, member.id] 
+                                                        : prev.filter(id => id !== member.id)
                                                 );
                                             }}
                                         />
                                         <label 
-                                            htmlFor={`member-${student.id}`}
+                                            htmlFor={`member-${member.id}`}
                                             className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
                                         >
                                             <Avatar className="h-6 w-6">
-                                                <AvatarImage src={student.avatarUrl} />
-                                                <AvatarFallback>{student.name[0]}</AvatarFallback>
+                                                <AvatarImage src={member.avatarUrl} />
+                                                <AvatarFallback>{member.name[0]}</AvatarFallback>
                                             </Avatar>
-                                            {student.name}
+                                            <div className="flex flex-col">
+                                                <span>{member.name}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase">{member.role}</span>
+                                            </div>
                                         </label>
                                     </div>
                                 ))}
@@ -284,64 +286,41 @@ export default function MyChatRoomPage() {
                     fetchedUsers = [...allAdmins];
                 }
 
-                // Fetch groups where user is a member
+                // Setup real-time listener for groups where user is a member
                 const groupsQuery = query(collection(firestore, 'groups'), where('members', 'array-contains', user.id));
-                const groupsSnap = await getDocs(groupsQuery);
-                const fetchedGroups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
-
-                // Deduplicate users (especially admins who might be added twice)
-                const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
-
-                const combined: ContactWithMetadata[] = [
-                    ...uniqueUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
-                    ...fetchedGroups.map(g => ({ ...g, isGroup: true } as ContactWithMetadata))
-                ];
-
-                setContacts(combined);
-                setLoading(false);
-
-                // Setup real-time last message listeners for each contact
-                combined.forEach(contact => {
-                    const chatId = contact.isGroup ? contact.id : [user.id, (contact as User).id].sort().join('_');
-                    const collName = contact.isGroup ? 'groups' : 'chats';
+                const unsubGroups = onSnapshot(groupsQuery, (snapshot) => {
+                    const fetchedGroups = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
                     
-                    const lastMsgQuery = query(
-                        collection(firestore, collName, chatId, 'messages'),
-                        orderBy('timestamp', 'desc'),
-                        limit(1)
-                    );
+                    // Deduplicate users
+                    const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
 
-                    const unsub = onSnapshot(lastMsgQuery, (snap) => {
-                        if (!snap.empty) {
-                            const lastMsg = snap.docs[0].data() as ChatMessage;
-                            setContacts(prev => {
-                                const updated = prev.map(c => {
-                                    const cId = c.isGroup ? c.id : (c as User).id;
-                                    const targetId = contact.isGroup ? contact.id : (contact as User).id;
-                                    if (cId === targetId) {
-                                        return {
-                                            ...c,
-                                            lastMessage: lastMsg.text,
-                                            lastTimestamp: lastMsg.timestamp,
-                                            hasUnread: lastMsg.senderId !== user.id && !lastMsg.isRead
-                                        };
-                                    }
-                                    return c;
-                                });
-                                // Re-sort: newest message first, then alphabetical
-                                return [...updated].sort((a, b) => {
-                                    const timeA = a.lastTimestamp?.toMillis() || 0;
-                                    const timeB = b.lastTimestamp?.toMillis() || 0;
-                                    if (timeA !== timeB) return timeB - timeA;
-                                    return a.name.localeCompare(b.name);
-                                });
-                            });
-                        }
-                    }, (err) => {
-                        console.warn(`Listener failed for chat ${chatId}:`, err);
+                    const combined: ContactWithMetadata[] = [
+                        ...uniqueUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
+                        ...fetchedGroups.map(g => ({ ...g, isGroup: true } as ContactWithMetadata))
+                    ];
+
+                    setContacts(prev => {
+                        // Maintain the last message data when refreshing the list
+                        return combined.map(c => {
+                            const cId = c.isGroup ? c.id : (c as User).id;
+                            const existing = prev.find(p => (p.isGroup ? p.id : (p as User).id) === cId);
+                            return existing ? { ...c, ...existing, name: c.name, avatarUrl: c.avatarUrl } : c;
+                        });
                     });
-                    unsubsRef.current.push(unsub);
+
+                    // Setup real-time last message listeners for each NEW contact
+                    snapshot.docs.forEach(doc => {
+                        setupLastMessageListener(doc.id, true);
+                    });
                 });
+                unsubsRef.current.push(unsubGroups);
+
+                // Initial setup for user message listeners
+                uniqueUsers.forEach(u => {
+                    if (u.id !== user.id) setupLastMessageListener(u.id, false);
+                });
+
+                setLoading(false);
 
             } catch (err: any) {
                 console.error("Error fetching chat data:", err);
@@ -349,6 +328,47 @@ export default function MyChatRoomPage() {
             }
         };
 
+        const setupLastMessageListener = (id: string, isGroupChat: boolean) => {
+            const chatId = isGroupChat ? id : [user!.id, id].sort().join('_');
+            const collName = isGroupChat ? 'groups' : 'chats';
+            
+            const lastMsgQuery = query(
+                collection(firestore!, collName, chatId, 'messages'),
+                orderBy('timestamp', 'desc'),
+                limit(1)
+            );
+
+            const unsub = onSnapshot(lastMsgQuery, (snap) => {
+                if (!snap.empty) {
+                    const lastMsg = snap.docs[0].data() as ChatMessage;
+                    setContacts(prev => {
+                        const updated = prev.map(c => {
+                            const cId = c.isGroup ? c.id : (c as User).id;
+                            const targetId = id;
+                            if (cId === targetId) {
+                                return {
+                                    ...c,
+                                    lastMessage: lastMsg.text,
+                                    lastTimestamp: lastMsg.timestamp,
+                                    hasUnread: lastMsg.senderId !== user!.id && !lastMsg.isRead
+                                };
+                            }
+                            return c;
+                        });
+                        // Re-sort: newest message first, then alphabetical
+                        return [...updated].sort((a, b) => {
+                            const timeA = a.lastTimestamp?.toMillis() || 0;
+                            const timeB = b.lastTimestamp?.toMillis() || 0;
+                            if (timeA !== timeB) return timeB - timeA;
+                            return a.name.localeCompare(b.name);
+                        });
+                    });
+                }
+            });
+            unsubsRef.current.push(unsub);
+        };
+
+        const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
         fetchAll();
         return () => cleanupListeners();
     }, [firestore, user]);
@@ -384,7 +404,7 @@ export default function MyChatRoomPage() {
                 avatarUrl: `https://picsum.photos/seed/${name.length}/200`
             };
 
-            const docRef = await addDoc(collection(firestore, 'groups'), groupData);
+            await addDoc(collection(firestore, 'groups'), groupData);
             toast({ title: 'Group Created', description: `"${name}" is ready.` });
         } catch (err) {
             toast({ title: 'Error', description: 'Failed to create group.', variant: 'destructive' });
@@ -414,9 +434,12 @@ export default function MyChatRoomPage() {
         });
     }, [contacts, filter, searchQuery]);
 
-    const availableStudents = useMemo(() => {
+    const availableGroupMembers = useMemo(() => {
+        if (user?.role === 'admin') {
+            return (contacts.filter(c => !c.isGroup && (c as User).role !== 'admin') as User[]);
+        }
         return (contacts.filter(c => !c.isGroup && (c as User).role === 'student') as User[]);
-    }, [contacts]);
+    }, [contacts, user]);
 
     return (
         <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-10rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
@@ -428,9 +451,9 @@ export default function MyChatRoomPage() {
                     <div className="p-4 border-b space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold font-headline">Messages</h2>
-                            {user?.role === 'teacher' && (
+                            {(user?.role === 'teacher' || user?.role === 'admin') && (
                                 <CreateGroupDialog 
-                                    students={availableStudents} 
+                                    availableMembers={availableGroupMembers} 
                                     onCreate={handleCreateGroup} 
                                 />
                             )}
