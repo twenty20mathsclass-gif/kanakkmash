@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -282,8 +281,8 @@ export function CreateExamForm() {
             if (data.examType === 'mcq') {
                  examData.questions = data.questions;
             } else {
-                if (data.descriptiveInputMethod === 'upload') examData.questionPaperUrl = questionPaperUpload.url;
-                else examData.questionPaperContent = data.questionPaperContent;
+                if (data.descriptiveInputMethod === 'upload' && questionPaperUpload.url) examData.questionPaperUrl = questionPaperUpload.url;
+                else if (data.questionPaperContent) examData.questionPaperContent = data.questionPaperContent;
                 examData.totalMarks = data.totalMarks;
             }
 
@@ -313,12 +312,24 @@ export function CreateExamForm() {
                 }
             } else {
                 if (data.courseModel === 'MATHS ONLINE TUITION') {
-                    examData.classes = data.classes; scheduleData.classes = data.classes;
-                    examData.syllabus = data.syllabus; scheduleData.syllabus = data.syllabus;
+                    if (data.classes && data.classes.length > 0) {
+                        examData.classes = data.classes;
+                        scheduleData.classes = data.classes;
+                    }
+                    if (data.syllabus) {
+                        examData.syllabus = data.syllabus;
+                        scheduleData.syllabus = data.syllabus;
+                    }
                 } else if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
-                    examData.levels = data.levels; scheduleData.levels = data.levels;
+                    if (data.levels && data.levels.length > 0) {
+                        examData.levels = data.levels;
+                        scheduleData.levels = data.levels;
+                    }
                 } else if (data.courseModel === 'COMPETITIVE EXAM') {
-                    examData.competitiveExam = data.competitiveExam; scheduleData.competitiveExam = data.competitiveExam;
+                    if (data.competitiveExam) {
+                        examData.competitiveExam = data.competitiveExam;
+                        scheduleData.competitiveExam = data.competitiveExam;
+                    }
                 }
             }
             

@@ -50,7 +50,9 @@ function PaymentComponent() {
     }
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, [router, toast]);
   
@@ -121,12 +123,14 @@ function PaymentComponent() {
             courseModel: data.courseModel,
             countryCode: phoneCode,
             mobile: data.mobile,
-            class: data.class || undefined,
-            level: data.level || undefined,
-            syllabus: data.syllabus || undefined,
-            competitiveExam: data.competitiveExam || undefined,
             createdAt: serverTimestamp(),
           };
+
+          // Only add optional fields if they have values to avoid Firestore "undefined" errors
+          if (data.class) userProfile.class = data.class;
+          if (data.level) userProfile.level = data.level;
+          if (data.syllabus) userProfile.syllabus = data.syllabus;
+          if (data.competitiveExam) userProfile.competitiveExam = data.competitiveExam;
 
           const batch = writeBatch(firestore);
           const userDocRef = doc(firestore, 'users', authUser.uid);
@@ -256,7 +260,7 @@ function PaymentComponent() {
         </Button>
 
         {error && (
-            <div className="text-sm text-destructive text-center">{error}</div>
+            <div className="text-sm text-destructive text-center mt-4">{error}</div>
         )}
       </CardContent>
     </Card>
