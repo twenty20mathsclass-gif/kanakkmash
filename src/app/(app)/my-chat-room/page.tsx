@@ -531,7 +531,10 @@ export default function MyChatRoomPage() {
                 )}>
                     <div className="p-6 border-b-0 space-y-6 bg-gradient-to-br from-primary/5 to-transparent">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-3xl font-black font-headline tracking-tighter">Messages</h2>
+                            <h2 className="text-3xl font-black font-headline tracking-tighter">
+                                <span className="bg-gradient-to-r from-primary via-accent to-chart-3 bg-clip-text text-transparent animate-gradient-pan [background-size:200%_auto]">Kanakk</span>
+                                <span className="text-black dark:text-white">Chat</span>
+                            </h2>
                             {(user?.role === 'teacher' || user?.role === 'admin') && (
                                 <GroupFormDialog 
                                     availableMembers={availableGroupMembers} 
