@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +9,7 @@ import {
   PlayCircle,
   Users,
   Clock,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   Award,
   Target,
@@ -179,7 +178,7 @@ function WhyChooseUsSection() {
             text: 'Our schedules are designed to fit your busy life, not the other way around.',
           },
           {
-            icon: DollarSign,
+            icon: IndianRupee,
             title: 'Affordable Pricing',
             text: 'High-quality education that doesn’t break the bank.',
             isPrimary: true,

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, Suspense } from 'react';
@@ -13,7 +12,7 @@ import {
     BookPlus,
     FilePlus2,
     PenSquare,
-    DollarSign,
+    IndianRupee,
     Users, 
     LayoutDashboard,
     Home,
@@ -165,7 +164,7 @@ export default function MainLayoutClient({
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
     { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
-    { href: '/admin/fees', label: 'Fee Management', icon: DollarSign },
+    { href: '/admin/fees', label: 'Fee Management', icon: IndianRupee },
     { href: '/admin/accountant/salaries', label: 'Teacher Salaries', icon: Banknote },
     { href: '/admin/accountant/invoices', label: 'Student Invoices', icon: Receipt },
   ];
