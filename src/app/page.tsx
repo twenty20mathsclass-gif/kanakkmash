@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import InstallButton from '@/components/shared/install-button';
 import { Reveal } from '@/components/shared/reveal';
+import { AnnouncementBanner } from '@/components/home/announcement-banner';
 
 const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
     <div
@@ -32,6 +33,10 @@ export default function Home() {
 
   return (
       <section className="relative flex flex-col items-center justify-center w-full px-4 py-2 sm:py-8 lg:py-12 flex-grow">
+        <div className="absolute top-0 left-0 right-0 z-40">
+            <AnnouncementBanner />
+        </div>
+        
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"

@@ -6,12 +6,10 @@ import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
 import { usePathname } from 'next/navigation';
 
-import { HomePageDock } from '@/components/shared/home-page-dock';
 import { MobileLogo } from '@/components/shared/mobile-logo';
 import { AppleStyleDock } from '@/components/shared/apple-style-dock';
 import { PublicHeader } from '@/components/shared/public-header';
 import { cn } from '@/lib/utils';
-import { AnnouncementBanner } from '@/components/home/announcement-banner';
 
 type NavItem = {
     href: string;
@@ -49,17 +47,11 @@ export default function PublicStudentLayout({
             "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full",
             isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
         )}>
-            
-            {/* Desktop Sticky Announcement Banner - At the absolute top of the viewport scroll */}
-            <div className="sticky top-0 z-40 w-full shrink-0 hidden md:block">
-                <AnnouncementBanner />
-            </div>
-
             <Suspense fallback={null}>
                 {/* Mobile fixed header - Stays at top-0 */}
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
                 
-                {/* Public Navigation - Hidden on mobile, fixed below announcement bar on desktop */}
+                {/* Public Navigation - Hidden on mobile, fixed at the top area */}
                 {user ? (
                     <div className="hidden md:block">
                         <PublicHeader user={user} onSignOut={onSignOut} navItems={studentNav} />
@@ -77,10 +69,7 @@ export default function PublicStudentLayout({
             </Suspense>
 
             {/* Layout content container */}
-            <div className={cn(
-                "flex-grow flex flex-col w-full min-h-0",
-                isHomepage ? "" : ""
-            )}>
+            <div className="flex-grow flex flex-col w-full min-h-0">
                 {/* Fixed Spacers for Desktop Navbars */}
                 {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
 
@@ -90,16 +79,6 @@ export default function PublicStudentLayout({
                 )}>
                     {/* Mobile Spacer for fixed header */}
                     <div className="h-16 md:hidden shrink-0" />
-
-                    {/* Mobile Sticky Announcement Banner - Positioned inside main scroller so it sticks to top-16 (under fixed header) */}
-                    <div className="sticky top-0 md:hidden z-40 w-full shrink-0">
-                        <div className="relative">
-                            {/* This sub-container actually handles the sticky offset logic */}
-                            <div className="sticky top-0">
-                                <AnnouncementBanner />
-                            </div>
-                        </div>
-                    </div>
 
                     <div className={cn(
                         "w-full flex-grow flex flex-col",

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,13 +15,11 @@ export function AnnouncementBanner() {
     useEffect(() => {
         if (!firestore) return;
         
-        // Simpler query to avoid missing index errors, with client-side sorting
         const q = query(collection(firestore, 'announcements'), where('isActive', '==', true));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (!snapshot.empty) {
                 const activeAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
-                // Sort client-side to show the most recently created active announcement
                 activeAnnouncements.sort((a, b) => {
                     const timeA = a.createdAt?.toMillis() || 0;
                     const timeB = b.createdAt?.toMillis() || 0;
