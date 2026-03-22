@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
@@ -164,13 +165,12 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-full w-full bg-[#efeae2] dark:bg-[#0b141a] relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.08] pointer-events-none z-0" 
+      {/* Background Pattern - WhatsApp Doodle */}
+      <div className="absolute inset-0 opacity-[0.4] dark:opacity-[0.06] pointer-events-none z-0" 
            style={{ 
-             backgroundImage: "url('https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg')",
+             backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
              backgroundSize: '400px',
              backgroundRepeat: 'repeat',
-             filter: 'grayscale(100%)'
            }} 
       />
 
