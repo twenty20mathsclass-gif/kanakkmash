@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { User, Schedule, SalaryPayment, Invoice, ReferredStudent, Reward, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,6 +35,7 @@ export default function UserProfilePage() {
     const userId = params.userId as string;
     const router = useRouter();
     const { firestore } = useFirebase();
+    const { user: currentUser, loading: authLoading } = useUser();
     const { toast } = useToast();
 
     const [user, setUser] = useState<User | null>(null);
@@ -53,7 +54,7 @@ export default function UserProfilePage() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-    const fetchUserData = async () => {
+    const fetchUserData = useCallback(async () => {
         if (!firestore || !userId) return;
         setLoading(true);
         setError(null);
@@ -121,19 +122,22 @@ export default function UserProfilePage() {
             }
 
         } catch (e: any) {
-            console.error("Error fetching user data:", e);
             if (e.code === 'permission-denied') {
                 errorEmitter.emit('permission-error', new FirestorePermissionError({path: `users/${userId} or related subcollections`, operation: 'get'}, {cause: e}));
+            } else {
+                console.error("Error fetching user data:", e);
             }
             setError("Failed to load user details.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [firestore, userId]);
     
     useEffect(() => {
-        fetchUserData();
-    }, [firestore, userId]);
+        if (!authLoading && currentUser && currentUser.role === 'admin') {
+            fetchUserData();
+        }
+    }, [authLoading, currentUser, fetchUserData]);
 
     const handleToggleStatus = async () => {
         if (!firestore || !user) return;
@@ -189,7 +193,7 @@ export default function UserProfilePage() {
         }
     };
     
-    if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
+    if (loading || authLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
     if (error) return <div className="text-destructive text-center">{error}</div>;
     if (!user) return <div className="text-center text-muted-foreground">User data could not be loaded.</div>;
 
@@ -222,7 +226,7 @@ export default function UserProfilePage() {
                             </CardDescription>
                             <div className="flex flex-col md:flex-row md:items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1"><Mail className="h-4 w-4" /> {user.email}</span>
-                                {user.mobile && <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {`+${user.countryCode} ${user.mobile}`}</span>}
+                                {user.mobile && <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {user.mobile}</span>}
                             </div>
                         </div>
                     </div>
@@ -270,7 +274,7 @@ export default function UserProfilePage() {
                 <TabsContent value="salary">
                     <Card><CardHeader><CardTitle>Salary Payments</CardTitle></CardHeader><CardContent><Table>
                         <TableHeader><TableRow><TableHead>Payment Date</TableHead><TableHead>Amount</TableHead><TableHead>For Period</TableHead></TableRow></TableHeader>
-                        <TableBody>{salaryPayments.map(p => (<TableRow key={p.id}><TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : '-'}</TableCell><TableCell className="font-medium flex items-center"><IndianRupee className="h-4 w-4"/>{p.amount.toLocaleString()}</TableCell><TableCell>{p.paymentMonth ? format(new Date(p.paymentMonth), 'MMMM yyyy') : `${format(p.startDate.toDate(), 'MMM d')} - ${format(p.endDate.toDate(), 'MMM d, yyyy')}`}</TableCell></TableRow>))}</TableBody>
+                        <TableBody>{salaryPayments.map(p => (<TableRow key={p.id}><TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : '-'}</TableCell><TableCell className="font-medium flex items-center"><IndianRupee className="h-4 w-4"/>{p.amount.toLocaleString()}</TableCell><TableCell>{p.paymentMonth ? format(new Date(p.paymentMonth), 'MMMM yyyy') : (p.startDate && p.endDate ? `${format(p.startDate.toDate(), 'MMM d')} - ${format(p.endDate.toDate(), 'MMM d, yyyy')}` : '-')}</TableCell></TableRow>))}</TableBody>
                     </Table></CardContent></Card>
                 </TabsContent>
                 <TabsContent value="referrals">
