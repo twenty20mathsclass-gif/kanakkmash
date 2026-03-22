@@ -46,8 +46,9 @@ export default function PublicStudentLayout({
     return (
         <div className={cn("relative flex flex-col min-h-screen bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]")}>
             
-            {/* Sticky Announcement Banner at the absolute top */}
-            <div className="sticky top-0 z-[100] w-full">
+            {/* Sticky Announcement Banner */}
+            {/* md:top-0 sticks to the very top on desktop. top-16 sticks below the fixed MobileLogo (h-16) on mobile. */}
+            <div className="sticky top-16 md:top-0 z-[40] w-full mt-16 md:mt-0">
                 <AnnouncementBanner />
             </div>
 
@@ -76,7 +77,8 @@ export default function PublicStudentLayout({
             
             <main className={cn(
                 "flex-grow flex flex-col",
-                isHomepage ? "justify-center items-center pt-16" : "pt-24 md:pt-28 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
+                // Removed pt-16 on mobile since the banner wrapper's mt-16 now handles header clearance
+                isHomepage ? "justify-center items-center pt-4 md:pt-16" : "pt-4 md:pt-28 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
             )}>
                 {children}
             </main>
