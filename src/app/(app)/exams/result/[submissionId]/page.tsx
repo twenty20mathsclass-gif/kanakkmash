@@ -1,20 +1,34 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { ExamSubmission, Exam } from '@/lib/definitions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle, XCircle, FileText, ArrowLeft, RefreshCw, FileSearch, Share2, FileDown, Home, Trophy, Hourglass } from 'lucide-react';
+import { 
+    Loader2, 
+    ArrowLeft, 
+    Home, 
+    Trophy, 
+    CheckCircle2, 
+    XCircle, 
+    ClipboardList, 
+    Target, 
+    Zap,
+    Info,
+    HelpCircle,
+    TrendingUp
+} from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import Link from 'next/link';
+import { Progress } from '@/components/ui/progress';
 
 type PageProps = {
   params: {
@@ -22,193 +36,252 @@ type PageProps = {
   };
 };
 
-const StatItem = ({ color, value, label }: { color: string, value: string | number, label: string }) => (
-    <div className="flex flex-col items-center">
-        <div className="flex items-center gap-2">
-            <div className={cn("h-2.5 w-2.5 rounded-full", color)} />
-            <p className="text-sm font-semibold">{value}</p>
+const StatHeaderItem = ({ icon: Icon, value, label, color }: { icon: any, value: string | number, label: string, color: string }) => (
+    <div className="flex flex-col items-center text-center">
+        <div className="flex items-center gap-2 mb-1">
+            <Icon className={cn("h-5 w-5", color)} />
+            <span className="text-lg font-bold text-foreground">{value}</span>
         </div>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</span>
     </div>
 );
 
-const ActionButton = ({ icon: Icon, label, href, onClick, disabled }: { icon: React.ElementType, label: string, href?: string, onClick?: () => void, disabled?: boolean }) => {
-    const content = (
-        <div className="flex flex-col items-center gap-2">
-            <Button
-                size="icon"
-                className="h-16 w-16 rounded-full bg-white/10 text-white shadow-lg hover:bg-white/20 disabled:bg-muted"
-                onClick={onClick}
-                disabled={disabled}
-            >
-                <Icon className="h-7 w-7" />
-            </Button>
-            <p className="text-xs font-semibold text-white/80">{label}</p>
-        </div>
-    );
-
-    if (href && !disabled) {
-        return <Link href={href}>{content}</Link>;
-    }
-
-    return content;
-};
-
 function ResultDisplay({ submission, exam }: { submission: ExamSubmission, exam: Exam | null }) {
     const router = useRouter();
-    const isMcq = submission.examType === 'mcq';
-
-    // --- Data for MCQ ---
-    const score = submission.score ?? 0;
-    const totalQuestions = submission.totalQuestions ?? 1;
-    const points = score * 10;
-    const wrongAnswers = totalQuestions > score ? totalQuestions - score : 0;
-
-    // --- Data for Descriptive ---
-    const isReviewed = submission.status === 'reviewed';
-
-    const handleReviewClick = () => {
-        const element = document.getElementById('review-section');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
     
+    const stats = useMemo(() => {
+        const isMcq = submission.examType === 'mcq';
+        const score = submission.score ?? 0;
+        const total = isMcq ? (submission.totalQuestions ?? 1) : (submission.totalMarks ?? 1);
+        const accuracy = Math.round((score / total) * 100);
+        
+        return {
+            isMcq,
+            score,
+            total,
+            accuracy,
+            wrong: isMcq ? (submission.totalQuestions || 0) - score : 0
+        };
+    }, [submission]);
+
+    const difficultyBlocks = Array.from({ length: 10 });
+
     return (
-        <div className="bg-gradient-to-b from-[#F59E0B] to-[#F97316] min-h-[100svh] text-white -m-4 md:-m-6 lg:-m-8 p-4 font-body flex flex-col">
-            <div className="max-w-sm mx-auto w-full flex-grow flex flex-col">
-                <header className="relative flex items-center justify-center mb-6 pt-4">
-                    <Button variant="ghost" size="icon" className="absolute left-0 text-white hover:bg-white/10 rounded-full" onClick={() => router.push('/my-results')}>
-                        <ArrowLeft />
+        <div className="min-h-screen bg-slate-50/50 pb-20 -m-4 md:-m-6 lg:-m-8">
+            <header className="bg-background border-b px-4 py-4 sticky top-0 z-20 shadow-sm">
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push('/my-results')}>
+                        <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <h1 className="text-lg font-bold">Result</h1>
-                </header>
+                    <h1 className="font-headline font-bold text-lg">Exam Result</h1>
+                    <div className="w-10" /> {/* Spacer */}
+                </div>
+            </header>
 
-                <div className="flex-grow flex flex-col justify-center">
-                    <div className="relative flex items-center justify-center w-48 h-48 mx-auto my-8">
-                        <div className="absolute inset-0 rounded-full bg-white/5" />
-                        <div className="absolute inset-2 rounded-full bg-white/10" />
-                        <div className="relative flex flex-col items-center justify-center w-40 h-40 rounded-full bg-white/20 shadow-inner">
-                            {isMcq ? (
-                                <>
-                                    <p className="text-sm">Your Score</p>
-                                    <p className="text-5xl font-bold font-headline">{points}<span className="text-3xl">pt</span></p>
-                                </>
-                            ) : (
-                                <>
-                                    {isReviewed ? (
-                                        <>
-                                            <p className="text-sm">Marks</p>
-                                            <p className="text-4xl font-bold font-headline">{submission.score ?? 0}<span className="text-2xl">/{submission.totalMarks}</span></p>
-                                        </>
-                                    ) : (
-                                        <div className="text-center">
-                                            <Hourglass className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                                            <p className="text-xl font-bold font-headline">Pending</p>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
+            <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+                {/* Main Score Card */}
+                <Reveal>
+                    <Card className="border-none shadow-lg overflow-hidden">
+                        <CardContent className="p-6 space-y-8">
+                            {/* Top Stats Row */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <StatHeaderItem 
+                                    icon={ClipboardList} 
+                                    value={stats.total} 
+                                    label="Total questions" 
+                                    color="text-green-600" 
+                                />
+                                <StatHeaderItem 
+                                    icon={CheckCircle2} 
+                                    value={stats.score} 
+                                    label="Right answers" 
+                                    color="text-blue-600" 
+                                />
+                                <StatHeaderItem 
+                                    icon={Target} 
+                                    value={`${stats.accuracy}%`} 
+                                    label="Accuracy" 
+                                    color="text-red-500" 
+                                />
+                            </div>
 
-                    <Card className="bg-white/95 text-card-foreground backdrop-blur-sm">
-                        <CardContent className="p-4">
-                            {isMcq ? (
-                                <div className="grid grid-cols-4 gap-y-4 text-center">
-                                    <StatItem color="bg-accent" value="100%" label="Completion" />
-                                    <StatItem color="bg-muted-foreground" value={totalQuestions} label="Total" />
-                                    <StatItem color="bg-success" value={score} label="Correct" />
-                                    <StatItem color="bg-destructive" value={wrongAnswers} label="Wrong" />
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-y-4 text-center">
-                                    <div>
-                                        <p className="font-bold text-lg capitalize">{submission.status}</p>
-                                        <p className="text-xs text-muted-foreground">Status</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-lg">{submission.totalMarks}</p>
-                                        <p className="text-xs text-muted-foreground">Total Marks</p>
+                            {/* Progress Bar Section */}
+                            <div className="space-y-3">
+                                <div className="relative h-14 w-full bg-green-50 rounded-xl overflow-hidden flex items-center px-6">
+                                    <div 
+                                        className="absolute left-0 top-0 h-full bg-green-500 transition-all duration-1000 ease-out"
+                                        style={{ width: `${stats.accuracy}%` }}
+                                    />
+                                    <div className="relative z-10 flex justify-between w-full items-center">
+                                        <span className="text-xl font-black text-white drop-shadow-sm">{stats.accuracy}%</span>
+                                        <span className="text-sm font-bold text-green-700/80 bg-white/80 px-3 py-1 rounded-full">Your Grade</span>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+
+                            {/* Bottom Footer Row */}
+                            <div className="flex items-center justify-between pt-2 border-t">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Trophy className="h-4 w-4 text-amber-500" />
+                                    <span className="text-xs font-bold uppercase tracking-tight">Avg. Grade</span>
+                                </div>
+                                <p className="text-xs font-medium text-muted-foreground">
+                                    You're <span className="text-blue-600 font-bold">above 42%</span> of other students
+                                </p>
+                            </div>
                         </CardContent>
                     </Card>
+                </Reveal>
 
-                    <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-                        <ActionButton icon={FileSearch} label="Review" onClick={handleReviewClick} disabled={!isMcq && !isReviewed} />
-                        <ActionButton icon={Home} label="Home" href="/dashboard" />
-                        <ActionButton icon={Trophy} label="Results" href="/my-results" />
+                {/* Rating Section */}
+                <Reveal delay={0.1}>
+                    <Card className="border-none shadow-md">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-sm">Rate exam</h3>
+                                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground leading-tight max-w-[180px]">
+                                        Share your thoughts on the exam so other students can be helped
+                                    </p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] font-bold px-2 py-0.5">Easy</Badge>
+                                    <div className="flex gap-1">
+                                        {difficultyBlocks.map((_, i) => (
+                                            <div 
+                                                key={i} 
+                                                className={cn(
+                                                    "h-3.5 w-3.5 rounded-sm",
+                                                    i < 4 ? "bg-green-500" : (i < 7 ? "bg-amber-400" : "bg-red-500")
+                                                )} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </Reveal>
+
+                {/* Analysis Section */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 px-1">
+                        <TrendingUp className="h-5 w-5 text-red-500" />
+                        <h2 className="font-headline font-bold text-slate-700">You lost marks here</h2>
                     </div>
-                </div>
-            </div>
 
-            {isMcq && exam && (
-                <div className="max-w-4xl mx-auto mt-8 w-full">
-                    <Card id="review-section">
-                        <CardHeader><CardTitle>Detailed Analysis</CardTitle><CardDescription>Review your answers for each question.</CardDescription></CardHeader>
-                        <CardContent className="space-y-6">
+                    {stats.isMcq && exam ? (
+                        <div className="space-y-4">
                             {exam.questions?.map((question, qIndex) => {
                                 const studentAnswerIndex = submission.answers?.[qIndex];
-                                const correctAnswerIndex = question.correctAnswerIndex;
-                                const isCorrect = studentAnswerIndex === correctAnswerIndex;
+                                const isCorrect = studentAnswerIndex === question.correctAnswerIndex;
+                                
+                                if (isCorrect) return null; // Only show where marks were lost as per reference
+
                                 return (
-                                    <div key={qIndex}>
-                                        <div className="flex justify-between items-start">
-                                            <p className="font-semibold">{qIndex + 1}. {question.questionText}</p>
-                                            {isCorrect ? <CheckCircle className="h-6 w-6 text-success flex-shrink-0 ml-4" /> : <XCircle className="h-6 w-6 text-destructive flex-shrink-0 ml-4" />}
-                                        </div>
-                                        <div className="mt-4 space-y-2 pl-6">
-                                            {question.options.map((option, oIndex) => {
-                                                const isStudentAnswer = oIndex === studentAnswerIndex;
-                                                const isCorrectAnswer = oIndex === correctAnswerIndex;
-                                                return (
-                                                    <div key={oIndex} className={cn('p-3 rounded-md border text-sm', isCorrectAnswer ? 'bg-success/10 border-success/50 text-success' : (isStudentAnswer ? 'bg-destructive/10 border-destructive/50 text-destructive' : ''))}>
-                                                        <p>{option.text}{isCorrectAnswer && <span className="font-semibold ml-2">(Correct Answer)</span>}{!isCorrectAnswer && isStudentAnswer && <span className="font-semibold ml-2">(Your Answer)</span>}</p>
+                                    <Reveal key={qIndex} delay={0.2 + (qIndex * 0.05)}>
+                                        <Card className="border-none shadow-md overflow-hidden">
+                                            <CardContent className="p-0">
+                                                <div className="bg-slate-100/50 p-4 border-b">
+                                                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Question {qIndex + 1}</p>
+                                                </div>
+                                                <div className="p-6 space-y-6">
+                                                    <p className="font-semibold text-slate-800 leading-snug">
+                                                        {question.questionText}
+                                                    </p>
+
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-tighter">Your Answer</p>
+                                                            <p className="text-sm text-slate-600 font-medium bg-slate-50 p-3 rounded-lg border border-dashed">
+                                                                {studentAnswerIndex !== undefined && studentAnswerIndex !== -1 
+                                                                    ? question.options[studentAnswerIndex]?.text 
+                                                                    : "No answer provided"}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Your feedback</p>
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-5 w-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                                                        <XCircle className="h-3.5 w-3.5 text-red-600" />
+                                                                    </div>
+                                                                    <p className="text-xs text-slate-500">The selected option is incorrect.</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                                                        <Info className="h-3.5 w-3.5 text-slate-400" />
+                                                                    </div>
+                                                                    <p className="text-xs text-slate-500">
+                                                                        Correct answer: <span className="font-bold text-green-600">{question.options[question.correctAnswerIndex]?.text}</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                )
-                                            })}
-                                        </div>
-                                        {qIndex < exam.questions!.length - 1 && <Separator className="mt-6" />}
-                                    </div>
-                                )
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </Reveal>
+                                );
                             })}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    ) : (
+                        submission.examType === 'descriptive' && (
+                            <Reveal delay={0.2}>
+                                <Card className="border-none shadow-md overflow-hidden">
+                                    <CardContent className="p-0">
+                                        <div className="bg-slate-100/50 p-4 border-b">
+                                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Tutor Assessment</p>
+                                        </div>
+                                        <div className="p-6 space-y-6">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-tighter">Teacher Feedback</p>
+                                                    <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border-2 border-slate-100">
+                                                        {submission.feedback || "Assessment is in progress. Your teacher will provide detailed feedback soon."}
+                                                    </p>
+                                                </div>
+
+                                                {submission.status === 'reviewed' && (
+                                                    <div className="space-y-3">
+                                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Grading breakdown</p>
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                                                    <Zap className="h-3.5 w-3.5 text-blue-600" />
+                                                                </div>
+                                                                <p className="text-xs text-slate-500">Points awarded: <span className="font-bold">{submission.score} / {submission.totalMarks}</span></p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Reveal>
+                        )
+                    )}
                 </div>
-            )}
-            {submission.examType === 'descriptive' && isReviewed && (
-                <div className="max-w-4xl mx-auto mt-8 w-full" id="review-section">
-                    <Card>
-                        <CardHeader><CardTitle>Review Details</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <h3 className="font-semibold">Your Submission</h3>
-                                {submission.answerFileUrl ? (
-                                    <Button asChild variant="outline">
-                                        <a href={submission.answerFileUrl} target="_blank" rel="noopener noreferrer">
-                                            <FileText className="mr-2 h-4 w-4" /> View Your Answer Sheet
-                                        </a>
-                                    </Button>
-                                ) : (
-                                    <p className="text-muted-foreground">No answer file was submitted.</p>
-                                )}
-                            </div>
-                            {submission.feedback && (
-                                <div>
-                                    <h3 className="font-semibold">Teacher's Feedback</h3>
-                                    <p className="prose dark:prose-invert mt-2">{submission.feedback}</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+
+                {/* Footer Actions */}
+                <div className="pt-8 flex flex-col gap-3">
+                    <Button asChild size="lg" className="rounded-2xl font-bold h-14 text-lg shadow-xl shadow-primary/20">
+                        <Link href="/dashboard"><Home className="mr-2 h-5 w-5" /> Back to Dashboard</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg" className="rounded-2xl font-bold h-14 text-slate-600">
+                        <Link href="/my-results"><Trophy className="mr-2 h-5 w-5" /> View All Results</Link>
+                    </Button>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
-
 
 export default function ExamResultPage({ params }: PageProps) {
   const { firestore } = useFirebase();
@@ -244,20 +317,17 @@ export default function ExamResultPage({ params }: PageProps) {
           const examSnap = await getDoc(examRef);
           if (examSnap.exists()) {
             setExam({ id: examSnap.id, ...examSnap.data() } as Exam);
-          } else if (submissionData.examType === 'mcq') {
-            setError('Could not load the original exam for analysis.');
           }
         } else {
           setError('Exam submission not found.');
         }
       } catch (err: any) {
         if (err.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({ path: `exams/{examId}/submissions/{userId} or /exams/{examId}`, operation: 'get' }, { cause: err });
+            const permissionError = new FirestorePermissionError({ path: `exams/${examId}/submissions/${userId}`, operation: 'get' }, { cause: err });
             errorEmitter.emit('permission-error', permissionError);
             setError('You do not have permission to view these results.');
         } else {
-          console.warn('Error fetching results:', err);
-          setError('Failed to load your results. Please try again.');
+          setError('Failed to load results.');
         }
       } finally {
         setLoading(false);
@@ -269,24 +339,26 @@ export default function ExamResultPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-background -m-4 md:-m-6 lg:-m-8">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Loading your results...</p>
+      <div className="flex flex-col justify-center items-center h-screen bg-slate-50">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="mt-4 text-sm font-bold text-slate-400 uppercase tracking-widest">Generating Analysis...</p>
       </div>
     );
   }
 
   if (error || !submission) {
     return (
-        <div className="min-h-screen flex items-center justify-center -m-4 md:-m-6 lg:-m-8">
-            <Reveal>
-                <Card className="border-destructive max-w-lg mx-auto">
-                    <CardHeader><CardTitle>Error</CardTitle></CardHeader>
-                    <CardContent>
-                        <p className="text-destructive">{error || 'No submission data found.'}</p>
-                        <Button onClick={() => router.push('/my-results')} className="mt-4">Go to My Results</Button>
-                    </CardContent>
-                </Card>
-            </Reveal>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
+            <Card className="max-w-md w-full border-none shadow-2xl p-8 text-center space-y-6">
+                <div className="h-20 w-20 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                    <XCircle className="h-10 w-10 text-red-500" />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-2xl font-headline font-bold text-slate-800">Something went wrong</h2>
+                    <p className="text-slate-500 text-sm">{error || 'No submission data found.'}</p>
+                </div>
+                <Button onClick={() => router.push('/my-results')} className="w-full h-12 rounded-xl">Go to My Results</Button>
+            </Card>
         </div>
     );
   }
