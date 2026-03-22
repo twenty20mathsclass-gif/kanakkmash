@@ -30,7 +30,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex flex-1 w-full flex-col items-center justify-center overflow-hidden py-12 md:py-24">
+      <section className="relative flex min-h-[calc(100vh-80px)] w-full flex-col items-center justify-center overflow-hidden py-12 md:py-24">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -46,7 +46,7 @@ export default function Home() {
           <Reveal>
             <div className="mx-auto max-w-4xl">
               <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
-                Unlock Your <span className="text-primary">Math Potential</span> with{' '}
+                Unlock Your <span className="text-black dark:text-white">Math Potential</span> with{' '}
                 <div className="mt-4 block lg:mt-0 lg:inline-block">
                     <Image
                     src="/logo mlm@4x.png"
