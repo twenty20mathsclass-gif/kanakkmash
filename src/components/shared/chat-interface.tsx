@@ -6,7 +6,24 @@ import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2, Phone, Video, MoreVertical, Paperclip, Smile, Camera, Mic, ArrowLeft, Info, Trash2, Check, CheckCheck } from 'lucide-react';
+import { 
+    Send, 
+    Loader2, 
+    Phone, 
+    MoreVertical, 
+    Smile, 
+    ArrowLeft, 
+    Info, 
+    Trash2, 
+    Check, 
+    CheckCheck,
+    BarChart2,
+    Hand,
+    ThumbsUp,
+    CheckCircle2,
+    XCircle,
+    MessageCircleQuestion
+} from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -18,6 +35,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface ChatInterfaceProps {
   currentUser: User;
@@ -27,6 +49,14 @@ interface ChatInterfaceProps {
   onHeaderClick?: () => void;
   onDeleteGroup?: () => void;
 }
+
+const CLASS_EMOJIS = [
+    { char: '✋', label: 'Raise Hand', icon: Hand, color: 'text-yellow-500' },
+    { char: '✅', label: 'Correct', icon: CheckCircle2, color: 'text-green-500' },
+    { char: '❌', label: 'Incorrect', icon: XCircle, color: 'text-red-500' },
+    { char: '👍', label: 'Agree', icon: ThumbsUp, color: 'text-blue-500' },
+    { char: '❓', label: 'Doubt', icon: MessageCircleQuestion, color: 'text-purple-500' },
+];
 
 export function ChatInterface({ 
     currentUser, 
@@ -100,19 +130,17 @@ export function ChatInterface({
   }, [messages]);
 
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newMessage.trim() === '' || !firestore) return;
+  const handleSendMessage = async (text: string) => {
+    if (text.trim() === '' || !firestore) return;
 
     const messagesCollection = collection(firestore, collectionPath);
     const messageData = {
-        text: newMessage,
+        text: text,
         senderId: currentUser.id,
         timestamp: serverTimestamp(),
         isRead: false
     };
     
-    const currentMsg = newMessage;
     setNewMessage('');
     
     addDoc(messagesCollection, messageData)
@@ -125,8 +153,13 @@ export function ChatInterface({
                 }, { cause: err });
                 errorEmitter.emit('permission-error', permissionError);
             }
-            setNewMessage(currentMsg);
         });
+  };
+
+  const handleDialerClick = () => {
+      if (!isGroup && (chatPartner as User).mobile) {
+          window.location.href = `tel:${(chatPartner as User).mobile}`;
+      }
   };
 
   return (
@@ -168,8 +201,11 @@ export function ChatInterface({
             </div>
         </div>
         <div className="flex items-center gap-3 text-muted-foreground shrink-0">
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hidden sm:flex"><Video className="h-5 w-5" /></Button>
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hidden sm:flex"><Phone className="h-5 w-5" /></Button>
+            {!isGroup && (chatPartner as User).mobile && (
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10" onClick={handleDialerClick}>
+                    <Phone className="h-5 w-5" />
+                </Button>
+            )}
             
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -239,7 +275,6 @@ export function ChatInterface({
                                             msg.isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
                                         )}
                                     </div>
-                                    {/* Tail */}
                                     <div className={cn(
                                         "absolute top-0 w-3 h-3",
                                         isSentByCurrentUser 
@@ -262,33 +297,62 @@ export function ChatInterface({
 
       {/* Input Footer */}
       <footer className="p-4 bg-transparent shrink-0 z-10 pb-24 md:pb-6 safe-area-bottom">
-        <form onSubmit={handleSendMessage} className="flex w-full items-end gap-3 max-w-5xl mx-auto">
+        <div className="flex w-full items-end gap-3 max-w-5xl mx-auto">
             <div className="flex-1 flex items-center bg-card rounded-[1.5rem] px-3 py-1.5 shadow-xl border-none focus-within:ring-2 focus-within:ring-primary/20 transition-all min-h-[52px]">
-                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 shrink-0 hover:bg-muted/50 active:scale-90">
-                    <Smile className="h-6 w-6" />
-                </Button>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 shrink-0 hover:bg-muted/50 active:scale-90">
+                            <Smile className="h-6 w-6" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2 rounded-2xl mb-2" side="top" align="start">
+                        <div className="flex items-center gap-2">
+                            {CLASS_EMOJIS.map((emoji) => {
+                                const Icon = emoji.icon;
+                                return (
+                                    <Button 
+                                        key={emoji.char} 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-10 w-10 rounded-xl hover:bg-muted"
+                                        onClick={() => handleSendMessage(emoji.char)}
+                                        title={emoji.label}
+                                    >
+                                        <Icon className={cn("h-5 w-5", emoji.color)} />
+                                    </Button>
+                                )
+                            })}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
                 <Input 
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
                     autoComplete="off"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
                     className="flex-1 h-10 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm py-0 shadow-none placeholder:text-muted-foreground/50 font-medium"
                 />
-                <div className="flex items-center gap-1 shrink-0">
-                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 hover:bg-muted/50 active:scale-90">
-                        <Paperclip className="h-5 w-5 rotate-45" />
-                    </Button>
-                    {!newMessage.trim() && (
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 hover:bg-muted/50 active:scale-90">
-                            <Camera className="h-5 w-5" />
+                
+                {isGroup && (
+                    <div className="flex items-center gap-1 shrink-0">
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-muted-foreground rounded-full h-10 w-10 hover:bg-muted/50 active:scale-90"
+                            title="Create Poll"
+                        >
+                            <BarChart2 className="h-5 w-5" />
                         </Button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
             
             <div className="shrink-0">
                 <Button 
-                    type="submit" 
+                    onClick={() => handleSendMessage(newMessage)}
                     size="icon" 
                     className={cn(
                         "rounded-full h-12 w-12 shadow-2xl transition-all active:scale-90",
@@ -300,7 +364,7 @@ export function ChatInterface({
                     <span className="sr-only">Send</span>
                 </Button>
             </div>
-        </form>
+        </div>
       </footer>
     </div>
   );
