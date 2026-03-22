@@ -84,7 +84,7 @@ export default function MyChatRoomPage() {
     const [contacts, setContacts] = useState<ContactWithMetadata[]>([]);
     const [selectedContact, setSelectedContact] = useState<ContactWithMetadata | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'student' | 'teacher' | 'promoter'>('all');
+    const [filter, setFilter] = useState<'all' | 'student' | 'teacher' | 'promoter' | 'admin'>('all');
     const [searchQuery, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -177,6 +177,27 @@ export default function MyChatRoomPage() {
         fetchContacts();
     }, [firestore, user]);
 
+    const filterOptions = useMemo(() => {
+        if (!user) return [];
+        const options = [{ id: 'all', label: 'All' }];
+        
+        if (user.role === 'admin') {
+            options.push({ id: 'student', label: 'Students' });
+            options.push({ id: 'teacher', label: 'Teachers' });
+            options.push({ id: 'promoter', label: 'Promoters' });
+        } else if (user.role === 'teacher') {
+            options.push({ id: 'student', label: 'Students' });
+            options.push({ id: 'admin', label: 'Admin' });
+        } else if (user.role === 'student') {
+            options.push({ id: 'teacher', label: 'Teachers' });
+            options.push({ id: 'admin', label: 'Admin' });
+        } else if (user.role === 'promoter') {
+            options.push({ id: 'admin', label: 'Admin' });
+        }
+        
+        return options;
+    }, [user]);
+
     const filteredContacts = useMemo(() => {
         return contacts.filter(c => {
             const matchesRole = filter === 'all' || c.role === filter;
@@ -204,12 +225,7 @@ export default function MyChatRoomPage() {
                             />
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                            {[
-                                { id: 'all', label: 'All' },
-                                { id: 'student', label: 'Students' },
-                                { id: 'teacher', label: 'Teachers' },
-                                { id: 'promoter', label: 'Promoters' }
-                            ].map(item => (
+                            {filterOptions.map(item => (
                                 <Button
                                     key={item.id}
                                     variant={filter === item.id ? 'default' : 'secondary'}
