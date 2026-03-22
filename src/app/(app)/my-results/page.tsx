@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -168,7 +167,7 @@ export default function MyResultsPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Reveal delay={0.1}>
-                    <Card className="bg-gradient-to-br from-background to-muted/20">
+                    <Card className="bg-gradient-to-br from-background to-muted/20 border-none shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Exams Taken</CardTitle>
                             <FileText className="h-4 w-4 text-primary" />
@@ -180,7 +179,7 @@ export default function MyResultsPage() {
                     </Card>
                 </Reveal>
                 <Reveal delay={0.2}>
-                     <Card className="bg-gradient-to-br from-background to-muted/20">
+                     <Card className="bg-gradient-to-br from-background to-muted/20 border-none shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Average Score</CardTitle>
                             <Percent className="h-4 w-4 text-primary" />
@@ -192,7 +191,7 @@ export default function MyResultsPage() {
                     </Card>
                 </Reveal>
                 <Reveal delay={0.3}>
-                     <Card className="bg-gradient-to-br from-background to-muted/20">
+                     <Card className="bg-gradient-to-br from-background to-muted/20 border-none shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Top Score</CardTitle>
                             <Target className="h-4 w-4 text-primary" />
@@ -204,7 +203,7 @@ export default function MyResultsPage() {
                     </Card>
                 </Reveal>
                 <Reveal delay={0.4}>
-                     <Card className="bg-gradient-to-br from-background to-muted/20">
+                     <Card className="bg-gradient-to-br from-background to-muted/20 border-none shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Performance Level</CardTitle>
                             <TrendingUp className="h-4 w-4 text-primary" />
@@ -219,7 +218,7 @@ export default function MyResultsPage() {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <Reveal delay={0.5} className="lg:col-span-2">
-                    <Card className="h-full">
+                    <Card className="h-full border-none shadow-lg">
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <BarChart3 className="h-5 w-5 text-primary" />
@@ -272,7 +271,7 @@ export default function MyResultsPage() {
                 </Reveal>
 
                 <Reveal delay={0.6} className="lg:col-span-1">
-                    <Card className="h-full">
+                    <Card className="h-full border-none shadow-lg">
                         <CardHeader>
                             <CardTitle className="font-headline">Assessment Status</CardTitle>
                             <CardDescription>Breakdown of submission statuses.</CardDescription>
@@ -307,7 +306,7 @@ export default function MyResultsPage() {
             </div>
 
              <Reveal delay={0.7}>
-                <Card>
+                <Card className="border-none shadow-xl">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle className="font-headline">All Submission History</CardTitle>

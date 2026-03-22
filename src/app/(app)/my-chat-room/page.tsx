@@ -390,7 +390,7 @@ export default function MyChatRoomPage() {
 
                 const adminsQuery = query(usersCol, where('role', '==', 'admin'));
                 const adminsSnap = await getDocs(adminsQuery);
-                const allAdmins = adminsSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                const allAdmins = adminsSnap.docs.map(d => ({ id: d.id, ...doc.data() } as any)); // Helper mapping
 
                 if (user.role === 'admin') {
                     const qAll = query(usersCol);
@@ -404,7 +404,7 @@ export default function MyChatRoomPage() {
                     const myTeachers = allTeachers.filter(t => 
                         t.assignedClasses?.some(c => studentContexts.includes(c)) || t.id === user.referredBy
                     );
-                    fetchedUsers = [...myTeachers, ...allAdmins];
+                    fetchedUsers = [...myTeachers, ...adminsSnap.docs.map(d => ({id: d.id, ...d.data()} as User))];
                 } else if (user.role === 'teacher') {
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
@@ -416,9 +416,9 @@ export default function MyChatRoomPage() {
                         const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
                         return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
                     });
-                    fetchedUsers = [...myStudents, ...allAdmins];
+                    fetchedUsers = [...myStudents, ...adminsSnap.docs.map(d => ({id: d.id, ...d.data()} as User))];
                 } else if (user.role === 'promoter') {
-                    fetchedUsers = [...allAdmins];
+                    fetchedUsers = [...adminsSnap.docs.map(d => ({id: d.id, ...d.data()} as User))];
                 }
 
                 const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
