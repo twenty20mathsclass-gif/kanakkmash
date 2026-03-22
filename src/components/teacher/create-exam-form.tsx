@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, orderBy, documentId } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
@@ -125,7 +125,6 @@ export function CreateExamForm() {
 
     const [allStudents, setAllStudents] = useState<User[]>([]);
     const [scheduledExams, setScheduledExams] = useState<Schedule[]>([]);
-    const [imageUploadStatus, setImageUploadStatus] = useState<Record<number, 'idle' | 'uploading' | 'success' | 'error'>>({});
     const [questionPaperUpload, setQuestionPaperUpload] = useState<{ file: File | null, status: 'idle' | 'uploading' | 'success' | 'error', url?: string }>({ file: null, status: 'idle' });
 
     const availableClasses = useMemo(() => {
@@ -175,7 +174,6 @@ export function CreateExamForm() {
     const { watch, setValue } = form;
     const learningMode = watch('learningMode');
     const courseModel = watch('courseModel');
-    const selectedClasses = watch('classes');
     const examType = watch('examType');
     const descriptiveInputMethod = watch('descriptiveInputMethod');
 
@@ -204,11 +202,9 @@ export function CreateExamForm() {
                     const studentsList: User[] = [];
                     for (let i = 0; i < studentIds.length; i += 30) {
                         const chunk = studentIds.slice(i, i + 30);
-                        if (chunk.length > 0) {
-                            const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-                            const querySnapshot = await getDocs(studentsQuery);
-                            studentsList.push(...querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
-                        }
+                        const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+                        const querySnapshot = await getDocs(studentsQuery);
+                        studentsList.push(...querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
                     }
                     studentsList.sort((a, b) => a.name.localeCompare(b.name));
                     setAllStudents(studentsList);
@@ -232,22 +228,6 @@ export function CreateExamForm() {
         return () => unsubscribe();
     }, [firestore, user]);
 
-
-    const handleImageUpload = async (file: File, questionIndex: number) => {
-        setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'uploading' }));
-        try {
-            const formData = new FormData();
-            formData.append('image', file);
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, { method: 'POST', body: formData });
-            const result = await response.json();
-            if (!result.success) throw new Error('Upload failed');
-            setValue(`questions.${questionIndex}.imageUrl`, result.data.url, { shouldValidate: true });
-            setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'success' }));
-        } catch (error: any) {
-            setImageUploadStatus(prev => ({ ...prev, [questionIndex]: 'error' }));
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload image.' });
-        }
-    }
 
     const handleQuestionPaperUpload = async (file: File) => {
         setQuestionPaperUpload({ file, status: 'uploading' });
@@ -282,8 +262,11 @@ export function CreateExamForm() {
             if (data.examType === 'mcq') {
                  examData.questions = data.questions;
             } else {
-                if (data.descriptiveInputMethod === 'upload' && questionPaperUpload.url) examData.questionPaperUrl = questionPaperUpload.url;
-                else if (data.questionPaperContent) examData.questionPaperContent = data.questionPaperContent;
+                if (data.descriptiveInputMethod === 'upload' && questionPaperUpload.url) {
+                    examData.questionPaperUrl = questionPaperUpload.url;
+                } else if (data.questionPaperContent) {
+                    examData.questionPaperContent = data.questionPaperContent;
+                }
                 examData.totalMarks = data.totalMarks;
             }
 
@@ -495,14 +478,26 @@ export function CreateExamForm() {
                                 <FormField control={form.control} name="descriptiveInputMethod" render={({ field }) => (
                                     <FormItem><FormLabel>Question Method</FormLabel>
                                         <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="upload" id="up" /><Label htmlFor="upload">Upload</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="editor" id="ed" /><Label htmlFor="editor">Editor</Label></div>
-                                        </RadioGroup></FormItem>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="upload" id="up" />
+                                                <Label htmlFor="up">Upload</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="editor" id="ed" />
+                                                <Label htmlFor="ed">Editor</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </FormItem>
                                 )}/>
                                 {descriptiveInputMethod === 'upload' ? (
-                                    <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} />
+                                    <div className="space-y-2">
+                                        <Label>Upload Question Paper</Label>
+                                        <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" />
+                                        {questionPaperUpload.status === 'uploading' && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin"/> Uploading...</p>}
+                                        {questionPaperUpload.status === 'success' && <p className="text-xs text-success">File uploaded successfully.</p>}
+                                    </div>
                                 ) : (
-                                    <FormField name="questionPaperContent" control={form.control} render={({ field }) => (<FormItem><FormControl><Textarea className="min-h-48" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField name="questionPaperContent" control={form.control} render={({ field }) => (<FormItem><FormControl><Textarea className="min-h-48" placeholder="Type your questions here..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 )}
                             </CardContent>
                         </Card>
@@ -525,19 +520,19 @@ function OptionsFieldArray({ questionIndex, control }: { questionIndex: number; 
     <div className="space-y-4 pl-4 border-l-2">
         <FormLabel>Options (Select correct one)</FormLabel>
         <Controller control={control} name={`questions.${questionIndex}.correctAnswerIndex`} render={({ field }) => (
-            <RadioGroup onValueChange={field.onChange} value={String(field.value)} className="space-y-2">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2">
+            <RadioGroup onValueChange={(val) => field.onChange(parseInt(val, 10))} value={String(field.value)} className="space-y-2">
+                {fields.map((optField, index) => (
+                    <div key={optField.id} className="flex items-center gap-2">
                         <RadioGroupItem value={String(index)} id={`q-${questionIndex}-o-${index}`} />
-                        <FormField control={control} name={`questions.${questionIndex}.options.${index}.text`} render={({ field: optField }) => (
-                            <FormItem className="flex-1"><FormControl><Input placeholder={`Option ${index + 1}`} {...optField} /></FormControl></FormItem>
+                        <FormField control={control} name={`questions.${questionIndex}.options.${index}.text`} render={({ field: inputField }) => (
+                            <FormItem className="flex-1"><FormControl><Input placeholder={`Option ${index + 1}`} {...inputField} /></FormControl></FormItem>
                         )}/>
-                        {fields.length > 2 && <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>}
+                        {fields.length > 2 && <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
                     </div>
                 ))}
             </RadioGroup>
         )}/>
-        {fields.length < 4 && <Button type="button" size="sm" variant="ghost" onClick={() => append({ text: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Option</Button>}
+        {fields.length < 4 && <Button type="button" size="sm" variant="ghost" onClick={() => append({ text: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Add Option</Button>}
     </div>
   );
 }
