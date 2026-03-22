@@ -87,6 +87,14 @@ service cloud.firestore {
       function isMember() {
         return request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
       }
+      
+      // Helper specifically for sub-collections where 'resource' isn't the group itself
+      function isGroupMember(gId) {
+        return request.auth != null && (
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(gId)).data.members || 
+          isAdmin()
+        );
+      }
 
       allow read: if isMember();
       allow create: if isRole('teacher') || isAdmin();
@@ -94,9 +102,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        allow read: if isMember();
-        allow create: if isMember() && request.resource.data.senderId == request.auth.uid;
-        allow update: if isMember();
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId) && request.resource.data.senderId == request.auth.uid;
+        allow update: if isGroupMember(groupId);
       }
     }
 
