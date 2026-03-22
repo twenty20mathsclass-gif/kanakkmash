@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -94,6 +95,7 @@ export function SignUpForm() {
   const selectedSyllabus = watch('syllabus');
   const selectedLevel = watch('level');
   const selectedCompetitiveExam = watch('competitiveExam');
+  const currentLearningMode = watch('learningMode');
   
   const activeModel = courseModels.find(m => m.name === courseModelName);
   
@@ -132,6 +134,12 @@ export function SignUpForm() {
             if (!querySnapshot.empty) {
                 const exactMatch = querySnapshot.docs.find(d => {
                     const data = d.data();
+                    
+                    // Filter by learning mode if it's specified in the rule
+                    if (data.learningMode && data.learningMode !== currentLearningMode) {
+                        return false;
+                    }
+
                     if (showCompetitiveExamField) return data.competitiveExam === selectedCompetitiveExam;
                     if (showLevelField) return data.level === selectedLevel;
                     if (showClassField) {
@@ -144,7 +152,7 @@ export function SignUpForm() {
                 if (exactMatch) {
                     setFee(exactMatch.data().amount);
                 } else {
-                    const generalFee = querySnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level);
+                    const generalFee = querySnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level && (!d.data().learningMode || d.data().learningMode === currentLearningMode));
                     setFee(generalFee ? generalFee.data().amount : DEFAULT_FEE);
                 }
             } else {
@@ -161,7 +169,7 @@ export function SignUpForm() {
     const timeoutId = setTimeout(fetchFee, 500);
     return () => clearTimeout(timeoutId);
 
-  }, [firestore, courseModelName, selectedClass, selectedSyllabus, selectedLevel, selectedCompetitiveExam, showClassField, showLevelField, showCompetitiveExamField]);
+  }, [firestore, courseModelName, selectedClass, selectedSyllabus, selectedLevel, selectedCompetitiveExam, currentLearningMode, showClassField, showLevelField, showCompetitiveExamField]);
 
 
   const handleContinue = async () => {

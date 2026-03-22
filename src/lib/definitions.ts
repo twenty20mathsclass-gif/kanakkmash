@@ -285,6 +285,7 @@ export type Notification = {
 export type CourseFee = {
   id: string;
   courseModel: string;
+  learningMode?: 'group' | 'one to one';
   class?: string;
   level?: string;
   syllabus?: string;

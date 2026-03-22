@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -42,6 +43,7 @@ const twenty20Levels = [
 
 const feeSchema = z.object({
   courseModel: z.string().min(1, 'Course model is required.'),
+  learningMode: z.enum(['group', 'one to one']).optional(),
   amount: z.coerce.number().min(0, 'Amount must be a positive number.'),
   class: z.string().optional(),
   level: z.string().optional(),
@@ -62,7 +64,7 @@ export default function AdminFeesPage() {
 
     const form = useForm<FeeFormValues>({
         resolver: zodResolver(feeSchema),
-        defaultValues: { amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: '' },
+        defaultValues: { amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: '', learningMode: 'group' },
     });
 
     const courseModelName = form.watch('courseModel');
@@ -99,6 +101,7 @@ export default function AdminFeesPage() {
         try {
             const feeData: any = {
                 courseModel: data.courseModel,
+                learningMode: data.learningMode,
                 amount: data.amount,
                 createdAt: serverTimestamp(),
             };
@@ -109,7 +112,7 @@ export default function AdminFeesPage() {
 
             await addDoc(collection(firestore, 'courseFees'), feeData);
             toast({ title: 'Success', description: 'New fee rule has been created.' });
-            form.reset({ amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: data.courseModel });
+            form.reset({ amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: data.courseModel, learningMode: data.learningMode });
         } catch (err: any) {
             if (err.code === 'permission-denied') {
                 errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'courseFees', operation: 'create' }, { cause: err }));
@@ -184,6 +187,18 @@ export default function AdminFeesPage() {
                                         </Select>
                                     <FormMessage /></FormItem>
                                 )}/>
+
+                                <FormField control={form.control} name="learningMode" render={({ field }) => (
+                                    <FormItem><FormLabel>Learning Mode</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="group">Group Mode</SelectItem>
+                                                <SelectItem value="one to one">One to One Mode</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    <FormMessage /></FormItem>
+                                )}/>
                                 
                                 {activeModel?.configType === 'class-syllabus' && (
                                     <>
@@ -249,17 +264,18 @@ export default function AdminFeesPage() {
                     {loadingFees ? <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div> : (
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader><TableRow><TableHead>Course Model</TableHead><TableHead>Condition</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                <TableHeader><TableRow><TableHead>Course Model</TableHead><TableHead>Mode</TableHead><TableHead>Condition</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {fees.map(fee => (
                                         <TableRow key={fee.id}>
                                             <TableCell className="whitespace-nowrap font-medium">{fee.courseModel}</TableCell>
+                                            <TableCell className="capitalize">{fee.learningMode || 'All'}</TableCell>
                                             <TableCell>{getConditionText(fee)}</TableCell>
                                             <TableCell className="text-right whitespace-nowrap"><div className="flex items-center justify-end font-bold"><IndianRupee className="h-3 w-3 mr-0.5"/>{fee.amount.toLocaleString('en-IN')}</div></TableCell>
                                             <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setFeeToDelete(fee)} className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4"/></Button></TableCell>
                                         </TableRow>
                                     ))}
-                                    {fees.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-10 text-muted-foreground">No fee rules defined yet.</TableCell></TableRow>}
+                                    {fees.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No fee rules defined yet.</TableCell></TableRow>}
                                 </TableBody>
                             </Table>
                         </div>
