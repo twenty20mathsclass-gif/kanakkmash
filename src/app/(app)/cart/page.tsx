@@ -221,7 +221,7 @@ export default function CartPage() {
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-lg text-primary flex items-center justify-end gap-0.5">
-                                                <IndianRupee className="h-4 w-4" /> 2,250
+                                                ₹ 2,250
                                             </p>
                                             <Button size="sm" className="mt-1" onClick={() => handleAddToCart(course.title)}>Add to Cart</Button>
                                         </div>
