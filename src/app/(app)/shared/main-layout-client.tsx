@@ -178,6 +178,7 @@ export default function MainLayoutClient({
     else if (user.role === 'teacher') navItems = teacherNav;
     else navItems = promoterNav;
     
+    const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     const pageTitle = navItems.find(item => {
         if (item.href === '/admin' || item.href === '/teacher' || item.href === '/promoter') {
             return pathname === item.href;

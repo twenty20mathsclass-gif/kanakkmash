@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, Suspense } from 'react';
@@ -148,7 +149,6 @@ export default function MainLayoutClient({
     { href: '/promoter', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/my-referrals', label: 'My Referrals', icon: Share2 },
     { href: '/promoter/rewards', label: 'Reward History', icon: Banknote },
-    { href: '/profile', label: 'Settings', icon: Settings },
   ];
 
   const adminNav = [
@@ -170,8 +170,9 @@ export default function MainLayoutClient({
   ];
   
   let layout;
+  const isHomepage = pathname === '/';
 
-  if (user && (user.role === 'admin' || user.role === 'teacher' || user.role === 'promoter')) {
+  if (user && !isHomepage && (user.role === 'admin' || user.role === 'teacher' || user.role === 'promoter')) {
     let navItems;
     if (user.role === 'admin') navItems = adminNav;
     else if (user.role === 'teacher') navItems = teacherNav;
