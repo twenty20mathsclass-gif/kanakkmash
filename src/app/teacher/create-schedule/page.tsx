@@ -1,6 +1,14 @@
-// This file has been neutralized to resolve parallel routing conflicts with src/app/(app)/teacher/create-schedule/page.tsx.
-// To fully fix the error, please manually delete this file from your project explorer.
+// This file is neutralized to resolve a Next.js parallel routing conflict.
+// The authoritative version of this page is located at:
+// src/app/(app)/teacher/create-schedule/page.tsx
 
-export default function NeutralizedPage() {
+/**
+ * NOTE: If you are seeing a "parallel pages" error in development, 
+ * you should manually delete this file (src/app/teacher/create-schedule/page.tsx) 
+ * from your project explorer. Overwriting it with this comment 
+ * helps, but explicit deletion is the most robust fix.
+ */
+
+export default function RedirectPlaceholder() {
   return null;
 }
