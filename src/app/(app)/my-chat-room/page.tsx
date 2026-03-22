@@ -241,60 +241,66 @@ export default function MyChatRoomPage() {
                 const usersCol = collection(firestore, 'users');
                 let fetchedUsers: User[] = [];
 
+                // Always fetch all admins to ensure they are listed for everyone
+                const adminsQuery = query(usersCol, where('role', '==', 'admin'));
+                const adminsSnap = await getDocs(adminsQuery);
+                const allAdmins = adminsSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+
                 if (user.role === 'admin') {
+                    // Admins see everyone
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
                     fetchedUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                 } else if (user.role === 'student') {
+                    // Students see assigned teachers and admins
                     const qTeachers = query(usersCol, where('role', '==', 'teacher'));
-                    const qAdmins = query(usersCol, where('role', '==', 'admin'));
-                    const [tSnap, aSnap] = await Promise.all([getDocs(qTeachers), getDocs(qAdmins)]);
-                    
+                    const tSnap = await getDocs(qTeachers);
                     const allTeachers = tSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
-                    const allAdmins = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                     
                     const studentContexts = [user.class, user.level, user.competitiveExam].filter(Boolean);
                     
-                    fetchedUsers = [
-                        ...allTeachers.filter(t => 
-                            t.assignedClasses?.some(c => studentContexts.includes(c)) || t.id === user.referredBy
-                        ),
-                        ...allAdmins
-                    ];
+                    const myTeachers = allTeachers.filter(t => 
+                        t.assignedClasses?.some(c => studentContexts.includes(c)) || t.id === user.referredBy
+                    );
+                    
+                    fetchedUsers = [...myTeachers, ...allAdmins];
                 } else if (user.role === 'teacher') {
+                    // Teachers see assigned students and admins
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
                     const allUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                     const teacherAssignments = user.assignedClasses || [];
                     
-                    fetchedUsers = allUsers.filter(u => {
-                        if (u.role === 'admin') return true;
-                        if (u.role === 'student') {
-                            if (u.referredBy === user.id) return true;
-                            const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
-                            return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
-                        }
-                        return false;
+                    const myStudents = allUsers.filter(u => {
+                        if (u.role !== 'student') return false;
+                        if (u.referredBy === user.id) return true;
+                        const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
+                        return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
                     });
+                    
+                    fetchedUsers = [...myStudents, ...allAdmins];
                 } else if (user.role === 'promoter') {
-                    const qAdmins = query(usersCol, where('role', '==', 'admin'));
-                    const aSnap = await getDocs(qAdmins);
-                    fetchedUsers = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                    // Promoters see admins
+                    fetchedUsers = [...allAdmins];
                 }
 
+                // Fetch groups where user is a member
                 const groupsQuery = query(collection(firestore, 'groups'), where('members', 'array-contains', user.id));
                 const groupsSnap = await getDocs(groupsQuery);
                 const fetchedGroups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
 
+                // Deduplicate users (especially admins who might be added twice)
+                const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
+
                 const combined: ContactWithMetadata[] = [
-                    ...fetchedUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
+                    ...uniqueUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
                     ...fetchedGroups.map(g => ({ ...g, isGroup: true } as ContactWithMetadata))
                 ];
 
                 setContacts(combined);
                 setLoading(false);
 
-                // Setup real-time last message listeners
+                // Setup real-time last message listeners for each contact
                 combined.forEach(contact => {
                     const chatId = contact.isGroup ? contact.id : [user.id, (contact as User).id].sort().join('_');
                     const collName = contact.isGroup ? 'groups' : 'chats';
@@ -322,6 +328,7 @@ export default function MyChatRoomPage() {
                                     }
                                     return c;
                                 });
+                                // Re-sort: newest message first, then alphabetical
                                 return [...updated].sort((a, b) => {
                                     const timeA = a.lastTimestamp?.toMillis() || 0;
                                     const timeB = b.lastTimestamp?.toMillis() || 0;
@@ -330,6 +337,8 @@ export default function MyChatRoomPage() {
                                 });
                             });
                         }
+                    }, (err) => {
+                        console.warn(`Listener failed for chat ${chatId}:`, err);
                     });
                     unsubsRef.current.push(unsub);
                 });
@@ -399,7 +408,7 @@ export default function MyChatRoomPage() {
         return contacts.filter(c => {
             const matchesRole = filter === 'all' 
                 ? true 
-                : filter === 'group' ? c.isGroup : (c as User).role === filter;
+                : filter === 'group' ? c.isGroup : (!c.isGroup && (c as User).role === filter);
             const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesRole && matchesSearch;
         });
