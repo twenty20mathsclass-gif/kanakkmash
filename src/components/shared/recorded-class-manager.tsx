@@ -1,15 +1,14 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import type { RecordedClass, User } from '@/lib/definitions';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -17,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, PlusCircle, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Edit, AlertCircle, Play } from 'lucide-react';
 import Image from 'next/image';
 import {
     AlertDialog,
@@ -149,7 +148,7 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
             <FormItem><FormLabel>Syllabus</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a syllabus" /></SelectTrigger></FormControl>
                 <SelectContent>{syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select><FormItem/></FormItem>
+            </Select><FormMessage/></FormItem>
         )} />}
         {showCompetitiveExamField && <FormField control={form.control} name="competitiveExam" render={({ field }) => (
             <FormItem><FormLabel>Competitive Exam</FormLabel>
@@ -261,52 +260,99 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
   };
 
   return (
-    <div className="space-y-6">
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={() => setClassToEdit(null)}><PlusCircle className="mr-2"/>Add New Recorded Class</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{classToEdit ? 'Edit' : 'Add'} Recorded Class</DialogTitle>
-            <DialogDescription>Fill in the details for the recorded class video.</DialogDescription>
-          </DialogHeader>
-          <ClassForm isAdmin={isAdmin} teachers={teachers} onFormSubmit={handleFormSubmit} classToEdit={classToEdit} />
-        </DialogContent>
-      </Dialog>
+    <div className="space-y-10">
+      <div className="flex justify-between items-center bg-card p-6 rounded-2xl border shadow-sm">
+        <div>
+            <h2 className="text-xl font-bold font-headline">Session Library</h2>
+            <p className="text-sm text-muted-foreground">Manage your collection of video lessons.</p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+            <Button onClick={() => setClassToEdit(null)} className="rounded-full shadow-lg h-11 px-6">
+                <PlusCircle className="mr-2 h-5 w-5"/>
+                Add Session
+            </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl rounded-3xl">
+            <DialogHeader>
+                <DialogTitle>{classToEdit ? 'Edit' : 'Add'} Session</DialogTitle>
+                <DialogDescription>Enter the YouTube details for this recorded class.</DialogDescription>
+            </DialogHeader>
+            <ClassForm isAdmin={isAdmin} teachers={teachers} onFormSubmit={handleFormSubmit} classToEdit={classToEdit} />
+            </DialogContent>
+        </Dialog>
+      </div>
       
-      <Card>
-        <CardHeader><CardTitle>Existing Classes</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? <Loader2 className="animate-spin" /> : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {classes.map(rc => (
-                <Card key={rc.id}>
-                  <div className="aspect-video relative">
-                    <Image src={rc.thumbnailUrl} alt={rc.title} fill className="object-cover rounded-t-lg" />
-                  </div>
-                  <CardContent className="p-4 space-y-2">
-                    <h3 className="font-bold line-clamp-2">{rc.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-3">{rc.description}</p>
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="outline" onClick={() => { setClassToEdit(rc); setDialogOpen(true); }}><Edit className="mr-2 h-3 w-3"/>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={() => setClassToDelete(rc)}><Trash2 className="mr-2 h-3 w-3"/>Delete</Button>
+      {loading ? (
+        <div className="flex justify-center p-12">
+            <Loader2 className="animate-spin h-10 w-10 text-primary opacity-50" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {classes.map(rc => (
+            <Card key={rc.id} className="group overflow-hidden border-none bg-transparent shadow-none">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted shadow-sm transition-all hover:shadow-md">
+                <Image 
+                    src={rc.thumbnailUrl} 
+                    alt={rc.title} 
+                    fill 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    unoptimized
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
+                    <div className="rounded-full bg-primary p-3 opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 group-hover:scale-110">
+                        <Play className="h-6 w-6 fill-white text-white translate-x-0.5" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                </div>
+              </div>
+              <CardContent className="p-3 pt-4 space-y-3">
+                <div className="space-y-1">
+                    <h3 className="font-bold text-[15px] leading-tight line-clamp-2">{rc.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 opacity-80">{rc.description}</p>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="h-8 rounded-full flex-1 font-bold text-[11px] uppercase tracking-wider" 
+                    onClick={() => { setClassToEdit(rc); setDialogOpen(true); }}
+                  >
+                    <Edit className="mr-1.5 h-3.5 w-3.5"/>
+                    Edit
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-8 rounded-full flex-1 font-bold text-[11px] uppercase tracking-wider text-destructive hover:bg-destructive/10" 
+                    onClick={() => setClassToDelete(rc)}
+                  >
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5"/>
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {classes.length === 0 && (
+            <div className="col-span-full py-20 text-center border-2 border-dashed rounded-3xl bg-muted/20">
+                <p className="text-muted-foreground font-medium">No recorded sessions in your library yet.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
       
       <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
-        <AlertDialogContent>
-            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+        <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
+            <AlertDialogHeader>
+                <AlertDialogTitle className="text-xl font-bold font-headline">Remove Session?</AlertDialogTitle>
+                <AlertDialogDescription className="text-base">
+                    This will permanently delete "{classToDelete?.title}" from the library. This action cannot be reversed.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2 pt-4">
+                <AlertDialogCancel className="rounded-xl font-bold uppercase text-[10px] tracking-widest">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 rounded-xl font-black uppercase text-[10px] tracking-widest h-10 px-6">
+                     {isDeleting ? <Loader2 className="animate-spin" /> : 'Yes, Delete Permanently'}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
