@@ -238,7 +238,7 @@ export function ChatInterface({
       </ScrollArea>
 
       {/* Input Footer */}
-      <footer className="p-3 bg-card/80 backdrop-blur-md border-t shrink-0 z-10 pb-20 md:pb-4">
+      <footer className="p-3 bg-card/80 backdrop-blur-md border-t shrink-0 z-10 pb-20 md:pb-4 safe-area-bottom">
         <form onSubmit={handleSendMessage} className="flex w-full items-end gap-2 max-w-5xl mx-auto">
             <div className="flex-1 flex items-center bg-background rounded-2xl px-2 py-1 shadow-sm border focus-within:ring-1 focus-within:ring-primary/30 transition-all min-h-[44px]">
                 <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-9 w-9 shrink-0 hover:bg-muted/50">

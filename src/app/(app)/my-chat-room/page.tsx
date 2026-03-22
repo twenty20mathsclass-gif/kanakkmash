@@ -322,9 +322,9 @@ export default function MyChatRoomPage() {
                 } else if (user.role === 'teacher') {
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
-                    const allUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                    const allUsersList = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                     const teacherAssignments = user.assignedClasses || [];
-                    const myStudents = allUsers.filter(u => {
+                    const myStudents = allUsersList.filter(u => {
                         if (u.role !== 'student') return false;
                         if (u.referredBy === user.id) return true;
                         const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
@@ -482,7 +482,7 @@ export default function MyChatRoomPage() {
     }, [selectedContact, user]);
 
     return (
-        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-10rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
+        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100dvh-10rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
             <div className="flex h-full divide-x">
                 {/* Contact List Sidebar */}
                 <div className={cn(
@@ -563,7 +563,7 @@ export default function MyChatRoomPage() {
                     !selectedContact && "hidden md:flex items-center justify-center"
                 )}>
                     {user && selectedContact ? (
-                        <div className="flex h-full w-full">
+                        <div className="flex h-full w-full relative">
                             <div className={cn("flex flex-col h-full w-full", showInfo && "hidden lg:flex")}>
                                 <ChatInterface 
                                     currentUser={user} 
@@ -578,10 +578,10 @@ export default function MyChatRoomPage() {
                             {/* Info Panel */}
                             {showInfo && (
                                 <div className={cn(
-                                    "absolute inset-0 z-[60] bg-background lg:relative lg:w-[350px] lg:border-l lg:z-0 flex flex-col",
+                                    "absolute inset-0 z-[60] bg-background lg:relative lg:w-[350px] lg:border-l lg:z-0 flex flex-col transition-all animate-in slide-in-from-right-full md:slide-in-from-right-0",
                                     !showInfo && "hidden"
                                 )}>
-                                    <div className="p-4 border-b flex items-center justify-between bg-card">
+                                    <div className="p-4 border-b flex items-center justify-between bg-card shrink-0">
                                         <h3 className="font-bold flex items-center gap-2">
                                             <Info className="h-4 w-4 text-primary" />
                                             {selectedContact.isGroup ? 'Group Info' : 'Contact Info'}
