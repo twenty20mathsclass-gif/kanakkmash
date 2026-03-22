@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -30,7 +31,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex min-h-0 w-full flex-col items-center justify-center px-4 py-4 sm:py-8 lg:py-12">
+      <section className="relative flex flex-col items-center justify-center w-full px-4 py-2 sm:py-8 lg:py-12 flex-grow">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -59,7 +60,7 @@ export default function Home() {
                   unoptimized
                 />
               </h1>
-              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg lg:text-xl text-foreground/80">
+              <p className="mx-auto mt-4 sm:mt-6 max-w-3xl text-sm sm:text-lg lg:text-xl text-foreground/80 leading-relaxed px-2">
                 An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
               </p>
             </div>
@@ -70,7 +71,7 @@ export default function Home() {
               <Button size="lg" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base bg-gradient-to-r from-primary via-accent to-chart-3 text-primary-foreground transition-all [background-size:200%_auto] animate-gradient-pan hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base rounded-full">
+              <Button size="lg" variant="outline" asChild className="h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base rounded-full bg-background/50 backdrop-blur-sm">
                 <Link href="/sign-in">Login</Link>
               </Button>
               <InstallButton />

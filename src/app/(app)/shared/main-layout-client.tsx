@@ -13,10 +13,7 @@ import {
     BookPlus,
     FilePlus2,
     PenSquare,
-    TrendingDown,
-    TrendingUp,
-    PlusSquare,
-    DollarSign,
+    IndianRupee,
     Users, 
     LayoutDashboard,
     Home,
@@ -39,6 +36,7 @@ import {
     Youtube,
     Settings,
     Megaphone,
+    LayoutGrid,
 } from 'lucide-react';
 
 const AdminPromoterTeacherLayout = dynamic(() => import('./admin-promoter-teacher-layout'), {
@@ -66,7 +64,7 @@ export default function MainLayoutClient({
 
   useEffect(() => {
     const authPages = ['/sign-in', '/sign-up'];
-    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results'];
+    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results', '/fee-structure'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
 
@@ -156,17 +154,18 @@ export default function MainLayoutClient({
 
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/course-model-controller', label: 'Course Model Controller', icon: LayoutGrid },
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
+    { href: '/admin/student-results', label: 'Student Results', icon: Award },
     { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
-    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
     { href: '/admin/testimonials', label: 'Testimonials', icon: Quote },
     { href: '/admin/blog/create', label: 'Blog Creator', icon: PenSquare },
     { href: '/admin/courses/create', label: 'Course Creator', icon: BookPlus },
-    { href: '/admin/fees', label: 'Fee Management', icon: DollarSign },
+    { href: '/admin/fees', label: 'Fee Management', icon: IndianRupee },
     { href: '/admin/accountant/salaries', label: 'Teacher Salaries', icon: Banknote },
     { href: '/admin/accountant/invoices', label: 'Student Invoices', icon: Receipt },
   ];

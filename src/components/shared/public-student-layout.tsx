@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -49,39 +50,30 @@ export default function PublicStudentLayout({
             isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
         )}>
             
-            {/* Desktop Sticky Announcement Banner */}
+            {/* Desktop Sticky Announcement Banner - At the absolute top of the viewport scroll */}
             <div className="sticky top-0 z-40 w-full shrink-0 hidden md:block">
                 <AnnouncementBanner />
             </div>
 
             <Suspense fallback={null}>
-                {/* Mobile fixed header */}
+                {/* Mobile fixed header - Stays at top-0 */}
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
                 
-                {/* Mobile Sticky Announcement Banner - Positioned under fixed header */}
-                <div className="sticky top-16 z-40 w-full shrink-0 md:hidden">
-                    <AnnouncementBanner />
-                </div>
-
+                {/* Public Navigation - Hidden on mobile, fixed below announcement bar on desktop */}
                 {user ? (
-                <>
                     <div className="hidden md:block">
                         <PublicHeader user={user} onSignOut={onSignOut} navItems={studentNav} />
                     </div>
-                    <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-                        <AppleStyleDock items={studentNav} user={user} onSignOut={onSignOut} />
-                    </div>
-                </>
                 ) : (
-                <>
                     <div className="hidden md:block">
                         <PublicHeader navItems={publicNav} />
                     </div>
-                    <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-                        <HomePageDock navItems={publicNav} />
-                    </div>
-                </>
                 )}
+
+                {/* Bottom Dock for Mobile */}
+                <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
+                    <AppleStyleDock items={user ? studentNav : publicNav} user={user} onSignOut={onSignOut} />
+                </div>
             </Suspense>
 
             {/* Layout content container */}
@@ -89,14 +81,26 @@ export default function PublicStudentLayout({
                 "flex-grow flex flex-col w-full min-h-0",
                 isHomepage ? "" : ""
             )}>
-                {/* Fixed Spacers for Navbars */}
-                <div className="h-16 md:hidden shrink-0" />
+                {/* Fixed Spacers for Desktop Navbars */}
                 {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
 
                 <main className={cn(
                     "flex-grow flex flex-col w-full min-h-0",
                     isHomepage ? "overflow-y-auto" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
                 )}>
+                    {/* Mobile Spacer for fixed header */}
+                    <div className="h-16 md:hidden shrink-0" />
+
+                    {/* Mobile Sticky Announcement Banner - Positioned inside main scroller so it sticks to top-16 (under fixed header) */}
+                    <div className="sticky top-0 md:hidden z-40 w-full shrink-0">
+                        <div className="relative">
+                            {/* This sub-container actually handles the sticky offset logic */}
+                            <div className="sticky top-0">
+                                <AnnouncementBanner />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className={cn(
                         "w-full flex-grow flex flex-col",
                         isHomepage ? "justify-center items-center py-4" : ""
@@ -119,7 +123,7 @@ export default function PublicStudentLayout({
                 </main>
             </div>
 
-            {/* Standard Footer for other pages */}
+            {/* Standard Footer for non-homepage scroll */}
             {!isHomepage && isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
                     <div className="container px-4 md:px-6">

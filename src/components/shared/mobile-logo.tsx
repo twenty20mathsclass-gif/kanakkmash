@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +11,7 @@ export function MobileLogo({ user, onSignOut }: { user: User | null; onSignOut?:
   const logoLink = '/';
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-background p-4 md:hidden">
+    <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur-md p-4 md:hidden">
       <Link href={logoLink}>
           <Image
               src="/logo mlm@4x.png"
