@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
+import { collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, documentId, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Exam, Schedule } from '@/lib/definitions';
 import { ScheduledItemsList } from '@/components/teacher/scheduled-items-list';
@@ -244,6 +244,15 @@ export function CreateExamForm() {
         }
     }
 
+    const cleanObject = (obj: any) => {
+        const cleaned: any = {};
+        Object.keys(obj).forEach(key => {
+            if (obj[key] !== undefined && obj[key] !== null) {
+                cleaned[key] = obj[key];
+            }
+        });
+        return cleaned;
+    }
 
     const onSubmit = async (data: ExamFormValues) => {
         if (!firestore || !user) return;
@@ -260,7 +269,15 @@ export function CreateExamForm() {
             };
 
             if (data.examType === 'mcq') {
-                 examData.questions = data.questions;
+                 examData.questions = data.questions?.map(q => {
+                     const cleaned: any = {
+                         questionText: q.questionText,
+                         options: q.options.map(o => ({ text: o.text })),
+                         correctAnswerIndex: q.correctAnswerIndex
+                     };
+                     if (q.imageUrl) cleaned.imageUrl = q.imageUrl;
+                     return cleaned;
+                 });
             } else {
                 if (data.descriptiveInputMethod === 'upload' && questionPaperUpload.url) {
                     examData.questionPaperUrl = questionPaperUpload.url;
@@ -317,17 +334,49 @@ export function CreateExamForm() {
                 }
             }
             
-            const examDocRef = await addDoc(collection(firestore, 'exams'), examData);
-            scheduleData.examId = examDocRef.id;
-            scheduleData.meetLink = `/exams/take/${examDocRef.id}`;
-            await addDoc(collection(firestore, 'schedules'), scheduleData);
+            const examRef = doc(collection(firestore, 'exams'));
+            const scheduleRef = doc(collection(firestore, 'schedules'));
+
+            const finalExamData = cleanObject(examData);
+            const finalScheduleData = cleanObject({
+                ...scheduleData,
+                examId: examRef.id,
+                meetLink: `/exams/take/${examRef.id}`
+            });
+
+            setDoc(examRef, finalExamData).catch(async (serverError) => {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: examRef.path,
+                        operation: 'create',
+                        requestResourceData: finalExamData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                }
+            });
+
+            setDoc(scheduleRef, finalScheduleData).catch(async (serverError) => {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: scheduleRef.path,
+                        operation: 'create',
+                        requestResourceData: finalScheduleData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                }
+            });
             
-            toast({ title: 'Exam Created!', description: 'Your exam is scheduled.' });
+            toast({ title: 'Exam Created!', description: 'Your exam is being scheduled.' });
             form.reset();
             setQuestionPaperUpload({ file: null, status: 'idle' });
         } catch (err: any) {
-            setError('An error occurred. Please try again.');
-            console.error(err);
+            if (err.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: 'exams or schedules',
+                    operation: 'create',
+                }, { cause: err }));
+            }
+            setError(err.message || 'An error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
