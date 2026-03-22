@@ -90,37 +90,23 @@ service cloud.firestore {
 
     match /groups/{groupId} {
       function isMember() {
-        // resource.data is the group document
         return request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
       }
       
-      function isGroupMember(gId) {
-        let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
-        return request.auth != null && (
-          request.auth.uid in groupData.members || 
-          isAdmin()
-        );
-      }
-      
-      function isGroupAdmin(gId) {
-        let groupData = get(/databases/$(database)/documents/groups/$(gId)).data;
-        return request.auth != null && (
-          request.auth.uid in groupData.admins || 
-          isAdmin() ||
-          isRole('teacher')
-        );
+      function getGroup() {
+        return get(/databases/$(database)/documents/groups/$(groupId)).data;
       }
 
       allow read: if isMember();
       allow create: if isRole('teacher') || isAdmin();
-      allow update: if isMember() || isAdmin() || isGroupAdmin(groupId);
-      allow delete: if isAdmin() || isGroupAdmin(groupId);
+      allow update: if isMember() || isAdmin();
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid in resource.data.admins);
 
       match /messages/{messageId} {
-        allow read: if isGroupMember(groupId);
-        allow create: if isGroupMember(groupId) && request.resource.data.senderId == request.auth.uid;
-        allow update: if isGroupMember(groupId);
-        allow delete: if isGroupAdmin(groupId) || (resource.data.senderId == request.auth.uid);
+        allow read: if request.auth != null && (request.auth.uid in getGroup().members || isAdmin());
+        allow create: if request.auth != null && (request.auth.uid in getGroup().members) && request.resource.data.senderId == request.auth.uid;
+        allow update: if request.auth != null && (request.auth.uid in getGroup().members);
+        allow delete: if isAdmin() || (request.auth != null && (request.auth.uid in getGroup().admins || request.auth.uid == resource.data.senderId));
       }
     }
 
