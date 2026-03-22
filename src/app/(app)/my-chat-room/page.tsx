@@ -67,7 +67,6 @@ const ContactItem = ({
     onSelect: () => void;
     currentUserId: string;
 }) => {
-    // Hook must be called unconditionally at the top level
     const isOnline = useOnlineStatus(contact.isGroup ? null : (contact as User).id);
 
     const getSubtitle = () => {
@@ -307,7 +306,6 @@ export default function MyChatRoomPage() {
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [isEditingGroup, setIsEditingGroup] = useState(false);
     
-    // Unconditionally call the hook at the top level
     const isPartnerOnline = useOnlineStatus(selectedContact && !selectedContact.isGroup ? (selectedContact as User).id : null);
 
     const unsubsRef = useRef<Unsubscribe[]>([]);
@@ -571,7 +569,7 @@ export default function MyChatRoomPage() {
     }, [selectedContact, user]);
 
     return (
-        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100dvh-10rem)] overflow-hidden bg-background border-none rounded-3xl shadow-2xl relative">
+        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100dvh-10rem)] overflow-hidden bg-background border-none rounded-3xl shadow-2xl relative mt-4 md:mt-0">
             <div className="flex h-full divide-x-0 md:divide-x border-none">
                 {/* Contact List Sidebar */}
                 <div className={cn(
