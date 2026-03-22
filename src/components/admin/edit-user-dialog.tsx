@@ -50,7 +50,8 @@ const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     role: z.enum(['student', 'teacher', 'admin', 'promoter']),
     teachingMode: z.enum(['group', 'one to one', 'both']).optional(),
-    hourlyRate: z.coerce.number().optional(),
+    hourlyRateGroup: z.coerce.number().optional(),
+    hourlyRateOneToOne: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
     assignedClasses: z.array(z.string()).optional(),
     assignedCompetitiveExams: z.array(z.string()).optional(),
@@ -78,7 +79,8 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
       name: user.name,
       role: user.role,
       teachingMode: user.teachingMode || 'both',
-      hourlyRate: user.hourlyRate || 0,
+      hourlyRateGroup: user.hourlyRateGroup || user.hourlyRate || 0,
+      hourlyRateOneToOne: user.hourlyRateOneToOne || user.hourlyRate || 0,
       rewardPercentage: user.rewardPercentage || 10,
       assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
       assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
@@ -96,7 +98,8 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             name: user.name,
             role: user.role,
             teachingMode: user.teachingMode || 'both',
-            hourlyRate: user.hourlyRate || 0,
+            hourlyRateGroup: user.hourlyRateGroup || user.hourlyRate || 0,
+            hourlyRateOneToOne: user.hourlyRateOneToOne || user.hourlyRate || 0,
             rewardPercentage: user.rewardPercentage || 10,
             assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
             assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
@@ -140,7 +143,10 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
         await updateDoc(userDocRef, dataToUpdate);
 
         if (data.role === 'teacher') {
-            const privateDetails: TeacherPrivateDetails = { hourlyRate: data.hourlyRate };
+            const privateDetails: TeacherPrivateDetails = { 
+                hourlyRateGroup: data.hourlyRateGroup,
+                hourlyRateOneToOne: data.hourlyRateOneToOne,
+            };
             await setDoc(teacherPrivateDetailsRef, privateDetails, { merge: true });
         }
         
@@ -251,19 +257,34 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                             </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="hourlyRate"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Hourly Rate (INR)</FormLabel>
-                            <FormControl>
-                                <Input type="number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="hourlyRateGroup"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Hourly Rate (Group)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="hourlyRateOneToOne"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Hourly Rate (1-1)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     <FormField
                         control={form.control}
                         name="assignedClasses"

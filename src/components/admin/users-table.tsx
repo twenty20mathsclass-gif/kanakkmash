@@ -118,8 +118,16 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     } className="capitalize">{user.role}</Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                        {user.role === 'teacher' && user.hourlyRate ? (
-                            <div className="flex items-center gap-1 text-sm"><IndianRupee className="h-4 w-4" />{user.hourlyRate.toLocaleString('en-IN')}/hr</div>
+                        {user.role === 'teacher' ? (
+                            <div className="space-y-1">
+                                {(user.hourlyRateGroup || user.hourlyRate) ? (
+                                    <div className="flex items-center gap-1 text-[10px]"><Badge variant="outline" className="px-1 py-0 h-auto text-[9px]">G</Badge><IndianRupee className="h-3 w-3" />{(user.hourlyRateGroup || user.hourlyRate)?.toLocaleString('en-IN')}/hr</div>
+                                ) : null}
+                                {(user.hourlyRateOneToOne || user.hourlyRate) ? (
+                                    <div className="flex items-center gap-1 text-[10px]"><Badge variant="outline" className="px-1 py-0 h-auto text-[9px]">1-1</Badge><IndianRupee className="h-3 w-3" />{(user.hourlyRateOneToOne || user.hourlyRate)?.toLocaleString('en-IN')}/hr</div>
+                                ) : null}
+                                {!(user.hourlyRateGroup || user.hourlyRateOneToOne || user.hourlyRate) && <span className="text-muted-foreground">-</span>}
+                            </div>
                         ) : user.role === 'promoter' && user.rewardPercentage ? (
                             <div className="flex items-center gap-1 text-sm">{user.rewardPercentage}% Reward</div>
                         ) : (

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,7 +9,7 @@ import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp,
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -26,13 +25,14 @@ import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 type ScheduleWithAttendance = Schedule & { attendance: number };
 
 const addPaymentSchema = z.object({
     paymentMonth: z.string().min(1, 'Please select a month.'),
-    hourlyRate: z.coerce.number().positive("Hourly rate must be positive."),
-    totalHours: z.coerce.number().min(0, "Total hours cannot be negative."),
+    hourlyRateGroup: z.coerce.number().min(0, "Rate cannot be negative."),
+    hourlyRateOneToOne: z.coerce.number().min(0, "Rate cannot be negative."),
 });
 type AddPaymentValues = z.infer<typeof addPaymentSchema>;
 
@@ -52,8 +52,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
         defaultValues: {
-            hourlyRate: 0,
-            totalHours: 0,
+            hourlyRateGroup: 0,
+            hourlyRateOneToOne: 0,
         },
     });
 
@@ -75,11 +75,30 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         return options.reverse(); // Show most recent first
     }, [teacher]);
 
-    const hourlyRate = form.watch('hourlyRate');
-    const totalHours = form.watch('totalHours');
-    const calculatedAmount = useMemo(() => hourlyRate * totalHours, [hourlyRate, totalHours]);
+    const rateGroup = form.watch('hourlyRateGroup');
+    const rateOneToOne = form.watch('hourlyRateOneToOne');
 
-    const getDurationInMinutes = (startTime: string, endTime: string): number => {
+    const monthlyStats = useMemo(() => {
+        let groupMinutes = 0;
+        let oneToOneMinutes = 0;
+
+        monthlySchedules.forEach(item => {
+            const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
+            if (item.learningMode === 'one to one' || item.studentId) {
+                oneToOneMinutes += duration;
+            } else {
+                groupMinutes += duration;
+            }
+        });
+
+        const groupHours = Math.round((groupMinutes / 60) * 100) / 100;
+        const oneToOneHours = Math.round((oneToOneMinutes / 60) * 100) / 100;
+        const totalAmount = (groupHours * rateGroup) + (oneToOneHours * rateOneToOne);
+
+        return { groupHours, oneToOneHours, totalAmount };
+    }, [monthlySchedules, rateGroup, rateOneToOne]);
+
+    function getDurationInMinutes(startTime: string, endTime: string): number {
         if (!startTime || !endTime) return 0;
         try {
             const start = parse(startTime, 'HH:mm', new Date());
@@ -90,7 +109,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
              console.warn("Could not parse time for schedule", e);
              return 0;
         }
-    };
+    }
 
 
     useEffect(() => {
@@ -130,8 +149,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     useEffect(() => {
         if (isOpen && teacher) {
             form.reset({
-                hourlyRate: teacher.hourlyRate || 0,
-                totalHours: 0,
+                hourlyRateGroup: teacher.hourlyRateGroup || teacher.hourlyRate || 0,
+                hourlyRateOneToOne: teacher.hourlyRateOneToOne || teacher.hourlyRate || 0,
                 paymentMonth: undefined,
             });
             setSelectedMonth(undefined);
@@ -143,7 +162,6 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     useEffect(() => {
         if (!selectedMonth || !firestore) {
             setMonthlySchedules([]);
-            form.setValue('totalHours', 0);
             return;
         }
 
@@ -166,25 +184,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             
             const detailedSchedules = await Promise.all(scheduleDetailsPromises);
             setMonthlySchedules(detailedSchedules);
-
-            const totalMinutes = schedulesInMonth.reduce((acc, schedule) => {
-                let duration = 0;
-                if (schedule.type === 'exam' && typeof schedule.duration === 'number') {
-                    duration = schedule.duration;
-                }
-                if (schedule.type === 'class' && schedule.startTime && schedule.endTime) {
-                    duration = getDurationInMinutes(schedule.startTime, schedule.endTime);
-                }
-                return acc + duration;
-            }, 0);
-            
-            form.setValue('totalHours', Math.round((totalMinutes / 60) * 100) / 100);
             setLoadingSchedules(false);
         };
         
         fetchMonthDetails();
 
-    }, [selectedMonth, allSchedules, firestore, form]);
+    }, [selectedMonth, allSchedules, firestore]);
 
 
     if (!teacher) return null;
@@ -216,18 +221,24 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             paymentDate: serverTimestamp(),
             startDate: startDate,
             endDate: endDate,
-            hourlyRate: data.hourlyRate,
-            totalHours: data.totalHours,
-            amount: data.hourlyRate * data.totalHours,
+            hourlyRateGroup: data.hourlyRateGroup,
+            hourlyRateOneToOne: data.hourlyRateOneToOne,
+            totalHoursGroup: monthlyStats.groupHours,
+            totalHoursOneToOne: monthlyStats.oneToOneHours,
+            totalHours: monthlyStats.groupHours + monthlyStats.oneToOneHours,
+            amount: monthlyStats.totalAmount,
         };
         batch.set(newInvoiceRef, invoiceData);
 
         const salaryPaymentRef = doc(collection(firestore, 'users', teacher.id, 'salaryPayments'));
         const paymentData = {
             teacherId: teacher.id,
-            hourlyRate: data.hourlyRate,
-            totalHours: data.totalHours,
-            amount: data.hourlyRate * data.totalHours,
+            hourlyRateGroup: data.hourlyRateGroup,
+            hourlyRateOneToOne: data.hourlyRateOneToOne,
+            totalHoursGroup: monthlyStats.groupHours,
+            totalHoursOneToOne: monthlyStats.oneToOneHours,
+            totalHours: monthlyStats.groupHours + monthlyStats.oneToOneHours,
+            amount: monthlyStats.totalAmount,
             paymentDate: serverTimestamp(),
             startDate: startDate,
             endDate: endDate,
@@ -258,10 +269,10 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl">
+            <DialogContent className="sm:max-w-5xl">
                 <DialogHeader>
                     <DialogTitle>Salary Details for {teacher.name}</DialogTitle>
-                    <DialogDescription>View payment history and record new salary payments.</DialogDescription>
+                    <DialogDescription>View payment history and record new salary payments based on Group and One-to-One hours.</DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-6">
@@ -272,7 +283,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              payments.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <Table>
-                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Hourly Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead><TableHead className="text-right">Invoice</TableHead></TableRow></TableHeader>
+                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Group Rate</TableHead><TableHead>1-1 Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead><TableHead className="text-right">Invoice</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {payments.map(p => (
                                                 <TableRow key={p.id}>
@@ -283,9 +294,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                                         }
                                                     </TableCell>
                                                     <TableCell className="whitespace-nowrap">{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
-                                                    <TableCell className="flex items-center gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.hourlyRate.toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell className="whitespace-nowrap flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateGroup || p.hourlyRate || 0).toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell className="whitespace-nowrap">
+                                                        <div className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateOneToOne || p.hourlyRate || 0).toLocaleString('en-IN')}</div>
+                                                    </TableCell>
                                                     <TableCell>{p.totalHours}</TableCell>
-                                                    <TableCell className="text-right font-medium flex items-center justify-end gap-1 whitespace-nowrap"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</TableCell>
+                                                    <TableCell className="text-right font-medium whitespace-nowrap"><div className="flex items-center justify-end gap-1"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</div></TableCell>
                                                     <TableCell className="text-right">
                                                         {p.invoiceId && (
                                                             <Button asChild variant="ghost" size="icon">
@@ -325,19 +339,17 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField name="hourlyRate" control={form.control} render={({field}) => (
+                                    <FormField name="hourlyRateGroup" control={form.control} render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Hourly Rate (INR)</FormLabel>
+                                            <FormLabel>Group Hourly Rate (INR)</FormLabel>
                                             <FormControl><Input type="number" {...field}/></FormControl>
-                                            <FormDescription>Pre-filled from teacher's profile.</FormDescription>
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
-                                    <FormField name="totalHours" control={form.control} render={({field}) => (
+                                    <FormField name="hourlyRateOneToOne" control={form.control} render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Total Hours</FormLabel>
-                                            <FormControl><Input type="number" {...field} readOnly className="bg-muted"/></FormControl>
-                                            <FormDescription>Auto-calculated from selected month.</FormDescription>
+                                            <FormLabel>One-to-One Hourly Rate (INR)</FormLabel>
+                                            <FormControl><Input type="number" {...field}/></FormControl>
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
@@ -345,36 +357,55 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                 {loadingSchedules ? (
                                     <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
                                 ) : monthlySchedules.length > 0 ? (
-                                     <div className="space-y-2">
-                                        <h4 className="font-semibold">Schedules for {format(parse(selectedMonth!, 'yyyy-MM', new Date()), 'MMMM yyyy')}</h4>
-                                        <div className="overflow-x-auto">
-                                            <Table>
-                                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Time</TableHead><TableHead>Title</TableHead><TableHead>Hours</TableHead><TableHead>Attendees</TableHead></TableRow></TableHeader>
-                                                <TableBody>
-                                                    {monthlySchedules.map(item => {
-                                                        const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
-                                                        return (
-                                                            <TableRow key={item.id}>
-                                                                <TableCell className="whitespace-nowrap">{format(item.date.toDate(), 'MMM dd')}</TableCell>
-                                                                <TableCell className="whitespace-nowrap">{format(parse(item.startTime, 'HH:mm', new Date()), 'p')}</TableCell>
-                                                                <TableCell>{item.title}</TableCell>
-                                                                <TableCell>{(duration / 60).toFixed(2)}</TableCell>
-                                                                <TableCell className="flex items-center gap-1 whitespace-nowrap"><UsersIconComponent className="h-4 w-4"/>{item.attendance}</TableCell>
-                                                            </TableRow>
-                                                        )
-                                                    })}
-                                                </TableBody>
-                                            </Table>
+                                     <div className="space-y-4">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                            <div className="p-3 border rounded-md bg-muted/30">
+                                                <p className="text-xs text-muted-foreground uppercase font-bold">Group Hours</p>
+                                                <p className="text-xl font-bold">{monthlyStats.groupHours}</p>
+                                            </div>
+                                            <div className="p-3 border rounded-md bg-muted/30">
+                                                <p className="text-xs text-muted-foreground uppercase font-bold">One-to-One Hours</p>
+                                                <p className="text-xl font-bold">{monthlyStats.oneToOneHours}</p>
+                                            </div>
+                                            <div className="p-3 border rounded-md bg-primary/10 col-span-2 sm:col-span-1">
+                                                <p className="text-xs text-primary uppercase font-bold">Total Amount</p>
+                                                <p className="text-xl font-bold flex items-center"><IndianRupee className="h-5 w-5 mr-1" />{monthlyStats.totalAmount.toLocaleString('en-IN')}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <h4 className="font-semibold flex items-center gap-2"><CalendarIcon className="h-4 w-4"/> Monthly Session Breakdown</h4>
+                                            <div className="overflow-x-auto border rounded-md">
+                                                <Table>
+                                                    <TableHeader className="bg-muted/50"><TableRow><TableHead>Date</TableHead><TableHead>Time</TableHead><TableHead>Title</TableHead><TableHead>Mode</TableHead><TableHead>Hours</TableHead><TableHead>Attendees</TableHead></TableRow></TableHeader>
+                                                    <TableBody>
+                                                        {monthlySchedules.map(item => {
+                                                            const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
+                                                            const isOneToOne = item.learningMode === 'one to one' || item.studentId;
+                                                            return (
+                                                                <TableRow key={item.id}>
+                                                                    <TableCell className="whitespace-nowrap">{format(item.date.toDate(), 'MMM dd')}</TableCell>
+                                                                    <TableCell className="whitespace-nowrap">{format(parse(item.startTime, 'HH:mm', new Date()), 'p')}</TableCell>
+                                                                    <TableCell className="font-medium">{item.title}</TableCell>
+                                                                    <TableCell>
+                                                                        <Badge variant={isOneToOne ? "secondary" : "outline"} className="capitalize">
+                                                                            {isOneToOne ? 'One-to-One' : 'Group'}
+                                                                        </Badge>
+                                                                    </TableCell>
+                                                                    <TableCell>{(duration / 60).toFixed(2)}</TableCell>
+                                                                    <TableCell className="flex items-center gap-1 whitespace-nowrap"><UsersIconComponent className="h-4 w-4"/>{item.attendance}</TableCell>
+                                                                </TableRow>
+                                                            )
+                                                        })}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
                                         </div>
                                      </div>
                                 ) : selectedMonth && <p className="text-sm text-center text-muted-foreground p-4 border rounded-md">No schedules found for this month.</p>}
 
-                                <div className="p-4 bg-muted rounded-md text-center">
-                                    <p className="text-sm text-muted-foreground">Calculated Total Amount</p>
-                                    <p className="text-2xl font-bold flex items-center justify-center gap-1"><IndianRupee className="h-6 w-6" />{calculatedAmount.toLocaleString('en-IN')}</p>
-                                </div>
                                 {formError && <Alert variant="destructive"><AlertCircle className="h-4 w-4"/><AlertTitle>Error</AlertTitle><AlertDescription>{formError}</AlertDescription></Alert>}
-                                <Button type="submit" disabled={isSubmitting || calculatedAmount <= 0}><PlusCircle className="mr-2 h-4 w-4"/> {isSubmitting ? 'Recording...' : 'Record Payment'}</Button>
+                                <Button type="submit" disabled={isSubmitting || monthlyStats.totalAmount <= 0} className="w-full sm:w-auto"><PlusCircle className="mr-2 h-4 w-4"/> {isSubmitting ? 'Recording...' : 'Record Payment'}</Button>
                             </form>
                            </Form>
                         </CardContent>
@@ -458,6 +489,17 @@ export default function AccountantSalariesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                <div className="flex justify-between items-center px-4 py-2 bg-muted rounded-md mb-2">
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Rate</p>
+                                        <p className="font-bold flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateGroup || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Rate</p>
+                                        <p className="font-bold flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateOneToOne || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                    </div>
+                                </div>
+
                                 {teacher.paymentMethod === 'upi' ? (
                                     <div className="space-y-3 rounded-md border p-4 text-sm">
                                         <div className="font-semibold text-center mb-2">UPI Details</div>

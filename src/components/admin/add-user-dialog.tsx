@@ -40,7 +40,8 @@ const createUserSchema = z.object({
     email: z.string().email('Invalid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['student', 'teacher', 'promoter']),
-    hourlyRate: z.coerce.number().optional(),
+    hourlyRateGroup: z.coerce.number().optional(),
+    hourlyRateOneToOne: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
     teachingMode: z.enum(['group', 'one to one', 'both']).optional(),
 });
@@ -64,7 +65,8 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
     const formObject = Object.fromEntries(formData.entries());
     
     if (formObject.role !== 'teacher') {
-        delete formObject.hourlyRate;
+        delete formObject.hourlyRateGroup;
+        delete formObject.hourlyRateOneToOne;
         delete formObject.teachingMode;
     }
     if (formObject.role !== 'promoter') {
@@ -81,7 +83,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         return;
     }
 
-    const { name, email, password, role, hourlyRate, rewardPercentage, teachingMode } = validatedFields.data;
+    const { name, email, password, role, hourlyRateGroup, hourlyRateOneToOne, rewardPercentage, teachingMode } = validatedFields.data;
 
     if (!firestore) {
         setError("Firestore is not available. Please try again later.");
@@ -120,8 +122,11 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         
         await setDoc(doc(firestore, 'users', user.uid), userProfile);
         
-        if(role === 'teacher' && (hourlyRate || hourlyRate === 0)) {
-            const privateDetails: TeacherPrivateDetails = { hourlyRate };
+        if(role === 'teacher') {
+            const privateDetails: TeacherPrivateDetails = { 
+                hourlyRateGroup: hourlyRateGroup || 0,
+                hourlyRateOneToOne: hourlyRateOneToOne || 0,
+            };
             await setDoc(doc(firestore, 'users', user.uid, 'teacher_details', 'payment'), privateDetails);
         }
         
@@ -145,7 +150,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
             const permissionError = new FirestorePermissionError({
                 path: `users/${user.uid}`,
                 operation: 'create',
-                requestResourceData: { name, email, role, hourlyRate, rewardPercentage }
+                requestResourceData: { name, email, role, hourlyRateGroup, hourlyRateOneToOne, rewardPercentage }
             }, { cause: e });
             errorEmitter.emit('permission-error', permissionError);
             setError('Permission denied when creating the user profile in the database.');
@@ -244,12 +249,21 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="hourlyRate">Hourly Rate (INR)</Label>
-                    <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={0} />
-                    {validationErrors?.hourlyRate && (
-                        <p className="text-sm text-destructive">{validationErrors.hourlyRate[0]}</p>
-                    )}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="hourlyRateGroup">Hourly Rate (Group)</Label>
+                        <Input id="hourlyRateGroup" name="hourlyRateGroup" type="number" defaultValue={0} />
+                        {validationErrors?.hourlyRateGroup && (
+                            <p className="text-sm text-destructive">{validationErrors.hourlyRateGroup[0]}</p>
+                        )}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="hourlyRateOneToOne">Hourly Rate (1-1)</Label>
+                        <Input id="hourlyRateOneToOne" name="hourlyRateOneToOne" type="number" defaultValue={0} />
+                        {validationErrors?.hourlyRateOneToOne && (
+                            <p className="text-sm text-destructive">{validationErrors.hourlyRateOneToOne[0]}</p>
+                        )}
+                    </div>
                 </div>
             </>
           )}

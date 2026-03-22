@@ -26,6 +26,8 @@ export type User = {
   upiId?: string;
   upiQrCodeUrl?: string;
   hourlyRate?: number;
+  hourlyRateGroup?: number;
+  hourlyRateOneToOne?: number;
   rewardPercentage?: number;
   assignedClasses?: string[];
   isDisabled?: boolean;
@@ -49,6 +51,8 @@ export type TeacherPrivateDetails = {
     upiId?: string;
     upiQrCodeUrl?: string;
     hourlyRate?: number;
+    hourlyRateGroup?: number;
+    hourlyRateOneToOne?: number;
 };
 
 export type PromoterPrivateDetails = {
@@ -220,8 +224,12 @@ export type Testimonial = {
 export type SalaryPayment = {
   id?: string;
   teacherId: string;
-  hourlyRate: number;
+  hourlyRate?: number;
+  hourlyRateGroup?: number;
+  hourlyRateOneToOne?: number;
   totalHours: number;
+  totalHoursGroup?: number;
+  totalHoursOneToOne?: number;
   amount: number;
   paymentDate: Timestamp;
   startDate: Timestamp;
@@ -238,8 +246,12 @@ export type SalaryInvoice = {
     paymentDate: Timestamp;
     startDate: Timestamp;
     endDate: Timestamp;
-    hourlyRate: number;
+    hourlyRate?: number;
+    hourlyRateGroup?: number;
+    hourlyRateOneToOne?: number;
     totalHours: number;
+    totalHoursGroup?: number;
+    totalHoursOneToOne?: number;
     amount: number;
 }
 
