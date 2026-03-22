@@ -69,18 +69,19 @@ export default function PublicStudentLayout({
                 )}
             </Suspense>
             
+            <div className="w-full pt-20 md:pt-24 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+                <AnnouncementBanner />
+            </div>
+
             <main className={cn(
                 "flex-grow flex flex-col",
-                isHomepage ? "pt-24 justify-center items-center" : "pt-24 pb-12 px-4 md:px-6 lg:px-8"
+                isHomepage ? "justify-center items-center" : "pb-12 px-4 md:px-6 lg:px-8"
             )}>
                 {children}
             </main>
 
             {isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4">
-                    <div className="w-full px-4 md:px-6">
-                        <AnnouncementBanner />
-                    </div>
                     <div className="container px-4 md:px-6">
                         {year && (
                         <p className="text-center text-sm text-foreground/60">
