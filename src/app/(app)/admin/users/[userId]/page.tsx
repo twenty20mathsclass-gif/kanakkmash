@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase } from '@/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
 import type { User, Schedule, SalaryPayment, Invoice, ReferredStudent, Reward, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee, Ban, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 export default function UserProfilePage() {
@@ -24,10 +25,12 @@ export default function UserProfilePage() {
     const userId = params.userId as string;
     const router = useRouter();
     const { firestore } = useFirebase();
+    const { toast } = useToast();
 
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [statusLoading, setStatusLoading] = useState(false);
     
     // Data states
     const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -119,6 +122,34 @@ export default function UserProfilePage() {
     useEffect(() => {
         fetchUserData();
     }, [firestore, userId]);
+
+    const handleToggleStatus = async () => {
+        if (!firestore || !user) return;
+        setStatusLoading(true);
+        const userRef = doc(firestore, 'users', user.id);
+        const newStatus = !user.isDisabled;
+
+        try {
+            await updateDoc(userRef, { isDisabled: newStatus });
+            setUser({ ...user, isDisabled: newStatus });
+            toast({
+                title: newStatus ? "Account Disabled" : "Account Enabled",
+                description: `${user.name}'s account has been ${newStatus ? 'disabled' : 'enabled'}.`
+            });
+        } catch (e: any) {
+            if (e.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `users/${user.id}`, operation: 'update', requestResourceData: { isDisabled: newStatus } }, { cause: e }));
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Update Failed",
+                    description: "Could not update user status."
+                });
+            }
+        } finally {
+            setStatusLoading(false);
+        }
+    };
     
     if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
     if (error) return <div className="text-destructive text-center">{error}</div>;
@@ -144,7 +175,10 @@ export default function UserProfilePage() {
                             <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <CardTitle className="text-2xl font-bold">{user.name}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-2xl font-bold">{user.name}</CardTitle>
+                                {user.isDisabled && <Badge variant="destructive">Disabled</Badge>}
+                            </div>
                             <CardDescription>
                                 <Badge className="capitalize">{user.role}</Badge>
                             </CardDescription>
@@ -154,7 +188,21 @@ export default function UserProfilePage() {
                             </div>
                         </div>
                     </div>
-                     <Button onClick={() => setIsEditDialogOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit User</Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit User
+                        </Button>
+                        <Button 
+                            variant={user.isDisabled ? "secondary" : "destructive"} 
+                            onClick={handleToggleStatus}
+                            disabled={statusLoading}
+                        >
+                            {statusLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                                user.isDisabled ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ban className="mr-2 h-4 w-4" />
+                            )}
+                            {user.isDisabled ? "Enable Account" : "Disable Account"}
+                        </Button>
+                    </div>
                 </CardHeader>
             </Card>
 

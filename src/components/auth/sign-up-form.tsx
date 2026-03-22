@@ -336,7 +336,7 @@ export function SignUpForm() {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {syllallabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />

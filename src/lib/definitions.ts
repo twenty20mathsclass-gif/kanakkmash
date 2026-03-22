@@ -28,6 +28,7 @@ export type User = {
   hourlyRate?: number;
   rewardPercentage?: number;
   assignedClasses?: string[];
+  isDisabled?: boolean;
 };
 
 export type CourseModel = {
