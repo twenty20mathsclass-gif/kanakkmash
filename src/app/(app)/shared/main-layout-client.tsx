@@ -158,6 +158,7 @@ export default function MainLayoutClient({
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },
     { href: '/admin/student-results', label: 'Student Results', icon: Award },
+    { href: '/my-chat-room', label: 'My Chat Room', icon: MessagesSquare },
     { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/admin/recorded-classes', label: 'Recorded Classes', icon: Youtube },
     { href: '/admin/course-cart', label: 'Course Cart', icon: ShoppingBag },
@@ -183,6 +184,7 @@ export default function MainLayoutClient({
         if (item.href === '/admin' || item.href === '/teacher' || item.href === '/promoter') {
             return pathname === item.href;
         }
+        // Handle nested routes, e.g., /admin/users should match "User Management"
         return pathname.startsWith(item.href) && item.href !== '/';
     })?.label || 'Dashboard';
 
