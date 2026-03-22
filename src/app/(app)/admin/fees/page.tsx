@@ -1,6 +1,6 @@
 /**
- * This file is neutralized to resolve a parallel route conflict with 
- * src/app/admin/fees/page.tsx. The active logic resides in the 
- * root app folder to ensure stable Next.js routing.
+ * This file is intentionally left empty to resolve parallel routing conflicts with src/app/admin/fees/page.tsx.
+ * Do not add a default export to this file.
  */
 export const dynamic = 'force-dynamic';
+export {};
