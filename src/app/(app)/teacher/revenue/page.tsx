@@ -108,7 +108,8 @@ function SalaryHistory() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Payment Date</TableHead>
-                                <TableHead>Hourly Rate</TableHead>
+                                <TableHead>Group Rate</TableHead>
+                                <TableHead>1-1 Rate</TableHead>
                                 <TableHead>Total Hours</TableHead>
                                 <TableHead className="text-right">Amount Paid</TableHead>
                                 <TableHead className="text-right">Invoice</TableHead>
@@ -117,17 +118,27 @@ function SalaryHistory() {
                         <TableBody>
                             {payments.map(payment => (
                                 <TableRow key={payment.id}>
-                                    <TableCell>{payment.paymentDate ? format(payment.paymentDate.toDate(), 'PPP') : 'Processing...'}</TableCell>
-                                    <TableCell className="flex items-center gap-1">
-                                        <IndianRupee className="h-4 w-4" />
-                                        {payment.hourlyRate.toLocaleString('en-IN')}
+                                    <TableCell className="whitespace-nowrap">{payment.paymentDate ? format(payment.paymentDate.toDate(), 'PPP') : 'Processing...'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <div className="flex items-center gap-1">
+                                            <IndianRupee className="h-3 w-3" />
+                                            {(payment.hourlyRateGroup || payment.hourlyRate || 0).toLocaleString('en-IN')}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <div className="flex items-center gap-1">
+                                            <IndianRupee className="h-3 w-3" />
+                                            {(payment.hourlyRateOneToOne || payment.hourlyRate || 0).toLocaleString('en-IN')}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         {payment.totalHours}
                                     </TableCell>
-                                    <TableCell className="text-right font-medium flex items-center justify-end gap-1">
-                                        <IndianRupee className="h-4 w-4" />
-                                        {payment.amount.toLocaleString('en-IN')}
+                                    <TableCell className="text-right font-medium whitespace-nowrap">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <IndianRupee className="h-4 w-4" />
+                                            {payment.amount.toLocaleString('en-IN')}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {payment.invoiceId && (
