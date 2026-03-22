@@ -269,7 +269,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-5xl">
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Salary Details for {teacher.name}</DialogTitle>
                     <DialogDescription>View payment history and record new salary payments based on Group and One-to-One hours.</DialogDescription>
@@ -281,7 +281,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                         <CardContent>
                              {loadingHistory ? <div className="flex justify-center my-8"><Loader2 className="animate-spin" /></div> :
                              payments.length > 0 ? (
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto border rounded-lg">
                                     <Table>
                                         <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Group Rate</TableHead><TableHead>1-1 Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead><TableHead className="text-right">Invoice</TableHead></TableRow></TableHeader>
                                         <TableBody>
@@ -360,40 +360,39 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                      <div className="space-y-4">
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                             <div className="p-3 border rounded-md bg-muted/30">
-                                                <p className="text-xs text-muted-foreground uppercase font-bold">Group Hours</p>
-                                                <p className="text-xl font-bold">{monthlyStats.groupHours}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Hours</p>
+                                                <p className="text-lg font-bold">{monthlyStats.groupHours}</p>
                                             </div>
                                             <div className="p-3 border rounded-md bg-muted/30">
-                                                <p className="text-xs text-muted-foreground uppercase font-bold">One-to-One Hours</p>
-                                                <p className="text-xl font-bold">{monthlyStats.oneToOneHours}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Hours</p>
+                                                <p className="text-lg font-bold">{monthlyStats.oneToOneHours}</p>
                                             </div>
                                             <div className="p-3 border rounded-md bg-primary/10 col-span-2 sm:col-span-1">
-                                                <p className="text-xs text-primary uppercase font-bold">Total Amount</p>
-                                                <p className="text-xl font-bold flex items-center"><IndianRupee className="h-5 w-5 mr-1" />{monthlyStats.totalAmount.toLocaleString('en-IN')}</p>
+                                                <p className="text-[10px] text-primary uppercase font-bold">Total Amount</p>
+                                                <p className="text-lg font-bold flex items-center"><IndianRupee className="h-4 w-4 mr-1" />{monthlyStats.totalAmount.toLocaleString('en-IN')}</p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <h4 className="font-semibold flex items-center gap-2"><CalendarIcon className="h-4 w-4"/> Monthly Session Breakdown</h4>
+                                            <h4 className="font-semibold flex items-center gap-2"><CalendarIcon className="h-4 w-4"/> Session Breakdown</h4>
                                             <div className="overflow-x-auto border rounded-md">
                                                 <Table>
-                                                    <TableHeader className="bg-muted/50"><TableRow><TableHead>Date</TableHead><TableHead>Time</TableHead><TableHead>Title</TableHead><TableHead>Mode</TableHead><TableHead>Hours</TableHead><TableHead>Attendees</TableHead></TableRow></TableHeader>
+                                                    <TableHeader className="bg-muted/50"><TableRow><TableHead>Date</TableHead><TableHead>Mode</TableHead><TableHead>Title</TableHead><TableHead>Hours</TableHead><TableHead>Attd</TableHead></TableRow></TableHeader>
                                                     <TableBody>
                                                         {monthlySchedules.map(item => {
                                                             const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
                                                             const isOneToOne = item.learningMode === 'one to one' || item.studentId;
                                                             return (
                                                                 <TableRow key={item.id}>
-                                                                    <TableCell className="whitespace-nowrap">{format(item.date.toDate(), 'MMM dd')}</TableCell>
-                                                                    <TableCell className="whitespace-nowrap">{format(parse(item.startTime, 'HH:mm', new Date()), 'p')}</TableCell>
-                                                                    <TableCell className="font-medium">{item.title}</TableCell>
+                                                                    <TableCell className="whitespace-nowrap text-xs">{format(item.date.toDate(), 'MMM dd')}</TableCell>
                                                                     <TableCell>
-                                                                        <Badge variant={isOneToOne ? "secondary" : "outline"} className="capitalize">
-                                                                            {isOneToOne ? 'One-to-One' : 'Group'}
+                                                                        <Badge variant={isOneToOne ? "secondary" : "outline"} className="capitalize text-[10px] px-1.5 py-0">
+                                                                            {isOneToOne ? '1-1' : 'Grp'}
                                                                         </Badge>
                                                                     </TableCell>
-                                                                    <TableCell>{(duration / 60).toFixed(2)}</TableCell>
-                                                                    <TableCell className="flex items-center gap-1 whitespace-nowrap"><UsersIconComponent className="h-4 w-4"/>{item.attendance}</TableCell>
+                                                                    <TableCell className="font-medium text-xs max-w-[120px] truncate">{item.title}</TableCell>
+                                                                    <TableCell className="text-xs">{(duration / 60).toFixed(2)}</TableCell>
+                                                                    <TableCell className="text-xs whitespace-nowrap">{item.attendance}</TableCell>
                                                                 </TableRow>
                                                             )
                                                         })}
@@ -475,68 +474,69 @@ export default function AccountantSalariesPage() {
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
             ) : teachers.length > 0 ? (
-                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                     {teachers.map(teacher => (
-                        <Card key={teacher.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedTeacher(teacher)}>
+                        <Card key={teacher.id} className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col h-full" onClick={() => setSelectedTeacher(teacher)}>
                             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4">
-                                <Avatar className="h-12 w-12">
+                                <Avatar className="h-12 w-12 shrink-0">
                                     <AvatarImage src={teacher.avatarUrl} alt={teacher.name} />
                                     <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="grid gap-1">
-                                    <CardTitle>{teacher.name}</CardTitle>
-                                    <CardDescription>{teacher.email}</CardDescription>
+                                <div className="grid gap-1 overflow-hidden">
+                                    <CardTitle className="truncate text-lg">{teacher.name}</CardTitle>
+                                    <CardDescription className="truncate text-xs">{teacher.email}</CardDescription>
                                 </div>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
                                 <div className="flex justify-between items-center px-4 py-2 bg-muted rounded-md mb-2">
                                     <div className="text-center">
                                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Rate</p>
-                                        <p className="font-bold flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateGroup || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                        <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateGroup || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Rate</p>
-                                        <p className="font-bold flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateOneToOne || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                        <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateOneToOne || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
                                     </div>
                                 </div>
 
                                 {teacher.paymentMethod === 'upi' ? (
-                                    <div className="space-y-3 rounded-md border p-4 text-sm">
-                                        <div className="font-semibold text-center mb-2">UPI Details</div>
+                                    <div className="space-y-3 rounded-md border p-4 text-sm bg-muted/30">
+                                        <div className="font-semibold text-center mb-2 text-xs uppercase tracking-wider text-muted-foreground">UPI Details</div>
                                         <div className="flex items-center gap-3">
-                                            <QrCode className="h-4 w-4 text-muted-foreground" />
-                                            <span>{teacher.upiId}</span>
+                                            <QrCode className="h-4 w-4 text-primary" />
+                                            <span className="truncate">{teacher.upiId}</span>
                                         </div>
                                         {teacher.upiQrCodeUrl && (
-                                            <div className="pt-2">
-                                                <p className="text-xs text-muted-foreground mb-2">QR Code:</p>
-                                                <Image src={teacher.upiQrCodeUrl} alt="UPI QR Code" width={128} height={128} className="rounded-md mx-auto border p-1" />
+                                            <div className="pt-2 flex justify-center">
+                                                <div className="relative w-24 h-24 border bg-white p-1 rounded-md">
+                                                    <Image src={teacher.upiQrCodeUrl} alt="UPI QR Code" fill className="object-contain" />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 ) : teacher.paymentMethod === 'bank' || teacher.accountHolderName ? (
-                                    <div className="space-y-3 rounded-md border p-4 text-sm">
-                                        <div className="font-semibold text-center mb-2">Bank Details</div>
+                                    <div className="space-y-2 rounded-md border p-4 text-sm bg-muted/30">
+                                        <div className="font-semibold text-center mb-2 text-xs uppercase tracking-wider text-muted-foreground">Bank Details</div>
                                         <div className="flex items-center gap-3">
-                                            <UserIcon className="h-4 w-4 text-muted-foreground" />
-                                            <span>{teacher.accountHolderName}</span>
+                                            <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                                            <span className="truncate">{teacher.accountHolderName}</span>
                                         </div>
                                          <div className="flex items-center gap-3">
-                                            <Landmark className="h-4 w-4 text-muted-foreground" />
-                                            <span>{teacher.bankName}</span>
+                                            <Landmark className="h-4 w-4 text-primary shrink-0" />
+                                            <span className="truncate">{teacher.bankName}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <Hash className="h-4 w-4 text-muted-foreground" />
-                                            <span>{teacher.accountNumber}</span>
+                                            <Hash className="h-4 w-4 text-primary shrink-0" />
+                                            <span className="truncate">{teacher.accountNumber}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <University className="h-4 w-4 text-muted-foreground" />
-                                            <span>{teacher.ifscCode}</span>
+                                            <University className="h-4 w-4 text-primary shrink-0" />
+                                            <span className="truncate uppercase">{teacher.ifscCode}</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-center text-muted-foreground p-6 border-2 border-dashed rounded-lg">
-                                        <p>Payment details not provided.</p>
+                                    <div className="text-center text-muted-foreground p-6 border-2 border-dashed rounded-lg flex-grow flex items-center justify-center">
+                                        <p className="text-xs">Payment details not provided.</p>
                                     </div>
                                 )}
                             </CardContent>

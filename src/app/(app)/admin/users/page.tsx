@@ -110,10 +110,10 @@ export default function AdminUsersPage() {
             user.email.toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-        const matchesClass = selectedClass === 'all' || user.class === selectedClass;
+        const matchesClass = selectedClass === 'all' ? true : (selectedClass === 'none' ? !user.class : user.class === selectedClass);
         const matchesSyllabus = selectedSyllabus === 'all' || user.syllabus === selectedSyllabus;
         const matchesExam = selectedExam === 'all' || user.competitiveExam === selectedExam;
-        const matchesLevel = selectedLevel === 'all' || user.level === selectedLevel;
+        const matchesLevel = selectedLevel === 'all' ? true : (selectedLevel === 'none' ? !user.level : user.level === selectedLevel);
 
         return matchesSearch && matchesRole && matchesClass && matchesSyllabus && matchesExam && matchesLevel;
     });
@@ -190,6 +190,7 @@ export default function AdminUsersPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Classes</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
                                     {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                 </SelectContent>
                             </Select>
@@ -216,6 +217,7 @@ export default function AdminUsersPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Levels</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
                                     {twenty20Levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                                 </SelectContent>
                             </Select>
