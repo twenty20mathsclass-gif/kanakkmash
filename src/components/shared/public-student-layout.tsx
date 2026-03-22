@@ -79,12 +79,12 @@ export default function PublicStudentLayout({
             
             <main className={cn(
                 "flex-grow flex flex-col w-full",
-                isHomepage ? "justify-center items-center pt-4 md:pt-8" : "pt-4 md:pt-28 pb-12 px-4 md:px-8 lg:px-12"
+                isHomepage ? "justify-center items-center pt-2 md:pt-4" : "pt-4 md:pt-28 pb-12 px-4 md:px-8 lg:px-12"
             )}>
                 {children}
             </main>
 
-            {isPubliclyAccessible && !isHomepage && (
+            {isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto">
                     <div className="container px-4 md:px-6">
                         {year && (
