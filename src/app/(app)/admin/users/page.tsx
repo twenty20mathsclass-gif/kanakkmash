@@ -2,7 +2,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
@@ -12,7 +12,15 @@ import { UsersTable } from "@/components/admin/users-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from '@/components/ui/select';
+import { ArrowLeft, PlusCircle, Search, X, Filter } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -31,94 +39,94 @@ const AddUserDialog = nextDynamic(
     }
 );
 
+const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
+const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
+const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+
 export default function AdminUsersPage() {
   const { firestore } = useFirebase();
   const searchParams = useSearchParams();
-  const roleFilter = searchParams.get('role');
+  const roleFilterParam = searchParams.get('role');
   
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState('User Management');
-  const [description, setDescription] = useState('View and manage all user accounts.');
+  
+  // Filters State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>(roleFilterParam || 'all');
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedSyllabus, setSelectedSyllabus] = useState<string>('all');
+  const [selectedExam, setSelectedExam] = useState<string>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
 
   const fetchUsers = useCallback(async () => {
     if (!firestore) return;
     setLoading(true);
     try {
-      let usersList: User[] = [];
-
-      if (roleFilter) {
-        const usersQuery = query(collection(firestore, 'users'), where('role', '==', roleFilter));
-        const usersSnapshot = await getDocs(usersQuery);
-        usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        const pageTitle = `${roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)} Data`;
-        const pageDescription = `A list of all ${roleFilter}s in the system.`;
-        setTitle(pageTitle);
-        setDescription(pageDescription);
-      } else {
-        const studentQuery = query(collection(firestore, 'users'), where('role', '==', 'student'));
-        const teacherQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
-        const adminQuery = query(collection(firestore, 'users'), where('role', '==', 'admin'));
-        const promoterQuery = query(collection(firestore, 'users'), where('role', '==', 'promoter'));
-        const [studentsSnap, teachersSnap, adminsSnap, promotersSnap] = await Promise.all([
-            getDocs(studentQuery),
-            getDocs(teacherQuery),
-            getDocs(adminQuery),
-            getDocs(promoterQuery),
-        ]);
-        usersList = [
-            ...studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
-            ...teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
-            ...adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
-            ...promotersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
-        ];
-        setTitle('All Users');
-        setDescription('A list of all users in the system.');
-      }
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       
-      // If we are fetching teachers, promoters, or all users, we also need to get their private details
-      if (roleFilter === 'teacher' || roleFilter === 'promoter' || !roleFilter) {
-          const usersWithDetails = await Promise.all(usersList.map(async (user) => {
-              if (user) {
-                  if (user.role === 'teacher') {
-                      const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
-                      const detailsSnap = await getDoc(detailsRef);
-                      if (detailsSnap.exists()) {
-                          return { ...user, ...(detailsSnap.data() as TeacherPrivateDetails) };
-                      }
-                  } else if (user.role === 'promoter') {
-                      const detailsRef = doc(firestore, 'users', user.id, 'promoter_details', 'payment');
-                      const detailsSnap = await getDoc(detailsRef);
-                      if (detailsSnap.exists()) {
-                          return { ...user, ...(detailsSnap.data() as PromoterPrivateDetails) };
-                      }
-                  }
+      // Fetch details for teachers and promoters
+      const usersWithDetails = await Promise.all(usersList.map(async (user) => {
+          if (user.role === 'teacher') {
+              const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+              const detailsSnap = await getDoc(detailsRef);
+              if (detailsSnap.exists()) {
+                  return { ...user, ...(detailsSnap.data() as TeacherPrivateDetails) };
               }
-              return user;
-          }));
-          setUsers(usersWithDetails.filter(Boolean) as User[]);
-      } else {
-          setUsers(usersList);
-      }
-
+          } else if (user.role === 'promoter') {
+              const detailsRef = doc(firestore, 'users', user.id, 'promoter_details', 'payment');
+              const detailsSnap = await getDoc(detailsRef);
+              if (detailsSnap.exists()) {
+                  return { ...user, ...(detailsSnap.data() as PromoterPrivateDetails) };
+              }
+          }
+          return user;
+      }));
+      
+      setUsers(usersWithDetails.filter(Boolean));
     } catch (e: any) {
       if (e.code === 'permission-denied') {
-        const permissionError = new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'users or subcollections',
           operation: 'list',
-        }, { cause: e });
-        errorEmitter.emit('permission-error', permissionError);
-      } else {
-        console.warn("Failed to fetch users:", e);
+        }, { cause: e }));
       }
     } finally {
       setLoading(false);
     }
-  }, [firestore, roleFilter]);
+  }, [firestore]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+        const matchesSearch = searchTerm === '' || 
+            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+        const matchesClass = selectedClass === 'all' || user.class === selectedClass;
+        const matchesSyllabus = selectedSyllabus === 'all' || user.syllabus === selectedSyllabus;
+        const matchesExam = selectedExam === 'all' || user.competitiveExam === selectedExam;
+        const matchesLevel = selectedLevel === 'all' || user.level === selectedLevel;
+
+        return matchesSearch && matchesRole && matchesClass && matchesSyllabus && matchesExam && matchesLevel;
+    });
+  }, [users, searchTerm, selectedRole, selectedClass, selectedSyllabus, selectedExam, selectedLevel]);
+
+  const resetFilters = () => {
+      setSearchTerm('');
+      setSelectedRole('all');
+      setSelectedClass('all');
+      setSelectedSyllabus('all');
+      setSelectedExam('all');
+      setSelectedLevel('all');
+  };
 
   return (
     <div className="space-y-8">
@@ -131,18 +139,116 @@ export default function AdminUsersPage() {
                   </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold font-headline">{title}</h1>
-                    <p className="text-muted-foreground">{description}</p>
+                    <h1 className="text-3xl font-bold font-headline">User Management</h1>
+                    <p className="text-muted-foreground">Search, filter, and manage all user accounts.</p>
                 </div>
               </div>
               <AddUserDialog creatorRole="admin" onUserAdded={fetchUsers} />
           </div>
         </Reveal>
+
+        <Reveal delay={0.1}>
+            <Card className="bg-muted/30">
+                <CardContent className="p-4 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by name or email..." 
+                                className="pl-9"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button variant="ghost" onClick={resetFilters} className="text-xs">
+                            <X className="mr-2 h-3 w-3" /> Reset Filters
+                        </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Role</label>
+                            <Select value={selectedRole} onValueChange={setSelectedRole}>
+                                <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="All Roles" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value="student">Student</SelectItem>
+                                    <SelectItem value="teacher">Teacher</SelectItem>
+                                    <SelectItem value="promoter">Promoter</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Class</label>
+                            <Select value={selectedClass} onValueChange={setSelectedClass}>
+                                <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="All Classes" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Classes</SelectItem>
+                                    {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Syllabus</label>
+                            <Select value={selectedSyllabus} onValueChange={setSelectedSyllabus}>
+                                <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="All Syllabuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Syllabuses</SelectItem>
+                                    {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Level</label>
+                            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                                <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="All Levels" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Levels</SelectItem>
+                                    {twenty20Levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Exams</label>
+                            <Select value={selectedExam} onValueChange={setSelectedExam}>
+                                <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="All Exams" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Exams</SelectItem>
+                                    {competitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </Reveal>
+
         <Reveal delay={0.2}>
           <Card>
-            <CardHeader>
-              <CardTitle>{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Users ({filteredUsers.length})</CardTitle>
+                <CardDescription>A filtered list of users matching your criteria.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Filter className="h-3 w-3" />
+                  <span>Filtered View</span>
+              </div>
             </CardHeader>
             <CardContent>
                 {loading ? (
@@ -152,7 +258,7 @@ export default function AdminUsersPage() {
                     <Skeleton className="h-12 w-full" />
                   </div>
                 ) : (
-                  <UsersTable users={users} onUserUpdated={fetchUsers} />
+                  <UsersTable users={filteredUsers} onUserUpdated={fetchUsers} />
                 )}
             </CardContent>
           </Card>
