@@ -108,7 +108,7 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
             <div>
                 <h3 className="font-bold text-sm leading-tight">{chatPartner.name}</h3>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                    {chatPartner.role === 'student' ? 'User' : chatPartner.role}
+                    {chatPartner.role === 'student' ? 'Student' : chatPartner.role}
                 </p>
             </div>
         </div>

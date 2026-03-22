@@ -70,7 +70,7 @@ const ContactItem = ({
                         )}
                     </p>
                     <Badge variant="outline" className="text-[9px] h-4 px-1 capitalize opacity-60">
-                        {contact.role === 'student' ? 'User' : contact.role}
+                        {contact.role === 'student' ? 'Student' : contact.role}
                     </Badge>
                 </div>
             </div>
@@ -206,7 +206,7 @@ export default function MyChatRoomPage() {
                         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                             {[
                                 { id: 'all', label: 'All' },
-                                { id: 'student', label: 'Users' },
+                                { id: 'student', label: 'Students' },
                                 { id: 'teacher', label: 'Teachers' },
                                 { id: 'promoter', label: 'Promoters' }
                             ].map(item => (
