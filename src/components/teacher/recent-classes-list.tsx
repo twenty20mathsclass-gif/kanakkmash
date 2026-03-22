@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Schedule } from '@/lib/definitions';
@@ -9,8 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Clock, BookOpen, User, Award, Users as UsersIcon, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useState, useEffect } from 'react';
-import { getDocs, query, where, collection } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
+import { getDocs, query, collection } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -36,10 +34,8 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
     const [attendance, setAttendance] = useState<{count: number, total: number} | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const isPastOrToday = schedule.date.toDate() <= new Date();
-
     useEffect(() => {
-        if (!firestore || !isPastOrToday) {
+        if (!firestore) {
             setLoading(false);
             return;
         }
@@ -50,13 +46,12 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
             setLoading(true);
 
             try {
-                // Get attendees count
+                // Get attendees count from the subcollection
                 const attendeesQuery = query(collection(firestore, 'schedules', schedule.id, 'attendees'));
                 const attendeesSnapshot = await getDocs(attendeesQuery);
                 const count = attendeesSnapshot.size;
 
-                // For one-on-one, total is 1. For group, we can't query all students due to permissions,
-                // so we'll use a special value (-1) to indicate we should only show the count.
+                // For one-on-one, total is 1. For group, we use -1 to indicate general count.
                 const total = schedule.studentId ? 1 : -1;
 
                 if (!cancelled) {
@@ -65,7 +60,10 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
 
             } catch (e: any) {
                 if (e.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: `schedules/${schedule.id}/attendees`, operation: 'list' }, { cause: e });
+                    const permissionError = new FirestorePermissionError({ 
+                        path: `schedules/${schedule.id}/attendees`, 
+                        operation: 'list' 
+                    }, { cause: e });
                     errorEmitter.emit('permission-error', permissionError);
                 } else {
                     console.warn("Error fetching attendance for schedule item", e);
@@ -77,14 +75,13 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
             }
         };
 
-
         fetchAttendance();
 
         return () => {
             cancelled = true;
         }
 
-    }, [firestore, schedule, isPastOrToday]);
+    }, [firestore, schedule]);
 
     const IconComponent = iconMap[schedule.icon] || BookOpen;
 
@@ -109,34 +106,33 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-1 pt-1">
-                            {schedule.class && <Badge variant="secondary">{schedule.class}</Badge>}
-                            {schedule.syllabus && <Badge variant="secondary">{schedule.syllabus}</Badge>}
-                            {schedule.competitiveExam && <Badge variant="secondary">{schedule.competitiveExam}</Badge>}
+                            {schedule.classes?.map(c => <Badge key={c} variant="secondary" className="text-[10px] px-1.5 py-0">{c}</Badge>)}
+                            {schedule.syllabus && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{schedule.syllabus}</Badge>}
+                            {schedule.competitiveExam && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{schedule.competitiveExam}</Badge>}
                         </div>
-                        {isPastOrToday && (
-                            <div className="text-xs text-muted-foreground pt-2">
-                                {loading ? (
-                                    <div className="flex items-center gap-1">
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                        <span>Loading attendance...</span>
-                                    </div>
-                                ) : attendance ? (
-                                    <div className="flex items-center gap-1 font-medium">
-                                        <UsersIcon className="h-3 w-3" />
-                                        {attendance.total !== -1 ? (
-                                            <>
-                                                <span>{attendance.count} / {attendance.total} attended</span>
-                                                {attendance.total > 0 && <span className="text-primary"> ({Math.round(attendance.count / attendance.total * 100)}%)</span>}
-                                            </>
-                                        ) : (
-                                             <span>{attendance.count} attended</span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p>No attendance data.</p>
-                                )}
-                            </div>
-                        )}
+                        
+                        <div className="text-xs text-muted-foreground pt-3 border-t mt-2">
+                            {loading ? (
+                                <div className="flex items-center gap-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span>Updating attendance...</span>
+                                </div>
+                            ) : attendance ? (
+                                <div className="flex items-center gap-1 font-bold text-primary">
+                                    <UsersIcon className="h-3 w-3" />
+                                    {attendance.total !== -1 ? (
+                                        <span>{attendance.count} / {attendance.total} Joined</span>
+                                    ) : (
+                                         <span>{attendance.count} Student{attendance.count !== 1 ? 's' : ''} Joined</span>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1 opacity-50">
+                                    <UsersIcon className="h-3 w-3" />
+                                    <span>0 Joined</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -149,7 +145,7 @@ export function RecentClassesList({ schedules }: { schedules: Schedule[] }) {
     <Card className="h-full">
       <CardHeader>
         <CardTitle>Recent Classes</CardTitle>
-        <CardDescription>A list of your most recent classes with attendance for past sessions.</CardDescription>
+        <CardDescription>View live session details and student engagement levels.</CardDescription>
       </CardHeader>
       <CardContent>
         {schedules.length > 0 ? (
@@ -161,7 +157,7 @@ export function RecentClassesList({ schedules }: { schedules: Schedule[] }) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="text-center text-muted-foreground py-16">
+          <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
             No classes scheduled yet.
           </div>
         )}
