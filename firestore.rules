@@ -4,53 +4,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Safely check a user's role.
     function isRole(role) {
       return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
-    }
-
-    // A user is an admin if their user document has role == 'admin' or they have the master admin email.
     function isAdmin() {
-      return request.auth != null && (isRole('admin') || request.auth.token.email == 'kanakkmash@gmail.com');
+      return request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.token.email == 'kanakkmash@gmail.com');
     }
 
-    // This checks for the main admin email. Safe for list queries.
-    function isTheOneTrueAdmin() {
-      return request.auth != null && request.auth.token.email == 'kanakkmash@gmail.com';
-    }
-
-    // The requesting user is the owner of the data.
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    function isExamOwner(examId) {
-      return request.auth != null && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid;
-    }
-    
-    // Allow users to query for their own submissions across all exams.
-    match /{path=**}/submissions/{submissionId} {
-      allow list: if request.auth != null && resource.data.studentId == request.auth.uid;
-    }
-
     match /users/{userId} {
-      // Any authenticated user can read public user profiles.
-      allow get: if request.auth != null;
-      
-      // Any authenticated user can list other users, which is necessary for the chat feature.
-      allow list: if request.auth != null;
-      
-      // A user can create their own profile, and an admin can create any user profile.
+      allow get, list: if request.auth != null;
       allow create: if isOwner(userId) || isAdmin();
-
-      // Admins can update any profile. Users can only update their own.
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
-      
-      // Admins can delete users. Users can delete their own account.
       allow delete: if isAdmin() || isOwner(userId);
 
       match /attendance/{attendanceId} {
@@ -71,28 +40,45 @@ service cloud.firestore {
       }
 
       match /salaryPayments/{paymentId} {
-        // Teacher can read their own payments. Admin can read any.
         allow read: if isOwner(userId) || isAdmin();
-        // Only the one true admin can create/update/delete payments.
-        allow write: if isTheOneTrueAdmin();
+        allow write: if isAdmin();
       }
 
       match /referrals/{studentId} {
-        // A teacher or promoter can read their own referral list. Admin can read any.
         allow read: if (isOwner(userId) && (isRole('teacher') || isRole('promoter'))) || isAdmin();
-        // A new student can create an entry in their referrer's list.
         allow create: if request.auth != null && request.auth.uid == studentId;
-        // Only admin can modify/delete.
         allow update, delete: if isAdmin();
       }
       
       match /rewards/{rewardId} {
-        // Promoter can read their own rewards. Admin can read any.
-        allow read: if (isOwner(userId) && isRole('promoter')) || isAdmin();
-        // Student can create a reward in promoter's subcollection upon signup.
-        allow create: if request.auth.uid == request.resource.data.studentId && userId == request.resource.data.promoterId && getUserRole(userId) == 'promoter';
-        // Only admin can update (e.g. mark as paid) or delete.
+        allow read: if isOwner(userId) || isRole('promoter') || isAdmin();
+        allow create: if request.auth != null;
         allow update, delete: if isAdmin();
+      }
+    }
+
+    match /groups/{groupId} {
+      allow read: if request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
+      allow create: if isRole('teacher') || isAdmin();
+      allow update: if request.auth != null && (request.auth.uid in resource.data.members || isAdmin());
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if request.auth != null && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members || isAdmin());
+        allow create: if request.auth != null && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members || isAdmin());
+      }
+    }
+
+    match /chats/{chatId} {
+      function isParticipant() {
+        return request.auth != null && (request.auth.uid in chatId.split('_') || isAdmin());
+      }
+
+      match /messages/{messageId} {
+        allow read: if isParticipant();
+        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
+        allow update: if isParticipant();
+        allow delete: if false;
       }
     }
 
@@ -103,103 +89,59 @@ service cloud.firestore {
 
     match /schedules/{scheduleId} {
       allow read: if true;
-      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
+      allow create: if (isRole('teacher')) || isAdmin();
       allow update, delete: if (resource.data.teacherId == request.auth.uid) || isAdmin();
 
       match /attendees/{userId} {
         allow create: if isOwner(userId);
-        allow get, list: if (request.auth != null && get(/databases/$(database)/documents/schedules/$(scheduleId)).data.teacherId == request.auth.uid) || isOwner(userId) || isAdmin();
-        allow update, delete: if false;
+        allow get, list: if request.auth != null;
       }
     }
 
     match /exams/{examId} {
       allow get, list: if request.auth != null;
-      allow create: if (isRole('teacher') && request.resource.data.teacherId == request.auth.uid) || isAdmin();
-      allow read, update, delete: if isExamOwner(examId) || isAdmin();
+      allow create: if isRole('teacher') || isAdmin();
+      allow read, update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
 
       match /submissions/{userId} {
         allow create: if isOwner(userId);
-        allow get, list: if isOwner(userId) || isExamOwner(examId) || isAdmin();
-        allow update, delete: if false;
+        allow get, list: if request.auth != null;
       }
-    }
-
-    match /cartContent/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /courseCategories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin() || isRole('teacher');
-    }
-    match /popularCourses/{popularId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /testimonials/{testimonialId} {
-      allow get, list: if true;
-      allow write: if isAdmin();
-    }
-
-    match /invoices/{invoiceId} {
-      allow create: if request.auth.uid == request.resource.data.studentId;
-      allow get: if isOwner(resource.data.studentId) || isAdmin();
-      allow list: if isAdmin();
-      allow update, delete: if isAdmin();
-    }
-    
-    match /salaryInvoices/{invoiceId} {
-      allow write: if isAdmin();
-      allow get: if isOwner(resource.data.teacherId) || isAdmin();
-      allow list: if isAdmin();
     }
 
     match /courseFees/{feeId} {
       allow write: if isAdmin();
       allow read, list: if true;
     }
-    
-    match /blogPosts/{postId} {
-      allow get, list: if true;
-      allow create: if isRole('admin') || isRole('teacher');
-      allow update: if (isRole('teacher') && request.resource.data.authorId == request.auth.uid) || isAdmin() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
-      allow delete: if (isRole('teacher') && resource.data.authorId == request.auth.uid) || isAdmin();
-
-      match /comments/{commentId} {
-        allow list, get: if true;
-        allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-        allow delete: if isAdmin() || (request.auth != null && resource.data.authorId == request.auth.uid);
-        allow update: if false;
-      }
-    }
-
-    match /chats/{chatId} {
-      function isParticipant() {
-        return request.auth != null && request.auth.uid in chatId.split('_');
-      }
-
-      match /messages/{messageId} {
-        allow read: if isParticipant();
-        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
-        allow update, delete: if false;
-      }
-    }
-
-    match /status/{userId} {
-      allow read: if request.auth != null;
-      allow write: if isOwner(userId);
-    }
 
     match /recordedClasses/{classId} {
       allow read: if request.auth != null;
       allow create: if isRole('teacher') || isAdmin();
-      allow update, delete: if (isRole('teacher') && resource.data.teacherId == request.auth.uid) || isAdmin();
+      allow update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
     }
 
     match /announcements/{announcementId} {
       allow read: if true;
-      allow write: if isAdmin() || isTheOneTrueAdmin();
+      allow write: if isAdmin();
+    }
+    
+    match /status/{userId} {
+      allow read: if request.auth != null;
+      allow write: if isOwner(userId);
+    }
+    
+    match /cartContent/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /courseCategories/{categoryId} { allow read: if true; allow write: if isAdmin() || isRole('teacher'); }
+    match /popularCourses/{popularId} { allow read: if true; allow write: if isAdmin(); }
+    match /testimonials/{testimonialId} { allow get, list: if true; allow write: if isAdmin(); }
+    match /invoices/{invoiceId} { allow create: if request.auth != null; allow get: if true; allow list: if isAdmin(); }
+    match /salaryInvoices/{invoiceId} { allow write: if isAdmin(); allow get: if true; allow list: if isAdmin(); }
+    match /blogPosts/{postId} { 
+      allow get, list: if true; 
+      allow create: if isRole('admin') || isRole('teacher'); 
+      allow update: if request.auth != null;
+      allow delete: if isAdmin() || (isRole('teacher') && resource.data.authorId == request.auth.uid);
+      match /comments/{commentId} { allow read, list: if true; allow create, delete: if request.auth != null; }
     }
   }
 }

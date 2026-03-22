@@ -20,155 +20,21 @@
       },
       "required": ["id", "name", "email", "role"]
     },
-    "courseModel": {
-      "title": "Course Model",
-      "description": "Defines a template for course offerings.",
+    "chatGroup": {
+      "title": "Chat Group",
+      "description": "Represents a group chat room.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "configType": { "type": "string", "enum": ["class-syllabus", "level", "competitive-exam", "none"] },
-        "description": { "type": "string" },
-        "isActive": { "type": "boolean" },
-        "createdAt": { "type": "object" }
+        "members": { "type": "array", "items": { "type": "string" } },
+        "admins": { "type": "array", "items": { "type": "string" } },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "object" },
+        "lastMessage": { "type": "string" },
+        "lastTimestamp": { "type": "object" },
+        "isGroup": { "type": "boolean" }
       },
-      "required": ["name", "configType", "isActive"]
-    },
-    "teacherPrivateDetails": {
-      "title": "Teacher Private Details",
-      "description": "Stores private payment and salary information for a teacher.",
-      "type": "object",
-      "properties": {
-        "paymentMethod": { "type": "string", "enum": ["bank", "upi"], "description": "The teacher's preferred payment method." },
-        "accountHolderName": { "type": "string", "description": "The account holder's name for bank details (teachers only)." },
-        "bankName": { "type": "string", "description": "The name of the bank (teachers only)." },
-        "accountNumber": { "type": "string", "description": "The bank account number (teachers only)." },
-        "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch (teachers only)." },
-        "upiId": { "type": "string", "description": "The teacher's UPI ID." },
-        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the teacher's UPI QR code image." },
-        "hourlyRate": { "type": "number", "description": "The teacher's hourly rate (teachers only)." }
-      }
-    },
-    "promoterPrivateDetails": {
-      "title": "Promoter Private Details",
-      "description": "Stores private payment and bank account information for a promoter.",
-      "type": "object",
-      "properties": {
-        "paymentMethod": { "type": "string", "enum": ["bank", "upi"], "description": "The promoter's preferred payment method." },
-        "accountHolderName": { "type": "string", "description": "The account holder's name for bank details." },
-        "bankName": { "type": "string", "description": "The name of the bank." },
-        "accountNumber": { "type": "string", "description": "The bank account number." },
-        "ifscCode": { "type": "string", "description": "The IFSC code for the bank branch." },
-        "upiId": { "type": "string", "description": "The promoter's UPI ID." },
-        "upiQrCodeUrl": { "type": "string", "format": "uri", "description": "URL of the promoter's UPI QR code image." },
-        "rewardPercentage": { "type": "number", "description": "The custom reward percentage for the promoter." }
-      }
-    },
-    "referredStudent": {
-      "title": "Referred Student",
-      "description": "A record of a student referred by a teacher.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "studentName": { "type": "string" },
-        "studentAvatarUrl": { "type": "string", "format": "uri" },
-        "courseModel": { "type": "string" },
-        "referredAt": { "type": "object" }
-      },
-      "required": ["studentId", "studentName", "referredAt"]
-    },
-    "testimonial": {
-      "title": "Testimonial",
-      "description": "A testimonial from a student.",
-      "type": "object",
-      "properties": {
-        "studentName": { "type": "string", "description": "The name of the student." },
-        "quote": { "type": "string", "description": "The testimonial text." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the student's image." },
-        "videoUrl": { "type": "string", "format": "uri", "description": "Optional URL of a video testimonial." },
-        "link": { "type": "string", "format": "uri", "description": "Optional link to a project or profile." },
-        "createdAt": { "type": "object", "description": "The date and time the testimonial was created." }
-      },
-      "required": ["studentName", "quote", "imageUrl", "createdAt"]
-    },
-    "invoice": {
-      "title": "Invoice",
-      "description": "Represents a student invoice for fees or purchases.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string", "description": "The ID of the student this invoice belongs to." },
-        "amount": { "type": "number", "description": "The total amount of the invoice." },
-        "status": { "type": "string", "enum": ["paid", "unpaid", "overdue"], "description": "The payment status of the invoice." },
-        "type": { "type": "string", "enum": ["fee", "cart"], "description": "The type of invoice." },
-        "createdAt": { "type": "object", "description": "The date the invoice was created." },
-        "dueDate": { "type": "object", "description": "The date the invoice is due." },
-        "paidAt": { "type": "object", "description": "The date the invoice was paid." },
-        "paymentId": { "type": "string", "description": "The transaction ID from the payment gateway." },
-        "paymentMethod": { "type": "string", "description": "The payment gateway used (e.g., 'razorpay')." }
-      },
-      "required": ["studentId", "amount", "status", "type", "createdAt", "dueDate"]
-    },
-    "salaryPayment": {
-      "title": "Salary Payment",
-      "description": "Represents a salary payment made to a teacher.",
-      "type": "object",
-      "properties": {
-        "teacherId": { "type": "string", "description": "The ID of the teacher receiving the payment." },
-        "hourlyRate": { "type": "number", "description": "The hourly rate for the teacher." },
-        "totalHours": { "type": "number", "description": "The total hours worked for this payment period." },
-        "amount": { "type": "number", "description": "The total amount paid (calculated from hourlyRate * totalHours)." },
-        "paymentDate": { "type": "object", "description": "The date the payment was made." },
-        "startDate": { "type": "object", "description": "The start date of the payment period." },
-        "endDate": { "type": "object", "description": "The end date of the payment period." },
-        "invoiceId": { "type": "string", "description": "The ID of the associated salary invoice." }
-      },
-      "required": ["teacherId", "hourlyRate", "totalHours", "amount", "paymentDate", "startDate", "endDate", "invoiceId"]
-    },
-    "salaryInvoice": {
-      "title": "Salary Invoice",
-      "description": "Represents a salary payment invoice for a teacher.",
-      "type": "object",
-      "properties": {
-        "teacherId": { "type": "string" },
-        "teacherName": { "type": "string" },
-        "teacherEmail": { "type": "string" },
-        "paymentDate": { "type": "object" },
-        "startDate": { "type": "object" },
-        "endDate": { "type": "object" },
-        "hourlyRate": { "type": "number" },
-        "totalHours": { "type": "number" },
-        "amount": { "type": "number" }
-      },
-      "required": ["teacherId", "teacherName", "paymentDate", "startDate", "endDate", "amount"]
-    },
-    "blogPost": {
-      "title": "Blog Post",
-      "description": "Represents a blog post article.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string", "description": "The title of the blog post." },
-        "content": { "type": "string", "description": "The main content of the blog post in HTML format." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "Optional URL of the post's feature image." },
-        "authorId": { "type": "string", "description": "The UID of the author." },
-        "authorName": { "type": "string", "description": "The name of the author." },
-        "authorAvatarUrl": { "type": "string", "format": "uri", "description": "URL of the author's avatar." },
-        "likes": { "type": "array", "items": { "type": "string" }, "description": "A list of user IDs who liked the post." },
-        "createdAt": { "type": "object", "description": "The date and time the post was created." },
-        "updatedAt": { "type": "object", "description": "The date and time the post was last updated." }
-      },
-      "required": ["title", "content", "authorId", "authorName", "createdAt", "updatedAt"]
-    },
-    "blogComment": {
-        "title": "Blog Comment",
-        "description": "A comment on a blog post.",
-        "type": "object",
-        "properties": {
-            "authorId": { "type": "string" },
-            "authorName": { "type": "string" },
-            "authorAvatarUrl": { "type": "string", "format": "uri" },
-            "text": { "type": "string" },
-            "createdAt": { "type": "object" }
-        },
-        "required": ["authorId", "authorName", "authorAvatarUrl", "text", "createdAt"]
+      "required": ["name", "members", "admins", "createdBy", "createdAt", "isGroup"]
     },
     "chatMessage": {
       "title": "Chat Message",
@@ -181,92 +47,6 @@
         "isRead": { "type": "boolean", "description": "Whether the message has been read by the recipient." }
       },
       "required": ["text", "senderId", "timestamp"]
-    },
-    "userStatus": {
-      "title": "User Status",
-      "description": "Represents a user's online presence.",
-      "type": "object",
-      "properties": {
-        "state": { "type": "string", "enum": ["online", "offline"], "description": "The user's online state." },
-        "last_changed": { "type": "object", "description": "The server timestamp of the last status change." }
-      },
-      "required": ["state", "last_changed"]
-    },
-    "notification": {
-      "title": "Notification",
-      "description": "Represents a notification for a user.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string", "description": "The title of the notification." },
-        "body": { "type": "string", "description": "The main content of the notification." },
-        "href": { "type": "string", "description": "The link to navigate to when clicked." },
-        "createdAt": { "type": "object", "description": "The date and time the notification was created." },
-        "isRead": { "type": "boolean", "description": "Whether the user has read the notification." }
-      },
-      "required": ["title", "body", "href", "createdAt", "isRead"]
-    },
-    "courseFee": {
-      "title": "Course Fee",
-      "description": "Defines a registration fee for a specific course configuration.",
-      "type": "object",
-      "properties": {
-        "courseModel": { "type": "string" },
-        "class": { "type": "string" },
-        "level": { "type": "string" },
-        "syllabus": { "type": "string" },
-        "competitiveExam": { "type": "string" },
-        "amount": { "type": "number" },
-        "createdAt": { "type": "object" }
-      },
-      "required": ["courseModel", "amount", "createdAt"]
-    },
-    "recordedClass": {
-      "title": "Recorded Class",
-      "description": "A recorded class session, usually a YouTube video.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "youtubeUrl": { "type": "string", "format": "uri" },
-        "thumbnailUrl": { "type": "string", "format": "uri" },
-        "teacherId": { "type": "string" },
-        "teacherName": { "type": "string" },
-        "teacherAvatarUrl": { "type": "string", "format": "uri" },
-        "courseModel": { "type": "string" },
-        "class": { "type": "string" },
-        "level": { "type": "string" },
-        "syllabus": { "type": "string" },
-        "competitiveExam": { "type": "string" },
-        "createdAt": { "type": "object" }
-      },
-      "required": ["title", "youtubeUrl", "thumbnailUrl", "teacherId", "teacherName", "courseModel", "createdAt"]
-    },
-    "reward": {
-      "title": "Referral Reward",
-      "description": "A reward given to a promoter for a successful student referral.",
-      "type": "object",
-      "properties": {
-        "promoterId": { "type": "string", "description": "The ID of the promoter who earned the reward." },
-        "studentId": { "type": "string", "description": "The ID of the student who was referred." },
-        "studentName": { "type": "string", "description": "The name of the student who was referred." },
-        "feeAmount": { "type": "number", "description": "The registration fee amount paid by the student." },
-        "rewardAmount": { "type": "number", "description": "The 10% reward amount for the promoter." },
-        "paidOut": { "type": "boolean", "description": "Whether this reward has been paid out to the promoter." },
-        "createdAt": { "type": "object", "description": "The date the reward was generated." }
-      },
-      "required": ["promoterId", "studentId", "studentName", "feeAmount", "rewardAmount", "paidOut", "createdAt"]
-    },
-    "announcement": {
-      "title": "Announcement",
-      "description": "A sitewide announcement banner that appears on the homepage.",
-      "type": "object",
-      "properties": {
-        "text": { "type": "string", "description": "The announcement text." },
-        "link": { "type": "string", "format": "uri", "description": "Optional URL for the announcement to link to." },
-        "isActive": { "type": "boolean", "description": "Whether the announcement is currently active and visible." },
-        "createdAt": { "type": "object", "description": "The date and time the announcement was created." }
-      },
-      "required": ["text", "isActive", "createdAt"]
     }
   },
   "auth": {
@@ -277,93 +57,17 @@
       "schema": { "$ref": "#/entities/userProfile" },
       "description": "Stores public user profile information."
     },
-    "/courseModels/{modelId}": {
-      "schema": { "$ref": "#/entities/courseModel" },
-      "description": "Stores course model templates."
-    },
-    "/users/{userId}/teacher_details/payment": {
-        "schema": { "$ref": "#/entities/teacherPrivateDetails" },
-        "description": "Stores a teacher's private payment details."
-    },
-    "/users/{userId}/promoter_details/payment": {
-      "schema": { "$ref": "#/entities/promoterPrivateDetails" },
-      "description": "Stores a promoter's private payment details."
-    },
-    "/users/{userId}/notifications/{notificationId}": {
-      "schema": { "$ref": "#/entities/notification" },
-      "description": "Stores notifications for a specific user."
-    },
-    "/users/{userId}/salaryPayments/{paymentId}": {
-      "schema": { "$ref": "#/entities/salaryPayment" },
-      "description": "Stores teacher salary payment records."
-    },
-    "/users/{userId}/referrals/{studentId}": {
-      "schema": { "$ref": "#/entities/referredStudent" },
-      "description": "Stores a list of students referred by a teacher."
-    },
-    "/users/{userId}/rewards/{rewardId}": {
-      "schema": { "$ref": "#/entities/reward" },
-      "description": "Stores referral rewards for a specific promoter."
-    },
-    "/testimonials/{testimonialId}": {
-      "schema": { "$ref": "#/entities/testimonial" },
-      "description": "Stores student testimonials."
-    },
-    "/schedules/{scheduleId}": {
-        "schema": {},
-        "description": "Stores class and exam schedules."
-    },
-    "/exams/{examId}": {
-        "schema": {},
-        "description": "Stores exam content."
-    },
-    "/cartContent/{docId}": {
-        "schema": {},
-        "description": "Stores content for the cart page."
-    },
-    "/courseCategories/{categoryId}": {
-        "schema": {},
-        "description": "Stores course categories for the cart page."
-    },
-     "/popularCourses/{popularId}": {
-        "schema": {},
-        "description": "Stores popular course mappings."
-    },
-    "/invoices/{invoiceId}": {
-      "schema": { "$ref": "#/entities/invoice" },
-      "description": "Stores student invoices."
-    },
-    "/salaryInvoices/{invoiceId}": {
-        "schema": { "$ref": "#/entities/salaryInvoice" },
-        "description": "Stores teacher salary payment invoices."
-    },
-    "/blogPosts/{postId}": {
-        "schema": { "$ref": "#/entities/blogPost" },
-        "description": "Stores blog post articles."
-    },
-    "/blogPosts/{postId}/comments/{commentId}": {
-        "schema": { "$ref": "#/entities/blogComment" },
-        "description": "Stores comments for a specific blog post."
+    "/groups/{groupId}": {
+      "schema": { "$ref": "#/entities/chatGroup" },
+      "description": "Stores group chat metadata."
     },
     "/chats/{chatId}/messages/{messageId}": {
       "schema": { "$ref": "#/entities/chatMessage" },
-      "description": "Stores individual chat messages between two users. The chatId is a composite key of the two user IDs, sorted alphabetically and joined by an underscore."
+      "description": "Stores individual chat messages."
     },
-    "/status/{userId}": {
-      "schema": { "$ref": "#/entities/userStatus" },
-      "description": "Stores real-time user presence information."
-    },
-    "/courseFees/{feeId}": {
-      "schema": { "$ref": "#/entities/courseFee" },
-      "description": "Stores the registration fee rules."
-    },
-    "/recordedClasses/{classId}": {
-      "schema": { "$ref": "#/entities/recordedClass" },
-      "description": "Stores recorded class videos."
-    },
-    "/announcements/{announcementId}": {
-      "schema": { "$ref": "#/entities/announcement" },
-      "description": "Stores sitewide announcements."
+    "/groups/{groupId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/chatMessage" },
+      "description": "Stores group chat messages."
     }
   }
 }

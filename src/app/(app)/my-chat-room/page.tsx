@@ -3,11 +3,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, limit, orderBy, onSnapshot } from 'firebase/firestore';
-import type { User, ChatMessage } from '@/lib/definitions';
+import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Search, Filter, ArrowLeft } from 'lucide-react';
+import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
@@ -18,41 +17,57 @@ import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export const dynamic = 'force-dynamic';
 
-type ContactWithMetadata = User & {
+type ContactWithMetadata = (User | ChatGroup) & {
     lastMessage?: string;
     lastTimestamp?: any;
     hasUnread?: boolean;
+    isGroup?: boolean;
 };
 
 const ContactItem = ({ 
     contact, 
     isSelected, 
-    onSelect 
+    onSelect,
+    currentUserId
 }: { 
     contact: ContactWithMetadata; 
     isSelected: boolean; 
-    onSelect: () => void 
+    onSelect: () => void;
+    currentUserId: string;
 }) => {
-    const isOnline = useOnlineStatus(contact.id);
+    const isOnline = contact.isGroup ? false : useOnlineStatus((contact as User).id);
 
     const getSubtitle = () => {
-        if (contact.role === 'student') {
+        if (contact.isGroup) return 'Group Chat';
+        const user = contact as User;
+        if (user.role === 'student') {
             const parts = [];
-            if (contact.class) parts.push(contact.class);
-            if (contact.syllabus) parts.push(contact.syllabus);
-            if (contact.level) parts.push(contact.level);
-            if (contact.competitiveExam) parts.push(contact.competitiveExam);
+            if (user.class) parts.push(user.class);
+            if (user.level) parts.push(user.level);
+            if (user.competitiveExam) parts.push(user.competitiveExam);
             return parts.length > 0 ? parts.join(' - ') : 'Student';
         }
-        if (contact.role === 'teacher') {
-            return contact.assignedClasses && contact.assignedClasses.length > 0 
-                ? `Assigned: ${contact.assignedClasses.join(', ')}` 
+        if (user.role === 'teacher') {
+            return user.assignedClasses && user.assignedClasses.length > 0 
+                ? `Assigned: ${user.assignedClasses.join(', ')}` 
                 : 'Teacher';
         }
-        return contact.role.charAt(0).toUpperCase() + contact.role.slice(1);
+        return user.role.charAt(0).toUpperCase() + user.role.slice(1);
     };
 
     return (
@@ -65,7 +80,10 @@ const ContactItem = ({
             onClick={onSelect}
         >
             <div className="relative shrink-0">
-                <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                <Avatar className={cn(
+                    "h-12 w-12 border-2 border-background shadow-sm",
+                    contact.isGroup && "rounded-lg"
+                )}>
                     <AvatarImage src={contact.avatarUrl} alt={contact.name} />
                     <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
                 </Avatar>
@@ -78,7 +96,7 @@ const ContactItem = ({
                     <div className="flex items-center gap-2 min-w-0">
                         <p className={cn("text-sm truncate", contact.hasUnread && !isSelected ? "font-black" : "font-bold")}>{contact.name}</p>
                         {contact.hasUnread && !isSelected && (
-                            <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                            <div className="h-2 w-2 rounded-full bg-primary shrink-0 animate-pulse" />
                         )}
                     </div>
                     {contact.lastTimestamp && (
@@ -98,42 +116,136 @@ const ContactItem = ({
                             <span className="italic opacity-70">Start a conversation</span>
                         )}
                     </p>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 capitalize opacity-60">
-                        {contact.role === 'student' ? 'Student' : contact.role}
-                    </Badge>
+                    {contact.isGroup && <Badge variant="secondary" className="text-[8px] h-3.5 px-1 uppercase opacity-60">Group</Badge>}
                 </div>
             </div>
         </button>
     );
 };
 
+function CreateGroupDialog({ 
+    students, 
+    currentUserId, 
+    onCreate 
+}: { 
+    students: User[]; 
+    currentUserId: string; 
+    onCreate: (name: string, members: string[]) => Promise<void>; 
+}) {
+    const [name, setName] = useState('');
+    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleCreate = async () => {
+        if (!name.trim() || selectedMembers.length === 0) return;
+        setLoading(true);
+        try {
+            await onCreate(name, selectedMembers);
+            setIsOpen(false);
+            setName('');
+            setSelectedMembers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-full h-8 px-3 text-xs gap-1.5">
+                    <Plus className="h-3.5 w-3.5" />
+                    New Group
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] h-[80vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Create Group</DialogTitle>
+                    <DialogDescription>Create a group with your students. Admins will be added automatically.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4 flex-grow flex flex-col min-h-0">
+                    <div className="space-y-2">
+                        <Label htmlFor="group-name">Group Name</Label>
+                        <Input 
+                            id="group-name" 
+                            placeholder="e.g. Class 10 - Maths Morning" 
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2 flex-grow flex flex-col min-h-0">
+                        <Label>Select Students ({selectedMembers.length})</Label>
+                        <ScrollArea className="flex-1 border rounded-md p-2">
+                            <div className="space-y-3">
+                                {students.map(student => (
+                                    <div key={student.id} className="flex items-center space-x-3">
+                                        <Checkbox 
+                                            id={`member-${student.id}`} 
+                                            checked={selectedMembers.includes(student.id)}
+                                            onCheckedChange={(checked) => {
+                                                setSelectedMembers(prev => 
+                                                    checked 
+                                                        ? [...prev, student.id] 
+                                                        : prev.filter(id => id !== student.id)
+                                                );
+                                            }}
+                                        />
+                                        <label 
+                                            htmlFor={`member-${student.id}`}
+                                            className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                                        >
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={student.avatarUrl} />
+                                                <AvatarFallback>{student.name[0]}</AvatarFallback>
+                                            </Avatar>
+                                            {student.name}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleCreate} disabled={loading || !name.trim() || selectedMembers.length === 0}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Group
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function MyChatRoomPage() {
     const { firestore } = useFirebase();
     const { user } = useUser();
+    const { toast } = useToast();
     const [contacts, setContacts] = useState<ContactWithMetadata[]>([]);
     const [selectedContact, setSelectedContact] = useState<ContactWithMetadata | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'student' | 'teacher' | 'promoter' | 'admin'>('all');
+    const [filter, setFilter] = useState<'all' | 'student' | 'teacher' | 'promoter' | 'admin' | 'group'>('all');
     const [searchQuery, setSearchTerm] = useState('');
 
     useEffect(() => {
         if (!firestore || !user) return;
         setLoading(true);
 
-        const fetchContacts = async () => {
+        const fetchAll = async () => {
             try {
+                // 1. Fetch Users
                 const usersCol = collection(firestore, 'users');
-                let fetchedContacts: User[] = [];
+                let fetchedUsers: User[] = [];
 
                 if (user.role === 'admin') {
                     const qAll = query(usersCol);
                     const allSnap = await getDocs(qAll);
-                    fetchedContacts = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                    fetchedUsers = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
                 } else if (user.role === 'student') {
                     const qTeachers = query(usersCol, where('role', '==', 'teacher'));
                     const qAdmins = query(usersCol, where('role', '==', 'admin'));
                     const [tSnap, aSnap] = await Promise.all([getDocs(qTeachers), getDocs(qAdmins)]);
-                    fetchedContacts = [
+                    fetchedUsers = [
                         ...tSnap.docs.map(d => ({ id: d.id, ...d.data() } as User)),
                         ...aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User))
                     ];
@@ -142,7 +254,7 @@ export default function MyChatRoomPage() {
                     const allSnap = await getDocs(qAll);
                     const allUsers = allSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                     const teacherAssignments = user.assignedClasses || [];
-                    fetchedContacts = allUsers.filter(u => {
+                    fetchedUsers = allUsers.filter(u => {
                         if (u.role === 'admin') return true;
                         if (u.role !== 'student') return false;
                         if (u.referredBy === user.id) return true;
@@ -152,18 +264,29 @@ export default function MyChatRoomPage() {
                 } else if (user.role === 'promoter') {
                     const qAdmins = query(usersCol, where('role', '==', 'admin'));
                     const aSnap = await getDocs(qAdmins);
-                    fetchedContacts = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+                    fetchedUsers = aSnap.docs.map(d => ({ id: d.id, ...d.data() } as User));
                 }
 
-                const cleaned = fetchedContacts.filter(c => c.id !== user.id);
-                setContacts(cleaned.map(c => ({ ...c })));
+                // 2. Fetch Groups where user is a member
+                const groupsQuery = query(collection(firestore, 'groups'), where('members', 'array-contains', user.id));
+                const groupsSnap = await getDocs(groupsQuery);
+                const fetchedGroups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
+
+                const combined: ContactWithMetadata[] = [
+                    ...fetchedUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
+                    ...fetchedGroups.map(g => ({ ...g, isGroup: true } as ContactWithMetadata))
+                ];
+
+                setContacts(combined);
                 setLoading(false);
 
-                // Listen for last messages and unread status
-                cleaned.forEach(contact => {
-                    const chatId = [user.id, contact.id].sort().join('_');
+                // 3. Listen for last messages and unread markers
+                combined.forEach(contact => {
+                    const chatId = contact.isGroup ? contact.id : [user.id, (contact as User).id].sort().join('_');
+                    const collName = contact.isGroup ? 'groups' : 'chats';
+                    
                     const lastMsgQuery = query(
-                        collection(firestore, 'chats', chatId, 'messages'),
+                        collection(firestore, collName, chatId, 'messages'),
                         orderBy('timestamp', 'desc'),
                         limit(1)
                     );
@@ -172,16 +295,19 @@ export default function MyChatRoomPage() {
                         if (!snap.empty) {
                             const lastMsg = snap.docs[0].data() as ChatMessage;
                             setContacts(prev => {
-                                const updated = prev.map(c => 
-                                    c.id === contact.id 
-                                        ? { 
-                                            ...c, 
-                                            lastMessage: lastMsg.text, 
+                                const updated = prev.map(c => {
+                                    const cId = c.isGroup ? c.id : (c as User).id;
+                                    const targetId = contact.isGroup ? contact.id : (contact as User).id;
+                                    if (cId === targetId) {
+                                        return {
+                                            ...c,
+                                            lastMessage: lastMsg.text,
                                             lastTimestamp: lastMsg.timestamp,
                                             hasUnread: lastMsg.senderId !== user.id && !lastMsg.isRead
-                                          } 
-                                        : c
-                                );
+                                        };
+                                    }
+                                    return c;
+                                });
                                 return updated.sort((a, b) => {
                                     const timeA = a.lastTimestamp?.toMillis() || 0;
                                     const timeB = b.lastTimestamp?.toMillis() || 0;
@@ -194,20 +320,14 @@ export default function MyChatRoomPage() {
                 });
 
             } catch (err: any) {
-                if (err.code === 'permission-denied') {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: 'users',
-                        operation: 'list',
-                    }, { cause: err }));
-                }
+                console.error(err);
                 setLoading(false);
             }
         };
 
-        fetchContacts();
+        fetchAll();
     }, [firestore, user]);
 
-    // Handle Escape key to exit chat
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && selectedContact) {
@@ -218,20 +338,53 @@ export default function MyChatRoomPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedContact]);
 
+    const handleCreateGroup = async (name: string, members: string[]) => {
+        if (!firestore || !user) return;
+        
+        try {
+            // Find all admins to add them to the group automatically
+            const adminsQuery = query(collection(firestore, 'users'), where('role', '==', 'admin'));
+            const adminsSnap = await getDocs(adminsQuery);
+            const adminIds = adminsSnap.docs.map(d => d.id);
+            
+            // Deduplicate all participants
+            const allMembers = Array.from(new Set([...members, user.id, ...adminIds]));
+            const groupAdmins = Array.from(new Set([user.id, ...adminIds]));
+
+            const groupData: Omit<ChatGroup, 'id'> = {
+                name,
+                members: allMembers,
+                admins: groupAdmins,
+                createdBy: user.id,
+                createdAt: serverTimestamp() as any,
+                isGroup: true,
+                avatarUrl: `https://picsum.photos/seed/${name.length}/200`
+            };
+
+            const docRef = await addDoc(collection(firestore, 'groups'), groupData);
+            const newGroup = { id: docRef.id, ...groupData } as ContactWithMetadata;
+            
+            setContacts(prev => [newGroup, ...prev]);
+            setSelectedContact(newGroup);
+            toast({ title: 'Group Created', description: `"${name}" is ready for chat.` });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to create group.', variant: 'destructive' });
+        }
+    };
+
     const filterOptions = useMemo(() => {
         if (!user) return [];
         const options = [{ id: 'all', label: 'All' }];
         if (user.role === 'admin') {
             options.push({ id: 'student', label: 'Students' });
             options.push({ id: 'teacher', label: 'Teachers' });
-            options.push({ id: 'promoter', label: 'Promoters' });
+            options.push({ id: 'group', label: 'Groups' });
         } else if (user.role === 'teacher') {
             options.push({ id: 'student', label: 'Students' });
+            options.push({ id: 'group', label: 'Groups' });
             options.push({ id: 'admin', label: 'Admin' });
-        } else if (user.role === 'student') {
-            options.push({ id: 'teacher', label: 'Teachers' });
-            options.push({ id: 'admin', label: 'Admin' });
-        } else if (user.role === 'promoter') {
+        } else {
+            options.push({ id: 'group', label: 'Groups' });
             options.push({ id: 'admin', label: 'Admin' });
         }
         return options;
@@ -239,11 +392,17 @@ export default function MyChatRoomPage() {
 
     const filteredContacts = useMemo(() => {
         return contacts.filter(c => {
-            const matchesRole = filter === 'all' || c.role === filter;
+            const matchesRole = filter === 'all' 
+                ? true 
+                : filter === 'group' ? c.isGroup : (c as User).role === filter;
             const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesRole && matchesSearch;
         });
     }, [contacts, filter, searchQuery]);
+
+    const availableStudents = useMemo(() => {
+        return (contacts.filter(c => !c.isGroup && (c as User).role === 'student') as User[]);
+    }, [contacts]);
 
     return (
         <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-theme(spacing.16)-4rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
@@ -256,6 +415,13 @@ export default function MyChatRoomPage() {
                     <div className="p-4 border-b space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold font-headline">Messages</h2>
+                            {user?.role === 'teacher' && (
+                                <CreateGroupDialog 
+                                    students={availableStudents} 
+                                    currentUserId={user.id} 
+                                    onCreate={handleCreateGroup} 
+                                />
+                            )}
                         </div>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -295,6 +461,7 @@ export default function MyChatRoomPage() {
                                             contact={contact}
                                             isSelected={selectedContact?.id === contact.id}
                                             onSelect={() => setSelectedContact(contact)}
+                                            currentUserId={user!.id}
                                         />
                                     ))}
                                 </div>
@@ -315,23 +482,26 @@ export default function MyChatRoomPage() {
                 )}>
                     {user && selectedContact ? (
                         <div className="flex flex-col h-full w-full">
-                            {/* Mobile Back Button Overlay */}
                             <div className="md:hidden absolute top-3.5 left-4 z-50">
                                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-background/50 backdrop-blur-md" onClick={() => setSelectedContact(null)}>
                                     <ArrowLeft className="h-5 w-5" />
                                 </Button>
                             </div>
-                            <ChatInterface currentUser={user} chatPartner={selectedContact} />
+                            <ChatInterface 
+                                currentUser={user} 
+                                chatPartner={selectedContact as any} 
+                                isGroup={selectedContact.isGroup} 
+                            />
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
                             <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Loader2 className="h-10 w-10 text-primary opacity-20" />
+                                <UsersIcon className="h-10 w-10 text-primary opacity-20" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold font-headline">Secure Messenger</h3>
+                                <h3 className="text-lg font-bold font-headline">Select a conversation</h3>
                                 <p className="text-sm text-muted-foreground max-w-xs">
-                                    Select a contact from the list to start a secure, real-time conversation.
+                                    Connect with students, teachers, or groups to start learning together.
                                 </p>
                             </div>
                         </div>

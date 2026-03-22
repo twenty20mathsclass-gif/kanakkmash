@@ -33,6 +33,19 @@ export type User = {
   isDisabled?: boolean;
 };
 
+export type ChatGroup = {
+  id: string;
+  name: string;
+  members: string[];
+  admins: string[];
+  createdBy: string;
+  createdAt: Timestamp;
+  lastMessage?: string;
+  lastTimestamp?: Timestamp;
+  isGroup: true;
+  avatarUrl?: string;
+};
+
 export type CourseModel = {
   id: string;
   name: string;
