@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase } from '@/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { User, Schedule, SalaryPayment, Invoice, ReferredStudent, Reward, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee, Ban, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee, Ban, CheckCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function UserProfilePage() {
     const params = useParams();
@@ -31,6 +41,8 @@ export default function UserProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusLoading, setStatusLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     
     // Data states
     const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -150,6 +162,32 @@ export default function UserProfilePage() {
             setStatusLoading(false);
         }
     };
+
+    const handleDeleteUser = async () => {
+        if (!firestore || !user) return;
+        setDeleteLoading(true);
+        const userRef = doc(firestore, 'users', user.id);
+        try {
+            await deleteDoc(userRef);
+            toast({
+                title: "User Deleted",
+                description: `${user.name}'s account profile has been removed from the database.`
+            });
+            router.push('/admin/users');
+        } catch (e: any) {
+            if (e.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `users/${user.id}`, operation: 'delete' }, { cause: e }));
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Delete Failed",
+                    description: "Could not delete user. They may have related data that prevents deletion."
+                });
+            }
+            setDeleteLoading(false);
+            setIsDeleteDialogOpen(false);
+        }
+    };
     
     if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
     if (error) return <div className="text-destructive text-center">{error}</div>;
@@ -188,19 +226,27 @@ export default function UserProfilePage() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit User
+                            <Edit className="mr-2 h-4 w-4" /> Edit
                         </Button>
                         <Button 
                             variant={user.isDisabled ? "secondary" : "destructive"} 
                             onClick={handleToggleStatus}
                             disabled={statusLoading}
+                            className="min-w-[120px]"
                         >
                             {statusLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                                 user.isDisabled ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ban className="mr-2 h-4 w-4" />
                             )}
-                            {user.isDisabled ? "Enable Account" : "Disable Account"}
+                            {user.isDisabled ? "Enable" : "Disable"}
+                        </Button>
+                        <Button 
+                            variant="destructive" 
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            disabled={deleteLoading}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </Button>
                     </div>
                 </CardHeader>
@@ -248,6 +294,25 @@ export default function UserProfilePage() {
             </Tabs>
             
             {user && <EditUserDialog user={user} isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} onUserUpdated={fetchUserData} />}
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete {user.name}'s profile from the database. 
+                            <strong> Note:</strong> This does not delete the user from Authentication.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90" disabled={deleteLoading}>
+                            {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                            Delete User
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
