@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -46,6 +45,12 @@ export default function PublicStudentLayout({
 
     return (
         <div className={cn("relative flex flex-col min-h-screen bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]")}>
+            
+            {/* Sticky Announcement Banner at the absolute top */}
+            <div className="sticky top-0 z-[100] w-full">
+                <AnnouncementBanner />
+            </div>
+
             <Suspense fallback={null}>
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
                 {user ? (
@@ -69,13 +74,9 @@ export default function PublicStudentLayout({
                 )}
             </Suspense>
             
-            <div className="w-full pt-20 md:pt-24 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-                <AnnouncementBanner />
-            </div>
-
             <main className={cn(
                 "flex-grow flex flex-col",
-                isHomepage ? "justify-center items-center" : "pb-12 px-4 md:px-6 lg:px-8"
+                isHomepage ? "justify-center items-center pt-16" : "pt-24 md:pt-28 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
             )}>
                 {children}
             </main>
