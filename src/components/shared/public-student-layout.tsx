@@ -44,7 +44,10 @@ export default function PublicStudentLayout({
     const isHomepage = pathname === '/';
 
     return (
-        <div className={cn("relative flex flex-col min-h-screen bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full")}>
+        <div className={cn(
+            "relative flex flex-col bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full",
+            isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
+        )}>
             
             {/* Sticky Announcement Banner */}
             <div className="sticky top-16 md:top-0 z-[40] w-full mt-16 md:mt-0">
@@ -76,12 +79,12 @@ export default function PublicStudentLayout({
             
             <main className={cn(
                 "flex-grow flex flex-col w-full",
-                isHomepage ? "justify-center items-center pt-4 md:pt-16" : "pt-4 md:pt-28 pb-12 px-4 md:px-8 lg:px-12"
+                isHomepage ? "justify-center items-center pt-4 md:pt-8" : "pt-4 md:pt-28 pb-12 px-4 md:px-8 lg:px-12"
             )}>
                 {children}
             </main>
 
-            {isPubliclyAccessible && (
+            {isPubliclyAccessible && !isHomepage && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto">
                     <div className="container px-4 md:px-6">
                         {year && (
