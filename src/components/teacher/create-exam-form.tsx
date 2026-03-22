@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Image from 'next/image';
@@ -511,6 +511,12 @@ export function CreateExamForm() {
                                     </div>
                                     <div className="space-y-4">
                                         <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Question Text" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        
+                                        <div className="space-y-2">
+                                            <FormLabel>Question Image (Optional)</FormLabel>
+                                            <QuestionImageUpload index={index} />
+                                        </div>
+
                                         <OptionsFieldArray questionIndex={index} control={form.control} />
                                     </div>
                                 </Card>
@@ -583,4 +589,69 @@ function OptionsFieldArray({ questionIndex, control }: { questionIndex: number; 
         {fields.length < 4 && <Button type="button" size="sm" variant="ghost" onClick={() => append({ text: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Add Option</Button>}
     </div>
   );
+}
+
+function QuestionImageUpload({ index }: { index: number }) {
+    const { setValue, watch } = useFormContext();
+    const [uploading, setUploading] = useState(false);
+    const { toast } = useToast();
+    const currentImageUrl = watch(`questions.${index}.imageUrl`);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Image upload API key is missing.' });
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, { method: 'POST', body: formData });
+            const result = await response.json();
+            
+            if (!result.success) throw new Error(result.error?.message || 'Upload failed');
+            
+            setValue(`questions.${index}.imageUrl`, result.data.url);
+            toast({ title: 'Success', description: 'Question image uploaded.' });
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload image.' });
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-3">
+            {currentImageUrl ? (
+                <div className="relative w-full h-48 border rounded-md overflow-hidden bg-muted/20">
+                    <Image src={currentImageUrl} alt="Question preview" fill className="object-contain" />
+                    <Button 
+                        type="button" 
+                        variant="destructive" 
+                        size="icon" 
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full shadow-lg"
+                        onClick={() => setValue(`questions.${index}.imageUrl`, undefined)}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            ) : (
+                <div className="flex items-center gap-4">
+                    <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleUpload} 
+                        className="file:text-foreground text-xs" 
+                        disabled={uploading}
+                    />
+                    {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
+                </div>
+            )}
+        </div>
+    );
 }
