@@ -30,6 +30,15 @@ export type User = {
   assignedClasses?: string[];
 };
 
+export type CourseModel = {
+  id: string;
+  name: string;
+  configType: 'class-syllabus' | 'level' | 'competitive-exam' | 'none';
+  description?: string;
+  isActive: boolean;
+  createdAt: Timestamp;
+};
+
 export type TeacherPrivateDetails = {
     paymentMethod?: 'bank' | 'upi';
     accountHolderName?: string;
@@ -274,7 +283,7 @@ export type Notification = {
 
 export type CourseFee = {
   id: string;
-  courseModel: 'MATHS ONLINE TUITION' | 'TWENTY 20 BASIC MATHS' | 'COMPETITIVE EXAM';
+  courseModel: string;
   class?: string;
   level?: string;
   syllabus?: string;

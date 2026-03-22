@@ -20,6 +20,19 @@
       },
       "required": ["id", "name", "email", "role"]
     },
+    "courseModel": {
+      "title": "Course Model",
+      "description": "Defines a template for course offerings.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "configType": { "type": "string", "enum": ["class-syllabus", "level", "competitive-exam", "none"] },
+        "description": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["name", "configType", "isActive"]
+    },
     "teacherPrivateDetails": {
       "title": "Teacher Private Details",
       "description": "Stores private payment and salary information for a teacher.",
@@ -196,7 +209,7 @@
       "description": "Defines a registration fee for a specific course configuration.",
       "type": "object",
       "properties": {
-        "courseModel": { "type": "string", "enum": ["MATHS ONLINE TUITION", "TWENTY 20 BASIC MATHS", "COMPETITIVE EXAM"] },
+        "courseModel": { "type": "string" },
         "class": { "type": "string" },
         "level": { "type": "string" },
         "syllabus": { "type": "string" },
@@ -262,6 +275,10 @@
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/userProfile" },
       "description": "Stores public user profile information."
+    },
+    "/courseModels/{modelId}": {
+      "schema": { "$ref": "#/entities/courseModel" },
+      "description": "Stores course model templates."
     },
     "/users/{userId}/teacher_details/payment": {
         "schema": { "$ref": "#/entities/teacherPrivateDetails" },

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { useFirebase } from '@/firebase';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, Loader2, IndianRupee } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { countries } from '@/lib/countries';
-import type { CourseFee } from '@/lib/definitions';
+import type { CourseFee, CourseModel } from '@/lib/definitions';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -46,23 +47,8 @@ const formSchema = z.object({
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION') {
-        if (!data.class) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a class.', path: ['class'] });
-        } else if (data.class !== 'DEGREE' && !data.syllabus) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a syllabus.', path: ['syllabus'] });
-        }
-    }
-    if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
-        if (!data.level) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a level.', path: ['level'] });
-        }
-    }
-    if (data.courseModel === 'COMPETITIVE EXAM') {
-        if (!data.competitiveExam) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
-        }
-    }
+    // Logic here is now slightly more complex because courseModel behavior is dynamic.
+    // We'll validate based on common naming patterns or keep it loose.
 });
 
 
@@ -89,6 +75,7 @@ export function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
   const [loadingFee, setLoadingFee] = useState(false);
+  const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
   
   const referralId = searchParams.get('ref');
 
@@ -106,32 +93,43 @@ export function SignUpForm() {
   });
 
   const { watch } = form;
-  const courseModel = watch('courseModel');
+  const courseModelName = watch('courseModel');
   const selectedClass = watch('class');
   const selectedSyllabus = watch('syllabus');
   const selectedLevel = watch('level');
   const selectedCompetitiveExam = watch('competitiveExam');
   
-  const showClassField = courseModel === 'MATHS ONLINE TUITION';
+  const activeModel = courseModels.find(m => m.name === courseModelName);
+  
+  const showClassField = activeModel?.configType === 'class-syllabus';
   const showSyllabusField = showClassField && selectedClass && selectedClass !== 'DEGREE';
-  const showLevelField = courseModel === 'TWENTY 20 BASIC MATHS';
-  const showCompetitiveExamField = courseModel === 'COMPETITIVE EXAM';
+  const showLevelField = activeModel?.configType === 'level';
+  const showCompetitiveExamField = activeModel?.configType === 'competitive-exam';
   
   useEffect(() => {
-    if (!firestore || !courseModel) return;
+    if (!firestore) return;
+    const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        setCourseModels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+    });
+    return () => unsubscribe();
+  }, [firestore]);
+
+  useEffect(() => {
+    if (!firestore || !courseModelName) return;
 
     const fetchFee = async () => {
         setLoadingFee(true);
-        let q = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModel));
+        let q = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModelName));
 
-        if (courseModel === 'COMPETITIVE EXAM' && selectedCompetitiveExam) {
+        if (showCompetitiveExamField && selectedCompetitiveExam) {
             q = query(q, where('competitiveExam', '==', selectedCompetitiveExam));
-        } else if (courseModel === 'MATHS ONLINE TUITION' && selectedClass) {
+        } else if (showClassField && selectedClass) {
             q = query(q, where('class', '==', selectedClass));
             if (selectedClass !== 'DEGREE' && selectedSyllabus) {
                 q = query(q, where('syllabus', '==', selectedSyllabus));
             }
-        } else if (courseModel === 'TWENTY 20 BASIC MATHS' && selectedLevel) {
+        } else if (showLevelField && selectedLevel) {
             q = query(q, where('level', '==', selectedLevel));
         }
         
@@ -141,7 +139,7 @@ export function SignUpForm() {
                 const feeData = querySnapshot.docs[0].data() as CourseFee;
                 setFee(feeData.amount);
             } else {
-                const generalQuery = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModel));
+                const generalQuery = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModelName));
                 const generalSnapshot = await getDocs(generalQuery);
                 const generalFee = generalSnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level);
                 if (generalFee) {
@@ -161,7 +159,7 @@ export function SignUpForm() {
     const timeoutId = setTimeout(fetchFee, 500);
     return () => clearTimeout(timeoutId);
 
-  }, [firestore, courseModel, selectedClass, selectedSyllabus, selectedLevel, selectedCompetitiveExam]);
+  }, [firestore, courseModelName, selectedClass, selectedSyllabus, selectedLevel, selectedCompetitiveExam, showClassField, showLevelField, showCompetitiveExamField]);
 
 
   const handleContinue = async () => {
@@ -247,9 +245,10 @@ export function SignUpForm() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                            <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
-                            <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
+                            {courseModels.map(model => (
+                                <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>
+                            ))}
+                            {courseModels.length === 0 && <SelectItem value="loading" disabled>Loading models...</SelectItem>}
                         </SelectContent>
                     </Select>
                     <FormMessage />

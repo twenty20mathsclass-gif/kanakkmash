@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -5,9 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase, useUser } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, documentId } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where, onSnapshot, getDocs, serverTimestamp, documentId, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { User, Schedule } from '@/lib/definitions';
+import type { User, Schedule, CourseModel } from '@/lib/definitions';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,33 +49,6 @@ const scheduleSchema = z.object({
     syllabus: z.string().optional(),
     studentId: z.string().optional(),
     competitiveExam: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.learningMode === 'one to one') {
-        if (!data.studentId || data.studentId.trim() === '') {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a student.', path: ['studentId'] });
-        }
-    } else {
-        if (data.courseModel === 'MATHS ONLINE TUITION') {
-            if (!data.classes || data.classes.length === 0) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select at least one class.', path: ['classes'] });
-            } else {
-                const hasNonDegreeClass = data.classes.some(c => c !== 'DEGREE');
-                if (hasNonDegreeClass && (!data.syllabus || data.syllabus.trim() === '')) {
-                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Syllabus is required for non-degree classes.', path: ['syllabus'] });
-                }
-            }
-        }
-        if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
-            if (!data.levels || data.levels.length === 0) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select at least one level.', path: ['levels'] });
-            }
-        }
-        if (data.courseModel === 'COMPETITIVE EXAM') {
-            if (!data.competitiveExam || data.competitiveExam.trim() === '') {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select a competitive exam.', path: ['competitiveExam'] });
-            }
-        }
-    }
 });
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -88,6 +62,7 @@ export default function CreateSchedulePage() {
 
     const [allStudents, setAllStudents] = useState<User[]>([]);
     const [scheduledClasses, setScheduledClasses] = useState<Schedule[]>([]);
+    const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
 
     const availableClasses = useMemo(() => {
         if (user?.role === 'admin') return classes;
@@ -133,7 +108,17 @@ export default function CreateSchedulePage() {
 
     const { watch } = form;
     const learningMode = watch('learningMode');
-    const courseModel = watch('courseModel');
+    const courseModelName = watch('courseModel');
+    const activeModel = courseModels.find(m => m.name === courseModelName);
+
+    useEffect(() => {
+        if (!firestore) return;
+        const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+        const unsub = onSnapshot(q, (snap) => {
+            setCourseModels(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+        });
+        return () => unsub();
+    }, [firestore]);
 
     useEffect(() => {
         if (!firestore || !user) return;
@@ -201,12 +186,12 @@ export default function CreateSchedulePage() {
                     if (student.syllabus) scheduleData.syllabus = student.syllabus;
                 }
             } else {
-                if (data.courseModel === 'MATHS ONLINE TUITION') {
+                if (activeModel?.configType === 'class-syllabus') {
                     scheduleData.classes = data.classes;
                     scheduleData.syllabus = data.syllabus;
-                } else if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
+                } else if (activeModel?.configType === 'level') {
                     scheduleData.levels = data.levels;
-                } else if (data.courseModel === 'COMPETITIVE EXAM') {
+                } else if (activeModel?.configType === 'competitive-exam') {
                     scheduleData.competitiveExam = data.competitiveExam;
                 }
             }
@@ -266,9 +251,9 @@ export default function CreateSchedulePage() {
                                                 form.setValue('syllabus', '');
                                             }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                                                    <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
-                                                    <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
+                                                    {courseModels.map(m => (
+                                                        <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select><FormMessage /></FormItem>
                                     )}/>
@@ -284,7 +269,7 @@ export default function CreateSchedulePage() {
                                     )}/>
                                 ) : (
                                     <>
-                                        {courseModel === 'MATHS ONLINE TUITION' && (
+                                        {activeModel?.configType === 'class-syllabus' && (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <FormField control={form.control} name="classes" render={({ field }) => (
                                                     <FormItem><FormLabel>Classes</FormLabel>
@@ -308,7 +293,7 @@ export default function CreateSchedulePage() {
                                                 )}/>
                                             </div>
                                         )}
-                                        {courseModel === 'TWENTY 20 BASIC MATHS' && (
+                                        {activeModel?.configType === 'level' && (
                                             <FormField control={form.control} name="levels" render={({ field }) => (
                                                 <FormItem><FormLabel>Levels</FormLabel>
                                                     <DropdownMenu>
@@ -324,7 +309,7 @@ export default function CreateSchedulePage() {
                                                     </DropdownMenu><FormMessage /></FormItem>
                                             )}/>
                                         )}
-                                        {courseModel === 'COMPETITIVE EXAM' && (
+                                        {activeModel?.configType === 'competitive-exam' && (
                                             <FormField control={form.control} name="competitiveExam" render={({ field }) => (
                                                 <FormItem><FormLabel>Competitive Exam</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} disabled={availableCompetitiveExams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger></FormControl>

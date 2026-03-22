@@ -36,6 +36,7 @@ import {
     Youtube,
     Settings,
     Megaphone,
+    LayoutGrid,
 } from 'lucide-react';
 
 const AdminPromoterTeacherLayout = dynamic(() => import('./admin-promoter-teacher-layout'), {
@@ -153,6 +154,7 @@ export default function MainLayoutClient({
 
   const adminNav = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/course-model-controller', label: 'Course Model Controller', icon: LayoutGrid },
     { href: '/admin/schedules', label: 'Schedules History', icon: History },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/promoters', label: 'Promoters', icon: Share2 },

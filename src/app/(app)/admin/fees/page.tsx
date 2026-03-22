@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,9 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, doc, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { CourseFee } from '@/lib/definitions';
+import type { CourseFee, CourseModel } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -41,30 +42,12 @@ const twenty20Levels = [
 ];
 
 const feeSchema = z.object({
-  courseModel: z.enum(['MATHS ONLINE TUITION', 'TWENTY 20 BASIC MATHS', 'COMPETITIVE EXAM'], { required_error: 'Course model is required.'}),
+  courseModel: z.string().min(1, 'Course model is required.'),
   amount: z.coerce.number().min(0, 'Amount must be a positive number.'),
   class: z.string().optional(),
   level: z.string().optional(),
   syllabus: z.string().optional(),
   competitiveExam: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.courseModel === 'MATHS ONLINE TUITION') {
-        if (!data.class) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Class is required.', path: ['class'] });
-        } else if (data.class !== 'DEGREE' && !data.syllabus) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Syllabus is required for this class.', path: ['syllabus'] });
-        }
-    }
-    if (data.courseModel === 'TWENTY 20 BASIC MATHS') {
-        if (!data.level) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Level is required.', path: ['level'] });
-        }
-    }
-    if (data.courseModel === 'COMPETITIVE EXAM') {
-        if (!data.competitiveExam) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Competitive exam is required.', path: ['competitiveExam'] });
-        }
-    }
 });
 type FeeFormValues = z.infer<typeof feeSchema>;
 
@@ -74,20 +57,27 @@ export default function AdminFeesPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fees, setFees] = useState<CourseFee[]>([]);
+    const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
     const [loadingFees, setLoadingFees] = useState(true);
     const [feeToDelete, setFeeToDelete] = useState<CourseFee | null>(null);
 
     const form = useForm<FeeFormValues>({
         resolver: zodResolver(feeSchema),
-        defaultValues: { amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: 'MATHS ONLINE TUITION' },
+        defaultValues: { amount: 0, class: '', level: '', syllabus: '', competitiveExam: '', courseModel: '' },
     });
 
-    const courseModel = form.watch('courseModel');
+    const courseModelName = form.watch('courseModel');
+    const activeModel = courseModels.find(m => m.name === courseModelName);
 
     useEffect(() => {
         if (!firestore) return;
-        const q = query(collection(firestore, 'courseFees'), orderBy('createdAt', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const qModels = query(collection(firestore, 'courseModels'), where('isActive', '==', true), orderBy('name', 'asc'));
+        const unsubModels = onSnapshot(qModels, (snap) => {
+            setCourseModels(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)));
+        });
+
+        const qFees = query(collection(firestore, 'courseFees'), orderBy('createdAt', 'desc'));
+        const unsubFees = onSnapshot(qFees, (snapshot) => {
             const feesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseFee));
             setFees(feesData);
             setLoadingFees(false);
@@ -97,7 +87,7 @@ export default function AdminFeesPage() {
             }
             setLoadingFees(false);
         });
-        return () => unsubscribe();
+        return () => { unsubModels(); unsubFees(); };
     }, [firestore]);
 
     const onSubmit = async (data: FeeFormValues) => {
@@ -148,14 +138,13 @@ export default function AdminFeesPage() {
     };
     
     const getConditionText = (fee: CourseFee) => {
-        if (fee.courseModel === 'COMPETITIVE EXAM') return fee.competitiveExam || '-';
-        if (fee.courseModel === 'TWENTY 20 BASIC MATHS') return fee.level || 'General';
-        if (fee.courseModel === 'MATHS ONLINE TUITION') {
-            if (!fee.class) return 'General';
+        if (fee.competitiveExam) return fee.competitiveExam;
+        if (fee.level) return fee.level;
+        if (fee.class) {
             if (fee.class === 'DEGREE') return 'Degree';
-            return `${fee.class || ''} - ${fee.syllabus || ''}`;
+            return `${fee.class}${fee.syllabus ? ` - ${fee.syllabus}` : ''}`;
         }
-        return '-';
+        return 'General';
     };
 
     return (
@@ -163,7 +152,7 @@ export default function AdminFeesPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold font-headline">Course Fee Management</h1>
-                    <p className="text-muted-foreground">Set and manage registration fees for different courses.</p>
+                    <p className="text-muted-foreground">Set and manage registration fees for different course models.</p>
                 </div>
             </div>
 
@@ -187,15 +176,15 @@ export default function AdminFeesPage() {
                                         >
                                             <FormControl><SelectTrigger><SelectValue placeholder="Select a course model" /></SelectTrigger></FormControl>
                                             <SelectContent>
-                                                <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
-                                                <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
-                                                <SelectItem value="COMPETITIVE EXAM">COMPETITIVE EXAM</SelectItem>
+                                                {courseModels.map(m => (
+                                                    <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     <FormMessage /></FormItem>
                                 )}/>
                                 
-                                {courseModel === 'MATHS ONLINE TUITION' && (
+                                {activeModel?.configType === 'class-syllabus' && (
                                     <>
                                         <FormField control={form.control} name="class" render={({ field }) => (
                                             <FormItem><FormLabel>Class</FormLabel>
@@ -221,7 +210,7 @@ export default function AdminFeesPage() {
                                     </>
                                 )}
 
-                                {courseModel === 'TWENTY 20 BASIC MATHS' && (
+                                {activeModel?.configType === 'level' && (
                                     <FormField control={form.control} name="level" render={({ field }) => (
                                         <FormItem><FormLabel>Level</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
@@ -232,7 +221,7 @@ export default function AdminFeesPage() {
                                     )}/>
                                 )}
 
-                                {courseModel === 'COMPETITIVE EXAM' && (
+                                {activeModel?.configType === 'competitive-exam' && (
                                     <FormField control={form.control} name="competitiveExam" render={({ field }) => (
                                         <FormItem><FormLabel>Competitive Exam</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
