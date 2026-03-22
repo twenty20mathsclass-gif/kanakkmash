@@ -230,17 +230,29 @@ export function CreateExamForm() {
 
 
     const handleQuestionPaperUpload = async (file: File) => {
+        if (!process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY) {
+            toast({ variant: 'destructive', title: 'Configuration Error', description: 'Image upload API key is missing.' });
+            setQuestionPaperUpload({ file, status: 'error' });
+            return;
+        }
+
         setQuestionPaperUpload({ file, status: 'uploading' });
         try {
             const formData = new FormData();
             formData.append('image', file);
             const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, { method: 'POST', body: formData });
             const result = await response.json();
-            if (!result.success) throw new Error('Upload failed');
+            
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Upload failed');
+            }
+            
             setQuestionPaperUpload({ file, status: 'success', url: result.data.url });
+            toast({ title: 'Success', description: 'Question paper uploaded.' });
         } catch (error: any) {
+            console.error("Upload error:", error);
             setQuestionPaperUpload({ file, status: 'error' });
-            toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload file.' });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload file. Please ensure it is a valid image.' });
         }
     }
 
@@ -279,7 +291,10 @@ export function CreateExamForm() {
                      return cleaned;
                  });
             } else {
-                if (data.descriptiveInputMethod === 'upload' && questionPaperUpload.url) {
+                if (data.descriptiveInputMethod === 'upload') {
+                    if (!questionPaperUpload.url) {
+                        throw new Error('Please upload a question paper first.');
+                    }
                     examData.questionPaperUrl = questionPaperUpload.url;
                 } else if (data.questionPaperContent) {
                     examData.questionPaperContent = data.questionPaperContent;
@@ -344,37 +359,20 @@ export function CreateExamForm() {
                 meetLink: `/exams/take/${examRef.id}`
             });
 
-            setDoc(examRef, finalExamData).catch(async (serverError) => {
-                if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({
-                        path: examRef.path,
-                        operation: 'create',
-                        requestResourceData: finalExamData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                }
-            });
-
-            setDoc(scheduleRef, finalScheduleData).catch(async (serverError) => {
-                if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({
-                        path: scheduleRef.path,
-                        operation: 'create',
-                        requestResourceData: finalScheduleData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                }
-            });
+            await setDoc(examRef, finalExamData);
+            await setDoc(scheduleRef, finalScheduleData);
             
-            toast({ title: 'Exam Created!', description: 'Your exam is being scheduled.' });
+            toast({ title: 'Exam Created!', description: 'Your exam has been successfully scheduled.' });
             form.reset();
             setQuestionPaperUpload({ file: null, status: 'idle' });
         } catch (err: any) {
+            console.error("Submission error:", err);
             if (err.code === 'permission-denied') {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                const permissionError = new FirestorePermissionError({
                     path: 'exams or schedules',
                     operation: 'create',
-                }, { cause: err }));
+                }, { cause: err });
+                errorEmitter.emit('permission-error', permissionError);
             }
             setError(err.message || 'An error occurred. Please try again.');
         } finally {
@@ -541,9 +539,10 @@ export function CreateExamForm() {
                                 {descriptiveInputMethod === 'upload' ? (
                                     <div className="space-y-2">
                                         <Label>Upload Question Paper</Label>
-                                        <Input type="file" accept="image/*,application/pdf" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" />
+                                        <Input type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" />
                                         {questionPaperUpload.status === 'uploading' && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin"/> Uploading...</p>}
                                         {questionPaperUpload.status === 'success' && <p className="text-xs text-success">File uploaded successfully.</p>}
+                                        {questionPaperUpload.status === 'error' && <p className="text-xs text-destructive">Upload failed. Please try again.</p>}
                                     </div>
                                 ) : (
                                     <FormField name="questionPaperContent" control={form.control} render={({ field }) => (<FormItem><FormControl><Textarea className="min-h-48" placeholder="Type your questions here..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
