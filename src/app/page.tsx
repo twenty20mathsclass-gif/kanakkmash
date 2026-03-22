@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -46,8 +45,10 @@ export default function Home() {
         <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
           <Reveal>
             <div className="mx-auto max-w-4xl">
-              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl leading-tight">
-                Unlock Your <span className="text-black dark:text-white">Math Potential</span> with{' '}
+              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl leading-tight text-black dark:text-white">
+                Unlock Your Math
+                <br />
+                Potential with{' '}
                 <Image
                   src="/logo mlm@4x.png"
                   alt="kanakkmash"
