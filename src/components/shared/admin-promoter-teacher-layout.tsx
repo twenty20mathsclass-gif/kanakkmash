@@ -27,7 +27,7 @@ export default function AdminPromoterTeacherLayout({ children, navItems, user, o
                         <h1 className="font-semibold text-lg">{pageTitle}</h1>
                     </header>
                     <main className="flex-grow p-4 md:p-6 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]">
-                        <div className="mx-auto w-full max-w-screen-2xl">
+                        <div className="w-full">
                             {children}
                         </div>
                     </main>

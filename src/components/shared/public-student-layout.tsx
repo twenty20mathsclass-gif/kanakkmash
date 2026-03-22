@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -77,7 +78,7 @@ export default function PublicStudentLayout({
 
             {isPubliclyAccessible && (
                 <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4">
-                    <div className="w-full max-w-4xl px-4 md:px-6">
+                    <div className="w-full px-4 md:px-6">
                         <AnnouncementBanner />
                     </div>
                     <div className="container px-4 md:px-6">

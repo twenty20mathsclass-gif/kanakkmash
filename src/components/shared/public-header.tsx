@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -43,13 +44,13 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
   }
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full px-4">
         <div className="relative grid h-16 grid-cols-[auto_1fr_auto] items-center gap-6 rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
             <div className="flex items-center justify-start">
                 <Link href={logoLink}>
                     <Image
                         src="/logo mlm@4x.png"
-                        alt="kanakkmash"
+                        alt="kanakkmash logo"
                         width={144}
                         height={44}
                         className="h-auto w-36 object-contain"
