@@ -5,7 +5,7 @@ import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MoreVertical, User as UserIcon, Calendar, Check } from 'lucide-react';
+import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon, Info, Edit, Trash2, X, MoreVertical, User as UserIcon, Calendar, Check, MessagesSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatInterface } from '@/components/shared/chat-interface';
 import { cn } from '@/lib/utils';
@@ -366,7 +366,6 @@ export default function MyChatRoomPage() {
                         const studentContexts = [u.class, u.level, u.competitiveExam].filter(Boolean);
                         return studentContexts.some(ctx => teacherAssignments.includes(ctx!));
                     });
-                    // Explicitly exclude promoters for teachers
                     fetchedUsers = [...myStudents, ...allAdmins];
                 } else if (user.role === 'promoter') {
                     fetchedUsers = [...allAdmins];
@@ -489,7 +488,6 @@ export default function MyChatRoomPage() {
         if (user.role === 'admin') {
             options.push({ id: 'student', label: 'Students' }, { id: 'teacher', label: 'Teachers' }, { id: 'promoter', label: 'Promoters' }, { id: 'group', label: 'Groups' });
         } else if (user.role === 'teacher') {
-            // No promoter filter for teachers
             options.push({ id: 'student', label: 'Students' }, { id: 'group', label: 'Groups' }, { id: 'admin', label: 'Admin' });
         } else {
             options.push({ id: 'group', label: 'Groups' }, { id: 'admin', label: 'Admin' });
