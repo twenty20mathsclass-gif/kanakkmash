@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -30,7 +31,7 @@ export default function Home() {
   ];
 
   return (
-      <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden py-4 md:py-8">
+      <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-4">
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -42,10 +43,10 @@ export default function Home() {
               ))}
           </div>
         </div>
-        <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
+        <div className="container relative z-10 mx-auto text-center md:px-6">
           <Reveal>
             <div className="mx-auto max-w-5xl">
-              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-7xl leading-tight text-black dark:text-white">
+              <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl leading-tight text-black dark:text-white">
                 Unlock Your Math
                 <br />
                 Potential with{' '}

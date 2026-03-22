@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -49,43 +50,54 @@ export default function PublicStudentLayout({
             isHomepage ? "h-svh overflow-hidden" : "min-h-screen"
         )}>
             
-            {/* Sticky Announcement Banner */}
-            <div className="sticky top-16 md:top-0 z-[40] w-full mt-16 md:mt-0">
-                <AnnouncementBanner />
-            </div>
-
             <Suspense fallback={null}>
                 <MobileLogo user={user} onSignOut={user ? onSignOut : undefined} />
                 {user ? (
                 <>
                     <div className="hidden md:block">
-                    <PublicHeader user={user} onSignOut={onSignOut} navItems={studentNav} />
+                        <PublicHeader user={user} onSignOut={onSignOut} navItems={studentNav} />
                     </div>
                     <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-                    <AppleStyleDock items={studentNav} user={user} onSignOut={onSignOut} />
+                        <AppleStyleDock items={studentNav} user={user} onSignOut={onSignOut} />
                     </div>
                 </>
                 ) : (
                 <>
                     <div className="hidden md:block">
-                    <PublicHeader navItems={publicNav} />
+                        <PublicHeader navItems={publicNav} />
                     </div>
                     <div className="fixed bottom-2 left-0 right-0 z-50 md:hidden">
-                    <HomePageDock navItems={publicNav} />
+                        <HomePageDock navItems={publicNav} />
                     </div>
                 </>
                 )}
             </Suspense>
-            
-            <main className={cn(
-                "flex-grow flex flex-col w-full",
-                isHomepage ? "justify-center items-center pt-2 md:pt-4" : "pt-4 md:pt-28 pb-12 px-4 md:px-8 lg:px-12"
-            )}>
-                {children}
-            </main>
 
+            {/* Layout content container */}
+            <div className={cn(
+                "flex-grow flex flex-col w-full",
+                isHomepage ? "overflow-hidden" : ""
+            )}>
+                {/* Fixed Spacer for Navbars - prevents content being hidden behind fixed headers */}
+                <div className="h-16 md:hidden shrink-0" />
+                {!isHomepage && <div className="h-28 hidden md:block shrink-0" />}
+
+                {/* Sticky Announcement Banner - Pins to top or below mobile header */}
+                <div className="sticky top-16 md:top-0 z-40 w-full shrink-0">
+                    <AnnouncementBanner />
+                </div>
+
+                <main className={cn(
+                    "flex-grow flex flex-col w-full",
+                    isHomepage ? "justify-center items-center overflow-hidden" : "pt-4 pb-12 px-4 md:px-8 lg:px-12"
+                )}>
+                    {children}
+                </main>
+            </div>
+
+            {/* Footer only visible if page fits or on scrolling pages */}
             {isPubliclyAccessible && (
-                <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto">
+                <footer className="w-full shrink-0 flex flex-col items-center gap-2 py-4 border-t mt-auto bg-background/50 backdrop-blur-sm">
                     <div className="container px-4 md:px-6">
                         {year && (
                         <p className="text-center text-sm text-foreground/60">
