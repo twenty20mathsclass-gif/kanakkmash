@@ -246,7 +246,7 @@ export default function MyChatRoomPage() {
     }, [contacts, filter, searchQuery]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-2rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
+        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100vh-theme(spacing.16)-4rem)] overflow-hidden bg-background border rounded-xl shadow-2xl relative">
             <div className="flex h-full divide-x">
                 {/* Contacts Sidebar */}
                 <div className={cn(
@@ -314,7 +314,7 @@ export default function MyChatRoomPage() {
                     !selectedContact && "hidden md:flex items-center justify-center"
                 )}>
                     {user && selectedContact ? (
-                        <div className="flex flex-col h-full w-full pb-20 md:pb-0">
+                        <div className="flex flex-col h-full w-full">
                             {/* Mobile Back Button Overlay */}
                             <div className="md:hidden absolute top-3.5 left-4 z-50">
                                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-background/50 backdrop-blur-md" onClick={() => setSelectedContact(null)}>

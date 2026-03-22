@@ -190,7 +190,7 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
       </ScrollArea>
 
       {/* Input */}
-      <footer className="p-3 bg-card border-t shrink-0 z-10 sticky bottom-0 md:relative">
+      <footer className="p-3 bg-card border-t shrink-0 z-10 pb-20 md:pb-3">
         <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2 max-w-5xl mx-auto">
             <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 shrink-0">
                 <Smile className="h-6 w-6" />
