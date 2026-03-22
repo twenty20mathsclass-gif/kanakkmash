@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -587,7 +586,7 @@ export default function MyChatRoomPage() {
     }, [selectedContact, user]);
 
     return (
-        <div className="flex flex-col h-[calc(100svh-12rem)] md:h-[calc(100dvh-10rem)] overflow-hidden bg-background border-none rounded-3xl shadow-2xl relative mt-4 md:mt-0">
+        <div className="flex flex-col h-[calc(100svh-10rem)] md:h-[calc(100dvh-8rem)] overflow-hidden bg-background border-none rounded-3xl shadow-2xl relative mt-2 md:mt-0">
             <div className="flex h-full divide-x-0 md:divide-x border-none">
                 {/* Contact List Sidebar */}
                 <div className={cn(

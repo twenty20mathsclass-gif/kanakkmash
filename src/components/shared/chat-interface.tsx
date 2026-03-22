@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
@@ -336,13 +335,13 @@ export function ChatInterface({
         )}
       </ScrollArea>
 
-      <footer className="p-4 bg-transparent shrink-0 z-10 pb-20 md:pb-6 safe-area-bottom">
-        <div className="flex w-full items-end gap-3 max-w-5xl mx-auto">
-            <div className="flex-1 flex items-center bg-card rounded-[1.5rem] px-3 py-1.5 shadow-xl border-none focus-within:ring-2 focus-within:ring-primary/20 transition-all min-h-[52px]">
+      <footer className="p-2 md:p-4 bg-transparent shrink-0 z-10 pb-16 md:pb-6 safe-area-bottom">
+        <div className="flex w-full items-center gap-2 max-w-5xl mx-auto px-2 md:px-0">
+            <div className="flex-1 flex items-center bg-card rounded-full px-3 py-1.5 shadow-lg border-none focus-within:ring-2 focus-within:ring-primary/20 transition-all min-h-[48px] backdrop-blur-sm">
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10 shrink-0 hover:bg-muted/50 active:scale-90">
-                            <Smile className="h-6 w-6" />
+                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-9 w-9 shrink-0 hover:bg-muted/50 active:scale-90">
+                            <Smile className="h-5 w-5" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2 rounded-2xl mb-2" side="top" align="start">
@@ -372,7 +371,7 @@ export function ChatInterface({
                     placeholder="Type a message..."
                     autoComplete="off"
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
-                    className="flex-1 h-10 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm py-0 shadow-none placeholder:text-muted-foreground/50 font-medium"
+                    className="flex-1 h-9 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-[14px] py-0 shadow-none placeholder:text-muted-foreground/50 font-medium"
                 />
                 
                 {isGroup && (
@@ -381,7 +380,7 @@ export function ChatInterface({
                             type="button" 
                             variant="ghost" 
                             size="icon" 
-                            className="text-muted-foreground rounded-full h-10 w-10 hover:bg-muted/50 active:scale-90"
+                            className="text-muted-foreground rounded-full h-9 w-9 hover:bg-muted/50 active:scale-90"
                             title="Create Poll"
                         >
                             <BarChart2 className="h-5 w-5" />
@@ -395,7 +394,7 @@ export function ChatInterface({
                     onClick={() => handleSendMessage(newMessage)}
                     size="icon" 
                     className={cn(
-                        "rounded-full h-12 w-12 shadow-2xl transition-all active:scale-90",
+                        "rounded-full h-11 w-11 shadow-lg transition-all active:scale-90",
                         newMessage.trim() ? "bg-primary hover:bg-primary/90" : "bg-muted-foreground/30 text-muted-foreground"
                     )}
                     disabled={!newMessage.trim()}
