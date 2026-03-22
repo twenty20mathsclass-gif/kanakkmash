@@ -68,6 +68,10 @@
     "/groups/{groupId}/messages/{messageId}": {
       "schema": { "$ref": "#/entities/chatMessage" },
       "description": "Stores group chat messages."
+    },
+    "/recordedClasses/{classId}/comments/{commentId}": {
+      "schema": { "type": "object", "properties": { "text": { "type": "string" }, "authorId": { "type": "string" }, "authorName": { "type": "string" }, "authorAvatarUrl": { "type": "string" }, "createdAt": { "type": "object" } } },
+      "description": "Comments on recorded classes."
     }
   }
 }
