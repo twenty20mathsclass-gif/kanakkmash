@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy, onSnapshot, addDoc, serverTimestamp, Unsubscribe, doc } from 'firebase/firestore';
 import type { User, ChatMessage, ChatGroup } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Search, Filter, ArrowLeft, Plus, Users as UsersIcon } from 'lucide-react';
@@ -233,6 +233,46 @@ export default function MyChatRoomPage() {
         unsubsRef.current = [];
     };
 
+    const setupLastMessageListener = (id: string, isGroupChat: boolean) => {
+        if (!firestore || !user) return;
+        const chatId = isGroupChat ? id : [user.id, id].sort().join('_');
+        const collName = isGroupChat ? 'groups' : 'chats';
+        
+        const lastMsgQuery = query(
+            collection(firestore, collName, chatId, 'messages'),
+            orderBy('timestamp', 'desc'),
+            limit(1)
+        );
+
+        const unsub = onSnapshot(lastMsgQuery, (snap) => {
+            if (!snap.empty) {
+                const lastMsg = snap.docs[0].data() as ChatMessage;
+                setContacts(prev => {
+                    const updated = prev.map(c => {
+                        const cId = c.isGroup ? c.id : (c as User).id;
+                        if (cId === id) {
+                            return {
+                                ...c,
+                                lastMessage: lastMsg.text,
+                                lastTimestamp: lastMsg.timestamp,
+                                hasUnread: lastMsg.senderId !== user.id && !lastMsg.isRead
+                            };
+                        }
+                        return c;
+                    });
+                    // Re-sort: newest message first, then alphabetical
+                    return [...updated].sort((a, b) => {
+                        const timeA = a.lastTimestamp?.toMillis() || 0;
+                        const timeB = b.lastTimestamp?.toMillis() || 0;
+                        if (timeA !== timeB) return timeB - timeA;
+                        return a.name.localeCompare(b.name);
+                    });
+                });
+            }
+        });
+        unsubsRef.current.push(unsub);
+    };
+
     useEffect(() => {
         if (!firestore || !user) return;
         setLoading(true);
@@ -286,14 +326,14 @@ export default function MyChatRoomPage() {
                     fetchedUsers = [...allAdmins];
                 }
 
+                // Deduplicate users
+                const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
+
                 // Setup real-time listener for groups where user is a member
                 const groupsQuery = query(collection(firestore, 'groups'), where('members', 'array-contains', user.id));
                 const unsubGroups = onSnapshot(groupsQuery, (snapshot) => {
                     const fetchedGroups = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChatGroup));
                     
-                    // Deduplicate users
-                    const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
-
                     const combined: ContactWithMetadata[] = [
                         ...uniqueUsers.filter(u => u.id !== user.id).map(u => ({ ...u, isGroup: false } as ContactWithMetadata)),
                         ...fetchedGroups.map(g => ({ ...g, isGroup: true } as ContactWithMetadata))
@@ -308,9 +348,9 @@ export default function MyChatRoomPage() {
                         });
                     });
 
-                    // Setup real-time last message listeners for each NEW contact
-                    snapshot.docs.forEach(doc => {
-                        setupLastMessageListener(doc.id, true);
+                    // Setup real-time last message listeners for each NEW contact from snapshot
+                    snapshot.docs.forEach(docSnap => {
+                        setupLastMessageListener(docSnap.id, true);
                     });
                 });
                 unsubsRef.current.push(unsubGroups);
@@ -328,47 +368,6 @@ export default function MyChatRoomPage() {
             }
         };
 
-        const setupLastMessageListener = (id: string, isGroupChat: boolean) => {
-            const chatId = isGroupChat ? id : [user!.id, id].sort().join('_');
-            const collName = isGroupChat ? 'groups' : 'chats';
-            
-            const lastMsgQuery = query(
-                collection(firestore!, collName, chatId, 'messages'),
-                orderBy('timestamp', 'desc'),
-                limit(1)
-            );
-
-            const unsub = onSnapshot(lastMsgQuery, (snap) => {
-                if (!snap.empty) {
-                    const lastMsg = snap.docs[0].data() as ChatMessage;
-                    setContacts(prev => {
-                        const updated = prev.map(c => {
-                            const cId = c.isGroup ? c.id : (c as User).id;
-                            const targetId = id;
-                            if (cId === targetId) {
-                                return {
-                                    ...c,
-                                    lastMessage: lastMsg.text,
-                                    lastTimestamp: lastMsg.timestamp,
-                                    hasUnread: lastMsg.senderId !== user!.id && !lastMsg.isRead
-                                };
-                            }
-                            return c;
-                        });
-                        // Re-sort: newest message first, then alphabetical
-                        return [...updated].sort((a, b) => {
-                            const timeA = a.lastTimestamp?.toMillis() || 0;
-                            const timeB = b.lastTimestamp?.toMillis() || 0;
-                            if (timeA !== timeB) return timeB - timeA;
-                            return a.name.localeCompare(b.name);
-                        });
-                    });
-                }
-            });
-            unsubsRef.current.push(unsub);
-        };
-
-        const uniqueUsers = Array.from(new Map(fetchedUsers.map(u => [u.id, u])).values());
         fetchAll();
         return () => cleanupListeners();
     }, [firestore, user]);
