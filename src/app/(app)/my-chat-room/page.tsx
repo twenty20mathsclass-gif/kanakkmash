@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, or } from 'firebase/firestore';
 import type { User } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,41 +61,91 @@ export default function MyChatRoomPage() {
 
         const fetchContacts = async () => {
             try {
-                let contactsQuery;
+                let fetchedContacts: User[] = [];
+                const usersCol = collection(firestore, 'users');
+
                 if (user.role === 'student') {
                     setContactListTitle('My Teachers');
-                    contactsQuery = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
+                    // Students see all teachers and admins
+                    const qTeachers = query(usersCol, where('role', '==', 'teacher'));
+                    const qAdmins = query(usersCol, where('role', '==', 'admin'));
+                    
+                    const [teachersSnap, adminsSnap] = await Promise.all([
+                        getDocs(qTeachers),
+                        getDocs(qAdmins)
+                    ]);
+                    
+                    fetchedContacts = [
+                        ...teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)),
+                        ...adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))
+                    ];
+
                 } else if (user.role === 'teacher') {
                     setContactListTitle('My Students');
+                    
+                    const contactMap = new Map<string, User>();
+
+                    // 1. Fetch Admins (always visible to teachers)
+                    const qAdmins = query(usersCol, where('role', '==', 'admin'));
+                    const adminsSnap = await getDocs(qAdmins);
+                    adminsSnap.forEach(doc => contactMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+                    // 2. Fetch Assigned Students (Groups)
                     if (user.assignedClasses && user.assignedClasses.length > 0) {
-                        contactsQuery = query(
-                            collection(firestore, 'users'), 
-                            where('role', '==', 'student'), 
-                            where('class', 'in', user.assignedClasses)
-                        );
-                    } else {
-                        // If teacher has no assigned classes, show no students.
-                        setContacts([]);
-                        setLoading(false);
-                        return;
+                        const assignedItems = user.assignedClasses;
+                        
+                        // Firestore 'in' queries are limited to 30 items
+                        const chunks = [];
+                        for (let i = 0; i < assignedItems.length; i += 30) {
+                            chunks.push(assignedItems.slice(i, i + 30));
+                        }
+
+                        const studentPromises = chunks.flatMap(chunk => [
+                            getDocs(query(usersCol, where('role', '==', 'student'), where('class', 'in', chunk))),
+                            getDocs(query(usersCol, where('role', '==', 'student'), where('level', 'in', chunk))),
+                            getDocs(query(usersCol, where('role', '==', 'student'), where('competitiveExam', 'in', chunk)))
+                        ]);
+
+                        const studentSnaps = await Promise.all(studentPromises);
+                        studentSnaps.forEach(snap => {
+                            snap.forEach(doc => {
+                                const s = { id: doc.id, ...doc.data() } as User;
+                                // Only show group students if teacher is assigned to that class
+                                if (s.learningMode === 'group') {
+                                    contactMap.set(doc.id, s);
+                                }
+                            });
+                        });
                     }
+
+                    // 3. Fetch Referred/Personal Students (One to One)
+                    // If a student was referred by this teacher, they are connected (usually 1-1)
+                    const qReferred = query(usersCol, where('referredBy', '==', user.id));
+                    const referredSnap = await getDocs(qReferred);
+                    referredSnap.forEach(doc => contactMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+                    fetchedContacts = Array.from(contactMap.values());
+
                 } else if (user.role === 'admin') {
                     setContactListTitle('All Users');
-                    contactsQuery = query(collection(firestore, 'users'));
-                } else {
-                     setContacts([]);
-                     setLoading(false);
-                     return;
+                    // Admins see everyone
+                    const qAll = query(usersCol);
+                    const allSnap = await getDocs(qAll);
+                    fetchedContacts = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                } else if (user.role === 'promoter') {
+                    setContactListTitle('Support');
+                    // Promoters see admins
+                    const qAdmins = query(usersCol, where('role', '==', 'admin'));
+                    const adminsSnap = await getDocs(qAdmins);
+                    fetchedContacts = adminsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
                 }
 
-                const querySnapshot = await getDocs(contactsQuery);
-                const fetchedContacts = querySnapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() } as User))
-                    // Filter out the current user from their own contact list
-                    .filter(contact => contact.id !== user.id);
+                // Filter out self and sort
+                const finalContacts = fetchedContacts
+                    .filter(c => c.id !== user.id)
+                    .sort((a, b) => a.name.localeCompare(b.name));
 
-                fetchedContacts.sort((a, b) => a.name.localeCompare(b.name));
-                setContacts(fetchedContacts);
+                setContacts(finalContacts);
 
             } catch (err: any) {
                 if (err.code === 'permission-denied') {
@@ -160,5 +210,3 @@ export default function MyChatRoomPage() {
         </div>
     );
 }
-
-    
