@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Phone, Video, MoreVertical, Paperclip, Smile } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -50,8 +51,6 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
                 operation: 'list',
             }, { cause: err });
             errorEmitter.emit('permission-error', permissionError);
-        } else {
-            console.warn("Chat listener error:", err);
         }
         setLoading(false);
     });
@@ -80,6 +79,7 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
         timestamp: serverTimestamp()
     };
     
+    const currentMsg = newMessage;
     setNewMessage('');
     
     addDoc(messagesCollection, messageData)
@@ -91,68 +91,104 @@ export function ChatInterface({ currentUser, chatPartner }: ChatInterfaceProps) 
                     requestResourceData: messageData
                 }, { cause: err });
                 errorEmitter.emit('permission-error', permissionError);
-            } else {
-              console.warn("Error sending message:", err);
             }
-            // Re-set the message so user can try again
-            setNewMessage(newMessage);
+            setNewMessage(currentMsg);
         });
   };
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="flex flex-row items-center gap-3 border-b">
-        <Avatar>
-            <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
-            <AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <CardTitle className="font-headline">{chatPartner.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-            {loading ? (
-                <div className="flex justify-center items-center h-full">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : messages.length > 0 ? (
-                <div className="space-y-4">
-                    {messages.map(msg => {
-                        const isSentByCurrentUser = msg.senderId === currentUser.id;
-                        return (
-                            <div key={msg.id} className={cn('flex items-end gap-2', isSentByCurrentUser ? 'justify-end' : 'justify-start')}>
-                                {!isSentByCurrentUser && <Avatar className="h-8 w-8"><AvatarImage src={chatPartner.avatarUrl} /><AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback></Avatar>}
-                                <div className={cn('max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg', isSentByCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                                    <p className="text-sm">{msg.text}</p>
-                                    <p className={cn('text-xs mt-1', isSentByCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
-                                        {msg.timestamp ? format(msg.timestamp.toDate(), 'p') : ''}
-                                    </p>
+    <div className="flex flex-col h-full w-full bg-[#E5DDD5] dark:bg-muted/10">
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 py-3 bg-card border-b shadow-sm z-10 shrink-0">
+        <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 border shadow-sm">
+                <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
+                <AvatarFallback>{chatPartner.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+                <h3 className="font-bold text-sm leading-tight">{chatPartner.name}</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                    {chatPartner.role === 'student' ? 'User' : chatPartner.role}
+                </p>
+            </div>
+        </div>
+        <div className="flex items-center gap-4 text-muted-foreground">
+            <Video className="h-5 w-5 cursor-pointer hover:text-primary transition-colors" />
+            <Phone className="h-5 w-5 cursor-pointer hover:text-primary transition-colors" />
+            <MoreVertical className="h-5 w-5 cursor-pointer hover:text-primary transition-colors" />
+        </div>
+      </header>
+
+      {/* Messages */}
+      <ScrollArea className="flex-1 px-4 relative" ref={scrollAreaRef}>
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg')] bg-repeat bg-center" />
+        {loading ? (
+            <div className="flex justify-center items-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : (
+            <div className="py-6 flex flex-col gap-2 relative z-10">
+                {messages.map((msg, index) => {
+                    const isSentByCurrentUser = msg.senderId === currentUser.id;
+                    const showDate = index === 0 || (msg.timestamp && messages[index-1].timestamp && format(msg.timestamp.toDate(), 'P') !== format(messages[index-1].timestamp.toDate(), 'P'));
+
+                    return (
+                        <div key={msg.id} className="w-full flex flex-col">
+                            {showDate && msg.timestamp && (
+                                <div className="flex justify-center my-4">
+                                    <span className="bg-background/80 backdrop-blur-sm text-[10px] uppercase font-bold px-3 py-1 rounded-full text-muted-foreground shadow-sm">
+                                        {format(msg.timestamp.toDate(), 'MMMM d, yyyy')}
+                                    </span>
                                 </div>
-                                {isSentByCurrentUser && <Avatar className="h-8 w-8"><AvatarImage src={currentUser.avatarUrl} /><AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback></Avatar>}
+                            )}
+                            <div className={cn('flex w-full mb-1', isSentByCurrentUser ? 'justify-end' : 'justify-start')}>
+                                <div className={cn(
+                                    'max-w-[85%] md:max-w-[70%] px-3 py-2 rounded-xl shadow-sm relative group',
+                                    isSentByCurrentUser 
+                                        ? 'bg-primary text-primary-foreground rounded-tr-none' 
+                                        : 'bg-card text-foreground rounded-tl-none'
+                                )}>
+                                    <p className="text-sm leading-relaxed">{msg.text}</p>
+                                    <div className={cn(
+                                        'flex items-center justify-end gap-1 mt-1 opacity-70',
+                                        isSentByCurrentUser ? 'text-primary-foreground' : 'text-muted-foreground'
+                                    )}>
+                                        <span className="text-[9px] font-medium">
+                                            {msg.timestamp ? format(msg.timestamp.toDate(), 'p') : ''}
+                                        </span>
+                                    </div>
+                                    {/* Bubble tail replacement with rounded corners logic above */}
+                                </div>
                             </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="flex justify-center items-center h-full text-muted-foreground">
-                    <p>No messages yet. Say hello!</p>
-                </div>
-            )}
-        </ScrollArea>
-      </CardContent>
-      <CardFooter className="p-4 border-t">
-        <form onSubmit={handleSendMessage} className="flex w-full items-center space-x-2">
+                        </div>
+                    );
+                })}
+            </div>
+        )}
+      </ScrollArea>
+
+      {/* Input */}
+      <footer className="p-3 bg-card border-t shrink-0 z-10">
+        <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2 max-w-5xl mx-auto">
+            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10">
+                <Smile className="h-6 w-6" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="text-muted-foreground rounded-full h-10 w-10">
+                <Paperclip className="h-6 w-6 rotate-45" />
+            </Button>
             <Input 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
                 autoComplete="off"
+                className="flex-1 h-11 bg-muted/50 border-none rounded-full px-6 focus-visible:ring-1 focus-visible:ring-primary shadow-inner"
             />
-            <Button type="submit" size="icon">
-                <Send className="h-4 w-4" />
+            <Button type="submit" size="icon" disabled={!newMessage.trim()} className="rounded-full h-11 w-11 shadow-lg shrink-0">
+                <Send className="h-5 w-5" />
                 <span className="sr-only">Send</span>
             </Button>
         </form>
-      </CardFooter>
-    </Card>
+      </footer>
+    </div>
   );
 }
