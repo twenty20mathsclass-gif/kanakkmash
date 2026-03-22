@@ -60,7 +60,8 @@ const ContactItem = ({
     onSelect: () => void;
     currentUserId: string;
 }) => {
-    const isOnline = contact.isGroup ? false : useOnlineStatus((contact as User).id);
+    // Hook must be called unconditionally at the top level
+    const isOnline = useOnlineStatus(contact.isGroup ? null : (contact as User).id);
 
     const getSubtitle = () => {
         if (contact.isGroup) return 'Group Chat';
@@ -282,6 +283,9 @@ export default function MyChatRoomPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     
+    // Unconditionally call the hook at the top level
+    const isPartnerOnline = useOnlineStatus(selectedContact && !selectedContact.isGroup ? (selectedContact as User).id : null);
+
     const unsubsRef = useRef<Unsubscribe[]>([]);
 
     const cleanupListeners = () => {
@@ -640,7 +644,7 @@ export default function MyChatRoomPage() {
                                                         <AvatarImage src={selectedContact.avatarUrl} />
                                                         <AvatarFallback className="text-5xl font-black font-headline">{selectedContact.name[0]}</AvatarFallback>
                                                     </Avatar>
-                                                    {!selectedContact.isGroup && useOnlineStatus((selectedContact as User).id) && (
+                                                    {isPartnerOnline && (
                                                         <div className="absolute bottom-3 right-3 w-6 h-6 bg-green-500 rounded-full border-[4px] border-background shadow-lg" />
                                                     )}
                                                 </div>
