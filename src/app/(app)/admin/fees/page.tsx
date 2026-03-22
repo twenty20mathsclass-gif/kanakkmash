@@ -70,9 +70,9 @@ export default function AdminFeesPage() {
 
     useEffect(() => {
         if (!firestore) return;
-        const qModels = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
+        const qModels = query(collection(firestore, 'courseModels'));
         const unsubModels = onSnapshot(qModels, (snap) => {
-            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
+            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel)).filter(m => m.isActive);
             list.sort((a, b) => a.name.localeCompare(b.name));
             setCourseModels(list);
         });

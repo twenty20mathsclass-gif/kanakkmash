@@ -104,15 +104,17 @@ export function SignUpForm() {
   
   useEffect(() => {
     if (!firestore) return;
-    const q = query(collection(firestore, 'courseModels'), where('isActive', '==', true));
+    // Fetch all course models and filter client-side to ensure robustness and avoid index issues
+    const q = query(collection(firestore, 'courseModels'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModel));
-        // Client-side sort to avoid index requirement
+        const list = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as CourseModel))
+            .filter(m => m.isActive);
         list.sort((a, b) => a.name.localeCompare(b.name));
         setCourseModels(list);
         setModelsLoaded(true);
     }, (err) => {
-        console.warn("Error loading models:", err);
+        console.warn("Error loading course models:", err);
         setModelsLoaded(true);
     });
     return () => unsubscribe();
@@ -125,31 +127,28 @@ export function SignUpForm() {
         setLoadingFee(true);
         let q = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModelName));
 
-        if (showCompetitiveExamField && selectedCompetitiveExam) {
-            q = query(q, where('competitiveExam', '==', selectedCompetitiveExam));
-        } else if (showClassField && selectedClass) {
-            q = query(q, where('class', '==', selectedClass));
-            if (selectedClass !== 'DEGREE' && selectedSyllabus) {
-                q = query(q, where('syllabus', '==', selectedSyllabus));
-            }
-        } else if (showLevelField && selectedLevel) {
-            q = query(q, where('level', '==', selectedLevel));
-        }
-        
         try {
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
-                const feeData = querySnapshot.docs[0].data() as CourseFee;
-                setFee(feeData.amount);
-            } else {
-                const generalQuery = query(collection(firestore, 'courseFees'), where('courseModel', '==', courseModelName));
-                const generalSnapshot = await getDocs(generalQuery);
-                const generalFee = generalSnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level);
-                if (generalFee) {
-                    setFee(generalFee.data().amount);
+                const exactMatch = querySnapshot.docs.find(d => {
+                    const data = d.data();
+                    if (showCompetitiveExamField) return data.competitiveExam === selectedCompetitiveExam;
+                    if (showLevelField) return data.level === selectedLevel;
+                    if (showClassField) {
+                        if (selectedClass === 'DEGREE') return data.class === 'DEGREE';
+                        return data.class === selectedClass && data.syllabus === selectedSyllabus;
+                    }
+                    return !data.class && !data.level && !data.competitiveExam;
+                });
+
+                if (exactMatch) {
+                    setFee(exactMatch.data().amount);
                 } else {
-                    setFee(DEFAULT_FEE);
+                    const generalFee = querySnapshot.docs.find(d => !d.data().class && !d.data().competitiveExam && !d.data().level);
+                    setFee(generalFee ? generalFee.data().amount : DEFAULT_FEE);
                 }
+            } else {
+                setFee(DEFAULT_FEE);
             }
         } catch (error) {
             console.error("Error fetching fee:", error);
