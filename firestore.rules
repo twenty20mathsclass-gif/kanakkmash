@@ -22,6 +22,7 @@ service cloud.firestore {
     }
 
     // --- Collection Group Rules ---
+    // Required for "My Results" page which uses collectionGroup('submissions')
     match /{path=**}/submissions/{submissionId} {
       allow read: if request.auth != null && (
         submissionId == request.auth.uid || 
