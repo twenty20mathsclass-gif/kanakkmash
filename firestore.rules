@@ -163,8 +163,15 @@ service cloud.firestore {
     match /courseCategories/{categoryId} { allow read: if true; allow write: if isAdmin() || isRole('teacher'); }
     match /popularCourses/{popularId} { allow read: if true; allow write: if isAdmin(); }
     match /testimonials/{testimonialId} { allow get, list: if true; allow write: if isAdmin(); }
-    match /invoices/{invoiceId} { allow create: if request.auth != null; allow get: if isOwner(get(/databases/$(database)/documents/invoices/$(invoiceId)).data.studentId) || isAdmin(); allow list: if isAdmin(); }
-    match /salaryInvoices/{invoiceId} { allow get: if isOwner(get(/databases/$(database)/documents/salaryInvoices/$(invoiceId)).data.teacherId) || isAdmin(); allow list, write: if isAdmin(); }
+    match /invoices/{invoiceId} { 
+      allow create: if request.auth != null; 
+      allow get: if isAdmin() || (resource != null && isOwner(resource.data.studentId)); 
+      allow list: if isAdmin(); 
+    }
+    match /salaryInvoices/{invoiceId} { 
+      allow get: if isAdmin() || (resource != null && isOwner(resource.data.teacherId)); 
+      allow list, write: if isAdmin(); 
+    }
     match /blogPosts/{postId} { allow get, list: if true; allow create: if isRole('admin') || isRole('teacher'); allow update: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])); allow delete: if isAdmin() || (isRole('teacher') && resource.data.authorId == request.auth.uid); match /comments/{commentId} { allow read, list: if true; allow create: if request.auth != null; allow delete: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid); } }
   }
 }

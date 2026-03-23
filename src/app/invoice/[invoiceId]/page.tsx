@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import type { Invoice, User } from '@/lib/definitions';
@@ -12,6 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { PageLoader } from '@/components/shared/page-loader';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +63,16 @@ function InvoicePageContents() {
                 }
             } catch (err: any) {
                 console.error("Error fetching invoice:", err);
-                setError('Failed to load invoice details.');
+                if (err.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: `invoices/${invoiceId}`,
+                        operation: 'get'
+                    }, { cause: err });
+                    errorEmitter.emit('permission-error', permissionError);
+                    setError('You do not have permission to view this invoice.');
+                } else {
+                    setError('Failed to load invoice details.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -140,7 +151,7 @@ function InvoicePageContents() {
                                     {student.syllabus && <p className="text-sm text-muted-foreground">Syllabus: {student.syllabus}</p>}
                                     {student.competitiveExam && <p className="text-sm text-muted-foreground">Exam: {student.competitiveExam}</p>}
                                 </td>
-                                <td className="p-3 text-right font-mono">₹{invoice.amount.toFixed(2)}</td>
+                                <td className="p-3 text-right font-mono">₹{Number(invoice.amount).toFixed(2)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -150,7 +161,7 @@ function InvoicePageContents() {
                     <div className="w-full max-w-xs space-y-2">
                         <div className="flex justify-between font-bold text-2xl bg-primary text-primary-foreground p-4 rounded-lg">
                             <span>Total</span>
-                            <span className="font-mono">₹{invoice.amount.toFixed(2)}</span>
+                            <span className="font-mono">₹{Number(invoice.amount).toFixed(2)}</span>
                         </div>
                          <div className="flex justify-center pt-2">
                              <p className="text-green-600 font-bold text-lg">PAID</p>
@@ -182,6 +193,12 @@ function InvoicePageContents() {
 
 
 export default function InvoicePage() {
+    const { user, loading: userLoading } = useUser();
+
+    if (userLoading) {
+        return <PageLoader />;
+    }
+
     return (
         <div className="bg-secondary/30 min-h-screen p-4 sm:p-8">
             <style jsx global>{`

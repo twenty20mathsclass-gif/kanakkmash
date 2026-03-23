@@ -74,7 +74,7 @@ function PaymentComponent() {
 
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: Math.round(registrationAmount * 100),
+      amount: Math.round(Number(registrationAmount) * 100),
       currency: 'INR',
       name: 'kanakkmash',
       description: 'Student Registration Fee',
@@ -149,12 +149,12 @@ function PaymentComponent() {
             
             if(referrer && referrer.role === 'promoter') {
                 const rewardPercentage = (promoterDetails?.rewardPercentage || 10) / 100;
-                const rewardAmount = registrationAmount * rewardPercentage;
+                const rewardAmount = Number(registrationAmount) * rewardPercentage;
                 const rewardData = {
                     promoterId: referralId,
                     studentId: authUser.uid,
                     studentName: data.name,
-                    feeAmount: registrationAmount,
+                    feeAmount: Number(registrationAmount),
                     rewardAmount: rewardAmount,
                     paidOut: false,
                     createdAt: serverTimestamp()
@@ -168,7 +168,7 @@ function PaymentComponent() {
           
           const invoiceData = {
             studentId: authUser.uid,
-            amount: registrationAmount,
+            amount: Number(registrationAmount),
             status: 'paid',
             type: 'fee',
             createdAt: serverTimestamp(),
@@ -251,12 +251,12 @@ function PaymentComponent() {
             </div>
             <div className="flex justify-between items-center font-bold text-xl pt-4 border-t">
                 <span>Registration Fee</span>
-                <span className="flex items-center"><IndianRupee className="h-5 w-5" /> {registrationAmount.toFixed(2)}</span>
+                <span className="flex items-center"><IndianRupee className="h-5 w-5" /> {Number(registrationAmount).toFixed(2)}</span>
             </div>
         </div>
 
         <Button onClick={handlePayment} className="w-full" size="lg" disabled={loading}>
-          {loading ? <Loader2 className="animate-spin" /> : `Pay ₹${registrationAmount}`}
+          {loading ? <Loader2 className="animate-spin" /> : `Pay ₹${Number(registrationAmount)}`}
         </Button>
 
         {error && (
