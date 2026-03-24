@@ -1,3 +1,4 @@
+'use server';
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -196,22 +197,38 @@ export function CreateExamForm() {
         if (!firestore || !user) return;
         const fetchStudents = async () => {
             try {
-                const referralsQuery = query(collection(firestore, 'users', user.id, 'referrals'));
-                const referralsSnapshot = await getDocs(referralsQuery);
-                const studentIds = referralsSnapshot.docs.map(doc => doc.id);
-                if (studentIds.length > 0) {
-                    const studentsList: User[] = [];
-                    for (let i = 0; i < studentIds.length; i += 30) {
-                        const chunk = studentIds.slice(i, i + 30);
-                        const studentsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-                        const querySnapshot = await getDocs(studentsQuery);
-                        studentsList.push(...querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+                // Fetch all students.
+                const studentsQuery = query(
+                    collection(firestore, 'users'), 
+                    where('role', '==', 'student')
+                );
+                
+                const querySnapshot = await getDocs(studentsQuery);
+                const studentsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                
+                // Filter client-side to show only relevant students to this teacher/admin
+                const filteredStudents = studentsList.filter(student => {
+                    if (user.role === 'admin') return true;
+                    
+                    // Show if referred by this teacher
+                    if (student.referredBy === user.id) return true;
+                    
+                    // Show if in one of the teacher's assigned classes/exams/levels
+                    if (user.assignedClasses && user.assignedClasses.length > 0) {
+                        return (
+                            (student.class && user.assignedClasses.includes(student.class)) ||
+                            (student.level && user.assignedClasses.includes(student.level)) ||
+                            (student.competitiveExam && user.assignedClasses.includes(student.competitiveExam))
+                        );
                     }
-                    studentsList.sort((a, b) => a.name.localeCompare(b.name));
-                    setAllStudents(studentsList);
-                }
+                    
+                    return false;
+                });
+
+                filteredStudents.sort((a, b) => a.name.localeCompare(b.name));
+                setAllStudents(filteredStudents);
             } catch (err: any) {
-                console.warn(err);
+                console.warn("Error fetching students:", err);
             }
         };
         fetchStudents();
