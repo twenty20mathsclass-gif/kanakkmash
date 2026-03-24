@@ -240,16 +240,18 @@ export default function AdminSchedulesHistoryPage() {
                          <div className="flex items-center gap-2 pt-2">
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                    <Button variant="outline" className="w-full justify-start text-left font-normal h-12 rounded-xl border-gray-100 text-gray-600">
+                                        <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
                                         {selectedDate ? format(selectedDate, 'PPP') : <span>Filter by date...</span>}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
+                                <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" align="start">
                                     <CalendarComponent
                                         mode="single"
                                         selected={selectedDate || undefined}
                                         onSelect={(date) => setSelectedDate(date || null)}
+                                        onCancel={() => {}} // Popover closes automatically on outside click but we provide these if needed
+                                        onApply={() => {}}
                                         initialFocus
                                     />
                                 </PopoverContent>

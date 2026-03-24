@@ -12,12 +12,28 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart, User, Award, BookOpen } from 'lucide-react';
+import { 
+  Clock, 
+  MoreHorizontal, 
+  BookText, 
+  AppWindow, 
+  FlaskConical, 
+  CalendarDays, 
+  Loader2, 
+  BarChart, 
+  User, 
+  Award, 
+  BookOpen,
+  Search,
+  Plus
+} from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { CalendarView } from '@/components/shared/calendar-view';
+import { useToast } from '@/hooks/use-toast';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -35,9 +51,12 @@ export default function ExamSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
+  const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<ScheduleWithTeacher[]>([]);
+  const [eventDates, setEventDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
 
@@ -133,7 +152,42 @@ export default function ExamSchedulePage() {
         setLoading(false);
     });
 
-    return () => unsubscribe();
+  useEffect(() => {
+    if (!firestore || !user) return;
+    
+    // Fetch all exam schedules for indicators
+    const allExamsQuery = query(
+        collection(firestore, 'schedules'),
+        where('type', '==', 'exam')
+    );
+
+    const unsub = onSnapshot(allExamsQuery, (snapshot) => {
+        const dates = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
+            .filter(schedule => {
+                if (schedule.studentId === user.id) return true;
+                if (!schedule.studentId && schedule.courseModel === user.courseModel) {
+                    if (user.courseModel === 'COMPETITIVE EXAM') return schedule.competitiveExam === user.competitiveExam;
+                    if (user.courseModel === 'TWENTY 20 BASIC MATHS') return user.level && schedule.levels?.includes(user.level);
+                    if (user.class && schedule.classes?.includes(user.class)) {
+                        if (user.class !== 'DEGREE') return schedule.syllabus === user.syllabus;
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .map(s => s.date.toDate());
+        
+        const uniqueDates = dates.filter((date, index, self) => 
+            index === self.findIndex((d) => isSameDay(d, date))
+        );
+        setEventDates(uniqueDates);
+    });
+
+    return () => unsub();
+  }, [firestore, user]);
+
+  return () => unsubscribe();
   }, [selectedDate, firestore, user]);
 
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
@@ -155,29 +209,33 @@ export default function ExamSchedulePage() {
     setSelectedEvent(null);
   };
 
+  if (view === 'calendar') {
+    return (
+        <CalendarView
+            selectedDate={selectedDate}
+            onDateSelect={(date) => {
+                setSelectedDate(date);
+                setView('list');
+            }}
+            onToggleView={() => setView('list')}
+            eventDates={eventDates}
+            onBack={() => setView('list')}
+            onSearch={() => toast({ title: "Search", description: "Search functionality coming soon!" })}
+            onAdd={() => router.push('/teacher/exams')}
+        />
+    );
+  }
+
   return (
-    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
+    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24 px-4 pt-6">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Exam Schedule</h1>
-           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <CalendarDays className="h-6 w-6" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                            if (date) setSelectedDate(date);
-                            setIsCalendarOpen(false);
-                        }}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setView('calendar')} className="rounded-full">
+                <CalendarDays className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
       </Reveal>
 

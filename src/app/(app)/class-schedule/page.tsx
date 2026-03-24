@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, Timestamp, onSnapshot, doc, setDoc, getDoc } from 'firebase/firestore';
@@ -12,7 +13,21 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Clock, MoreHorizontal, BookText, AppWindow, FlaskConical, CalendarDays, Loader2, BarChart, User as UserIcon, Award, BookOpen } from 'lucide-react';
+import { 
+  Clock, 
+  MoreHorizontal, 
+  BookText, 
+  AppWindow, 
+  FlaskConical, 
+  CalendarDays, 
+  Loader2, 
+  BarChart, 
+  User as UserIcon, 
+  Award, 
+  BookOpen,
+  Search,
+  Plus
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +35,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { CalendarView } from '@/components/shared/calendar-view';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText,
@@ -37,9 +53,11 @@ export default function ClassSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
+  const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [schedules, setSchedules] = useState<ScheduleWithTeacher[]>([]);
+  const [eventDates, setEventDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
   const [attendedClasses, setAttendedClasses] = useState<string[]>([]);
@@ -141,6 +159,42 @@ export default function ClassSchedulePage() {
 
     return () => unsubscribe();
   }, [selectedDate, firestore, user]);
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+    
+    // Fetch all schedules for this user/criteria to show dots on calendar
+    const allSchedulesQuery = query(
+        collection(firestore, 'schedules')
+    );
+
+    const unsub = onSnapshot(allSchedulesQuery, (snapshot) => {
+        const dates = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
+            .filter(schedule => {
+                if (schedule.type && schedule.type !== 'class') return false;
+                if (schedule.studentId === user.id) return true;
+                if (!schedule.studentId && schedule.courseModel === user.courseModel) {
+                    if (user.courseModel === 'COMPETITIVE EXAM') return schedule.competitiveExam === user.competitiveExam;
+                    if (user.courseModel === 'TWENTY 20 BASIC MATHS') return user.level && schedule.levels?.includes(user.level);
+                    if (user.class && schedule.classes?.includes(user.class)) {
+                        if (user.class !== 'DEGREE') return schedule.syllabus === user.syllabus;
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .map(s => s.date.toDate());
+        
+        // Filter unique dates to avoid duplicates
+        const uniqueDates = dates.filter((date, index, self) => 
+            index === self.findIndex((d) => isSameDay(d, date))
+        );
+        setEventDates(uniqueDates);
+    });
+
+    return () => unsub();
+  }, [firestore, user]);
 
   useEffect(() => {
     if (!firestore || !user) return;
@@ -266,29 +320,33 @@ export default function ClassSchedulePage() {
     setSelectedEvent(null); // Close dialog
   };
 
+  if (view === 'calendar') {
+    return (
+        <CalendarView
+            selectedDate={selectedDate}
+            onDateSelect={(date) => {
+                setSelectedDate(date);
+                setView('list');
+            }}
+            onToggleView={() => setView('list')}
+            eventDates={eventDates}
+            onBack={() => setView('list')}
+            onSearch={() => toast({ title: "Search", description: "Search functionality coming soon!" })}
+            onAdd={() => router.push('/teacher/create-schedule')}
+        />
+    );
+  }
+
   return (
-    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24">
+    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24 px-4 pt-6">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Class Schedule</h1>
-           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <CalendarDays className="h-6 w-6" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                            if (date) setSelectedDate(date);
-                            setIsCalendarOpen(false);
-                        }}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setView('calendar')} className="rounded-full">
+                <CalendarDays className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
       </Reveal>
 

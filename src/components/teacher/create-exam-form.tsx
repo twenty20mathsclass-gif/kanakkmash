@@ -135,6 +135,7 @@ export function CreateExamForm() {
     const [error, setError] = useState<string | null>(null);
 
     const [allStudents, setAllStudents] = useState<User[]>([]);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [scheduledExams, setScheduledExams] = useState<Schedule[]>([]);
     const [questionPaperUpload, setQuestionPaperUpload] = useState<{ file: File | null, status: 'idle' | 'uploading' | 'success' | 'error', url?: string }>({ file: null, status: 'idle' });
 
@@ -458,9 +459,9 @@ export function CreateExamForm() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField name="duration" control={form.control} render={({ field }) => (<FormItem><FormLabel>Duration (min)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <FormField name="date" control={form.control} render={({ field }) => (
-                                    <FormItem className="flex flex-col"><FormLabel>Date</FormLabel><Popover><PopoverTrigger asChild><FormControl>
-                                        <Button variant="outline" className="justify-between">{field.value ? format(field.value, "PPP") : "Pick date"}<CalendarIcon className="h-4 w-4 opacity-50" /></Button>
-                                    </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
+                                    <FormItem className="flex flex-col"><FormLabel>Date</FormLabel><Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}><PopoverTrigger asChild><FormControl>
+                                        <Button variant="outline" className={cn("justify-between h-12 rounded-xl border-gray-100", !field.value && "text-muted-foreground", field.value && "text-[#FF8C00] border-[#FF8C00]/20 bg-orange-50")}>{field.value ? format(field.value, "PPP") : "Pick date"}<CalendarIcon className="h-4 w-4 opacity-50" /></Button>
+                                    </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} onCancel={() => setIsCalendarOpen(false)} onApply={() => setIsCalendarOpen(false)} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
                                 )}/>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
