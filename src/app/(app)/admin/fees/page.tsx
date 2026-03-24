@@ -143,7 +143,10 @@ export default function AdminFeesPage() {
     
     const getConditionText = (fee: CourseFee) => {
         if (fee.competitiveExam) return fee.competitiveExam;
-        if (fee.level) return fee.level;
+        if (fee.level) {
+            const levelObj = twenty20Levels.find(l => l.value === fee.level);
+            return levelObj ? levelObj.label : fee.level;
+        }
         if (fee.class) {
             if (fee.class === 'DEGREE') return 'Degree';
             return `${fee.class}${fee.syllabus ? ` - ${fee.syllabus}` : ''}`;

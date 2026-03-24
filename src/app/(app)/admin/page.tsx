@@ -21,6 +21,41 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 type ScheduleWithAttendance = Schedule & { attendanceCount: number, teacherName?: string };
 
+const StatCard = ({
+  title,
+  value,
+  icon,
+  description,
+  color,
+  delay,
+}: {
+  title: string;
+  value: string | number | React.ReactNode;
+  icon: React.ElementType;
+  description: string;
+  color: string;
+  delay: number;
+}) => {
+  const Icon = icon;
+  return (
+    <Reveal delay={delay}>
+      <Card
+        style={{ backgroundColor: color }}
+        className="text-primary-foreground shadow-lg border-none"
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <Icon className="h-5 w-5 text-primary-foreground/80" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl md:text-4xl font-bold">{value}</div>
+          <p className="text-[10px] md:text-xs text-primary-foreground/80 mt-1">{description}</p>
+        </CardContent>
+      </Card>
+    </Reveal>
+  );
+};
+
 export default function AdminDashboardPage() {
   const { firestore } = useFirebase();
   const [stats, setStats] = useState({ students: 0, teachers: 0, courses: 0 });
@@ -84,7 +119,7 @@ export default function AdminDashboardPage() {
   }, [firestore]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10 w-full max-w-none overflow-x-hidden px-1">
       <Reveal>
         <div>
           <h1 className="text-3xl font-bold font-headline">Admin Dashboard</h1>
@@ -92,40 +127,31 @@ export default function AdminDashboardPage() {
         </div>
       </Reveal>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Reveal>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <div className="text-2xl font-bold">{stats.students}</div>}
-            </CardContent>
-          </Card>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <div className="text-2xl font-bold">{stats.teachers}</div>}
-            </CardContent>
-          </Card>
-        </Reveal>
-        <Reveal delay={0.2}>
-            <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{stats.courses}</div>
-            </CardContent>
-            </Card>
-        </Reveal>
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+        <StatCard
+          title="Total Students"
+          value={loading ? <Loader2 className="h-8 w-8 animate-spin"/> : stats.students}
+          description="Total active students enrolled on the platform"
+          icon={Users}
+          color="hsl(210 80% 65%)"
+          delay={0.1}
+        />
+        <StatCard
+          title="Total Teachers"
+          value={loading ? <Loader2 className="h-8 w-8 animate-spin"/> : stats.teachers}
+          description="Total active instructors and subject experts"
+          icon={Users}
+          color="hsl(270 80% 65%)"
+          delay={0.2}
+        />
+        <StatCard
+          title="Total Courses"
+          value={loading ? <Loader2 className="h-8 w-8 animate-spin"/> : stats.courses}
+          description="Curated courses and competitive materials"
+          icon={BookOpen}
+          color="hsl(30 95% 55%)"
+          delay={0.3}
+        />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -157,15 +157,24 @@ function DescriptiveExamInterface({ exam, schedule, user, timeLeft, handleSubmit
         </CardHeader>
         <CardContent className="space-y-6">
             <div>
-                <h3 className="font-semibold mb-2">Question Paper</h3>
-                 {exam.questionPaperUrl ? (
-                    <Button asChild>
+                <h3 className="font-semibold mb-4 text-lg">Questions</h3>
+                 {exam.questions && exam.questions.length > 0 ? (
+                    <ul className="space-y-4 list-none p-0">
+                        {exam.questions.map((q, i) => (
+                            <li key={i} className="flex gap-4 p-4 border rounded-xl bg-muted/5">
+                                <span className="font-bold text-primary shrink-0">Q{i + 1}.</span>
+                                <span className="text-foreground leading-relaxed">{q.questionText}</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : exam.questionPaperUrl ? (
+                    <Button asChild className="w-full sm:w-auto">
                         <a href={exam.questionPaperUrl} target="_blank" rel="noopener noreferrer">View Question Paper</a>
                     </Button>
                 ) : exam.questionPaperContent ? (
-                    <div className="prose dark:prose-invert border p-4 rounded-md max-h-96 overflow-y-auto" dangerouslySetInnerHTML={{ __html: exam.questionPaperContent }} />
+                    <div className="prose dark:prose-invert border p-6 rounded-2xl max-h-96 overflow-y-auto bg-muted/5" dangerouslySetInnerHTML={{ __html: exam.questionPaperContent }} />
                 ) : (
-                    <p className="text-muted-foreground">No question paper available.</p>
+                    <p className="text-muted-foreground p-4 border border-dashed rounded-xl text-center">No questions available.</p>
                 )}
             </div>
             <div>

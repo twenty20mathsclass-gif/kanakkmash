@@ -69,8 +69,8 @@ const StatCard = ({
           <Icon className="h-5 w-5 text-primary-foreground/80" />
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold">{value}</div>
-          <p className="text-xs text-primary-foreground/80 mt-1">{description}</p>
+          <div className="text-3xl md:text-4xl font-bold">{value}</div>
+          <p className="text-[10px] md:text-xs text-primary-foreground/80 mt-1">{description}</p>
         </CardContent>
       </Card>
     </Reveal>
@@ -221,7 +221,7 @@ export default function TeacherDashboardPage() {
   }, [firestore, user]);
 
   return (
-    <div className="space-y-10 w-full max-w-none">
+    <div className="space-y-10 w-full max-w-none overflow-x-hidden px-1">
       <Reveal>
         <div className="mb-6">
           <h1 className="text-4xl font-bold font-headline tracking-tight">
@@ -233,7 +233,7 @@ export default function TeacherDashboardPage() {
         </div>
       </Reveal>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="My Students"
           value={loading ? <Loader2 className="h-8 w-8 animate-spin"/> : stats.students}
@@ -274,12 +274,12 @@ export default function TeacherDashboardPage() {
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 <Card style={{ backgroundColor: 'hsl(210 80% 65%)' }} className="text-primary-foreground hover:shadow-xl transition-all border-none">
                     <CardHeader className="flex flex-row items-center gap-6 space-y-0 pb-4">
-                        <div className="p-4 rounded-xl bg-background/20">
-                            <CalendarPlus className="h-8 w-8" />
+                        <div className="p-3 md:p-4 rounded-xl bg-background/20">
+                            <CalendarPlus className="h-6 w-6 md:h-8 md:h-8" />
                         </div>
                         <div>
-                            <CardTitle className="text-2xl">Schedule a Class</CardTitle>
-                            <CardDescription className="text-primary-foreground/80 text-base">Set up a new live session for your students.</CardDescription>
+                            <CardTitle className="text-xl md:text-2xl">Schedule a Class</CardTitle>
+                            <CardDescription className="text-primary-foreground/80 text-sm md:text-base line-clamp-2">Set up a new live session for your students.</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -290,12 +290,12 @@ export default function TeacherDashboardPage() {
                 </Card>
                 <Card style={{ backgroundColor: 'hsl(30 95% 55%)' }} className="text-primary-foreground hover:shadow-xl transition-all border-none">
                     <CardHeader className="flex flex-row items-center gap-6 space-y-0 pb-4">
-                        <div className="p-4 rounded-xl bg-background/20">
-                            <FilePenLine className="h-8 w-8" />
+                        <div className="p-3 md:p-4 rounded-xl bg-background/20">
+                            <FilePenLine className="h-6 w-6 md:h-8 md:h-8" />
                         </div>
                         <div>
-                            <CardTitle className="text-2xl">Create an Exam</CardTitle>
-                            <CardDescription className="text-primary-foreground/80 text-base">Assess student knowledge with a custom test.</CardDescription>
+                            <CardTitle className="text-xl md:text-2xl">Create an Exam</CardTitle>
+                            <CardDescription className="text-primary-foreground/80 text-sm md:text-base line-clamp-2">Assess student knowledge with a custom test.</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>

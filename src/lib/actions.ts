@@ -4,11 +4,7 @@ import { generateCustomMathPractice } from '@/ai/flows/generate-custom-math-prac
 import type { GenerateCustomMathPracticeOutput } from '@/ai/flows/generate-custom-math-practice';
 import { v2 as cloudinary } from 'cloudinary';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+
 
 export async function generatePractice(
   topic: string,
@@ -28,7 +24,7 @@ export async function generatePractice(
 
 /**
  * Uploads an image to Cloudinary and returns the secure URL.
- * Expects a FormData object containing an 'image' field with a File or Blob.
+ * Falls back to ImgBB if Cloudinary fails (e.g., 403 Forbidden).
  */
 export async function uploadImage(formData: FormData): Promise<string> {
   const file = formData.get('image') as File;
@@ -37,20 +33,58 @@ export async function uploadImage(formData: FormData): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      { 
-        folder: 'kanakkmash',
-        resource_type: 'auto'
-      },
-      (error, result) => {
-        if (error) {
-          console.error('Cloudinary upload error:', error);
-          reject(new Error('Failed to upload image to the server.'));
-        } else {
-          resolve(result?.secure_url || '');
+  // 1. Try Cloudinary First
+  try {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { 
+          folder: 'kanakkmash',
+          resource_type: 'auto'
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            reject(error);
+          } else {
+            resolve(result?.secure_url || '');
+          }
         }
-      }
-    ).end(buffer);
-  });
+      ).end(buffer);
+    });
+
+    if (cloudinaryUrl) return cloudinaryUrl;
+  } catch (cloudinaryError) {
+    console.warn('Cloudinary failed, attempting fallback to ImgBB...');
+  }
+
+  // 2. Fallback to ImgBB
+  try {
+    const imgbbKey = process.env.IMAGE_UPLOAD_API_KEY || process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY;
+    if (!imgbbKey) throw new Error('No upload keys available.');
+
+    const imgbbFormData = new FormData();
+    imgbbFormData.append('image', file);
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+      method: 'POST',
+      body: imgbbFormData,
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return data.data.url;
+    } else {
+      console.error('ImgBB upload error:', data);
+      throw new Error(data.error?.message || 'ImgBB upload failed.');
+    }
+  } catch (imgbbError: any) {
+    console.error('Upload fallback failed:', imgbbError);
+    throw new Error('Failed to upload image. Please check your internet connection and try again.');
+  }
 }

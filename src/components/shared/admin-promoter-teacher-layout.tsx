@@ -17,15 +17,15 @@ export default function AdminPromoterTeacherLayout({ children, navItems, user, o
     pageTitle: string;
 }) {
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
             <div className="flex min-h-screen w-full">
                 <AppSidebar items={navItems} user={user} onSignOut={onSignOut} />
-                <div className="flex flex-col flex-1 md:ml-[--sidebar-width-icon] group-data-[state=expanded]:md:ml-[--sidebar-width] transition-[margin-left] duration-300 ease-in-out w-full">
+                <div className="flex flex-col flex-1 min-w-0 transition-[margin-left] duration-300 ease-in-out">
                     <header className="p-4 border-b h-16 flex items-center gap-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10 w-full">
-                        <SidebarTrigger className="md:hidden" />
+                        <SidebarTrigger className="hover:bg-accent p-1 rounded-md transition-colors" />
                         <h1 className="font-semibold text-lg">{pageTitle}</h1>
                     </header>
-                    <main className="flex-grow p-4 md:p-8 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] w-full">
+                    <main className="flex-grow p-4 md:p-8 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px] overflow-x-hidden">
                         <div className="w-full">
                             {children}
                         </div>

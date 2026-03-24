@@ -32,7 +32,13 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
-const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+const twenty20Levels = [
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' }
+];
 
 const scheduleSchema = z.object({
     learningMode: z.enum(['group', 'one to one'], { required_error: 'Please select a learning mode.' }),
@@ -63,26 +69,17 @@ export default function CreateSchedulePage() {
     const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
 
     const availableClasses = useMemo(() => {
-        if (user?.role === 'admin') return classes;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return classes.filter(c => user.assignedClasses!.includes(c));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return classes;
         return [];
     }, [user]);
     
     const availableCompetitiveExams = useMemo(() => {
-        if (user?.role === 'admin') return competitiveExams;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return competitiveExams.filter(c => user.assignedClasses!.includes(c));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return competitiveExams;
         return [];
     }, [user]);
 
     const availableLevels = useMemo(() => {
-        if (user?.role === 'admin') return twenty20Levels;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return twenty20Levels.filter(l => user.assignedClasses!.includes(l));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return twenty20Levels;
         return [];
     }, [user]);
 
@@ -294,18 +291,19 @@ export default function CreateSchedulePage() {
                                         )}
                                         {activeModel?.configType === 'level' && (
                                             <FormField control={form.control} name="levels" render={({ field }) => (
-                                                <FormItem><FormLabel>Levels</FormLabel>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableLevels.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
-                                                        <DropdownMenuContent className="w-56"><DropdownMenuLabel>Levels</DropdownMenuLabel><DropdownMenuSeparator />
+                                                <FormItem><FormLabel>Level</FormLabel>
+                                                    <Select
+                                                        onValueChange={(val) => field.onChange([val])}
+                                                        value={field.value?.[0] || ''}
+                                                        disabled={availableLevels.length === 0}
+                                                    >
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger></FormControl>
+                                                        <SelectContent>
                                                             {availableLevels.map(l => (
-                                                                <DropdownMenuCheckboxItem key={l} checked={field.value?.includes(l)} onCheckedChange={(checked) => {
-                                                                    const vals = field.value || [];
-                                                                    field.onChange(checked ? [...vals, l] : vals.filter(v => v !== l));
-                                                                }}>{l}</DropdownMenuCheckboxItem>
+                                                                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                                                             ))}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu><FormMessage /></FormItem>
+                                                        </SelectContent>
+                                                    </Select><FormMessage /></FormItem>
                                             )}/>
                                         )}
                                         {activeModel?.configType === 'competitive-exam' && (

@@ -15,8 +15,9 @@ export function useUser() {
 
   useEffect(() => {
     if (!auth || !firestore) {
-      // Firebase services might not be available immediately.
-      // This effect will re-run when they are.
+      // Firebase services might not be available immediately, or not at all.
+      // To prevent sticking on the loader, we set loading to false.
+      setLoading(false);
       return;
     }
 

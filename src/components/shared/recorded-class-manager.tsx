@@ -32,7 +32,13 @@ import {
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
-const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+const twenty20Levels = [
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' }
+];
 
 const recordedClassSchema = z.object({
   title: z.string().min(3, 'Title is required.'),
@@ -141,7 +147,7 @@ function ClassForm({ isAdmin, teachers, onFormSubmit, classToEdit }: { isAdmin: 
         {showLevelField && <FormField control={form.control} name="level" render={({ field }) => (
           <FormItem><FormLabel>Level</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a level" /></SelectTrigger></FormControl>
-              <SelectContent>{twenty20Levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              <SelectContent>{twenty20Levels.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
             </Select><FormMessage /></FormItem>
         )} />}
         {showSyllabusField && <FormField control={form.control} name="syllabus" render={({ field }) => (

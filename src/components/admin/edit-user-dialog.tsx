@@ -44,7 +44,13 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
-const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+const twenty20Levels = [
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' }
+];
 
 const updateUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -84,7 +90,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
       rewardPercentage: user.rewardPercentage || 10,
       assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
       assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
-      assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.includes(c)) || [],
+      assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.some(l => l.value === c)) || [],
     },
   });
 
@@ -103,7 +109,7 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
             rewardPercentage: user.rewardPercentage || 10,
             assignedClasses: user.assignedClasses?.filter(c => classes.includes(c)) || [],
             assignedCompetitiveExams: user.assignedClasses?.filter(c => competitiveExams.includes(c)) || [],
-            assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.includes(c)) || [],
+            assignedTwenty20Levels: user.assignedClasses?.filter(c => twenty20Levels.some(l => l.value === c)) || [],
         });
     }
   }, [isOpen, user, form]);
@@ -388,17 +394,17 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
                                             <DropdownMenuSeparator />
                                             {twenty20Levels.map(l => (
                                                 <DropdownMenuCheckboxItem
-                                                    key={l}
-                                                    checked={field.value?.includes(l)}
+                                                    key={l.value}
+                                                    checked={field.value?.includes(l.value)}
                                                     onCheckedChange={(checked) => {
                                                         const currentValues = field.value || [];
                                                         const newValues = checked
-                                                            ? [...currentValues, l]
-                                                            : currentValues.filter(val => val !== l);
+                                                            ? [...currentValues, l.value]
+                                                            : currentValues.filter(val => val !== l.value);
                                                         field.onChange(newValues);
                                                     }}
                                                 >
-                                                    {l}
+                                                    {l.label}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
                                         </DropdownMenuContent>

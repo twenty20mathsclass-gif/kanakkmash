@@ -57,7 +57,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
     const homeHref = '/';
 
     return (
-        <Sidebar>
+        <Sidebar collapsible="icon">
             <SidebarHeader>
                 <Link href={homeHref} className={cn("flex items-center p-2 justify-center")}>
                     <Image
@@ -65,7 +65,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
                         alt="kanakkmash"
                         width={128}
                         height={39}
-                        className={cn("w-32 h-auto transition-all duration-300", state === 'collapsed' && "w-10")}
+                         className={cn("w-32 h-auto transition-all duration-300 group-data-[state=collapsed]:w-8")}
                         priority
                         unoptimized
                     />
@@ -77,10 +77,10 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
                         const Icon = item.icon;
                         return (
                             <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={{ children: item.label }}>
-                                    <Link href={item.href} onClick={() => setOpenMobile(false)}>
-                                        <Icon />
-                                        <span>{item.label}</span>
+                                 <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={{ children: item.label }} className="group-data-[state=collapsed]:justify-center">
+                                    <Link href={item.href} onClick={() => setOpenMobile(false)} className="flex items-center w-full gap-2 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-0">
+                                         <Icon className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                                        <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -96,7 +96,7 @@ export function AppSidebar({ items, user, onSignOut }: { items: NavItem[], user:
                                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className={cn("flex flex-col items-start text-left", state === 'collapsed' && 'hidden')}>
+                            <div className="flex flex-col items-start text-left group-data-[state=collapsed]:hidden">
                                 <p className="text-sm font-medium leading-none">{user.name}</p>
                                 <p className="text-xs leading-none text-muted-foreground truncate max-w-[120px]">{user.email}</p>
                             </div>

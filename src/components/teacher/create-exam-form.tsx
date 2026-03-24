@@ -1,4 +1,3 @@
-'use server';
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -41,7 +40,13 @@ const courseModelVisuals: { [key: string]: { icon: string; color: string; textCo
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
-const twenty20Levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+const twenty20Levels = [
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' }
+];
 
 const optionSchema = z.object({
   text: z.string().min(1, { message: "Option text cannot be empty." }),
@@ -50,8 +55,8 @@ const optionSchema = z.object({
 const questionSchema = z.object({
   questionText: z.string().min(1, { message: "Question text cannot be empty." }),
   imageUrl: z.string().url().optional(),
-  options: z.array(optionSchema).min(2, { message: "Must have at least two options." }).max(4, { message: "Cannot have more than 4 options." }),
-  correctAnswerIndex: z.coerce.number().min(0, { message: "Please select a correct answer." }),
+  options: z.array(optionSchema).min(2, { message: "Must have at least two options." }).max(4, { message: "Cannot have more than 4 options." }).optional(),
+  correctAnswerIndex: z.coerce.number().min(0, { message: "Please select a correct answer." }).optional(),
 });
 
 const examFormSchema = z.object({
@@ -110,8 +115,12 @@ const examFormSchema = z.object({
         if ((data.totalMarks ?? 0) <= 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Total marks must be a positive number.', path: ['totalMarks'] });
         }
-         if (data.descriptiveInputMethod === 'editor' && (!data.questionPaperContent || data.questionPaperContent.trim().length === 0)) {
-            ctx.addIssue({ code: 'custom', message: 'Question paper content cannot be empty.', path: ['questionPaperContent'] });
+        if (data.descriptiveInputMethod === 'editor') {
+            if (!data.questions || data.questions.length < 1) {
+                ctx.addIssue({ code: 'custom', message: 'Please add at least one question.', path: ['questions'] });
+            }
+        } else if (data.descriptiveInputMethod === 'upload') {
+            // Checked in onSubmit as it uses local state
         }
     }
 });
@@ -130,26 +139,17 @@ export function CreateExamForm() {
     const [questionPaperUpload, setQuestionPaperUpload] = useState<{ file: File | null, status: 'idle' | 'uploading' | 'success' | 'error', url?: string }>({ file: null, status: 'idle' });
 
     const availableClasses = useMemo(() => {
-        if (user?.role === 'admin') return classes;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return classes.filter(c => user.assignedClasses!.includes(c));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return classes;
         return [];
     }, [user]);
 
     const availableCompetitiveExams = useMemo(() => {
-        if (user?.role === 'admin') return competitiveExams;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return competitiveExams.filter(c => user.assignedClasses!.includes(c));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return competitiveExams;
         return [];
     }, [user]);
 
     const availableLevels = useMemo(() => {
-        if (user?.role === 'admin') return twenty20Levels;
-        if (user?.role === 'teacher' && user.assignedClasses) {
-            return twenty20Levels.filter(l => user.assignedClasses!.includes(l));
-        }
+        if (user?.role === 'admin' || user?.role === 'teacher') return twenty20Levels;
         return [];
     }, [user]);
 
@@ -274,6 +274,30 @@ export function CreateExamForm() {
         return cleaned;
     }
 
+    const [filterValue, setFilterValue] = useState<string>('');
+    const [filterSyllabus, setFilterSyllabus] = useState<string>('');
+
+    useEffect(() => {
+        setFilterValue('');
+        setFilterSyllabus('');
+        setValue('studentId', '');
+    }, [courseModel, learningMode, setValue]);
+
+    const filteredStudentsBySelection = useMemo(() => {
+        return allStudents.filter(student => {
+            if (learningMode !== 'one to one') return true;
+            if (courseModel === 'MATHS ONLINE TUITION') {
+                if (filterValue && filterValue !== 'all' && student.class !== filterValue) return false;
+                if (filterSyllabus && filterSyllabus !== 'all' && student.syllabus !== filterSyllabus) return false;
+            } else if (courseModel === 'TWENTY 20 BASIC MATHS') {
+                if (filterValue && filterValue !== 'all' && student.level !== filterValue) return false;
+            } else if (courseModel === 'COMPETITIVE EXAM') {
+                if (filterValue && filterValue !== 'all' && student.competitiveExam !== filterValue) return false;
+            }
+            return true;
+        });
+    }, [allStudents, courseModel, learningMode, filterValue, filterSyllabus]);
+
     const onSubmit = async (data: ExamFormValues) => {
         if (!firestore || !user) return;
         setLoading(true);
@@ -292,20 +316,30 @@ export function CreateExamForm() {
                  examData.questions = data.questions?.map(q => {
                      const cleaned: any = {
                          questionText: q.questionText,
-                         options: q.options.map(o => ({ text: o.text })),
+                         options: (q.options || []).map(o => ({ text: o.text })),
                          correctAnswerIndex: q.correctAnswerIndex
                      };
                      if (q.imageUrl) cleaned.imageUrl = q.imageUrl;
                      return cleaned;
                  });
-            } else {
+            } else if (data.examType === 'descriptive') {
                 if (data.descriptiveInputMethod === 'upload') {
                     if (!questionPaperUpload.url) {
+                        setLoading(false);
                         throw new Error('Please upload a question paper first.');
                     }
                     examData.questionPaperUrl = questionPaperUpload.url;
-                } else if (data.questionPaperContent) {
-                    examData.questionPaperContent = data.questionPaperContent;
+                } else {
+                    // Editor mode: use the structured questions array
+                    examData.questions = data.questions?.map(q => {
+                        const cleaned: any = { questionText: q.questionText };
+                        if (q.imageUrl) cleaned.imageUrl = q.imageUrl;
+                        return cleaned;
+                    });
+                    
+                    // Backup: join them into a formatted HTML string for the student interface
+                    const questionItems = data.questions?.map((q, i) => `<li class="mb-4"><span class="font-bold underline">Q${i+1}:</span> ${q.questionText}</li>`).join('') || '';
+                    examData.questionPaperContent = `<ul class="list-disc pl-6 space-y-4 font-sans text-base">${questionItems}</ul>`;
                 }
                 examData.totalMarks = data.totalMarks;
             }
@@ -451,13 +485,63 @@ export function CreateExamForm() {
                                 </Select><FormMessage /></FormItem>
                             )}/>
                             {learningMode === 'one to one' ? (
-                                <FormField control={form.control} name="studentId" render={({ field }) => (
-                                    <FormItem><FormLabel>Student</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value} disabled={allStudents.length === 0}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger></FormControl>
-                                            <SelectContent>{allStudents.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )}/>
+                                <div className="space-y-4">
+                                    {courseModel === 'MATHS ONLINE TUITION' && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Filter by Class</Label>
+                                                <Select onValueChange={setFilterValue} value={filterValue}>
+                                                    <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Classes</SelectItem>
+                                                        {availableClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Filter by Syllabus</Label>
+                                                <Select onValueChange={setFilterSyllabus} value={filterSyllabus}>
+                                                    <SelectTrigger><SelectValue placeholder="Select Syllabus" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">All Syllabuses</SelectItem>
+                                                        {syllabuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {courseModel === 'TWENTY 20 BASIC MATHS' && (
+                                        <div className="space-y-2">
+                                            <Label>Filter by Level</Label>
+                                            <Select onValueChange={setFilterValue} value={filterValue}>
+                                                <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Levels</SelectItem>
+                                                    {availableLevels.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                    {courseModel === 'COMPETITIVE EXAM' && (
+                                        <div className="space-y-2">
+                                            <Label>Filter by Exam</Label>
+                                            <Select onValueChange={setFilterValue} value={filterValue}>
+                                                <SelectTrigger><SelectValue placeholder="Select Exam" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Exams</SelectItem>
+                                                    {availableCompetitiveExams.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                    <FormField control={form.control} name="studentId" render={({ field }) => (
+                                        <FormItem><FormLabel>Student</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={filteredStudentsBySelection.length === 0}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder={filteredStudentsBySelection.length === 0 ? "No matches found" : "Select a student"} /></SelectTrigger></FormControl>
+                                                <SelectContent>{filteredStudentsBySelection.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.class || s.level || s.competitiveExam})</SelectItem>)}</SelectContent>
+                                            </Select><FormMessage /></FormItem>
+                                    )}/>
+                                </div>
                             ) : (
                                 <>
                                     {courseModel === 'MATHS ONLINE TUITION' && (
@@ -485,17 +569,19 @@ export function CreateExamForm() {
                                     )}
                                     {courseModel === 'TWENTY 20 BASIC MATHS' && (
                                         <FormField control={form.control} name="levels" render={({ field }) => (
-                                            <FormItem><FormLabel>Levels</FormLabel>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild><FormControl><Button variant="outline" className="w-full justify-between" disabled={availableLevels.length === 0}>{field.value?.length ? `${field.value.length} selected` : 'Select levels'}</Button></FormControl></DropdownMenuTrigger>
-                                                    <DropdownMenuContent className="w-56">
+                                            <FormItem><FormLabel>Level</FormLabel>
+                                                <Select 
+                                                    onValueChange={(val) => field.onChange([val])} 
+                                                    value={field.value?.[0] || ''}
+                                                    disabled={availableLevels.length === 0}
+                                                >
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
                                                         {availableLevels.map(l => (
-                                                            <DropdownMenuCheckboxItem key={l} checked={field.value?.includes(l)} onCheckedChange={(checked) => {
-                                                                const vals = field.value || []; field.onChange(checked ? [...vals, l] : vals.filter(v => v !== l));
-                                                            }}>{l}</DropdownMenuCheckboxItem>
+                                                            <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                                                         ))}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu><FormMessage /></FormItem>
+                                                    </SelectContent>
+                                                </Select><FormMessage /></FormItem>
                                         )}/>
                                     )}
                                     {courseModel === 'COMPETITIVE EXAM' && (
@@ -511,34 +597,13 @@ export function CreateExamForm() {
                         </CardContent>
                     </Card>
 
-                    {examType === 'mcq' ? (
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-bold font-headline">Questions</h2>
-                            {fields.map((field, index) => (
-                                <Card key={field.id} className="p-6 border-l-4 border-primary">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="font-bold">Question {index + 1}</h3>
-                                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (<FormItem><FormControl><Textarea placeholder="Question Text" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                        
-                                        <div className="space-y-2">
-                                            <FormLabel>Question Image (Optional)</FormLabel>
-                                            <QuestionImageUpload index={index} />
-                                        </div>
-
-                                        <OptionsFieldArray questionIndex={index} control={form.control} />
-                                    </div>
-                                </Card>
-                            ))}
-                            <Button type="button" variant="outline" onClick={() => append({ questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: -1, imageUrl: undefined })} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Add Question</Button>
-                        </div>
-                    ) : (
-                        <Card>
+                    {examType === 'descriptive' && (
+                        <Card className="mb-8">
                             <CardHeader><CardTitle>Descriptive Setup</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
-                                <FormField name="totalMarks" control={form.control} render={({ field }) => (<FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField name="totalMarks" control={form.control} render={({ field }) => (
+                                    <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
                                 <FormField control={form.control} name="descriptiveInputMethod" render={({ field }) => (
                                     <FormItem><FormLabel>Question Method</FormLabel>
                                         <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
@@ -553,7 +618,8 @@ export function CreateExamForm() {
                                         </RadioGroup>
                                     </FormItem>
                                 )}/>
-                                {descriptiveInputMethod === 'upload' ? (
+                                
+                                {form.watch('descriptiveInputMethod') === 'upload' && (
                                     <div className="space-y-2">
                                         <Label>Upload Question Paper</Label>
                                         <Input type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleQuestionPaperUpload(e.target.files[0])}} className="file:text-foreground" />
@@ -561,11 +627,62 @@ export function CreateExamForm() {
                                         {questionPaperUpload.status === 'success' && <p className="text-xs text-success">File uploaded successfully.</p>}
                                         {questionPaperUpload.status === 'error' && <p className="text-xs text-destructive">Upload failed. Please try again.</p>}
                                     </div>
-                                ) : (
-                                    <FormField name="questionPaperContent" control={form.control} render={({ field }) => (<FormItem><FormControl><Textarea className="min-h-48" placeholder="Type your questions here..." {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 )}
                             </CardContent>
                         </Card>
+                    )}
+
+                    {(examType === 'mcq' || (examType === 'descriptive' && form.watch('descriptiveInputMethod') === 'editor')) && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold font-headline">Questions</h2>
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => append(examType === 'mcq' ? { questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: 0 } : { questionText: '' })}
+                                >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Question
+                                </Button>
+                            </div>
+                            {fields.map((field, index) => (
+                                <Card key={field.id} className="p-6 border-l-4 border-primary relative">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <h3 className="font-bold text-lg">Question {index + 1}</h3>
+                                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => remove(index)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <FormField control={form.control} name={`questions.${index}.questionText`} render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Question Text</FormLabel>
+                                                <FormControl><Textarea className="min-h-32 rounded-xl focus-visible:ring-primary/20" placeholder="Type your question here..." {...field} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}/>
+                                        
+                                        <QuestionImageUpload index={index} />
+                                        
+                                        {examType === 'mcq' && <OptionsFieldArray questionIndex={index} control={form.control} />}
+                                    </div>
+                                </Card>
+                            ))}
+                            {fields.length === 0 && (
+                                <div className="text-center py-12 border-2 border-dashed rounded-3xl bg-muted/5">
+                                    <p className="text-muted-foreground mb-4">No questions added yet.</p>
+                                    <Button type="button" onClick={() => append(examType === 'mcq' ? { questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: 0 } : { questionText: '' })}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Start Adding Questions
+                                    </Button>
+                                </div>
+                            )}
+                            {fields.length > 0 && (
+                                <Button type="button" variant="outline" onClick={() => append(examType === 'mcq' ? { questionText: '', options: [{text: ''}, {text: ''}], correctAnswerIndex: 0 } : { questionText: '' })} className="w-full h-12 rounded-xl border-dashed">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Another Question
+                                </Button>
+                            )}
+                        </div>
                     )}
                     {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
                     <Button type="submit" disabled={loading} className="w-full" size="lg">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Exam</Button>
