@@ -28,6 +28,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { uploadImage } from '@/lib/actions';
 
 
 function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Firestore, onTestimonialAdded: () => void }) {
@@ -59,39 +60,31 @@ function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Fire
         const form = e.currentTarget;
         const formData = new FormData(form);
 
-        const newTestimonialData = {
-            studentName: formData.get('studentName') as string,
-            quote: formData.get('quote') as string,
-            videoUrl: formData.get('videoUrl') as string || undefined,
-            link: formData.get('link') as string || undefined,
-        };
+        const studentName = formData.get('studentName') as string;
+        const quote = formData.get('quote') as string;
+        const videoUrl = formData.get('videoUrl') as string || undefined;
+        const link = formData.get('link') as string || undefined;
 
-        if (!newTestimonialData.studentName || !newTestimonialData.quote || !imageFile) {
+        if (!studentName || !quote || !imageFile) {
             setError("Student Name, Quote, and an Image are required.");
             setLoading(false);
             return;
         }
 
         try {
-            // 1. Upload image
-            const imgbbFormData = new FormData();
-            imgbbFormData.append('image', imageFile);
-
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
-                method: 'POST',
-                body: imgbbFormData,
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error?.message || 'Image upload failed');
-            }
-            const imageUrl = result.data.url;
+            // 1. Upload image using server action
+            const uploadFormData = new FormData();
+            uploadFormData.append('image', imageFile);
+            
+            const imageUrl = await uploadImage(uploadFormData);
             
             // 2. Add testimonial to firestore
             const testimonialsCollection = collection(firestore, 'testimonials');
             const dataToSave = {
-                ...newTestimonialData,
+                studentName,
+                quote,
+                videoUrl,
+                link,
                 imageUrl,
                 createdAt: serverTimestamp(),
             };
@@ -217,8 +210,6 @@ export default function AdminTestimonialsPage() {
             // Delete firestore doc
             const testimonialRef = doc(firestore, 'testimonials', testimonialToDelete.id);
             await deleteDoc(testimonialRef);
-
-            // Note: Image on imgbb is not deleted.
             
             toast({ title: "Success", description: "Testimonial deleted." });
         } catch (serverError: any) {
@@ -279,7 +270,9 @@ export default function AdminTestimonialsPage() {
                     <div className="space-y-4">
                         {testimonials.map(t => (
                             <div key={t.id} className="flex items-start gap-4 p-4 border rounded-lg">
-                                <Image src={t.imageUrl} alt={t.studentName} width={80} height={80} className="rounded-md object-cover aspect-square" />
+                                <div className="relative w-20 h-20 shrink-0">
+                                    <Image src={t.imageUrl} alt={t.studentName} fill className="rounded-md object-cover aspect-square" />
+                                </div>
                                 <div className="flex-1 space-y-1">
                                     <p className="font-bold">{t.studentName}</p>
                                     <p className="text-sm text-muted-foreground italic line-clamp-2">"{t.quote}"</p>

@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Timer, Upload } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { uploadImage } from '@/lib/actions';
 
 interface Props {
   exam: Exam;
@@ -70,7 +71,7 @@ function McqExamInterface({ exam, schedule, user, timeLeft, handleSubmit }: Prop
           
           {currentQuestion.imageUrl && (
             <div className="relative w-full h-64 mb-6">
-                <Image src={currentQuestion.imageUrl} alt={`Question ${currentQuestionIndex + 1} image`} layout="fill" objectFit="contain" className="rounded-md"/>
+                <Image src={currentQuestion.imageUrl} alt={`Question ${currentQuestionIndex + 1} image`} fill className="rounded-md object-contain"/>
             </div>
           )}
 
@@ -232,17 +233,9 @@ export function ExamInterface({ exam, schedule, user }: Props) {
     setIsSubmitting(true);
 
     try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
-            method: 'POST',
-            body: formData,
-        });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error?.message || 'Answer file upload failed');
-        }
-        const downloadUrl = result.data.url;
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', file);
+        const downloadUrl = await uploadImage(uploadFormData);
         
         const submissionData: Omit<ExamSubmission, 'id'> = {
           examId: exam.id, studentId: user.id, studentName: user.name,
@@ -274,8 +267,6 @@ export function ExamInterface({ exam, schedule, user }: Props) {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Auto-submit logic can be tricky, for now we just stop the timer.
-          // A proper implementation would need to know which submit handler to call.
           toast({ variant: 'destructive', title: 'Time is up!', description: 'Please submit your exam now.' });
           return 0;
         }

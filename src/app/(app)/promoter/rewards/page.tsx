@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -26,6 +25,7 @@ import { AlertCircle } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { uploadImage } from '@/lib/actions';
 
 const paymentDetailsSchema = z.object({
   paymentMethod: z.enum(['bank', 'upi'], { required_error: 'Please select a payment method.' }),
@@ -148,17 +148,9 @@ function PaymentDetailsForm() {
                 dataToUpdate.ifscCode = undefined;
 
                 if (qrCodeFile) {
-                    const formData = new FormData();
-                    formData.append('image', qrCodeFile);
-                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
-                        method: 'POST',
-                        body: formData,
-                    });
-                    const result = await response.json();
-                    if (!result.success) {
-                        throw new Error(result.error?.message || 'QR code upload failed');
-                    }
-                    dataToUpdate.upiQrCodeUrl = result.data.url;
+                    const uploadFormData = new FormData();
+                    uploadFormData.append('image', qrCodeFile);
+                    dataToUpdate.upiQrCodeUrl = await uploadImage(uploadFormData);
                 } else if (existingQrUrl) {
                     dataToUpdate.upiQrCodeUrl = existingQrUrl;
                 }

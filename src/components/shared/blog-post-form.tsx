@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -23,6 +22,7 @@ import Image from 'next/image';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { FormDescription } from '../ui/form';
+import { uploadImage } from '@/lib/actions';
 
 const blogPostSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -82,17 +82,9 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
 
       if (imageFile) {
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
-            method: 'POST',
-            body: formData,
-        });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error?.message || 'Image upload failed');
-        }
-        imageUrl = result.data.url;
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', imageFile);
+        imageUrl = await uploadImage(uploadFormData);
         setIsUploading(false);
       } else if (!imagePreview) {
         imageUrl = '';

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -22,6 +21,7 @@ import { AlertCircle } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { uploadImage } from '@/lib/actions';
 
 
 const passwordFormSchema = z.object({
@@ -74,25 +74,17 @@ export default function ProfilePage() {
         let downloadURL = '';
 
         try {
+            // 1. Upload using server action to Cloudinary
             const formData = new FormData();
             formData.append('image', file);
             
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, {
-                method: 'POST',
-                body: formData,
-            });
-            const result = await response.json();
+            downloadURL = await uploadImage(formData);
 
-            if (!result.success) {
-                throw new Error(result.error?.message || 'Image upload failed');
-            }
-            downloadURL = result.data.url;
-
-            // Update firestore document
+            // 2. Update firestore document
             const userDocRef = doc(firestore, 'users', user.id);
             await updateDoc(userDocRef, { avatarUrl: downloadURL });
 
-            // Update auth user profile
+            // 3. Update auth user profile
             await updateProfile(auth.currentUser, { photoURL: downloadURL });
 
             toast({

@@ -28,6 +28,7 @@ import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { uploadImage } from '@/lib/actions';
 
 
 const courseModelVisuals: { [key: string]: { icon: string; color: string; textColor: string; subject: string; } } = {
@@ -230,29 +231,19 @@ export function CreateExamForm() {
 
 
     const handleQuestionPaperUpload = async (file: File) => {
-        if (!process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY) {
-            toast({ variant: 'destructive', title: 'Configuration Error', description: 'Image upload API key is missing.' });
-            setQuestionPaperUpload({ file, status: 'error' });
-            return;
-        }
-
         setQuestionPaperUpload({ file, status: 'uploading' });
         try {
-            const formData = new FormData();
-            formData.append('image', file);
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, { method: 'POST', body: formData });
-            const result = await response.json();
+            const uploadFormData = new FormData();
+            uploadFormData.append('image', file);
             
-            if (!result.success) {
-                throw new Error(result.error?.message || 'Upload failed');
-            }
+            const imageUrl = await uploadImage(uploadFormData);
             
-            setQuestionPaperUpload({ file, status: 'success', url: result.data.url });
+            setQuestionPaperUpload({ file, status: 'success', url: imageUrl });
             toast({ title: 'Success', description: 'Question paper uploaded.' });
         } catch (error: any) {
             console.error("Upload error:", error);
             setQuestionPaperUpload({ file, status: 'error' });
-            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload file. Please ensure it is a valid image.' });
+            toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not upload file.' });
         }
     }
 
@@ -390,13 +381,15 @@ export function CreateExamForm() {
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="examType" render={({ field }) => (
                                     <FormItem><FormLabel>Exam Type</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                             <SelectContent><SelectItem value="mcq">Multiple Choice</SelectItem><SelectItem value="descriptive">Descriptive</SelectItem></SelectContent>
                                         </Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="learningMode" render={({ field }) => (
                                     <FormItem><FormLabel>Learning Mode</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 {(user?.teachingMode === 'group' || user?.teachingMode === 'both' || !user?.teachingMode) && (
                                                     <SelectItem value="group">Group Mode</SelectItem>
@@ -431,7 +424,8 @@ export function CreateExamForm() {
                         <CardContent className="space-y-4">
                              <FormField control={form.control} name="courseModel" render={({ field }) => (
                                 <FormItem><FormLabel>Course Model</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="MATHS ONLINE TUITION">MATHS ONLINE TUITION</SelectItem>
                                         <SelectItem value="TWENTY 20 BASIC MATHS">TWENTY 20 BASIC MATHS</SelectItem>
@@ -601,21 +595,14 @@ function QuestionImageUpload({ index }: { index: number }) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (!process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Image upload API key is missing.' });
-            return;
-        }
-
         setUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('image', file);
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY}`, { method: 'POST', body: formData });
-            const result = await response.json();
+            const uploadFormData = new FormData();
+            uploadFormData.append('image', file);
             
-            if (!result.success) throw new Error(result.error?.message || 'Upload failed');
+            const imageUrl = await uploadImage(uploadFormData);
             
-            setValue(`questions.${index}.imageUrl`, result.data.url);
+            setValue(`questions.${index}.imageUrl`, imageUrl);
             toast({ title: 'Success', description: 'Question image uploaded.' });
         } catch (error: any) {
             console.error("Upload error:", error);
