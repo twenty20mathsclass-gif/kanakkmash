@@ -6,10 +6,12 @@ import { useFirebase } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Announcement } from '@/lib/definitions';
 import { Megaphone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function AnnouncementBanner() {
     const { firestore } = useFirebase();
-    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
         if (!firestore) return;
@@ -18,15 +20,16 @@ export function AnnouncementBanner() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (!snapshot.empty) {
-                const activeAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
-                activeAnnouncements.sort((a, b) => {
+                const active = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+                active.sort((a, b) => {
                     const timeA = a.createdAt?.toMillis() || 0;
                     const timeB = b.createdAt?.toMillis() || 0;
                     return timeB - timeA;
                 });
-                setAnnouncement(activeAnnouncements[0]);
+                setAnnouncements(active);
+                setCurrentIndex(0); // Reset to first when list changes
             } else {
-                setAnnouncement(null);
+                setAnnouncements([]);
             }
         }, (err) => {
             console.error("Announcement listener failed:", err);
@@ -35,20 +38,45 @@ export function AnnouncementBanner() {
         return () => unsubscribe();
     }, [firestore]);
 
-    if (!announcement) {
+    useEffect(() => {
+        if (announcements.length <= 1) return;
+        
+        const timer = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % announcements.length);
+        }, 20000); // 20 seconds
+
+        return () => clearInterval(timer);
+    }, [announcements.length]);
+
+    if (announcements.length === 0) {
         return null;
     }
 
+    const current = announcements[currentIndex];
+
     const content = (
-        <div className="flex items-center justify-center gap-3 p-2 bg-gradient-to-r from-primary via-accent to-destructive text-primary-foreground shadow-sm w-full border-b border-white/10">
-            <Megaphone className="h-4 w-4 shrink-0 hidden sm:block animate-bounce" />
-            <p className="font-bold text-center uppercase tracking-wider text-xs sm:text-sm">{announcement.text}</p>
+        <div className="flex items-center justify-center gap-3 p-2 bg-gradient-to-r from-primary via-accent to-destructive text-primary-foreground shadow-sm w-full border-b border-white/10 h-10 overflow-hidden relative">
+            <Megaphone className="h-4 w-4 shrink-0 hidden sm:block animate-bounce z-10" />
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentIndex}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="flex flex-col items-center justify-center"
+                >
+                    <p className="font-bold text-center uppercase tracking-wider text-xs sm:text-sm line-clamp-1">
+                        {current.text}
+                    </p>
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
     
-    if (announcement.link) {
+    if (current.link) {
         return (
-            <Link href={announcement.link} target="_blank" rel="noopener noreferrer" className="block w-full hover:opacity-95 transition-opacity">
+            <Link href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full hover:opacity-95 transition-opacity">
                 {content}
             </Link>
         )
