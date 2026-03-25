@@ -297,17 +297,22 @@ export default function SignUpPaymentPage() {
                     unoptimized
                     />
                 </Link>
-                <div className='z-10 space-y-4'>
-                    <Image 
-                        src="https://i.ibb.co/L5QG0HV/cartoon-maths-elements-background-education-logo-vector.jpg"
-                        width={600}
-                        height={400}
-                        alt="Illustration"
-                        className="mx-auto rounded-lg shadow-lg"
-                        data-ai-hint="maths elements"
-                    />
-                    <h1 className="font-headline text-4xl font-bold mt-4">One Last Step!</h1>
-                    <p className="text-muted-foreground mt-2 max-w-md mx-auto">Secure your spot by completing the registration payment.</p>
+                <div className='z-10 space-y-8'>
+                    <div className="relative">
+                        <div className="absolute -inset-4 bg-primary/10 blur-2xl rounded-full"></div>
+                        <Image 
+                            src="/fv.png"
+                            width={500}
+                            height={500}
+                            alt="Brand Logo"
+                            className="relative mx-auto h-64 w-64 object-contain"
+                            priority
+                        />
+                    </div>
+                    <div className="space-y-4">
+                        <h1 className="font-headline text-5xl font-black tracking-tight text-foreground">One Last Step!</h1>
+                        <p className="text-muted-foreground text-lg max-w-sm mx-auto font-medium leading-relaxed">Secure your spot in the math excellence program by completing your registration payment.</p>
+                    </div>
                 </div>
             </div>
             <div className="flex items-center justify-center p-6 min-h-screen relative">

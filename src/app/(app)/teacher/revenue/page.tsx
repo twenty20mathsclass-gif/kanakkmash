@@ -259,10 +259,10 @@ export default function TeacherRevenuePage() {
         try {
             if (data.paymentMethod === 'upi') {
                 dataToUpdate.upiId = data.upiId;
-                dataToUpdate.accountHolderName = undefined;
-                dataToUpdate.bankName = undefined;
-                dataToUpdate.accountNumber = undefined;
-                dataToUpdate.ifscCode = undefined;
+                (dataToUpdate as any).accountHolderName = null;
+                (dataToUpdate as any).bankName = null;
+                (dataToUpdate as any).accountNumber = null;
+                (dataToUpdate as any).ifscCode = null;
 
                 if (qrCodeFile) {
                     const uploadFormData = new FormData();
@@ -280,8 +280,8 @@ export default function TeacherRevenuePage() {
                 dataToUpdate.bankName = data.bankName;
                 dataToUpdate.accountNumber = data.accountNumber;
                 dataToUpdate.ifscCode = data.ifscCode;
-                dataToUpdate.upiId = undefined;
-                dataToUpdate.upiQrCodeUrl = undefined;
+                (dataToUpdate as any).upiId = null;
+                (dataToUpdate as any).upiQrCodeUrl = null;
             }
 
             await setDoc(detailsDocRef, dataToUpdate, { merge: true });

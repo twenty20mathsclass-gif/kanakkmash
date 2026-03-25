@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import type { User, Schedule } from '@/lib/definitions';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -58,6 +58,7 @@ const StatCard = ({
 
 export default function AdminDashboardPage() {
   const { firestore } = useFirebase();
+  const { user, loading: userLoading } = useUser();
   const [stats, setStats] = useState({ students: 0, teachers: 0, courses: 0 });
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allSchedules, setAllSchedules] = useState<Schedule[]>([]);
@@ -65,7 +66,12 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore || userLoading || !user || user.role !== 'admin') {
+        if (!userLoading && user && user.role !== 'admin') {
+            setLoading(false);
+        }
+        return;
+    }
 
     const fetchData = async () => {
       try {
@@ -116,7 +122,7 @@ export default function AdminDashboardPage() {
     };
 
     fetchData();
-  }, [firestore]);
+  }, [firestore, user, userLoading]);
 
   return (
     <div className="space-y-10 w-full max-w-none overflow-x-hidden px-1">

@@ -1,6 +1,7 @@
+﻿
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, startOfWeek, isToday, isSameDay, startOfDay, endOfDay, parse } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
@@ -57,7 +58,7 @@ export default function ExamSchedulePage() {
   const [schedules, setSchedules] = useState<ScheduleWithTeacher[]>([]);
   const [eventDates, setEventDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleWithTeacher | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Schedule | null>(null);
 
   useEffect(() => {
     if (!firestore || !user) {
@@ -151,9 +152,6 @@ export default function ExamSchedulePage() {
         setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [selectedDate, firestore, user]);
-
   useEffect(() => {
     if (!firestore || !user) return;
     
@@ -189,6 +187,9 @@ export default function ExamSchedulePage() {
     return () => unsub();
   }, [firestore, user]);
 
+  return () => unsubscribe();
+  }, [selectedDate, firestore, user]);
+
   const startOfSelectedWeek = startOfWeek(selectedDate, { weekStartsOn: 0 }); // Sunday
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfSelectedWeek, i));
   
@@ -208,43 +209,32 @@ export default function ExamSchedulePage() {
     setSelectedEvent(null);
   };
 
+  if (view === 'calendar') {
+    return (
+        <CalendarView
+            selectedDate={selectedDate}
+            onDateSelect={(date) => {
+                setSelectedDate(date);
+                setView('list');
+            }}
+            onToggleView={() => setView('list')}
+            eventDates={eventDates}
+            onBack={() => setView('list')}
+            onSearch={() => toast({ title: "Search", description: "Search functionality coming soon!" })}
+            onAdd={() => router.push('/teacher/exams')}
+        />
+    );
+  }
+
   return (
     <div className="space-y-6 md:max-w-lg md:mx-auto pb-24 px-4 pt-6">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Exam Schedule</h1>
           <div className="flex items-center gap-2">
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
-                        <CalendarDays className="h-6 w-6" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden border-2 shadow-2xl" align="end">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                            date && setSelectedDate(date);
-                            setIsCalendarOpen(false);
-                        }}
-                        initialFocus
-                        modifiers={{ hasEvent: eventDates }}
-                        modifiersStyles={{
-                          selected: {
-                            color: 'white',
-                            backgroundColor: 'hsl(var(--primary))',
-                            borderRadius: '0.75rem'
-                          },
-                          hasEvent: { 
-                            fontWeight: 'bold', 
-                            textDecoration: 'underline',
-                            color: 'hsl(var(--primary))' 
-                          }
-                        }}
-                    />
-                </PopoverContent>
-            </Popover>
+            <Button variant="ghost" size="icon" onClick={() => setView('calendar')} className="rounded-full">
+                <CalendarDays className="h-6 w-6" />
+            </Button>
           </div>
         </div>
       </Reveal>
@@ -278,12 +268,12 @@ export default function ExamSchedulePage() {
                         style={{backgroundColor: event.color}}
                         className='shadow-lg transition-shadow hover:shadow-xl'
                       >
-                          <CardContent className="p-3">
+                          <CardContent className="p-3" style={{color: event.textColor}}>
                               <div className="flex gap-3 items-center">
                                   <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
-                                      <IconComponent className="h-5 w-5 text-white" />
+                                      <IconComponent className="h-5 w-5" />
                                   </div>
-                                  <div className="text-white">
+                                  <div>
                                       <p className="text-xs opacity-80">{event.subject}</p>
                                       <p className="font-bold text-sm leading-tight">{event.title}</p>
                                       <p className="text-xs opacity-80 font-medium">by {event.teacherName}</p>
@@ -292,9 +282,9 @@ export default function ExamSchedulePage() {
                                           <span>{format(parse(event.startTime, 'HH:mm', new Date()), 'h:mm a')} - {format(parse(event.endTime, 'HH:mm', new Date()), 'h:mm a')}</span>
                                       </div>
                                       <div className="flex flex-wrap gap-1 pt-2">
-                                          {event.classes?.map(c => <Badge key={c} variant="secondary" className="bg-background/20 border-none text-xs font-normal text-white">{c}</Badge>)}
-                                          {event.syllabus && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal text-white">{event.syllabus}</Badge>}
-                                          {event.competitiveExam && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal text-white">{event.competitiveExam}</Badge>}
+                                          {event.classes?.map(c => <Badge key={c} variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{c}</Badge>)}
+                                          {event.syllabus && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.syllabus}</Badge>}
+                                          {event.competitiveExam && <Badge variant="secondary" className="bg-background/20 border-none text-xs font-normal" style={{color: 'inherit'}}>{event.competitiveExam}</Badge>}
                                       </div>
                                   </div>
                               </div>
@@ -323,7 +313,6 @@ export default function ExamSchedulePage() {
             <div className="space-y-2 text-sm">
                 <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
                 <p><strong>Duration:</strong> {selectedEvent?.duration} minutes</p>
-                <p><strong>Teacher:</strong> {selectedEvent?.teacherName}</p>
             </div>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
