@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, User as UserIcon } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
@@ -176,9 +176,11 @@ export default function ProfilePage() {
                         <CardTitle>Profile Picture</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
-                        <Avatar className="w-32 h-32 text-4xl">
+                        <Avatar className="w-32 h-32 border-4 border-white shadow-xl">
                             <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-orange-50 text-orange-600">
+                                <UserIcon className="h-16 w-16" />
+                            </AvatarFallback>
                         </Avatar>
                         <input 
                             type="file" 
