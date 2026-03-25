@@ -43,7 +43,7 @@ export function AnnouncementBanner() {
         
         const timer = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % announcements.length);
-        }, 20000); // 20 seconds
+        }, 10000); // 10 seconds
 
         return () => clearInterval(timer);
     }, [announcements.length]);
