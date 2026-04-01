@@ -53,6 +53,7 @@ export default function ClassSchedulePage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
   const { toast } = useToast();
+  const router = useRouter();
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -338,7 +339,7 @@ export default function ClassSchedulePage() {
   }
 
   return (
-    <div className="space-y-6 md:max-w-lg md:mx-auto pb-24 px-4 pt-6">
+    <div className="space-y-8 w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto pb-24 px-4 pt-6">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Class Schedule</h1>

@@ -45,7 +45,11 @@ export function UserNav({ user, onSignOut, side, align }: { user: User; onSignOu
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+          <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onSignOut} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
           </DropdownMenuItem>

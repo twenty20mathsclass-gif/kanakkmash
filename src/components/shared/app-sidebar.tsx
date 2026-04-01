@@ -48,7 +48,7 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { state, setOpenMobile, setOpen } = useSidebar();
+  const { state, setOpenMobile, setOpen, isMobile } = useSidebar();
 
   const currentUrl = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
@@ -134,7 +134,7 @@ export function AppSidebar({
               className={cn(
                 "w-full h-11 flex items-center gap-3 rounded-xl px-3 transition-all",
                 "hover:bg-gray-100",
-                state === "collapsed"
+                state === "collapsed" && !isMobile
                   ? "w-11 h-11 p-0 justify-center"
                   : "justify-start",
               )}
