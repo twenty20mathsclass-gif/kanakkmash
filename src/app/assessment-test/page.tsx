@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, doc, getDoc, orderBy, where, query } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, orderBy, where, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import Image from 'next/image';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Trophy, Sparkles, Loader2 } from 'lucide-react';
@@ -43,6 +43,7 @@ export default function AssessmentTestPage() {
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [reportSaved, setReportSaved] = useState(false);
 
   // Load user from sessionStorage
   useEffect(() => {
@@ -99,6 +100,38 @@ export default function AssessmentTestPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, submitted]);
+
+  // Save report to Firestore
+  useEffect(() => {
+    if (submitted && user && firestore && !reportSaved) {
+      setReportSaved(true);
+      const saveReport = async () => {
+        try {
+          const finalScore = questions.length > 0
+            ? answers.filter((a, i) => a === questions[i]?.correctAnswerIndex).length
+            : 0;
+          const percentage = questions.length > 0 ? Math.round((finalScore / questions.length) * 100) : 0;
+          
+          await addDoc(collection(firestore, 'assessment'), {
+            user: {
+              name: user.name,
+              email: user.email,
+              whatsapp: user.whatsapp,
+              class: user.class
+            },
+            score: finalScore,
+            totalQuestions: questions.length,
+            percentage: Math.round(percentage),
+            answers: answers,
+            submittedAt: serverTimestamp()
+          });
+        } catch (error) {
+          console.error("Error saving assessment report:", error);
+        }
+      };
+      saveReport();
+    }
+  }, [submitted, user, firestore, reportSaved, questions, answers]);
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;

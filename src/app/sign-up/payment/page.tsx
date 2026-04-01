@@ -185,7 +185,7 @@ function PaymentComponent() {
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
           
-          router.push(`/invoice/${invoiceDocRef.id}`);
+          window.location.href = '/dashboard';
 
         } catch (err: any) {
           console.error("Registration failed:", err);
@@ -268,20 +268,6 @@ function PaymentComponent() {
 }
 
 export default function SignUpPaymentPage() {
-    const { user, loading } = useUser();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!loading && user) {
-            const targetPath = user.role === 'teacher' ? '/teacher' : '/dashboard';
-            router.replace(targetPath);
-        }
-    }, [user, loading, router]);
-
-    if (loading || (!loading && user)) {
-        return null;
-    }
-
     return (
         <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
             <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">

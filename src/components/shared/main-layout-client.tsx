@@ -84,6 +84,7 @@ export default function MainLayoutClient({
       pathname.startsWith("/courses") ||
       pathname.startsWith("/exam-schedule") ||
       pathname.startsWith("/class-schedule") ||
+      pathname.startsWith("/invoice") ||
       isPublicBlogPost;
 
     if (loading || authPages.some((p) => pathname.startsWith(p))) {

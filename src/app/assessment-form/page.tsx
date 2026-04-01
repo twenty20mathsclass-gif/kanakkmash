@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, User, Mail, Phone, GraduationCap, ChevronRight, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, User, Mail, Phone, GraduationCap, ChevronRight } from 'lucide-react';
 
 export default function AssessmentFormPage() {
   const router = useRouter();
@@ -68,8 +69,8 @@ export default function AssessmentFormPage() {
         <div className="bg-card border border-border rounded-3xl p-8 shadow-lg">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#F59E0B] shadow-md mb-4">
-              <Sparkles size={28} className="text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+              <Image src="/fv.png" alt="Assessment Icon" width={64} height={64} className="rounded-2xl shadow-md object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-1 font-headline">Assessment Test</h1>
             <p className="text-muted-foreground text-sm">Fill in your details to begin the test</p>
