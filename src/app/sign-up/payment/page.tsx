@@ -185,7 +185,7 @@ function PaymentComponent() {
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
           
-          window.location.href = '/dashboard';
+          router.push(`/invoice/${invoiceDocRef.id}`);
 
         } catch (err: any) {
           console.error("Registration failed:", err);

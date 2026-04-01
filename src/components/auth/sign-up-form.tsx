@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +67,7 @@ const DEFAULT_FEE = 99;
 export function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { firestore } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
@@ -197,6 +198,39 @@ export function SignUpForm() {
 
     setLoading(true);
     const data = form.getValues();
+    
+    if (auth) {
+        try {
+            // Pre-flight check: attempt to create the account to guarantee the email is fresh and password is valid.
+            // Bypasses Identity Platform enumeration protections natively.
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            if (userCredential.user) {
+                // Instantly delete the user to keep the auth namespace clean for the final payment step.
+                await userCredential.user.delete();
+            }
+        } catch (error: any) {
+            console.error('Error checking email:', error);
+            if (error.code === 'auth/email-already-in-use') {
+                setLoading(false);
+                form.setError('email', { type: 'manual', message: 'Email already exists' });
+                return;
+            }
+            if (error.code === 'auth/invalid-email') {
+                setLoading(false);
+                form.setError('email', { type: 'manual', message: 'Invalid email format' });
+                return;
+            }
+            if (error.code === 'auth/weak-password') {
+                setLoading(false);
+                form.setError('password', { type: 'manual', message: 'Password is too weak' });
+                return;
+            }
+            setLoading(false);
+            toast({ title: 'Error', description: error.message, variant: 'destructive' });
+            return;
+        }
+    }
+
     const dataWithFee = { ...data, registrationAmount: fee };
     
     sessionStorage.setItem('kanakkmash_signup_data', JSON.stringify(dataWithFee));
