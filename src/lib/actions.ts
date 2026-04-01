@@ -32,6 +32,8 @@ export async function uploadImage(formData: FormData): Promise<string> {
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
+  const base64Data = buffer.toString('base64');
+  const fileUri = `data:${file.type};base64,${base64Data}`;
 
   // 1. Try Cloudinary First
   try {
@@ -41,26 +43,16 @@ export async function uploadImage(formData: FormData): Promise<string> {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
-    const cloudinaryUrl = await new Promise<string>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { 
-          folder: 'kanakkmash',
-          resource_type: 'auto'
-        },
-        (error, result) => {
-          if (error) {
-            console.error('Cloudinary upload error:', error);
-            reject(error);
-          } else {
-            resolve(result?.secure_url || '');
-          }
-        }
-      ).end(buffer);
+    const result = await cloudinary.uploader.upload(fileUri, {
+      folder: 'kanakkmash',
+      resource_type: 'auto'
     });
 
-    if (cloudinaryUrl) return cloudinaryUrl;
+    if (result && result.secure_url) {
+      return result.secure_url;
+    }
   } catch (cloudinaryError) {
-    console.warn('Cloudinary failed, attempting fallback to ImgBB...');
+    console.warn('Cloudinary failed, attempting fallback to ImgBB...', cloudinaryError);
   }
 
   // 2. Fallback to ImgBB
@@ -68,12 +60,15 @@ export async function uploadImage(formData: FormData): Promise<string> {
     const imgbbKey = process.env.IMAGE_UPLOAD_API_KEY || process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API_KEY;
     if (!imgbbKey) throw new Error('No upload keys available.');
 
-    const imgbbFormData = new FormData();
-    imgbbFormData.append('image', file);
+    const imgbbFormData = new URLSearchParams();
+    imgbbFormData.append('image', base64Data);
 
     const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
       method: 'POST',
       body: imgbbFormData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
 
     const data = await response.json();

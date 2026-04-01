@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, PlusCircle, Trash2, Video, Link as LinkIcon, Upload, X } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Video, Link as LinkIcon, Upload, X, PenBox } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import type { Testimonial } from '@/lib/definitions';
@@ -31,12 +31,12 @@ import {
 import { uploadImage } from '@/lib/actions';
 
 
-function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Firestore, onTestimonialAdded: () => void }) {
+function TestimonialForm({ firestore, onSaved, initialData }: { firestore: Firestore, onSaved: () => void, initialData?: Testimonial }) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -62,44 +62,49 @@ function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Fire
 
         const studentName = formData.get('studentName') as string;
         const quote = formData.get('quote') as string;
-        const videoUrl = formData.get('videoUrl') as string || undefined;
-        const link = formData.get('link') as string || undefined;
+        const videoUrl = formData.get('videoUrl') as string || null;
+        const link = formData.get('link') as string || null;
 
-        if (!studentName || !quote || !imageFile) {
+        if (!studentName || !quote || (!imageFile && !initialData)) {
             setError("Student Name, Quote, and an Image are required.");
             setLoading(false);
             return;
         }
 
         try {
-            // 1. Upload image using server action
-            const uploadFormData = new FormData();
-            uploadFormData.append('image', imageFile);
+            let imageUrl = initialData?.imageUrl || '';
+            if (imageFile) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', imageFile);
+                imageUrl = await uploadImage(uploadFormData);
+            }
             
-            const imageUrl = await uploadImage(uploadFormData);
-            
-            // 2. Add testimonial to firestore
-            const testimonialsCollection = collection(firestore, 'testimonials');
-            const dataToSave = {
+            const dataToSave: any = {
                 studentName,
                 quote,
                 videoUrl,
                 link,
                 imageUrl,
-                createdAt: serverTimestamp(),
             };
 
-            await addDoc(testimonialsCollection, dataToSave);
+            if (initialData) {
+                const testimonialRef = doc(firestore, 'testimonials', initialData.id);
+                await updateDoc(testimonialRef, dataToSave);
+                toast({ title: "Success", description: "Testimonial updated." });
+            } else {
+                dataToSave.createdAt = serverTimestamp();
+                await addDoc(collection(firestore, 'testimonials'), dataToSave);
+                toast({ title: "Success", description: "Testimonial added." });
+            }
             
-            toast({ title: "Success", description: "Testimonial added." });
             form.reset();
             setImageFile(null);
-            setImagePreview(null);
-            onTestimonialAdded();
+            if (!initialData) setImagePreview(null);
+            onSaved();
 
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
-                const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: 'create' }, { cause: serverError });
+                const permissionError = new FirestorePermissionError({ path: 'testimonials', operation: initialData ? 'update' : 'create' }, { cause: serverError });
                 errorEmitter.emit('permission-error', permissionError);
                 setError('Failed to save testimonial due to permissions.');
             } else {
@@ -115,15 +120,15 @@ function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Fire
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <Label htmlFor="studentName">Student Name</Label>
-                <Input id="studentName" name="studentName" required />
+                <Input id="studentName" name="studentName" required defaultValue={initialData?.studentName} />
             </div>
             <div>
                 <Label htmlFor="quote">Quote</Label>
-                <Textarea id="quote" name="quote" required placeholder="Write the testimonial here..." />
+                <Textarea id="quote" name="quote" required placeholder="Write the testimonial here..." defaultValue={initialData?.quote} />
             </div>
              <div>
                 <Label htmlFor="image">Student Image</Label>
-                <Input id="image" name="image" type="file" accept="image/*" onChange={handleImageChange} required className="file:text-foreground"/>
+                <Input id="image" name="image" type="file" accept="image/*" onChange={handleImageChange} required={!initialData} className="file:text-foreground"/>
                 {imagePreview && (
                     <div className="mt-4 relative w-32 h-32">
                         <Image src={imagePreview} alt="Image preview" fill className="rounded-md object-cover" />
@@ -139,16 +144,16 @@ function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Fire
             </div>
             <div className="space-y-1">
                 <Label htmlFor="videoUrl">Video URL (Optional)</Label>
-                 <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
                     <Video className="text-muted-foreground" />
-                    <Input id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=..." />
+                    <Input id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=..." defaultValue={initialData?.videoUrl || ''} />
                 </div>
             </div>
             <div className="space-y-1">
                 <Label htmlFor="link">Profile/Project Link (Optional)</Label>
                  <div className="flex items-center gap-2">
                     <LinkIcon className="text-muted-foreground" />
-                    <Input id="link" name="link" placeholder="https://github.com/student" />
+                    <Input id="link" name="link" placeholder="https://github.com/student" defaultValue={initialData?.link || ''} />
                 </div>
             </div>
             
@@ -163,7 +168,7 @@ function AddTestimonialForm({ firestore, onTestimonialAdded }: { firestore: Fire
             <DialogFooter>
                 <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
                 <Button type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Add Testimonial'}
+                    {loading ? <Loader2 className="animate-spin" /> : (initialData ? 'Save Changes' : 'Add Testimonial')}
                 </Button>
             </DialogFooter>
         </form>
@@ -177,6 +182,7 @@ export default function AdminTestimonialsPage() {
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [testimonialToEdit, setTestimonialToEdit] = useState<Testimonial | null>(null);
     const [testimonialToDelete, setTestimonialToDelete] = useState<Testimonial | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -254,7 +260,16 @@ export default function AdminTestimonialsPage() {
                     <DialogHeader>
                         <DialogTitle>Add a New Testimonial</DialogTitle>
                     </DialogHeader>
-                    <AddTestimonialForm firestore={firestore} onTestimonialAdded={() => setIsDialogOpen(false)}/>
+                    <TestimonialForm firestore={firestore} onSaved={() => setIsDialogOpen(false)}/>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!testimonialToEdit} onOpenChange={(v) => !v && setTestimonialToEdit(null)}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Testimonial</DialogTitle>
+                    </DialogHeader>
+                    {testimonialToEdit && <TestimonialForm firestore={firestore} initialData={testimonialToEdit} onSaved={() => setTestimonialToEdit(null)}/>}
                 </DialogContent>
             </Dialog>
         </div>
@@ -281,9 +296,14 @@ export default function AdminTestimonialsPage() {
                                         {t.link && <a href={t.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-4 w-4"/> Link</a>}
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => setTestimonialToDelete(t)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                                <div className="flex flex-col gap-1 shrink-0">
+                                    <Button variant="ghost" size="icon" onClick={() => setTestimonialToEdit(t)}>
+                                        <PenBox className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setTestimonialToDelete(t)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </div>

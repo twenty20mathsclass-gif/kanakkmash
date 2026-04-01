@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import type { User } from "@/lib/definitions";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Sidebar,
@@ -28,7 +28,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, Settings, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -48,6 +48,7 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { state, setOpenMobile, setOpen, isMobile } = useSidebar();
 
   const currentUrl = `${pathname}${
@@ -165,7 +166,12 @@ export function AppSidebar({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={onSignOut} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </DropdownMenuItem>
