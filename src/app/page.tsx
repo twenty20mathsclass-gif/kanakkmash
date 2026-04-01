@@ -6,47 +6,17 @@ import Image from 'next/image';
 
 import { Reveal } from '@/components/shared/reveal';
 import { AnnouncementBanner } from '@/components/home/announcement-banner';
+import { FloatingMathBackground } from '@/components/home/floating-math-background';
 
-const FloatingSymbol = ({ symbol, className, duration, delay }: { symbol: string; className: string, duration: number, delay: number }) => (
-  <div
-    className={`absolute text-5xl font-bold text-primary/20 -z-10 ${className}`}
-    style={{
-      animation: `float-down ${duration}s ease-in-out ${delay}s infinite`,
-    }}
-  >
-    {symbol}
-  </div>
-);
 
 export default function Home() {
-  const symbols = [
-    { symbol: '+', className: 'top-[20%] left-[10%]', duration: 8, delay: 0 },
-    { symbol: '−', className: 'top-[50%] right-[12%]', duration: 10, delay: 2 },
-    { symbol: '×', className: 'bottom-[25%] left-[20%]', duration: 9, delay: 1 },
-    { symbol: '÷', className: 'top-[15%] right-[25%]', duration: 12, delay: 3 },
-    { symbol: '∫', className: 'bottom-[15%] right-[15%]', duration: 7, delay: 0.5 },
-    { symbol: '√', className: 'top-[70%] left-[15%]', duration: 11, delay: 2.5 },
-    { symbol: 'π', className: 'top-[10%] left-[40%]', duration: 9, delay: 1.5 },
-    { symbol: 'Σ', className: 'bottom-[5%] left-[50%]', duration: 13, delay: 4 },
-  ];
-
   return (
     <section className="relative flex flex-col w-full h-full min-h-0 flex-grow pt-16 md:pt-0">
       <div className="w-full z-40 shrink-0">
         <AnnouncementBanner />
       </div>
 
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10"
-      >
-        <div className="absolute inset-0 bg-background bg-[radial-gradient(hsl(var(--primary)/.05)_1px,transparent_1px)] [background-size:8px_8px]"></div>
-        <div className="hidden md:block">
-          {symbols.map((s, i) => (
-            <FloatingSymbol key={i} {...s} />
-          ))}
-        </div>
-      </div>
+      <FloatingMathBackground />
 
       <div className="container relative z-10 mx-auto text-center px-4 flex flex-col justify-center items-center flex-grow overflow-hidden">
         <Reveal className="w-full">

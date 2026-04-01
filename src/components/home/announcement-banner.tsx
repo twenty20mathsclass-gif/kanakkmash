@@ -56,7 +56,7 @@ export function AnnouncementBanner() {
 
     const content = (
         <div className="flex items-center justify-center gap-3 p-2 bg-gradient-to-r from-primary via-accent to-destructive text-primary-foreground shadow-sm w-full border-b border-white/10 h-10 overflow-hidden relative">
-            <Megaphone className="h-4 w-4 shrink-0 hidden sm:block animate-bounce z-10" />
+            <Megaphone className="h-4 w-4 shrink-0 animate-bounce z-10" />
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -67,7 +67,19 @@ export function AnnouncementBanner() {
                     className="flex flex-col items-center justify-center"
                 >
                     <p className="font-bold text-center uppercase tracking-wider text-xs sm:text-sm line-clamp-1">
-                        {current.text}
+                        {current.text.split('').map((char, i) => (
+                            <motion.span
+                                key={i}
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                    duration: 0.1,
+                                    delay: i * 0.03,
+                                }}
+                            >
+                                {char}
+                            </motion.span>
+                        ))}
                     </p>
                 </motion.div>
             </AnimatePresence>
