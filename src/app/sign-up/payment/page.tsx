@@ -17,7 +17,7 @@ import { ArrowLeft, Loader2, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/lib/countries';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -107,7 +107,7 @@ function PaymentComponent() {
           const authUser = userCredential.user;
           
 
-          const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
+          const avatarUrl = '';
           await updateProfile(authUser, { displayName: data.name, photoURL: avatarUrl });
 
           const selectedCountry = countries.find(c => c.code === data.countryCode);
@@ -180,12 +180,36 @@ function PaymentComponent() {
           const invoiceDocRef = doc(collection(firestore, 'invoices'));
           batch.set(invoiceDocRef, invoiceData);
           
+          // --- Reconciliation with Assessment Leads (Resilient Matching) ---
+          const lowerEmail = data.email.toLowerCase();
+          const normalizedRegPhone = `${phoneCode}${data.mobile}`.replace(/[^\d+]/g, '');
+          const qEmail = query(collection(firestore, 'assessment'), where('email', '==', lowerEmail));
+          
+          const snapEmail = await getDocs(qEmail).catch(() => ({ docs: [] }));
+          
+          snapEmail.docs.forEach((docSnap) => {
+             const docData = docSnap.data();
+             const docPhone = (docData.whatsapp || '').replace(/[^\d+]/g, '');
+             
+             // Both Email (already matched) and WhatsApp must match for linking
+             if (docPhone === normalizedRegPhone) {
+                batch.update(docSnap.ref, {
+                   isLoggedIn: true,
+                   isLogged: true,
+                   userId: authUser.uid,
+                   userEmail: lowerEmail,
+                   status: 'registered',
+                   reconciledAt: serverTimestamp()
+                });
+             }
+          });
+
           await batch.commit();
 
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
           
-          router.push(`/invoice/${invoiceDocRef.id}`);
+          router.push('/dashboard');
 
         } catch (err: any) {
           console.error("Registration failed:", err);

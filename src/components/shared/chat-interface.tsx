@@ -23,7 +23,9 @@ import {
     CheckCircle2,
     XCircle,
     MessageCircleQuestion,
-    ChevronDown
+    ChevronDown,
+    User as UserIcon,
+    Users as UsersIcon
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -207,8 +209,10 @@ export function ChatInterface({
             >
                 <div className="relative shrink-0">
                     <Avatar className={cn("h-11 w-11 border-2 border-background shadow-md", isGroup ? "rounded-xl" : "rounded-full")}>
-                        <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} />
-                        <AvatarFallback className="font-bold font-headline">{chatPartner.name.charAt(0)}</AvatarFallback>
+                        {chatPartner.avatarUrl && !chatPartner.avatarUrl.includes('688z9X5/user.png') && <AvatarImage src={chatPartner.avatarUrl} alt={chatPartner.name} className="object-cover" />}
+                        <AvatarFallback className="bg-muted text-muted-foreground flex items-center justify-center">
+                            {isGroup ? <UsersIcon className="h-6 w-6" /> : <UserIcon className="h-6 w-6" />}
+                        </AvatarFallback>
                     </Avatar>
                 </div>
                 <div className="min-w-0">

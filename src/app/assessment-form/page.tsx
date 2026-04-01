@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, User, Mail, Phone, GraduationCap, ChevronRight } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, GraduationCap, ChevronRight, AlertCircle } from 'lucide-react';
+import { useFirebase, useUser } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function AssessmentFormPage() {
   const router = useRouter();
@@ -29,6 +31,9 @@ export default function AssessmentFormPage() {
     return newErrors;
   };
 
+  const { firestore } = useFirebase();
+  const { user } = useUser();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
@@ -37,9 +42,31 @@ export default function AssessmentFormPage() {
       return;
     }
     setLoading(true);
-    sessionStorage.setItem('assessmentUser', JSON.stringify(formData));
-    await new Promise((r) => setTimeout(r, 800));
-    router.push('/assessment-test');
+
+    try {
+      if (firestore) {
+        const submissionData = {
+          ...formData,
+          email: formData.email.toLowerCase(), // Normalize email for case-insensitive search
+          whatsapp: formData.whatsapp.replace(/[^\d+]/g, ''), // Normalize number (strip spaces/symbols)
+          isLoggedIn: !!user,
+          isLogged: !!user,
+          userId: user?.id || null,
+          userEmail: user?.email ? user.email.toLowerCase() : null,
+          submittedAt: serverTimestamp(),
+          status: 'started'
+        };
+        await addDoc(collection(firestore, 'assessment'), submissionData);
+      }
+      
+      sessionStorage.setItem('assessmentUser', JSON.stringify(formData));
+      await new Promise((r) => setTimeout(r, 800));
+      router.push('/assessment-test');
+    } catch (err: any) {
+      console.warn("Failed to save assessment registration:", err);
+      setErrors({ form: "Could not register details. Please check your connection and try again." });
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -75,6 +102,13 @@ export default function AssessmentFormPage() {
             <h1 className="text-2xl font-bold text-foreground mb-1 font-headline">Assessment Test</h1>
             <p className="text-muted-foreground text-sm">Fill in your details to begin the test</p>
           </div>
+
+          {errors.form && (
+            <div className="mb-6 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 text-destructive text-sm font-medium">
+                <AlertCircle size={18} />
+                <span>{errors.form}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {/* Name */}

@@ -225,6 +225,16 @@ export function ExamInterface({ exam, schedule, user }: Props) {
       const submissionId = `${user.id}_${exam.id}`;
       const submissionRef = doc(firestore, 'exams', exam.id, 'submissions', user.id);
       await setDoc(submissionRef, submissionData);
+
+      // Global Tracking for Dashboard
+      const globalSubRef = doc(firestore, 'exams_submissions', `${exam.id}_${user.id}`);
+      await setDoc(globalSubRef, { 
+          examId: exam.id, 
+          studentId: user.id, 
+          status: 'submitted',
+          submittedAt: Timestamp.now()
+      });
+
       toast({ title: 'Exam Submitted!', description: 'Your results have been recorded.' });
       router.push(`/exams/result/${submissionId}`);
     } catch (serverError: any) {
@@ -255,6 +265,15 @@ export function ExamInterface({ exam, schedule, user }: Props) {
         const submissionId = `${user.id}_${exam.id}`;
         const submissionRef = doc(firestore, 'exams', exam.id, 'submissions', user.id);
         await setDoc(submissionRef, submissionData);
+
+        // Global Tracking for Dashboard
+        const globalSubRef = doc(firestore, 'exams_submissions', `${exam.id}_${user.id}`);
+        await setDoc(globalSubRef, { 
+            examId: exam.id, 
+            studentId: user.id, 
+            status: 'submitted',
+            submittedAt: Timestamp.now()
+        });
 
         toast({ title: 'Answer Submitted!', description: 'Your answer has been submitted for review.' });
         router.push(`/exams/result/${submissionId}`);

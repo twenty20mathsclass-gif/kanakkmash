@@ -3,15 +3,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 import type { Exam, Schedule, User } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { ExamInterface } from '@/components/student/exam-interface';
 import { Reveal } from '@/components/shared/reveal';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { format } from 'date-fns';
 
 type PageProps = {
   params: {
@@ -32,7 +34,6 @@ export default function TakeExamPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!firestore || !examId || !user) {
-        // If user is loading, keep status as 'loading'
         if (!user) return;
     }
 
@@ -60,13 +61,34 @@ export default function TakeExamPage({ params }: PageProps) {
           return;
         }
 
-        // 3. Fetch schedule for duration
+        // 3. Fetch schedule for duration & timeframe
         const scheduleQuery = query(collection(firestore, 'schedules'), where('examId', '==', examId));
         const scheduleSnap = await getDocs(scheduleQuery);
 
+        let currentSchedule: Schedule | null = null;
         if (!scheduleSnap.empty) {
           const scheduleData = scheduleSnap.docs[0].data() as Schedule;
-          setSchedule({id: scheduleSnap.docs[0].id, ...scheduleData});
+          currentSchedule = {id: scheduleSnap.docs[0].id, ...scheduleData};
+          setSchedule(currentSchedule);
+        }
+
+        // 4. Timeframe Access Control
+        if (currentSchedule) {
+            const now = Timestamp.now().toMillis();
+            const startMillis = currentSchedule.startDate?.toMillis() || 0;
+            const endMillis = currentSchedule.endDate?.toMillis() || Infinity;
+
+            if (now < startMillis) {
+                setError(`Exam session hasn't started yet. Entry permitted at: ${format(currentSchedule.startDate!.toDate(), 'PPP p')}`);
+                setStatus('error');
+                return;
+            }
+
+            if (now > endMillis) {
+                setError('The access period for this exam has expired.');
+                setStatus('error');
+                return;
+            }
         }
         
         setStatus('ready');
@@ -96,21 +118,26 @@ export default function TakeExamPage({ params }: PageProps) {
             return (
                 <div className="flex flex-col justify-center items-center h-64 gap-4">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Checking exam status...</p>
+                    <p className="text-muted-foreground">Checking authentication status...</p>
                 </div>
             );
         case 'already_taken':
             return (
                 <div className="flex flex-col justify-center items-center h-64 gap-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                  <p className="text-muted-foreground">You have already completed this exam. Redirecting to your results...</p>
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Session already recorded. Syncing results...</p>
                 </div>
             );
         case 'error':
              return (
-                <Card className="border-destructive">
-                    <CardHeader><CardTitle>Error</CardTitle></CardHeader>
-                    <CardContent><p className="text-destructive">{error}</p></CardContent>
+                <Card className="border-destructive shadow-xl rounded-[2rem] overflow-hidden">
+                    <CardHeader className="bg-destructive/5 p-8">
+                        <CardTitle className="text-destructive text-2xl font-black">Access Restricted</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-8">
+                        <p className="text-muted-foreground font-medium text-lg leading-relaxed">{error}</p>
+                        <Button onClick={() => router.push('/exam-schedule')} variant="outline" className="mt-8 rounded-full h-12 px-8 border-2">Return to Dashboard</Button>
+                    </CardContent>
                 </Card>
             );
         case 'ready':
@@ -121,12 +148,11 @@ export default function TakeExamPage({ params }: PageProps) {
                     </Reveal>
                 );
             }
-            // fallthrough
         default:
              return (
-                <Card>
-                    <CardContent className='p-8 text-center text-muted-foreground'>
-                        Could not load exam.
+                <Card className="rounded-[2rem] shadow-sm">
+                    <CardContent className='p-12 text-center text-muted-foreground font-medium'>
+                        Initialization failed. Please refresh your session.
                     </CardContent>
                 </Card>
             );
@@ -134,7 +160,7 @@ export default function TakeExamPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-8">
+    <div className="container mx-auto max-w-4xl py-12 px-4">
       {renderContent()}
     </div>
   );

@@ -159,6 +159,23 @@ export default function AdminDashboardPage() {
           delay={0.3}
         />
       </div>
+
+       <Reveal delay={0.4}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button asChild variant="outline" className="h-24 rounded-2xl border-dashed border-2 flex flex-col gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                <Link href="/admin/course-model-controller">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                    <span className="font-bold">Course Models</span>
+                </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-24 rounded-2xl border-dashed border-2 flex flex-col gap-2 hover:border-primary hover:bg-primary/5 transition-all">
+                <Link href="/admin/level-controller">
+                    <Users className="h-6 w-6 text-primary" />
+                    <span className="font-bold">Level Management</span>
+                </Link>
+            </Button>
+        </div>
+      </Reveal>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Reveal delay={0.3}>
@@ -207,7 +224,7 @@ export default function AdminDashboardPage() {
                                         <TableRow key={s.id}>
                                             <TableCell>
                                                 <div className="font-medium">{s.title}</div>
-                                                <div className="text-xs text-muted-foreground">{format(s.date.toDate(), 'MMM d, yyyy')}</div>
+                                                <div className="text-xs text-muted-foreground">{s.date ? format(s.date.toDate(), 'MMM d, yyyy') : 'No date'}</div>
                                             </TableCell>
                                             <TableCell>{s.teacherName}</TableCell>
                                             <TableCell className="text-center">{s.attendanceCount}</TableCell>

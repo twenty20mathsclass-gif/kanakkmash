@@ -321,32 +321,43 @@ export default function ClassSchedulePage() {
     setSelectedEvent(null); // Close dialog
   };
 
-  if (view === 'calendar') {
-    return (
-        <CalendarView
-            selectedDate={selectedDate}
-            onDateSelect={(date) => {
-                setSelectedDate(date);
-                setView('list');
-            }}
-            onToggleView={() => setView('list')}
-            eventDates={eventDates}
-            onBack={() => setView('list')}
-            onSearch={() => toast({ title: "Search", description: "Search functionality coming soon!" })}
-            onAdd={() => router.push('/teacher/create-schedule')}
-        />
-    );
-  }
-
   return (
     <div className="space-y-8 w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto pb-24 px-4 pt-6">
       <Reveal>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold font-headline">Class Schedule</h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setView('calendar')} className="rounded-full">
-                <CalendarDays className="h-6 w-6" />
-            </Button>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
+                        <CalendarDays className="h-6 w-6" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden border-2 shadow-2xl" align="end">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date: Date | undefined) => {
+                            date && setSelectedDate(date);
+                            setIsCalendarOpen(false);
+                        }}
+                        initialFocus
+                        modifiers={{ hasEvent: eventDates }}
+                        modifiersStyles={{
+                          selected: {
+                            color: 'white',
+                            backgroundColor: 'hsl(var(--primary))',
+                            borderRadius: '0.75rem'
+                          },
+                          hasEvent: { 
+                            fontWeight: 'bold', 
+                            textDecoration: 'underline',
+                            color: 'hsl(var(--primary))' 
+                          }
+                        }}
+                    />
+                </PopoverContent>
+            </Popover>
           </div>
         </div>
       </Reveal>

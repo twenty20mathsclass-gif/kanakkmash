@@ -5,7 +5,7 @@ import { collection, onSnapshot, query, getDocs, where, doc, updateDoc, getDoc }
 import type { Schedule, Exam, ExamSubmission, User } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Loader2, CheckCircle, FileText } from 'lucide-react';
+import { Loader2, CheckCircle, FileText, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -60,6 +60,22 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
                 }
                 setLoading(false);
             });
+        } else if (schedule.type === 'homework' && schedule.homeworkId) {
+            const submissionsQuery = query(collection(firestore, 'homeworks', schedule.homeworkId, 'submissions'));
+            unsubscribe = onSnapshot(submissionsQuery, async (snapshot) => {
+                const submissionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const homeworkRef = doc(firestore, 'homeworks', schedule.homeworkId!);
+                const homeworkSnap = await getDoc(homeworkRef);
+                const homeworkData = homeworkSnap.exists() ? homeworkSnap.data() : null;
+                setDetails({ type: 'homework', submissions: submissionsList, homework: homeworkData });
+                setLoading(false);
+            }, (serverError: any) => {
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({ path: `homeworks/${schedule.homeworkId}/submissions`, operation: 'list', }, { cause: serverError });
+                    errorEmitter.emit('permission-error', permissionError);
+                }
+                setLoading(false);
+            });
         } else {
              setLoading(false);
         }
@@ -69,25 +85,78 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
     
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Details for: {schedule.title}</CardTitle>
-                <CardDescription className="capitalize">
-                    {schedule.type} on {schedule.date.toDate().toLocaleDateString()}
-                </CardDescription>
+        <Card className="rounded-3xl border-muted/20 shadow-xl overflow-hidden">
+            <CardHeader className="bg-primary/5 border-b border-muted/10 p-6 flex flex-row items-center justify-between">
+                <div>
+                   <CardTitle className="text-xl font-bold font-headline">{schedule.title}</CardTitle>
+                   <CardDescription className="capitalize">
+                       {schedule.subject} {schedule.type} on {schedule.date ? format(schedule.date.toDate(), 'PPP') : 'N/A'}
+                   </CardDescription>
+                </div>
+                <Badge variant="outline" className="rounded-full bg-white px-4 py-1 text-xs font-bold uppercase tracking-wider">{schedule.type}</Badge>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
                 {loading ? (
-                    <div className="flex justify-center items-center h-24"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                 ) : details?.type === 'class' ? (
-                    <ClassAttendance attendees={details.attendees} />
+                    <div className="p-6"><ClassAttendance attendees={details.attendees} /></div>
                 ) : details?.type === 'exam' ? (
-                    <ExamSubmissions submissions={details.submissions} exam={details.exam} />
+                    <div className="p-6"><ExamSubmissions submissions={details.submissions} exam={details.exam} /></div>
+                ) : details?.type === 'homework' ? (
+                    <div className="p-6"><HomeworkSubmissions submissions={details.submissions} homework={details.homework} /></div>
                 ) : (
-                    <p className="text-muted-foreground text-center py-8">No details found for this item.</p>
+                    <p className="text-muted-foreground text-center py-16">No details found for this item.</p>
                 )}
             </CardContent>
         </Card>
+    );
+}
+
+function HomeworkSubmissions({ submissions, homework }: { submissions: any[], homework: any }) {
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center bg-muted/30 p-4 rounded-2xl">
+                <div>
+                    <h4 className="font-bold">Submissions Progress</h4>
+                    <p className="text-sm text-muted-foreground">{submissions.length} students have submitted</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-2xl font-black text-primary">{submissions.length}</p>
+                </div>
+            </div>
+            {submissions.length > 0 ? (
+                <ul className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {submissions.map(sub => (
+                        <li key={sub.id} className="flex items-center gap-4 p-4 rounded-2xl border border-muted/20 hover:bg-muted/5 transition-colors">
+                            <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                                <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
+                                    <UserIcon className="h-2/3 w-2/3" />
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <p className="font-bold">{sub.studentName}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    Submitted {format(sub.submittedAt.toDate(), 'PPP p')}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {sub.homeworkType === 'mcq' && <Badge variant="secondary" className="rounded-full bg-green-50 text-green-700 border-none">MCQ</Badge>}
+                                {sub.homeworkType === 'descriptive' && (
+                                    <Button asChild size="sm" variant="outline" className="rounded-xl border-primary/20 hover:bg-primary/5 text-primary text-xs">
+                                        <a href={sub.answerFileUrl} target="_blank" rel="noopener noreferrer">View Answer</a>
+                                    </Button>
+                                )}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="py-12 text-center text-muted-foreground border-2 border-dashed rounded-3xl">
+                   <p>No students have submitted yet.</p>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -96,7 +165,12 @@ function ClassAttendance({ attendees }: { attendees: any[] }) {
         <ul className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
             {attendees.map(attendee => (
                 <li key={attendee.id} className="flex items-center gap-4 p-2 rounded-md border">
-                    <Avatar><AvatarImage src={attendee.studentAvatar} alt={attendee.studentName} /><AvatarFallback>{attendee.studentName.charAt(0)}</AvatarFallback></Avatar>
+                    <Avatar>
+                        {attendee.studentAvatar && !attendee.studentAvatar.includes('688z9X5/user.png') && <AvatarImage src={attendee.studentAvatar} alt={attendee.studentName} className="object-cover" />}
+                        <AvatarFallback className="bg-muted text-muted-foreground flex items-center justify-center">
+                            <UserIcon className="h-2/3 w-2/3" />
+                        </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1">
                         <p className="font-medium">{attendee.studentName}</p>
                         <p className="text-sm text-muted-foreground">Joined at: {format(attendee.attendedAt.toDate(), 'p')}</p>
@@ -119,8 +193,10 @@ function ExamSubmissions({ submissions, exam }: { submissions: ExamSubmission[],
                     {submissions.map(sub => (
                         <li key={sub.id} className="flex items-center gap-4 p-3 rounded-md border">
                             <Avatar>
-                                <AvatarImage src={(exam as any)?.student?.avatarUrl} alt={sub.studentName} />
-                                <AvatarFallback>{sub.studentName.charAt(0)}</AvatarFallback>
+                                {(exam as any)?.student?.avatarUrl && !(exam as any)?.student?.avatarUrl.includes('688z9X5/user.png') && <AvatarImage src={(exam as any)?.student?.avatarUrl} alt={sub.studentName} className="object-cover" />}
+                                <AvatarFallback className="bg-muted text-muted-foreground flex items-center justify-center">
+                                    <UserIcon className="h-2/3 w-2/3" />
+                                </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                                 <p className="font-medium">{sub.studentName}</p>

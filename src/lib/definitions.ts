@@ -55,6 +55,13 @@ export type CourseModel = {
   createdAt: Timestamp;
 };
 
+export type Level = {
+  id: string;
+  name: string;
+  className: string;
+  createdAt: Timestamp;
+};
+
 export type TeacherPrivateDetails = {
     paymentMethod?: 'bank' | 'upi';
     accountHolderName?: string;
@@ -122,15 +129,17 @@ export type Course = {
 
 export type Schedule = {
   id: string;
-  type: 'class' | 'exam';
+  type: 'class' | 'exam' | 'homework';
   courseModel: string;
   subject: string;
   title: string;
-  date: Timestamp;
-  startTime: string;
-  endTime: string;
+  date?: Timestamp;
+  startTime?: string;
+  endTime?: string;
   meetLink: string;
   teacherId: string;
+  teacherName?: string;
+  teacherAvatarUrl?: string;
   icon: string;
   color: string;
   textColor: string;
@@ -140,7 +149,10 @@ export type Schedule = {
   studentId?: string;
   syllabus?: string;
   examId?: string;
+  homeworkId?: string;
   duration?: number;
+  startDate?: Timestamp;
+  endDate?: Timestamp;
   competitiveExam?: string;
   createdAt?: Timestamp;
 };
@@ -198,8 +210,40 @@ export type ExamSubmission = {
     score?: number; 
     answerFileUrl?: string;
     status?: 'submitted' | 'reviewed';
-    feedback?: string;
+    type?: 'exam' | 'homework';
+    title?: string;
     totalMarks?: number;
+};
+
+export type Homework = {
+  id: string;
+  teacherId: string;
+  title: string;
+  courseModel: string;
+  learningMode?: 'group' | 'one to one';
+  classes?: string[];
+  levels?: string[];
+  syllabus?: string;
+  studentId?: string;
+  competitiveExam?: string;
+  homeworkType: 'mcq' | 'descriptive';
+  questions?: McqQuestion[];
+  questionPaperUrl?: string;
+  questionPaperContent?: string;
+};
+
+export type HomeworkSubmission = {
+    id: string;
+    homeworkId: string;
+    studentId: string;
+    studentName: string;
+    homeworkTitle: string;
+    submittedAt: Timestamp;
+    homeworkType: 'mcq' | 'descriptive';
+    answers?: (number | null)[];
+    answerFileUrl?: string;
+    status?: 'submitted' | 'reviewed';
+    feedback?: string;
 };
 
 

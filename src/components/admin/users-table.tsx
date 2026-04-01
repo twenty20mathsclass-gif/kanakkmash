@@ -100,12 +100,12 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                 <TableRow key={user.id}>
                     <TableCell className="hidden sm:table-cell">
                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={user.avatarUrl} alt={user.name || 'User'} />
+                            <AvatarFallback>{(user.name || user.email || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </TableCell>
                     <TableCell className="font-medium">
-                        {user.name}
+                        {user.name || 'Unnamed User'}
                         <div className="text-muted-foreground text-xs md:hidden">{user.email}</div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{user.email}</TableCell>

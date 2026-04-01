@@ -147,7 +147,7 @@ export default function MainLayoutClient({
     { href: "/dashboard", label: "Home", icon: Home },
     { href: "/class-schedule", label: "Class Schedule", icon: Calendar },
     { href: "/recorded-classes", label: "Recorded", icon: Youtube },
-    { href: "/exam-schedule", label: "Exam Schedule", icon: FileText },
+    { href: "/exam-schedule", label: "Practice Schedule", icon: FileText },
     { href: "/my-results", label: "My Results", icon: Award },
     { href: "/my-chat-room", label: "My Chat Room", icon: MessagesSquare },
   ];
@@ -161,6 +161,12 @@ export default function MainLayoutClient({
       icon: CalendarPlus,
     },
     { href: "/teacher/exams", label: "Exam Management", icon: FilePenLine },
+    {
+      href: "/teacher/homework/create",
+      label: "create h/w",
+      icon: FilePlus2,
+    },
+    { href: "/teacher/homework", label: "mng h/w", icon: BookOpen },
     {
       href: "/teacher/recorded-classes",
       label: "Recorded Classes",

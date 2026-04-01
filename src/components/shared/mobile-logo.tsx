@@ -23,11 +23,9 @@ export function MobileLogo({ user, onSignOut }: { user: User | null; onSignOut?:
               unoptimized
           />
       </Link>
-      {showUserNav && (
-        <div className="h-10 w-10">
-            <UserNav user={user} onSignOut={onSignOut} side="bottom" align="end" />
-        </div>
-      )}
+      <div className="h-10 w-10">
+          <UserNav user={user} onSignOut={onSignOut} side="bottom" align="end" />
+      </div>
     </div>
   );
 }

@@ -30,18 +30,36 @@ export function ExamSubmissionsList() {
         if (!firestore || !user) return;
         setLoading(true);
         try {
-            // 1. Get all exams by this teacher
+            // 1. Get all exams and homeworks by this teacher
             const examsQuery = query(collection(firestore, 'exams'), where('teacherId', '==', user.id));
-            const examsSnapshot = await getDocs(examsQuery);
-            const teacherExams = examsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam));
+            const homeworksQuery = query(collection(firestore, 'homeworks'), where('teacherId', '==', user.id));
+            
+            const [examsSnapshot, homeworksSnapshot] = await Promise.all([
+                getDocs(examsQuery),
+                getDocs(homeworksQuery)
+            ]);
 
-            // 2. For each exam, fetch submissions
-            const allSubmissions: ExamSubmission[] = [];
+            const teacherExams = examsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam));
+            const teacherHomeworks = homeworksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+
+            // 2. Fetch submissions for each
+            const allSubmissions: any[] = [];
+            
+            // Exams
             for (const exam of teacherExams) {
                 const subRef = collection(firestore, 'exams', exam.id, 'submissions');
                 const subSnapshot = await getDocs(subRef);
                 subSnapshot.docs.forEach(doc => {
-                    allSubmissions.push({ id: doc.id, ...doc.data() } as ExamSubmission);
+                    allSubmissions.push({ id: doc.id, ...doc.data(), type: 'exam', title: exam.title });
+                });
+            }
+            
+            // Homeworks
+            for (const hw of teacherHomeworks) {
+                const subRef = collection(firestore, 'homeworks', hw.id, 'submissions');
+                const subSnapshot = await getDocs(subRef);
+                subSnapshot.docs.forEach(doc => {
+                    allSubmissions.push({ id: doc.id, ...doc.data(), type: 'homework', title: hw.title, examType: hw.homeworkType });
                 });
             }
 
@@ -123,43 +141,43 @@ export function ExamSubmissionsList() {
                             {submissions.map((sub, i) => (
                                 <TableRow key={sub.id} className="border-muted/5 group hover:bg-muted/5 transition-colors duration-200">
                                     <TableCell className="py-5 px-8 font-medium">{sub.studentName}</TableCell>
-                                    <TableCell className="py-5 px-8">{sub.examTitle}</TableCell>
+                                    <TableCell className="py-5 px-8 font-semibold">{sub.title}</TableCell>
                                     <TableCell className="py-5 px-8">
-                                        <Badge variant={sub.examType === 'mcq' ? 'secondary' : 'outline'} className="rounded-full px-4 text-[10px] font-bold uppercase tracking-wider">
-                                            {sub.examType}
+                                        <Badge variant={sub.type === 'exam' ? 'default' : 'secondary'} className="rounded-full px-4 text-[10px] font-bold uppercase tracking-wider">
+                                            {sub.type}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="py-5 px-8 text-muted-foreground">
-                                        {format(sub.submittedAt.toDate(), 'PPP p')}
+                                        {sub.submittedAt instanceof Timestamp ? format(sub.submittedAt.toDate(), 'PPP p') : 'N/A'}
                                     </TableCell>
                                     <TableCell className="py-5 px-8">
                                         {sub.examType === 'mcq' ? (
-                                            <Badge className="bg-green-500 rounded-full px-4 text-[10px] font-bold uppercase tracking-wider">
-                                                {sub.score} / {sub.totalQuestions} Marks
+                                            <Badge className="bg-green-500 rounded-full px-4 text-[10px] font-bold uppercase tracking-wider text-white">
+                                                {sub.score || '0'} / {sub.totalQuestions || '?'} Marks
                                             </Badge>
                                         ) : (
-                                            <Badge variant={sub.status === 'reviewed' ? 'secondary' : 'outline'} className={`rounded-full px-4 text-[10px] font-bold uppercase tracking-wider ${sub.status === 'reviewed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            <Badge variant={sub.status === 'reviewed' ? 'secondary' : 'outline'} className={`rounded-full px-4 text-[10px] font-bold uppercase tracking-wider ${sub.status === 'reviewed' ? 'bg-green-100 text-green-700 border-none' : 'bg-orange-100 text-orange-700 border-none'}`}>
                                                 {sub.status === 'reviewed' ? `${sub.score} Marks` : 'Unchecked'}
                                             </Badge>
                                         )}
                                     </TableCell>
                                     <TableCell className="py-5 px-8 text-right">
-                                        {sub.examType === 'descriptive' ? (
+                                        {(sub.examType === 'descriptive' || sub.type === 'homework') && sub.answerFileUrl ? (
                                             <div className="flex gap-2 justify-end">
-                                                {sub.answerFileUrl && (
-                                                    <Button asChild size="sm" variant="ghost" className="h-8 w-8 rounded-lg p-0">
-                                                        <a href={sub.answerFileUrl} target="_blank" rel="noopener noreferrer">
-                                                            <ExternalLink className="h-4 w-4" />
-                                                        </a>
+                                                <Button asChild size="sm" variant="ghost" className="h-8 w-8 rounded-lg p-0">
+                                                    <a href={sub.answerFileUrl} target="_blank" rel="noopener noreferrer">
+                                                        <ExternalLink className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                                {sub.type === 'exam' && (
+                                                    <Button size="sm" className="h-9 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white" onClick={() => handleOpenGradeDialog(sub)}>
+                                                        Grade
                                                     </Button>
                                                 )}
-                                                <Button size="sm" className="h-9 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white" onClick={() => handleOpenGradeDialog(sub)}>
-                                                    Grade Answer
-                                                </Button>
                                             </div>
                                         ) : (
                                             <Button size="sm" variant="ghost" className="h-9 px-4 rounded-xl opacity-50 cursor-not-allowed">
-                                                Completed
+                                                {sub.status === 'submitted' ? 'Submitted' : 'Completed'}
                                             </Button>
                                         )}
                                     </TableCell>

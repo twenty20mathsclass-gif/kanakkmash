@@ -122,133 +122,193 @@ export default function AdminCourseModelControllerPage() {
     }
   };
 
-  const handleInitializeDefaults = async () => {
-    if (!firestore) return;
-    setIsSubmitting(true);
-    const defaults: Omit<CourseModel, 'id' | 'createdAt'>[] = [
-        { name: 'MATHS ONLINE TUITION', configType: 'class-syllabus', isActive: true, description: 'Standard tuition classes with syllabus options.' },
-        { name: 'TWENTY 20 BASIC MATHS', configType: 'level', isActive: true, description: 'Level-based foundational maths program.' },
-        { name: 'COMPETITIVE EXAM', configType: 'competitive-exam', isActive: true, description: 'Preparation for competitive entrance exams.' }
-    ];
+    const [modelToEdit, setModelToEdit] = useState<CourseModel | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-    try {
-        for (const def of defaults) {
-            await addDoc(collection(firestore, 'courseModels'), {
-                ...def,
-                createdAt: serverTimestamp()
-            });
+    const handleEditModel = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!firestore || !modelToEdit) return;
+
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+        const name = formData.get('name') as string;
+        const description = formData.get('description') as string;
+
+        if (!name) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Name is required.' });
+            return;
         }
-        toast({ title: 'Initialized', description: 'Default models have been created.' });
-    } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to initialize defaults.' });
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-
-  return (
-    <div className="space-y-8">
-        <Reveal>
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold font-headline">Course Model Controller</h1>
-                    <p className="text-muted-foreground">Manage the foundational course categories available on the platform.</p>
-                </div>
-                {models.length === 0 && !loading && (
-                    <Button onClick={handleInitializeDefaults} disabled={isSubmitting} variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                        Initialize Standard Defaults
-                    </Button>
-                )}
-            </div>
-        </Reveal>
         
-        <div className="grid lg:grid-cols-3 gap-8">
-            <Reveal delay={0.1} className="lg:col-span-1">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Create New Model</CardTitle>
-                        <CardDescription>Add a new course template with specific configurations.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleAddModel} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Model Name</Label>
-                                <Input id="name" name="name" placeholder="e.g. Foundation Course" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="configType">Configuration Mode</Label>
-                                <Select name="configType" defaultValue="none">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select logic mode" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="class-syllabus">Class & Syllabus</SelectItem>
-                                        <SelectItem value="level">Twenty 20 Levels</SelectItem>
-                                        <SelectItem value="competitive-exam">Competitive Exams</SelectItem>
-                                        <SelectItem value="none">Standard (No extra fields)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-[10px] text-muted-foreground">Determines which extra fields are shown in sign-up and scheduling.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
-                                <Input id="description" name="description" placeholder="Brief purpose of this model" />
-                            </div>
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Course Model
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </Reveal>
+        setIsSubmitting(true);
+        try {
+            await updateDoc(doc(firestore, 'courseModels', modelToEdit.id), {
+                name,
+                description: description || '',
+                updatedAt: serverTimestamp()
+            });
+            toast({ title: 'Success', description: 'Course model updated.' });
+            setIsEditDialogOpen(false);
+            setModelToEdit(null);
+        } catch (err: any) {
+             if (err.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `courseModels/${modelToEdit.id}`, operation: 'update' }, { cause: err }));
+            }
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update course model.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-            <Reveal delay={0.2} className="lg:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Existing Models</CardTitle>
-                        <CardDescription>Manage your active course templates.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? <div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div> :
-                            models.length > 0 ? (
-                                <div className="space-y-4">
-                                    {models.map(item => (
-                                        <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-4 p-4 border rounded-lg hover:bg-muted/30 transition-colors">
-                                            <div className="space-y-1 overflow-hidden">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-bold">{item.name}</p>
-                                                    <Badge variant="outline" className="text-[10px] capitalize">
-                                                        {item.configType.replace('-', ' ')}
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground line-clamp-1">{item.description || 'No description provided.'}</p>
-                                                <p className="text-[10px] text-muted-foreground">Created: {item.createdAt ? format(item.createdAt.toDate(), 'PPP') : 'N/A'}</p>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <Switch id={`active-switch-${item.id}`} checked={item.isActive} onCheckedChange={() => handleToggleActive(item)} />
-                                                    <Label htmlFor={`active-switch-${item.id}`} className="text-xs">Active</Label>
-                                                </div>
-                                                <Button variant="ghost" size="icon" onClick={() => setModelToDelete(item)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                                    <LayoutGrid className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                                    <p>No course models defined yet.</p>
-                                    <p className="text-xs">Click "Initialize Standard Defaults" to start with standard options.</p>
-                                </div>
-                            )
-                        }
-                    </CardContent>
-                </Card>
+
+    const handleInitializeDefaults = async () => {
+        if (!firestore) return;
+        setIsSubmitting(true);
+        const defaults = [
+            { name: 'MATHS ONLINE TUITION', configType: 'class-syllabus', isActive: true, description: 'Standard tuition classes with syllabus options.' },
+            { name: 'TWENTY 20 BASIC MATHS', configType: 'level', isActive: true, description: 'Level-based foundational maths program.' },
+            { name: 'COMPETITIVE EXAM', configType: 'competitive-exam', isActive: true, description: 'Preparation for competitive entrance exams.' }
+        ];
+
+        try {
+            for (const def of defaults) {
+                await addDoc(collection(firestore, 'courseModels'), { ...def, createdAt: serverTimestamp() });
+            }
+            toast({ title: 'Initialized', description: 'Default models have been created.' });
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to initialize defaults.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <Reveal>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold font-headline">Course Model Controller</h1>
+                        <p className="text-muted-foreground">Manage the foundational course categories available on the platform.</p>
+                    </div>
+                    {models.length === 0 && !loading && (
+                        <Button onClick={handleInitializeDefaults} disabled={isSubmitting} variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                            Initialize Standard Defaults
+                        </Button>
+                    )}
+                </div>
             </Reveal>
-        </div>
+            
+            <div className="grid lg:grid-cols-3 gap-8">
+                <Reveal delay={0.1} className="lg:col-span-1">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Create New Model</CardTitle>
+                            <CardDescription>Add a new course template with specific configurations.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleAddModel} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Model Name</Label>
+                                    <Input id="name" name="name" placeholder="e.g. Foundation Course" required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="configType">Configuration Mode</Label>
+                                    <Select name="configType" defaultValue="none">
+                                        <SelectTrigger><SelectValue placeholder="Select logic mode" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="class-syllabus">Class & Syllabus</SelectItem>
+                                            <SelectItem value="level">Twenty 20 Levels</SelectItem>
+                                            <SelectItem value="competitive-exam">Competitive Exams</SelectItem>
+                                            <SelectItem value="none">Standard (No extra fields)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[10px] text-muted-foreground">Determines which extra fields are shown in sign-up and scheduling.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="description">Description</Label>
+                                    <Input id="description" name="description" placeholder="Brief purpose of this model" />
+                                </div>
+                                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Course Model
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </Reveal>
+
+                <Reveal delay={0.2} className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Existing Models</CardTitle>
+                            <CardDescription>Manage your active course templates.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {loading ? <div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div> :
+                                models.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {models.map(item => (
+                                            <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-4 p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                                                <div className="space-y-1 overflow-hidden">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-bold">{item.name}</p>
+                                                        <Badge variant="outline" className="text-[10px] capitalize">
+                                                            {item.configType.replace('-', ' ')}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground line-clamp-1">{item.description || 'No description provided.'}</p>
+                                                    <p className="text-[10px] text-muted-foreground">Created: {item.createdAt ? format(item.createdAt.toDate(), 'PPP') : 'N/A'}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Switch id={`active-switch-${item.id}`} checked={item.isActive} onCheckedChange={() => handleToggleActive(item)} />
+                                                        <Label htmlFor={`active-switch-${item.id}`} className="text-xs">Active</Label>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Button variant="ghost" size="icon" onClick={() => { setModelToEdit(item); setIsEditDialogOpen(true); }}><Edit className="h-4 w-4 text-primary" /></Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => setModelToDelete(item)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                                        <LayoutGrid className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                                        <p>No course models defined yet.</p>
+                                        <p className="text-xs">Click "Initialize Standard Defaults" to start with standard options.</p>
+                                    </div>
+                                )
+                            }
+                        </CardContent>
+                    </Card>
+                </Reveal>
+            </div>
+
+            <AlertDialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setModelToEdit(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Edit Course Model</AlertDialogTitle>
+                        <AlertDialogDescription>Update the name and description for "{modelToEdit?.name}". Configuration mode cannot be changed once created.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <form onSubmit={handleEditModel} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-name">Model Name</Label>
+                            <Input id="edit-name" name="name" defaultValue={modelToEdit?.name} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-description">Description</Label>
+                            <Input id="edit-description" name="description" defaultValue={modelToEdit?.description} />
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Model
+                            </Button>
+                        </AlertDialogFooter>
+                    </form>
+                </AlertDialogContent>
+            </AlertDialog>
 
         <AlertDialog open={!!modelToDelete} onOpenChange={(open) => !open && setModelToDelete(null)}>
             <AlertDialogContent>

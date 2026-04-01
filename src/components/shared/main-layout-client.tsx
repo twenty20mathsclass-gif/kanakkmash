@@ -4,6 +4,7 @@ import { useEffect, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useUser, useFirebase } from "@/firebase";
 import { signOut as firebaseSignOut } from "firebase/auth";
+import { collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { PageLoader } from "@/components/shared/page-loader";
 import { usePresence } from "@/hooks/use-presence";
 import dynamic from "next/dynamic";
@@ -63,6 +64,54 @@ export default function MainLayoutClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { firestore } = useFirebase();
+
+  useEffect(() => {
+    if (!user || !firestore) return;
+
+    const reconcileLeads = async () => {
+      // Get all unlinked assessments matching the current user's email
+      const q = query(
+        collection(firestore, 'assessment'),
+        where('email', '==', user.email),
+        where('isLoggedIn', '==', false)
+      );
+
+      try {
+        const snap = await getDocs(q);
+        if (snap.empty) return;
+
+        const batch = writeBatch(firestore);
+        const userPhoneNormalized = `${user.countryCode || ''}${user.mobile || ''}`.replace(/[^\d+]/g, '');
+        let updated = false;
+
+        snap.docs.forEach((docSnap) => {
+          const docData = docSnap.data();
+          const docPhoneNormalized = (docData.whatsapp || '').replace(/[^\d+]/g, '');
+
+          // Both email (already matched) and whatsapp must match for linking
+          if (docPhoneNormalized === userPhoneNormalized) {
+            batch.update(docSnap.ref, {
+              isLoggedIn: true,
+              isLogged: true,
+              userId: user.id,
+              userEmail: user.email,
+              status: 'registered'
+            });
+            updated = true;
+          }
+        });
+
+        if (updated) {
+          await batch.commit();
+        }
+      } catch (error) {
+        console.warn("Background lead reconciliation failed:", error);
+      }
+    };
+
+    reconcileLeads();
+  }, [user, firestore]);
 
   useEffect(() => {
     const authPages = ["/sign-in", "/sign-up"];
@@ -174,12 +223,19 @@ export default function MainLayoutClient({
     },
     { href: "/teacher/exams", label: "Exam Management", icon: FilePenLine },
     {
+      href: "/teacher/homework/create",
+      label: "Create H/W",
+      icon: FilePlus2,
+    },
+    { href: "/teacher/homework", label: "H/W Management", icon: BookOpen },
+    {
       href: "/teacher/recorded-classes",
       label: "Recorded Classes",
       icon: Youtube,
     },
     { href: "/my-chat-room", label: "My Chat Room", icon: MessagesSquare },
     { href: "/teacher/revenue", label: "My Revenue", icon: Banknote },
+    { href: "/teacher/assessment", label: "Assessment", icon: LayoutGrid },
     { href: "/my-referrals", label: "My Referrals", icon: Share2 },
     { href: "/teacher/blog/create", label: "Blog Creation", icon: PenSquare },
     { href: "/teacher/course-cart", label: "Course Cart", icon: ShoppingBag },
@@ -193,7 +249,11 @@ export default function MainLayoutClient({
 
   const ogaNav = [
     { href: "/oga", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/oga/questions", label: "Assessment Questions", icon: FilePenLine },
+    {
+      href: "/oga/questions",
+      label: "Assessment Questions",
+      icon: FilePenLine,
+    },
     { href: "/oga/settings", label: "Test Settings", icon: Settings },
   ];
 
@@ -230,6 +290,7 @@ export default function MainLayoutClient({
       label: "Student Invoices",
       icon: Receipt,
     },
+    { href: "/admin/assessment", label: "Assessment", icon: LayoutGrid },
   ];
 
   let layout;

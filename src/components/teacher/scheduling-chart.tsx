@@ -20,6 +20,7 @@ export function SchedulingChart({ schedules }: { schedules: Schedule[] }) {
         }
 
         schedules.forEach(schedule => {
+            if (!schedule.date) return;
             const scheduleDate = schedule.date.toDate();
             const monthKey = format(scheduleDate, 'MMM yy');
             if (monthlyData[monthKey]) {

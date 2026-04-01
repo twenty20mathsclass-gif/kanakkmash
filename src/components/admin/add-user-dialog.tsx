@@ -105,7 +105,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
         );
         const user = userCredential.user;
 
-        const avatarUrl = `https://i.ibb.co/688z9X5/user.png`;
+        const avatarUrl = '';
 
         const userProfile: any = {
             id: user.uid,

@@ -23,19 +23,24 @@ export default function DashboardPage() {
   }
 
   const getSubtitle = (user: User) => {
-    if (user.role !== 'student') {
-      return user.role;
+    if (user.role !== 'student') return user.role;
+    
+    const parts = [];
+    if (user.courseModel) parts.push(user.courseModel);
+    
+    if (user.courseModel === 'TWENTY 20 BASIC MATHS') {
+      if (user.level) parts.push(user.level);
+    } else if (user.courseModel === 'MATHS ONLINE TUITION') {
+      if (user.class) parts.push(user.class);
+      if (user.syllabus) parts.push(user.syllabus);
+    } else if (user.courseModel === 'COMPETITIVE EXAM') {
+      if (user.competitiveExam) parts.push(user.competitiveExam);
+    } else if (user.competitiveExam) {
+      // Fallback if courseModel is not set but exam is
+      parts.push(user.competitiveExam);
     }
-    if (user.competitiveExam) {
-      return user.competitiveExam;
-    }
-    if (user.courseModel && user.class) {
-      return `${user.courseModel} - ${user.class}`;
-    }
-    if (user.courseModel) {
-      return user.courseModel;
-    }
-    return user.role;
+
+    return parts.length > 0 ? parts.join(' - ') : 'Student';
   };
 
   return (

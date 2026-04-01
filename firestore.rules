@@ -20,7 +20,7 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // --- Collection Group Rules ---
+    // --- Collection Group Rules & Global Tracking ---
     match /{path=**}/submissions/{submissionId} {
       allow read: if request.auth != null && (
         submissionId == request.auth.uid || 
@@ -28,6 +28,16 @@ service cloud.firestore {
         isAdmin() || 
         (path.size() >= 2 && path[0] == 'exams' && get(/databases/$(database)/documents/exams/$(path[1])).data.teacherId == request.auth.uid)
       );
+    }
+
+    match /homework_submissions/{submissionId} {
+      allow create, update: if request.auth != null && (submissionId.split('_')[1] == request.auth.uid || request.resource.data.studentId == request.auth.uid);
+      allow read: if request.auth != null && (resource.data.studentId == request.auth.uid || isAdmin() || isRole('teacher'));
+    }
+
+    match /exams_submissions/{submissionId} {
+      allow create, update: if request.auth != null && (submissionId.split('_')[1] == request.auth.uid || request.resource.data.studentId == request.auth.uid);
+      allow read: if request.auth != null && (resource.data.studentId == request.auth.uid || isAdmin() || isRole('teacher'));
     }
 
     // --- User Profiles & Details ---
@@ -137,9 +147,19 @@ service cloud.firestore {
       allow create: if isRole('teacher') || isAdmin();
       allow read, update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
       match /submissions/{userId} {
-        allow create: if isOwner(userId);
-        allow get, list: if request.auth != null;
-        allow update: if isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid);
+        allow create, update: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid);
+      }
+    }
+
+    // --- Homeworks ---
+    match /homeworks/{homeworkId} {
+      allow get, list: if request.auth != null;
+      allow create: if isRole('teacher') || isAdmin();
+      allow read, update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
+      match /submissions/{userId} {
+        allow create, update: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/homeworks/$(homeworkId)).data.teacherId == request.auth.uid);
       }
     }
 
@@ -187,6 +207,18 @@ service cloud.firestore {
       allow get, list: if true;
       // Only OGA and admin can write
       allow write: if isRole('oga') || isAdmin();
+    }
+
+    match /assessment/{docId} {
+      allow create: if true;
+      allow read: if isAdmin() || isRole('oga') || isRole('teacher') || (request.auth != null && resource.data.email == request.auth.token.email);
+      allow update: if isAdmin() || (request.auth != null && resource.data.email == request.auth.token.email);
+    }
+
+    // --- Levels ---
+    match /levels/{levelId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
     }
   }
 }

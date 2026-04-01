@@ -57,6 +57,8 @@ export function AppSidebar({
 
   const isActive = (href: string) => {
     if (href.includes("?")) return currentUrl === href;
+    // Exact match for base dashboard and homework management to avoid highlighting on sub-pages
+    if (href === "/teacher" || href === "/teacher/homework") return pathname === href;
     return pathname.startsWith(href) && href !== "/";
   };
 
@@ -142,7 +144,7 @@ export function AppSidebar({
             >
               {/* AVATAR */}
               <Avatar className="h-8 w-8 shrink-0 border border-gray-200">
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
+                {user.avatarUrl && !user.avatarUrl.includes('688z9X5/user.png') && <AvatarImage src={user.avatarUrl} alt={user.name} className="object-cover" />}
                 <AvatarFallback className="bg-orange-50 text-orange-600">
                   <UserIcon className="h-4 w-4" />
                 </AvatarFallback>
