@@ -173,5 +173,20 @@ service cloud.firestore {
       allow list, write: if isAdmin(); 
     }
     match /blogPosts/{postId} { allow get, list: if true; allow create: if isRole('admin') || isRole('teacher'); allow update: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])); allow delete: if isAdmin() || (isRole('teacher') && resource.data.authorId == request.auth.uid); match /comments/{commentId} { allow read, list: if true; allow create: if request.auth != null; allow delete: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid); } }
+
+    // --- Assessment Test ---
+    match /assessment_questions/{questionId} {
+      // Public can read (for the live assessment test, no login required)
+      allow get, list: if true;
+      // Only OGA and admin can create, update, delete
+      allow create, update, delete: if isRole('oga') || isAdmin();
+    }
+
+    match /assessment_config/{configId} {
+      // Public can read config (duration, isActive)
+      allow get, list: if true;
+      // Only OGA and admin can write
+      allow write: if isRole('oga') || isAdmin();
+    }
   }
 }

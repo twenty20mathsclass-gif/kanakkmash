@@ -5,7 +5,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'admin' | 'teacher' | 'promoter';
+  role: 'student' | 'admin' | 'teacher' | 'promoter' | 'oga';
   avatarUrl: string;
   countryCode?: string;
   mobile?: string;
@@ -356,4 +356,22 @@ export type Announcement = {
   link?: string;
   isActive: boolean;
   createdAt: Timestamp;
+};
+
+export type AssessmentQuestion = {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  class: string;
+  imageUrl?: string;
+  createdAt: Timestamp;
+  createdBy: string;
+};
+
+export type AssessmentConfig = {
+  durationMinutes: number;
+  isActive: boolean;
+  updatedAt: Timestamp;
+  updatedBy: string;
 };

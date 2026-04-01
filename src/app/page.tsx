@@ -77,6 +77,9 @@ export default function Home() {
               <Button size="lg" asChild className="h-11 sm:h-12 px-8 sm:px-10 text-sm sm:text-base font-bold bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-primary-foreground transition-all hover:shadow-lg rounded-full">
                 <Link href="/sign-up">Enroll Now</Link>
               </Button>
+              <Button size="lg" variant="outline" asChild className="h-11 sm:h-12 px-8 sm:px-10 text-sm sm:text-base font-bold rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:shadow-lg">
+                <Link href="/assessment-form">Assessment Test</Link>
+              </Button>
               <Button size="lg" variant="outline" asChild className="h-11 sm:h-12 px-8 sm:px-10 text-sm sm:text-base rounded-full bg-background/50 backdrop-blur-sm border-muted-foreground/20 font-medium">
                 <Link href="/sign-in">Login</Link>
               </Button>

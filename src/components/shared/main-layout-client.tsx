@@ -75,6 +75,8 @@ export default function MainLayoutClient({
       "/terms-and-conditions",
       "/my-results",
       "/fee-structure",
+      "/assessment-form",
+      "/assessment-test",
     ];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible =
@@ -99,13 +101,15 @@ export default function MainLayoutClient({
     if (user.role === "admin") targetPath = "/admin";
     else if (user.role === "teacher") targetPath = "/teacher";
     else if (user.role === "promoter") targetPath = "/promoter";
+    else if (user.role === "oga") targetPath = "/oga";
     else targetPath = "/dashboard";
 
     if (
       pathname === "/dashboard" ||
       pathname === "/teacher" ||
       pathname === "/admin" ||
-      pathname === "/promoter"
+      pathname === "/promoter" ||
+      pathname === "/oga"
     ) {
       router.replace(targetPath);
     }
@@ -115,6 +119,8 @@ export default function MainLayoutClient({
     } else if (pathname.startsWith("/teacher") && user.role !== "teacher") {
       router.replace("/dashboard");
     } else if (pathname.startsWith("/promoter") && user.role !== "promoter") {
+      router.replace("/dashboard");
+    } else if (pathname.startsWith("/oga") && user.role !== "oga") {
       router.replace("/dashboard");
     }
   }, [loading, user, router, pathname]);
@@ -184,6 +190,12 @@ export default function MainLayoutClient({
     { href: "/promoter/rewards", label: "Reward History", icon: Banknote },
   ];
 
+  const ogaNav = [
+    { href: "/oga", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/oga/questions", label: "Assessment Questions", icon: FilePenLine },
+    { href: "/oga/settings", label: "Test Settings", icon: Settings },
+  ];
+
   const adminNav = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     {
@@ -227,11 +239,13 @@ export default function MainLayoutClient({
     !isHomepage &&
     (user.role === "admin" ||
       user.role === "teacher" ||
-      user.role === "promoter")
+      user.role === "promoter" ||
+      user.role === "oga")
   ) {
     let navItems;
     if (user.role === "admin") navItems = adminNav;
     else if (user.role === "teacher") navItems = teacherNav;
+    else if (user.role === "oga") navItems = ogaNav;
     else navItems = promoterNav;
 
     const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
@@ -240,7 +254,8 @@ export default function MainLayoutClient({
         if (
           item.href === "/admin" ||
           item.href === "/teacher" ||
-          item.href === "/promoter"
+          item.href === "/promoter" ||
+          item.href === "/oga"
         ) {
           return pathname === item.href;
         }

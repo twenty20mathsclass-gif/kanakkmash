@@ -39,7 +39,7 @@ const createUserSchema = z.object({
     name: z.string().min(2, 'Name is required'),
     email: z.string().email('Invalid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.enum(['student', 'teacher', 'promoter']),
+    role: z.enum(['student', 'teacher', 'promoter', 'oga']),
     hourlyRateGroup: z.coerce.number().optional(),
     hourlyRateOneToOne: z.coerce.number().optional(),
     rewardPercentage: z.coerce.number().optional(),
@@ -225,6 +225,7 @@ export function AddUserDialog({ creatorRole = 'admin', onUserAdded }: { creatorR
                   <>
                     <SelectItem value="teacher">Teacher</SelectItem>
                     <SelectItem value="promoter">Promoter</SelectItem>
+                    <SelectItem value="oga">Operation Growth Associate</SelectItem>
                   </>
                 )}
               </SelectContent>

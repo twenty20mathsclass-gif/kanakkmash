@@ -177,6 +177,7 @@ export default function AdminUsersPage() {
                                     <SelectItem value="student">Student</SelectItem>
                                     <SelectItem value="teacher">Teacher</SelectItem>
                                     <SelectItem value="promoter">Promoter</SelectItem>
+                                    <SelectItem value="oga">OGA</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
