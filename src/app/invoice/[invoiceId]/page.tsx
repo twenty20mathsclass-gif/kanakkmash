@@ -20,6 +20,13 @@ export const dynamic = 'force-dynamic';
 function InvoicePageContents() {
     const { firestore } = useFirebase();
     const params = useParams();
+    const [isSuccess, setIsSuccess] = useState(false);
+    
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        setIsSuccess(searchParams.get('success') === 'true');
+    }, []);
+
     const invoiceId = params.invoiceId as string;
     
     const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -108,8 +115,17 @@ function InvoicePageContents() {
     }
     
     return (
-        <div className="max-w-4xl mx-auto">
-            <div ref={componentRef} className="p-8 print-area bg-background rounded-lg shadow-lg">
+        <div className="max-w-4xl mx-auto space-y-6">
+            {isSuccess && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-full mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-green-900 font-headline">Welcome to Kanakkmash!</h2>
+                    <p className="text-green-700 mt-1">Your payment was successful and your account has been created. Your invoice is ready below.</p>
+                </div>
+            )}
+            <div ref={componentRef} className="p-8 print-area bg-background rounded-lg shadow-lg border border-border/50">
                 <header className="flex justify-between items-center pb-8 border-b">
                     <div>
                         <Image src="/logo mlm@4x.png" alt="kanakkmash logo" width={200} height={62} className="object-contain" unoptimized/>

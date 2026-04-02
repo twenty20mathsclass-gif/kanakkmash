@@ -36,6 +36,7 @@ import {
   Settings,
   Megaphone,
   LayoutGrid,
+  ClipboardCheck,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -177,6 +178,7 @@ export default function MainLayoutClient({
     { href: "/my-referrals", label: "My Referrals", icon: Share2 },
     { href: "/teacher/blog/create", label: "Blog Creation", icon: PenSquare },
     { href: "/teacher/course-cart", label: "Course Cart", icon: ShoppingBag },
+    { href: "/teacher/assessment", label: "Assessment Management", icon: ClipboardCheck },
   ];
 
   const promoterNav = [

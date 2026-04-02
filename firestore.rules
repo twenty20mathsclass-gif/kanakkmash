@@ -198,8 +198,8 @@ service cloud.firestore {
     match /assessment_questions/{questionId} {
       // Public can read (for the live assessment test, no login required)
       allow get, list: if true;
-      // Only OGA and admin can create, update, delete
-      allow create, update, delete: if isRole('oga') || isAdmin();
+      // Only OGA, teacher and admin can create, update, delete
+      allow create, update, delete: if isRole('oga') || isRole('teacher') || isAdmin();
     }
 
     match /assessment_config/{configId} {

@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase, useUser } from '@/firebase';
-import { collectionGroup, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collectionGroup, query, where, orderBy, onSnapshot, collection, getDocs, Timestamp } from 'firebase/firestore';
 import type { ExamSubmission } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,14 @@ import { Loader2, Award, CheckCircle, Percent, Hourglass, FileText, TrendingUp, 
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Sparkles, Trophy, ClipboardCheck, ArrowUpRight, GraduationCap, Calendar, Phone, Mail, Info, ShieldCheck, XCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import {
@@ -49,7 +57,9 @@ export default function MyResultsPage() {
     const { user, loading: userLoading } = useUser();
     const router = useRouter();
     const [submissions, setSubmissions] = useState<ExamSubmission[]>([]);
+    const [assessments, setAssessments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
     useEffect(() => {
         if (userLoading) {
@@ -87,6 +97,26 @@ export default function MyResultsPage() {
         return () => unsubscribe();
 
     }, [firestore, user, userLoading, router]);
+
+    useEffect(() => {
+        if (!user || !firestore) return;
+        
+        const fetchAssessments = async () => {
+            try {
+                // Link assessments by user email or userId
+                const q = query(
+                    collection(firestore, 'assessment'),
+                    where('userId', '==', user.id)
+                );
+                const snap = await getDocs(q);
+                const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setAssessments(list.filter((a: any) => a.assessmentType === 'paid'));
+            } catch (err) {
+                console.warn("Error fetching initial assessments:", err);
+            }
+        };
+        fetchAssessments();
+    }, [user, firestore]);
     
     const { averageScore, totalExamsTaken, topScore, chartData, performanceLevel } = useMemo(() => {
         const scores: number[] = [];
@@ -362,6 +392,165 @@ export default function MyResultsPage() {
                     )}
                 </div>
              </Reveal>
+
+             {/* Initial Assessment Section */}
+             {assessments.length > 0 && (
+                <Reveal delay={0.8}>
+                    <div className="pt-10 space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <Sparkles className="h-5 w-5 text-amber-500" />
+                            <h2 className="font-headline font-bold text-slate-700">Initial Assessment</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {assessments.map(item => (
+                                <Card 
+                                    key={item.id} 
+                                    className="border border-slate-100 shadow-sm rounded-3xl bg-white hover:border-amber-200 transition-all group cursor-pointer overflow-hidden relative"
+                                    onClick={() => setSelectedAssessment(item)}
+                                >
+                                    <div className="absolute top-0 right-0 p-4">
+                                        <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                                    </div>
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="h-10 w-10 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
+                                                <Trophy className="h-5 w-5 text-amber-600" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-sm font-bold truncate leading-tight">Entrance Test</CardTitle>
+                                                <CardDescription className="text-[10px] font-bold uppercase tracking-wider">{item.class}</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pb-6">
+                                        <div className="flex items-end justify-between">
+                                            <div>
+                                                <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Score Result</p>
+                                                <p className="text-2xl font-black text-slate-800">
+                                                    {item.score}<span className="text-sm text-slate-300">/{item.totalQuestions}</span>
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Precision</p>
+                                                <p className="text-lg font-black text-amber-600">{item.percentage}%</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-50 h-1.5 rounded-full mt-4 overflow-hidden border border-slate-100">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full" 
+                                                style={{ width: `${item.percentage}%` }}
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                </Reveal>
+             )}
+
+             {/* Assessment Detail Modal */}
+             <Dialog open={!!selectedAssessment} onOpenChange={(open) => !open && setSelectedAssessment(null)}>
+                <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl rounded-[3rem] gap-0">
+                    <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 p-8 pt-10 text-white relative">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-3xl font-black font-headline leading-tight">Initial Assessment</h2>
+                                <p className="text-white/70 font-medium text-sm mt-1">Foundational performance report</p>
+                            </div>
+                            <div className="bg-white/10 p-4 rounded-[2rem] backdrop-blur-md shrink-0 border border-white/10">
+                                <Award size={32} className="text-white" />
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-8">
+                            <Badge className="bg-white/10 hover:bg-white/20 border-white/20 text-white backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold">
+                                Category: {selectedAssessment?.class}
+                            </Badge>
+                            <Badge className="bg-white/10 hover:bg-white/20 border-white/20 text-white backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold">
+                                {selectedAssessment?.submittedAt ? format(selectedAssessment.submittedAt.toDate(), "MMM dd, yyyy") : "N/A"}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <div className="p-8 bg-background">
+                        <div className="mb-10 p-6 rounded-[2.5rem] bg-amber-50 border border-amber-100 flex flex-col md:flex-row items-center gap-8 shadow-inner">
+                            <div className="relative w-32 h-32 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle
+                                        className="text-amber-200/30"
+                                        strokeWidth="8"
+                                        stroke="currentColor"
+                                        fill="transparent"
+                                        r="56"
+                                        cx="64"
+                                        cy="64"
+                                    />
+                                    <circle
+                                        className="text-amber-600"
+                                        strokeWidth="8"
+                                        strokeDasharray={351.85}
+                                        strokeDashoffset={351.85 - (351.85 * (selectedAssessment?.percentage || 0)) / 100}
+                                        strokeLinecap="round"
+                                        stroke="currentColor"
+                                        fill="transparent"
+                                        r="56"
+                                        cx="64"
+                                        cy="64"
+                                    />
+                                </svg>
+                                <div className="absolute flex flex-col items-center">
+                                    <span className="text-3xl font-black text-slate-800 leading-none">{selectedAssessment?.percentage ?? 0}%</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Score</span>
+                                </div>
+                            </div>
+                            <div className="flex-1 text-center md:text-left space-y-1">
+                                <h4 className="text-xl font-black font-headline text-slate-800">Entrance Test Success</h4>
+                                <p className="text-slate-500 text-sm font-medium">
+                                    You have correctly answered <span className="text-slate-800 font-bold">{selectedAssessment?.score}</span> out of <span className="text-slate-800 font-bold">{selectedAssessment?.totalQuestions}</span> questions in your initial assessment for <span className="text-amber-600 font-bold">{selectedAssessment?.class}</span>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2 leading-none">Testing Candidate</p>
+                                    <p className="text-lg font-black text-slate-800 font-headline leading-none">{selectedAssessment?.name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2 leading-none">Reference ID</p>
+                                    <p className="text-xs font-mono text-slate-500 truncate max-w-[200px]">{selectedAssessment?.id}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2 leading-none">Status</p>
+                                    <Badge className="bg-amber-100 text-amber-700 border-none px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+                                        {selectedAssessment?.status === 'completed' ? 'Evaluation Finished' : selectedAssessment?.status}
+                                    </Badge>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2 leading-none">Time Attempted</p>
+                                    <p className="text-sm font-medium text-slate-600 flex items-center gap-2 leading-none">
+                                        <Calendar size={18} className="text-slate-300" />
+                                        {selectedAssessment?.submittedAt ? format(selectedAssessment.submittedAt.toDate(), "MMMM dd, yyyy · hh:mm a") : "N/A"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-end pt-6 border-t">
+                            <Button 
+                                onClick={() => setSelectedAssessment(null)} 
+                                className="rounded-2xl px-12 h-14 font-black transition-all hover:scale-[1.03] active:scale-[0.98] shadow-xl shadow-amber-600/20 bg-amber-600 hover:bg-amber-700 text-white"
+                            >
+                                Close Report
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+             </Dialog>
 
         </div>
     );

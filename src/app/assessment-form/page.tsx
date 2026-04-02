@@ -18,6 +18,14 @@ export default function AssessmentFormPage() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+
+  useState(() => {
+    if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        setInvoiceId(params.get('invoiceId'));
+    }
+  });
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -53,6 +61,8 @@ export default function AssessmentFormPage() {
           isLogged: !!user,
           userId: user?.id || null,
           userEmail: user?.email ? user.email.toLowerCase() : null,
+          invoiceId: invoiceId || null,
+          assessmentType: invoiceId ? 'paid' : 'free',
           submittedAt: serverTimestamp(),
           status: 'started'
         };
@@ -61,7 +71,7 @@ export default function AssessmentFormPage() {
       
       sessionStorage.setItem('assessmentUser', JSON.stringify(formData));
       await new Promise((r) => setTimeout(r, 800));
-      router.push('/assessment-test');
+      router.push(`/assessment-test${invoiceId ? `?invoiceId=${invoiceId}` : ''}`);
     } catch (err: any) {
       console.warn("Failed to save assessment registration:", err);
       setErrors({ form: "Could not register details. Please check your connection and try again." });

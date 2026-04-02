@@ -37,6 +37,7 @@ import {
   Settings,
   Megaphone,
   LayoutGrid,
+  ClipboardCheck,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -73,7 +74,7 @@ export default function MainLayoutClient({
       // Get all unlinked assessments matching the current user's email
       const q = query(
         collection(firestore, 'assessment'),
-        where('email', '==', user.email),
+        where('email', '==', user.email.toLowerCase()),
         where('isLoggedIn', '==', false)
       );
 
@@ -87,7 +88,9 @@ export default function MainLayoutClient({
 
         snap.docs.forEach((docSnap) => {
           const docData = docSnap.data();
-          const docPhoneNormalized = (docData.whatsapp || '').replace(/[^\d+]/g, '');
+          // Check both root and nested user object for whatsapp
+          const whatsapp = docData.whatsapp || docData.user?.whatsapp || '';
+          const docPhoneNormalized = whatsapp.replace(/[^\d+]/g, '');
 
           // Both email (already matched) and whatsapp must match for linking
           if (docPhoneNormalized === userPhoneNormalized) {
@@ -95,7 +98,7 @@ export default function MainLayoutClient({
               isLoggedIn: true,
               isLogged: true,
               userId: user.id,
-              userEmail: user.email,
+              userEmail: user.email.toLowerCase(),
               status: 'registered'
             });
             updated = true;
@@ -236,6 +239,7 @@ export default function MainLayoutClient({
     { href: "/my-chat-room", label: "My Chat Room", icon: MessagesSquare },
     { href: "/teacher/revenue", label: "My Revenue", icon: Banknote },
     { href: "/teacher/assessment", label: "Assessment", icon: LayoutGrid },
+    { href: "/teacher/assessment-results", label: "Assessment Results", icon: ClipboardCheck },
     { href: "/my-referrals", label: "My Referrals", icon: Share2 },
     { href: "/teacher/blog/create", label: "Blog Creation", icon: PenSquare },
     { href: "/teacher/course-cart", label: "Course Cart", icon: ShoppingBag },

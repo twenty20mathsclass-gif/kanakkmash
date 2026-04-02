@@ -209,7 +209,14 @@ function PaymentComponent() {
           sessionStorage.removeItem('kanakkmash_signup_data');
           if (referralId) sessionStorage.removeItem('kanakkmash_referral_id');
           
-          router.push('/dashboard');
+          sessionStorage.setItem('assessmentUser', JSON.stringify({
+            name: data.name,
+            email: data.email,
+            whatsapp: `${phoneCode}${data.mobile}`,
+            class: data.class || data.level || data.competitiveExam || ''
+          }));
+          
+          router.push(`/assessment-test?invoiceId=${invoiceDocRef.id}`);
 
         } catch (err: any) {
           console.error("Registration failed:", err);

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { collection, getDocs, doc, getDoc, orderBy, where, query, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import Image from 'next/image';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, Trophy, Sparkles, Loader2 } from 'lucide-react';
 
@@ -33,22 +34,27 @@ const FALLBACK_QUESTIONS: Question[] = [
 
 export default function AssessmentTestPage() {
   const { firestore } = useFirebase();
+  const { user: authUser } = useUser();
+  const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [durationSeconds, setDurationSeconds] = useState(5 * 60);
   const [fetchingConfig, setFetchingConfig] = useState(true);
-
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [reportSaved, setReportSaved] = useState(false);
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
 
-  // Load user from sessionStorage
+  // Load user and check for invoiceId
   useEffect(() => {
     const raw = sessionStorage.getItem('assessmentUser');
     if (raw) setUser(JSON.parse(raw));
+
+    const params = new URLSearchParams(window.location.search);
+    setInvoiceId(params.get('invoiceId'));
   }, []);
 
   // Fetch questions + config from Firestore
@@ -60,25 +66,41 @@ export default function AssessmentTestPage() {
         const raw = sessionStorage.getItem('assessmentUser');
         const studentClass = raw ? JSON.parse(raw).class : '';
 
-        // Fetch questions filtered by the student's class
+        // Fetch questions filtered by the student's category
         const qSnap = await getDocs(
           query(
             collection(firestore, 'assessment_questions'),
-            where('class', '==', studentClass),
-            orderBy('createdAt', 'asc')
+            where('class', '==', studentClass)
           )
         );
-        const fetched: Question[] = qSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Question));
-        const qs = fetched.length > 0 ? fetched : FALLBACK_QUESTIONS;
-        setQuestions(qs);
-        setAnswers(Array(qs.length).fill(null));
-
-        // Config — duration
-        const cfgSnap = await getDoc(doc(firestore, 'assessment_config', 'settings'));
-        const duration = cfgSnap.exists() ? (cfgSnap.data().durationMinutes ?? 5) : 5;
-        setDurationSeconds(duration * 60);
-        setTimeLeft(duration * 60);
-      } catch {
+        const fetched: Question[] = qSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as any))
+          .sort((a, b) => {
+             const timeA = a.createdAt?.toMillis() || 0;
+             const timeB = b.createdAt?.toMillis() || 0;
+             return timeA - timeB;
+          });
+        
+        if (fetched.length === 0) {
+          // If no questions found for this specific class/level
+          setQuestions([]);
+          if (invoiceId) {
+             // Paid students can skip if no questions exist for their level yet
+             router.replace(`/invoice/${invoiceId}?success=true`);
+             return;
+          }
+        } else {
+          setQuestions(fetched);
+          setAnswers(Array(fetched.length).fill(null));
+          
+          // Config — duration
+          const cfgSnap = await getDoc(doc(firestore, 'assessment_config', 'settings'));
+          const duration = cfgSnap.exists() ? (cfgSnap.data().durationMinutes ?? 5) : 5;
+          setDurationSeconds(duration * 60);
+          setTimeLeft(duration * 60);
+        }
+      } catch (error) {
+        console.error("Error fetching assessment questions:", error);
         setQuestions(FALLBACK_QUESTIONS);
         setAnswers(Array(FALLBACK_QUESTIONS.length).fill(null));
         setTimeLeft(5 * 60);
@@ -87,7 +109,7 @@ export default function AssessmentTestPage() {
       }
     };
     fetchData();
-  }, [firestore]);
+  }, [firestore, invoiceId, router]);
 
   // Timer
   useEffect(() => {
@@ -113,9 +135,15 @@ export default function AssessmentTestPage() {
           const percentage = questions.length > 0 ? Math.round((finalScore / questions.length) * 100) : 0;
           
           await addDoc(collection(firestore, 'assessment'), {
+            // Fields at root for easier querying & reconciliation
+            name: user.name,
+            email: user.email.toLowerCase(),
+            whatsapp: user.whatsapp.replace(/[^\d+]/g, ''),
+            class: user.class,
+            // Original structure preserved for compatibility if needed
             user: {
               name: user.name,
-              email: user.email,
+              email: user.email.toLowerCase(),
               whatsapp: user.whatsapp,
               class: user.class
             },
@@ -123,7 +151,15 @@ export default function AssessmentTestPage() {
             totalQuestions: questions.length,
             percentage: Math.round(percentage),
             answers: answers,
-            submittedAt: serverTimestamp()
+            submittedAt: serverTimestamp(),
+            // Reconciliation fields matching registration logic
+            isLoggedIn: !!authUser,
+            isLogged: !!authUser,
+            userId: authUser?.id || null,
+            userEmail: authUser?.email ? authUser.email.toLowerCase() : null,
+            invoiceId: invoiceId || null,
+            assessmentType: invoiceId ? 'paid' : 'free',
+            status: 'completed'
           });
         } catch (error) {
           console.error("Error saving assessment report:", error);
@@ -131,7 +167,7 @@ export default function AssessmentTestPage() {
       };
       saveReport();
     }
-  }, [submitted, user, firestore, reportSaved, questions, answers]);
+  }, [submitted, user, firestore, reportSaved, questions, answers, authUser]);
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -214,11 +250,14 @@ export default function AssessmentTestPage() {
           </p>
 
           <div className="flex gap-3">
-            <Link href="/" className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-sm font-medium">
-              Back to Home
+            <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-sm font-medium">
+              {invoiceId ? 'Skip and View Invoice' : 'Back to Home'}
             </Link>
-            <Link href="/sign-up" className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold hover:from-[#ea6c0a] hover:to-[#e08f08] transition-all text-sm shadow-md">
-              Enroll Now
+            <Link 
+              href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/sign-up"} 
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold hover:from-[#ea6c0a] hover:to-[#e08f08] transition-all text-sm shadow-md"
+            >
+              {invoiceId ? 'View My Invoice' : 'Enroll Now'}
             </Link>
           </div>
         </div>
@@ -237,8 +276,8 @@ export default function AssessmentTestPage() {
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group">
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Exit
+          <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group">
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> {invoiceId ? 'Skip test & View Invoice' : 'Exit'}
           </Link>
           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm border ${
             (timeLeft ?? 0) < 60
@@ -281,7 +320,7 @@ export default function AssessmentTestPage() {
         </div>
 
         {/* Question card */}
-        {q && (
+        {questions.length > 0 ? (
           <div className="bg-card border border-border rounded-3xl p-7 shadow-md mb-4">
             <div className="flex items-center gap-2 mb-4">
               <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
@@ -289,15 +328,15 @@ export default function AssessmentTestPage() {
               </span>
               <Sparkles size={14} className="text-accent" />
             </div>
-            {q.imageUrl && (
+            {q?.imageUrl && (
               <div className="relative w-full max-w-sm h-44 mx-auto rounded-xl overflow-hidden border border-border bg-muted/20 mb-4">
                 <Image src={q.imageUrl} alt="Question image" fill className="object-contain" unoptimized />
               </div>
             )}
-            <h2 className="text-foreground font-semibold text-lg leading-relaxed mb-6">{q.question}</h2>
+            <h2 className="text-foreground font-semibold text-lg leading-relaxed mb-6">{q?.question}</h2>
 
             <div className="space-y-3">
-              {q.options.map((opt, idx) => (
+              {q?.options.map((opt, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSelect(idx)}
@@ -317,24 +356,41 @@ export default function AssessmentTestPage() {
               ))}
             </div>
           </div>
+        ) : (
+          <div className="bg-card border border-border rounded-3xl p-10 shadow-md mb-4 text-center space-y-6">
+             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                <BookOpen size={24} className="text-muted-foreground" />
+             </div>
+             <div>
+                <h3 className="text-xl font-bold">No questions available</h3>
+                <p className="text-muted-foreground text-sm mt-2">
+                   We haven't added assessment questions for the category <b>"{user?.class}"</b> yet.
+                </p>
+             </div>
+             <Link href="/sign-up" className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold text-sm">
+                Proceed to Enrollment
+             </Link>
+          </div>
         )}
 
         {/* Navigation */}
-        <div className="flex gap-3">
-          <button
-            onClick={handlePrev}
-            disabled={currentQ === 0}
-            className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium"
-          >
-            ← Previous
-          </button>
-          <button
-            onClick={handleNext}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold hover:from-[#ea6c0a] hover:to-[#e08f08] transition-all text-sm flex items-center justify-center gap-2 shadow-md"
-          >
-            {currentQ === questions.length - 1 ? <><CheckCircle size={16} /> Submit</> : <>Next →</>}
-          </button>
-        </div>
+        {questions.length > 0 && (
+          <div className="flex gap-3">
+            <button
+              onClick={handlePrev}
+              disabled={currentQ === 0}
+              className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              ← Previous
+            </button>
+            <button
+              onClick={handleNext}
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold hover:from-[#ea6c0a] hover:to-[#e08f08] transition-all text-sm flex items-center justify-center gap-2 shadow-md"
+            >
+              {currentQ === questions.length - 1 ? <><CheckCircle size={16} /> Submit</> : <>Next →</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
