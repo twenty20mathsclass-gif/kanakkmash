@@ -86,13 +86,15 @@ export function AnnouncementBanner() {
         </div>
     );
     
-    if (current.link) {
-        return (
-            <Link href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full hover:opacity-95 transition-opacity">
-                {content}
-            </Link>
-        )
-    }
-
-    return <div className="w-full">{content}</div>;
+    return (
+        <div className="fixed top-0 left-0 right-0 z-[110]">
+            {current.link ? (
+                <Link href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full hover:opacity-95 transition-all">
+                    {content}
+                </Link>
+            ) : (
+                <div className="w-full">{content}</div>
+            )}
+        </div>
+    );
 }

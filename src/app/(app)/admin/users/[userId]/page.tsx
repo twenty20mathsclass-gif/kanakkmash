@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee, Ban, CheckCircle, Trash2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail, Phone, Edit, IndianRupee, Ban, CheckCircle, Trash2, Lock, Unlock, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -53,6 +53,8 @@ export default function UserProfilePage() {
     const [rewards, setRewards] = useState<Reward[]>([]);
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+    const [paymentLockLoading, setPaymentLockLoading] = useState(false);
 
     const fetchUserData = useCallback(async () => {
         if (!firestore || !userId) return;
@@ -138,6 +140,31 @@ export default function UserProfilePage() {
             fetchUserData();
         }
     }, [authLoading, currentUser, fetchUserData]);
+
+    const handleTogglePaymentLock = async () => {
+        if (!firestore || !user || user.role !== 'teacher') return;
+        setPaymentLockLoading(true);
+        const detailsRef = doc(firestore, 'users', user.id, 'teacher_details', 'payment');
+        const newLockedStatus = !((user as any).isLocked !== false);
+
+        try {
+            await updateDoc(detailsRef, { isLocked: newLockedStatus });
+            setUser({ ...user, isLocked: newLockedStatus } as any);
+            toast({
+                title: newLockedStatus ? "Payment Details Locked" : "Payment Details Unlocked",
+                description: `Teacher can ${newLockedStatus ? 'no longer' : 'now'} edit their payment information.`
+            });
+        } catch (e: any) {
+            console.error("Error toggling payment lock:", e);
+            toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: "Could not update payment lock status."
+            });
+        } finally {
+            setPaymentLockLoading(false);
+        }
+    };
 
     const handleToggleStatus = async () => {
         if (!firestore || !user) return;
@@ -260,6 +287,7 @@ export default function UserProfilePage() {
                 <TabsList>
                     {user.role === 'teacher' && <TabsTrigger value="schedules">Schedules ({schedules.length})</TabsTrigger>}
                     {user.role === 'teacher' && <TabsTrigger value="salary">Salary ({salaryPayments.length})</TabsTrigger>}
+                    {user.role === 'teacher' && <TabsTrigger value="payment">Payment Details</TabsTrigger>}
                     {(user.role === 'teacher' || user.role === 'promoter') && <TabsTrigger value="referrals">Referrals ({referrals.length})</TabsTrigger>}
                     {user.role === 'promoter' && <TabsTrigger value="rewards">Rewards ({rewards.length})</TabsTrigger>}
                     {user.role === 'student' && <TabsTrigger value="invoices">Fee Payments ({invoices.length})</TabsTrigger>}
@@ -277,6 +305,72 @@ export default function UserProfilePage() {
                         <TableBody>{salaryPayments.map(p => (<TableRow key={p.id}><TableCell>{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : '-'}</TableCell><TableCell className="font-medium flex items-center"><IndianRupee className="h-4 w-4"/>{p.amount.toLocaleString()}</TableCell><TableCell>{p.paymentMonth ? format(new Date(p.paymentMonth), 'MMMM yyyy') : (p.startDate && p.endDate ? `${format(p.startDate.toDate(), 'MMM d')} - ${format(p.endDate.toDate(), 'MMM d, yyyy')}` : '-')}</TableCell></TableRow>))}</TableBody>
                     </Table></CardContent></Card>
                 </TabsContent>
+                <TabsContent value="payment">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Payment Details & Security</CardTitle>
+                                <CardDescription>View and manage teacher's payment platform information.</CardDescription>
+                            </div>
+                            <Button 
+                                variant={(user as any).isLocked !== false ? "outline" : "destructive"}
+                                onClick={handleTogglePaymentLock}
+                                disabled={paymentLockLoading}
+                            >
+                                {paymentLockLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                                    (user as any).isLocked !== false ? <Unlock className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />
+                                )}
+                                {(user as any).isLocked !== false ? "Unlock for Edit" : "Lock Details"}
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {(user as any).paymentMethod ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">General Info</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">Method</span><Badge className="capitalize">{(user as any).paymentMethod}</Badge></div>
+                                            <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">Status</span><Badge variant={(user as any).isLocked !== false ? "secondary" : "destructive"}>{(user as any).isLocked !== false ? "LOCKED" : "UNLOCKED"}</Badge></div>
+                                        </div>
+                                    </div>
+                                    
+                                    {(user as any).paymentMethod === 'bank' ? (
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Bank Account Details</h3>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">Holder</span><span className="font-medium">{(user as any).accountHolderName}</span></div>
+                                                <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">Bank</span><span className="font-medium">{(user as any).bankName}</span></div>
+                                                <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">A/C No</span><span className="font-medium">{(user as any).accountNumber}</span></div>
+                                                <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">IFSC</span><span className="font-medium">{(user as any).ifscCode}</span></div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">UPI Details</h3>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between border-b pb-2"><span className="text-muted-foreground">UPI ID</span><span className="font-medium">{(user as any).upiId}</span></div>
+                                                {(user as any).upiQrCodeUrl && (
+                                                    <div className="pt-2">
+                                                        <span className="text-muted-foreground block mb-2">QR Code</span>
+                                                        <Link href={(user as any).upiQrCodeUrl} target="_blank" className="block relative h-40 w-40 border rounded-xl overflow-hidden hover:opacity-80 transition-opacity">
+                                                            <img src={(user as any).upiQrCodeUrl} alt="UPI QR" className="object-cover w-full h-full" />
+                                                        </Link>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-3xl">
+                                    <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                    <p>Teacher has not submitted any payment details yet.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 <TabsContent value="referrals">
                     <Card><CardHeader><CardTitle>Referred Users</CardTitle></CardHeader><CardContent><Table>
                         <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Date Joined</TableHead></TableRow></TableHeader>

@@ -122,7 +122,8 @@ export default function MainLayoutClient({
       "/",
       "/about-us",
       "/blog",
-      "/cart",
+      "/shop",
+      "/products",
       "/testimonials",
       "/terms-and-conditions",
       "/my-results",
@@ -134,6 +135,7 @@ export default function MainLayoutClient({
     const isPubliclyAccessible =
       publiclyAccessiblePaths.includes(pathname) ||
       pathname.startsWith("/courses") ||
+      pathname.startsWith("/products") ||
       pathname.startsWith("/exam-schedule") ||
       pathname.startsWith("/class-schedule") ||
       pathname.startsWith("/invoice") ||
@@ -198,7 +200,7 @@ export default function MainLayoutClient({
     { href: "/", label: "Home", icon: Home },
     { href: "/blog", label: "Blog", icon: Newspaper },
     { href: "/testimonials", label: "Testimonials", icon: Quote },
-    { href: "/cart", label: "Cart", icon: ShoppingCart },
+    { href: "/shop", label: "Shop", icon: ShoppingCart },
     { href: "/about-us", label: "About Us", icon: Users },
   ];
 
@@ -279,10 +281,9 @@ export default function MainLayoutClient({
       label: "Recorded Classes",
       icon: Youtube,
     },
-    { href: "/admin/course-cart", label: "Course Cart", icon: ShoppingBag },
+    { href: "/admin/shop", label: "Shop Management", icon: ShoppingBag },
     { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
     { href: "/admin/blog/create", label: "Blog Creator", icon: PenSquare },
-    { href: "/admin/courses/create", label: "Course Creator", icon: BookPlus },
     { href: "/admin/fees", label: "Fee Management", icon: IndianRupee },
     {
       href: "/admin/accountant/salaries",
@@ -294,7 +295,8 @@ export default function MainLayoutClient({
       label: "Student Invoices",
       icon: Receipt,
     },
-    { href: "/admin/assessment", label: "Assessment", icon: LayoutGrid },
+    { href: "/admin/assessment", label: "Assessment Questions", icon: LayoutGrid },
+    { href: "/admin/assessment-results", label: "Assessment Results", icon: ClipboardCheck },
   ];
 
   let layout;

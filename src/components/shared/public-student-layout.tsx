@@ -38,7 +38,7 @@ export default function PublicStudentLayout({
     }, []);
 
     const isHomepage = pathname === '/';
-    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/cart', '/testimonials', '/terms-and-conditions', '/my-results', '/fee-structure'];
+    const publiclyAccessiblePaths = ['/', '/about-us', '/blog', '/shop', '/testimonials', '/terms-and-conditions', '/my-results', '/fee-structure'];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible = publiclyAccessiblePaths.includes(pathname) || pathname.startsWith('/courses') || pathname.startsWith('/exam-schedule') || pathname.startsWith('/class-schedule') || isPublicBlogPost;
 

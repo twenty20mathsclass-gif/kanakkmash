@@ -5,11 +5,11 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useFirebase, useUser } from '@/firebase';
-import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, doc, getDoc, writeBatch, setDoc } from 'firebase/firestore';
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info, Lock, Unlock, ShieldCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +48,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const [formError, setFormError] = useState<string|null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<string | undefined>();
+    const [paymentLockLoading, setPaymentLockLoading] = useState(false);
+    const [isLocked, setIsLocked] = useState(true);
 
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
@@ -156,8 +158,34 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             setSelectedMonth(undefined);
             setMonthlySchedules([]);
             setFormError(null);
+            setIsLocked((teacher as any).isLocked !== false);
         }
     }, [isOpen, teacher, form]);
+
+    const handleTogglePaymentLock = async () => {
+        if (!firestore || !teacher) return;
+        setPaymentLockLoading(true);
+        const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
+        const newLockedStatus = !isLocked;
+
+        try {
+            await setDoc(detailsRef, { isLocked: newLockedStatus }, { merge: true });
+            setIsLocked(newLockedStatus);
+            toast({
+                title: newLockedStatus ? "Payment Details Locked" : "Payment Details Unlocked",
+                description: `Teacher can ${newLockedStatus ? 'no longer' : 'now'} edit their payment information.`
+            });
+        } catch (e: any) {
+            console.error("Error toggling payment lock:", e);
+            toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: "Could not update payment lock status."
+            });
+        } finally {
+            setPaymentLockLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!selectedMonth || !firestore) {
@@ -271,8 +299,28 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Salary Details for {teacher.name}</DialogTitle>
-                    <DialogDescription>View payment history and record new salary payments based on Group and One-to-One hours.</DialogDescription>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <DialogTitle className="text-2xl font-bold font-headline">Salary Details for {teacher.name}</DialogTitle>
+                            <DialogDescription>View payment history and record new salary payments based on Group and One-to-One hours.</DialogDescription>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                             <Badge variant={isLocked ? "secondary" : "destructive"} className="px-3 py-1 flex gap-1.5 items-center">
+                                {isLocked ? <Lock size={12}/> : <Unlock size={12}/>}
+                                {isLocked ? "LOCKED" : "UNLOCKED"}
+                             </Badge>
+                             <Button 
+                                size="sm"
+                                variant={isLocked ? "outline" : "destructive"}
+                                onClick={handleTogglePaymentLock}
+                                disabled={paymentLockLoading}
+                                className="h-8 rounded-lg text-[11px] font-bold"
+                             >
+                                {paymentLockLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : (isLocked ? <ShieldCheck className="mr-2 h-3 w-3" /> : <Lock className="mr-2 h-3 w-3" />)}
+                                {isLocked ? "Allow Teacher Update" : "Disable Teacher Update"}
+                             </Button>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="grid gap-6">

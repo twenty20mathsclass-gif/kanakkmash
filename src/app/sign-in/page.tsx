@@ -41,11 +41,9 @@ export default function SignInPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
-      <Button variant="ghost" asChild className="absolute top-4 left-4">
-        <Link href="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
+      <Button variant="ghost" onClick={() => router.back()} className="absolute top-4 left-4">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
       </Button>
       <div className="mb-8">
         <Link href="/">

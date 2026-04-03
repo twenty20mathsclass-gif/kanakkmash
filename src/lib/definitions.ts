@@ -154,6 +154,7 @@ export type Schedule = {
   startDate?: Timestamp;
   endDate?: Timestamp;
   competitiveExam?: string;
+  homeworkType?: string;
   createdAt?: Timestamp;
 };
 
@@ -230,6 +231,7 @@ export type Homework = {
   questions?: McqQuestion[];
   questionPaperUrl?: string;
   questionPaperContent?: string;
+  totalMarks?: number;
 };
 
 export type HomeworkSubmission = {

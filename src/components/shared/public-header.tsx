@@ -42,9 +42,14 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
     return pathname === href;
   }
 
+  const isHome = pathname === '/';
+
   return (
-    <header className="fixed top-12 left-1/2 -translate-x-1/2 z-50 w-full px-4">
-        <div className="relative grid h-16 grid-cols-[auto_1fr_auto] items-center gap-6 rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6">
+    <header className={cn(
+        "fixed left-1/2 -translate-x-1/2 z-[100] w-full px-4 transition-all duration-300",
+        isHome ? "top-12" : "top-4"
+    )}>
+        <div className="relative grid h-16 grid-cols-[auto_1fr_auto] items-center gap-6 rounded-full bg-background/80 px-4 shadow-lg backdrop-blur-md sm:px-6 border border-white/10">
             <div className="flex items-center justify-start">
                 <Link href={logoLink}>
                     <Image

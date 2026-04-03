@@ -14,16 +14,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, X, IndianRupee, FileText } from 'lucide-react';
+import { Loader2, Save, X, IndianRupee, FileText, Lock, Info, Headset } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import type { TeacherPrivateDetails, SalaryPayment } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { uploadImage } from '@/lib/actions';
+import { Reveal } from '@/components/shared/reveal';
 
 const paymentDetailsSchema = z.object({
   paymentMethod: z.enum(['bank', 'upi'], { required_error: 'Please select a payment method.' }),
@@ -174,6 +176,8 @@ export default function TeacherRevenuePage() {
     const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
     const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
 
+    const [isLocked, setIsLocked] = useState(false);
+
 
     const form = useForm<PaymentDetailsFormValues>({
         resolver: zodResolver(paymentDetailsSchema),
@@ -210,6 +214,8 @@ export default function TeacherRevenuePage() {
                         setQrCodePreview(data.upiQrCodeUrl);
                         setExistingQrUrl(data.upiQrCodeUrl);
                     }
+                    // Only lock if payment method exists AND admin hasn't unlocked it
+                    setIsLocked(!!data.paymentMethod && data.isLocked !== false);
                 }
             } catch (serverError: any) {
                  if (serverError.code === 'permission-denied') {
@@ -249,6 +255,8 @@ export default function TeacherRevenuePage() {
             setError('You must be logged in to update your details.');
             return;
         }
+
+        if (isLocked) return;
 
         setLoading(true);
         setError(null);
@@ -293,6 +301,7 @@ export default function TeacherRevenuePage() {
              if (dataToUpdate.upiQrCodeUrl) {
                 setExistingQrUrl(dataToUpdate.upiQrCodeUrl);
              }
+             setIsLocked(true); // Lock the form after successful submission
 
         } catch (serverError: any) {
             if (serverError.code === 'permission-denied') {
@@ -318,17 +327,47 @@ export default function TeacherRevenuePage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold font-headline">My Revenue</h1>
-                <p className="text-muted-foreground">Manage your earnings and payment details.</p>
-            </div>
+            <Reveal>
+                <div>
+                   <h1 className="text-3xl font-bold font-headline">My Revenue</h1>
+                   <p className="text-muted-foreground">Manage your earnings and payment details.</p>
+                </div>
+            </Reveal>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle>Payment Details</CardTitle>
-                    <CardDescription>This information is used to process your salary payments. It is kept private and secure.</CardDescription>
+            <Card className={isLocked ? "bg-muted/30" : ""}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-1.5">
+                        <CardTitle className="flex items-center gap-2">
+                            Payment Details
+                            {isLocked && <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none flex gap-1 items-center px-3 py-1"><Lock size={12} /> L0CKED</Badge>}
+                        </CardTitle>
+                        <CardDescription>This information is used to process your salary payments. It is kept private and secure.</CardDescription>
+                    </div>
                 </CardHeader>
                 <CardContent>
+                    {isLocked && (
+                        <Alert className="mb-6 bg-amber-50/50 border-amber-200 text-amber-900 rounded-[1.5rem] p-4 flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-amber-100 p-2 rounded-xl h-fit shrink-0 border border-amber-200">
+                                    <Lock className="h-4 w-4 text-amber-600" />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <AlertTitle className="font-black text-sm font-headline tracking-tight leading-none">Information Locked</AlertTitle>
+                                    <AlertDescription className="font-medium text-[11px] text-amber-800/70 leading-normal max-w-md">
+                                        Details finalized for security. Contact support to update.
+                                    </AlertDescription>
+                                </div>
+                            </div>
+                            <Button 
+                                onClick={() => window.open('https://wa.me/917994875893', '_blank')}
+                                className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl h-9 px-4 font-bold text-[11px] shadow-lg shadow-orange-600/20 flex gap-2 shrink-0 group transition-all active:scale-95"
+                            >
+                                <Headset className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />
+                                Contact Support
+                            </Button>
+                        </Alert>
+                    )}
+
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <FormField
@@ -336,20 +375,21 @@ export default function TeacherRevenuePage() {
                                 name="paymentMethod"
                                 render={({ field }) => (
                                     <FormItem className="space-y-3">
-                                        <FormLabel>Payment Method</FormLabel>
+                                        <FormLabel className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">Payment Method</FormLabel>
                                         <FormControl>
                                             <RadioGroup
                                                 onValueChange={field.onChange}
                                                 value={field.value}
                                                 className="flex flex-col space-y-1"
+                                                disabled={isLocked}
                                             >
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
-                                                    <FormControl><RadioGroupItem value="bank" /></FormControl>
-                                                    <FormLabel className="font-normal">Bank Account</FormLabel>
+                                                    <FormControl><RadioGroupItem value="bank" disabled={isLocked} /></FormControl>
+                                                    <FormLabel className="font-bold">Bank Account</FormLabel>
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
-                                                    <FormControl><RadioGroupItem value="upi" /></FormControl>
-                                                    <FormLabel className="font-normal">UPI</FormLabel>
+                                                    <FormControl><RadioGroupItem value="upi" disabled={isLocked} /></FormControl>
+                                                    <FormLabel className="font-bold">UPI</FormLabel>
                                                 </FormItem>
                                             </RadioGroup>
                                         </FormControl>
@@ -359,38 +399,40 @@ export default function TeacherRevenuePage() {
                             />
 
                             {paymentMethod === 'bank' && (
-                                <div className="space-y-4 p-4 border rounded-md">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white border rounded-[2rem] shadow-sm">
                                     <FormField control={form.control} name="accountHolderName" render={({ field }) => (
-                                        <FormItem><FormLabel>Account Holder Name</FormLabel><FormControl><Input placeholder="e.g., John Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel className="font-bold">Account Holder Name</FormLabel><FormControl><Input placeholder="Full Name" {...field} disabled={isLocked} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <FormField control={form.control} name="bankName" render={({ field }) => (
-                                        <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input placeholder="e.g., State Bank of India" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel className="font-bold">Bank Name</FormLabel><FormControl><Input placeholder="Name of your bank" {...field} disabled={isLocked} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <FormField control={form.control} name="accountNumber" render={({ field }) => (
-                                        <FormItem><FormLabel>Account Number</FormLabel><FormControl><Input placeholder="e.g., 12345678901" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel className="font-bold">Account Number</FormLabel><FormControl><Input placeholder="Your account number" {...field} disabled={isLocked} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <FormField control={form.control} name="ifscCode" render={({ field }) => (
-                                        <FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input placeholder="e.g., SBIN0001234" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel className="font-bold">IFSC Code</FormLabel><FormControl><Input placeholder="Bank IFSC" {...field} disabled={isLocked} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                 </div>
                             )}
 
                             {paymentMethod === 'upi' && (
-                                <div className="space-y-4 p-4 border rounded-md">
+                                <div className="space-y-6 p-6 bg-white border rounded-[2rem] shadow-sm">
                                      <FormField control={form.control} name="upiId" render={({ field }) => (
-                                        <FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okhdfcbank" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel className="font-bold">UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@bank" {...field} disabled={isLocked} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                     )}/>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="qrCode">UPI QR Code</Label>
-                                        <Input id="qrCode" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground" />
+                                    <div className="space-y-4">
+                                        <Label htmlFor="qrCode" className="font-bold">UPI QR Code</Label>
+                                        <Input id="qrCode" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground h-12 flex items-center bg-muted/20" disabled={isLocked} />
                                         <FormDescription>Upload an image of your UPI QR code.</FormDescription>
                                         {qrCodePreview && (
-                                            <div className="mt-4 relative w-40 h-40">
-                                                <Image src={qrCodePreview} alt="QR Code preview" fill className="rounded-md object-cover border p-1" />
-                                                <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                    onClick={() => { setQrCodeFile(null); setQrCodePreview(null); setExistingQrUrl(null); }}>
-                                                    <X className="h-4 w-4" />
-                                                </Button>
+                                            <div className="mt-4 relative w-56 h-56 group">
+                                                <Image src={qrCodePreview} alt="QR Code preview" fill className="rounded-3xl object-cover border-4 border-white shadow-xl" />
+                                                {!isLocked && (
+                                                    <Button type="button" variant="destructive" size="icon" className="absolute -top-3 -right-3 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => { setQrCodeFile(null); setQrCodePreview(null); setExistingQrUrl(null); }}>
+                                                        <X size={20} />
+                                                    </Button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -398,16 +440,19 @@ export default function TeacherRevenuePage() {
                             )}
 
                             {error && (
-                                <Alert variant="destructive">
+                                <Alert variant="destructive" className="rounded-2xl">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertTitle>Error</AlertTitle>
                                     <AlertDescription>{error}</AlertDescription>
                                 </Alert>
                             )}
-                            <Button type="submit" disabled={loading}>
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                {loading ? 'Saving...' : 'Save Details'}
-                            </Button>
+                            
+                            {!isLocked && (
+                                <Button type="submit" disabled={loading} size="lg" className="rounded-2xl px-10 h-14 font-black shadow-lg hover:shadow-primary/25 transition-all">
+                                    {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                    {loading ? 'Finalizing Details...' : 'Save Payment Details'}
+                                </Button>
+                            )}
                         </form>
                     </Form>
                 </CardContent>

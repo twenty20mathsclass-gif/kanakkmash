@@ -71,7 +71,7 @@ export default function MainLayoutClient({
       "/",
       "/about-us",
       "/blog",
-      "/cart",
+      "/shop",
       "/testimonials",
       "/terms-and-conditions",
       "/my-results",
@@ -140,7 +140,7 @@ export default function MainLayoutClient({
     { href: "/", label: "Home", icon: Home },
     { href: "/blog", label: "Blog", icon: Newspaper },
     { href: "/testimonials", label: "Testimonials", icon: Quote },
-    { href: "/cart", label: "Cart", icon: ShoppingCart },
+    { href: "/shop", label: "Shop", icon: ShoppingCart },
     { href: "/about-us", label: "About Us", icon: Users },
   ];
 

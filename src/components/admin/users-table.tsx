@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User } from '@/lib/definitions';
 import Link from 'next/link';
 import { useFirebase } from '@/firebase';
@@ -44,6 +45,7 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
+    const router = useRouter();
     const { toast } = useToast();
     const { auth } = useFirebase();
 
@@ -97,7 +99,11 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
             </TableHeader>
             <TableBody>
                 {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow 
+                    key={user.id} 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                >
                     <TableCell className="hidden sm:table-cell">
                         <Avatar className="h-10 w-10">
                             <AvatarImage src={user.avatarUrl} alt={user.name || 'User'} />
@@ -134,15 +140,49 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                             <span className="text-muted-foreground">-</span>
                         )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button>
+                            <Button 
+                                aria-haspopup="true" 
+                                size="icon" 
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full hover:bg-primary hover:text-white transition-all"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild><Link href={`/admin/users/${user.id}`}><UserIcon className="mr-2 h-4 w-4"/>View Profile</Link></DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => openEditDialog(user)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setTimeout(() => setUserToReset(user), 0)}><Mail className="mr-2 h-4 w-4" />Send Password Reset</DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onSelect={() => {
+                                    router.push(`/admin/users/${user.id}`);
+                                }}
+                            >
+                                <UserIcon className="mr-2 h-4 w-4"/>View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setTimeout(() => {
+                                        setUserToEdit(user);
+                                        setIsEditDialogOpen(true);
+                                    }, 0);
+                                }}
+                            >
+                                <Edit className="mr-2 h-4 w-4" />Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setTimeout(() => {
+                                        setUserToReset(user);
+                                    }, 0);
+                                }}
+                            >
+                                <Mail className="mr-2 h-4 w-4" />Send Password Reset
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     </TableCell>

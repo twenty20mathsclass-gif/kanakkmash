@@ -38,12 +38,10 @@ export default function SignUpPage() {
 
   return (
     <div className="relative w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      {/* Back to Home Button */}
-      <Button variant="ghost" asChild className="absolute top-4 left-4 z-50">
-        <Link href="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
+      {/* Back Button */}
+      <Button variant="ghost" onClick={() => router.back()} className="absolute top-4 left-4 z-50">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
       </Button>
 
       <div className="relative hidden bg-muted/30 lg:flex flex-col items-center justify-center p-8 text-center">

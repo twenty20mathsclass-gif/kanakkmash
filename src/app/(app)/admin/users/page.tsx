@@ -105,9 +105,11 @@ export default function AdminUsersPage() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
+        const name = user.name || '';
+        const email = user.email || '';
         const matchesSearch = searchTerm === '' || 
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+            name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            email.toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesRole = selectedRole === 'all' || user.role === selectedRole;
         const matchesClass = selectedClass === 'all' ? true : (selectedClass === 'none' ? !user.class : user.class === selectedClass);

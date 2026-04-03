@@ -202,9 +202,15 @@ export function HomeworkInterface({ homework, schedule, user }: Props) {
     try {
         const submissionRef = doc(firestore, 'homeworks', homework.id, 'submissions', user.id);
         const submissionData: any = {
-            homeworkId: homework.id, studentId: user.id, studentName: user.name,
-            homeworkTitle: homework.title, submittedAt: Timestamp.now(), 
-            homeworkType: 'mcq', answers: answers, status: 'submitted'
+            homeworkId: homework.id, 
+            teacherId: homework.teacherId,
+            studentId: user.id, 
+            studentName: user.name,
+            homeworkTitle: homework.title, 
+            submittedAt: Timestamp.now(), 
+            homeworkType: 'mcq', 
+            answers: answers, 
+            status: 'submitted'
         };
         await setDoc(submissionRef, submissionData);
 
@@ -212,6 +218,7 @@ export function HomeworkInterface({ homework, schedule, user }: Props) {
         const globalSubRef = doc(firestore, 'homework_submissions', `${homework.id}_${user.id}`);
         await setDoc(globalSubRef, { 
             homeworkId: homework.id, 
+            teacherId: homework.teacherId,
             studentId: user.id, 
             status: 'submitted',
             submittedAt: Timestamp.now()
@@ -236,9 +243,15 @@ export function HomeworkInterface({ homework, schedule, user }: Props) {
         
         const submissionRef = doc(firestore, 'homeworks', homework.id, 'submissions', user.id);
         const submissionData: any = {
-            homeworkId: homework.id, studentId: user.id, studentName: user.name,
-            homeworkTitle: homework.title, submittedAt: Timestamp.now(), 
-            homeworkType: 'descriptive', answerFileUrl: downloadUrl, status: 'submitted'
+            homeworkId: homework.id, 
+            teacherId: homework.teacherId,
+            studentId: user.id, 
+            studentName: user.name,
+            homeworkTitle: homework.title, 
+            submittedAt: Timestamp.now(), 
+            homeworkType: 'descriptive', 
+            answerFileUrl: downloadUrl, 
+            status: 'submitted'
         };
         await setDoc(submissionRef, submissionData);
 
@@ -246,6 +259,7 @@ export function HomeworkInterface({ homework, schedule, user }: Props) {
         const globalSubRef = doc(firestore, 'homework_submissions', `${homework.id}_${user.id}`);
         await setDoc(globalSubRef, { 
             homeworkId: homework.id, 
+            teacherId: homework.teacherId,
             studentId: user.id, 
             status: 'submitted',
             submittedAt: Timestamp.now()

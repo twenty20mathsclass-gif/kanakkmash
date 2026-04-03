@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
@@ -188,269 +188,306 @@ export function EditUserDialog({ user, isOpen, onOpenChange, onUserUpdated }: Ed
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
-        <DialogHeader>
-          <DialogTitle>Edit User: {user.name}</DialogTitle>
-          <DialogDescription>
-            Modify the user's details below.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user.email} disabled />
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-y-auto max-h-[90vh] border-none shadow-2xl rounded-[2.5rem] gap-0 custom-scrollbar scrollbar-hide">
+        <div className="bg-slate-900 p-8 pb-10 text-white relative">
+            <div>
+                <h2 className="text-2xl font-black font-headline tracking-tight">Edit Member Profile</h2>
+                <p className="text-slate-400 text-xs font-medium mt-1">Configure account access and individual permissions.</p>
             </div>
+            <div className="absolute top-8 right-8 w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5">
+                <Edit className="h-6 w-6 text-slate-300" />
+            </div>
+        </div>
 
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="promoter">Promoter</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {role === 'teacher' && (
-                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 px-1">
+        <div className="p-8 bg-background">
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-4">
                     <FormField
-                        control={form.control}
-                        name="teachingMode"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Teaching Mode</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select teaching mode" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="group">Group Mode</SelectItem>
-                                        <SelectItem value="one to one">One to One Mode</SelectItem>
-                                        <SelectItem value="both">Both</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Full Display Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl border-muted bg-muted/20 h-11 focus-visible:ring-primary/20" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                    <div className="grid grid-cols-2 gap-4">
+                    
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">User Email (Login)</Label>
+                        <Input type="email" value={user.email} disabled className="rounded-xl border-muted bg-muted/40 h-11 opacity-60 font-mono grayscale" />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Authentication Role</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="rounded-xl border-muted h-11 bg-muted/10 font-bold">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="rounded-2xl border-none shadow-2xl">
+                              <SelectItem value="student" className="rounded-lg">Student Account</SelectItem>
+                              <SelectItem value="teacher" className="rounded-lg">Professional Teacher</SelectItem>
+                              <SelectItem value="admin" className="rounded-lg">Administrative User</SelectItem>
+                              <SelectItem value="promoter" className="rounded-lg">Platform Promoter</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
+
+                {role === 'teacher' && (
+                    <div className="p-5 rounded-[2rem] bg-primary/[0.03] border border-primary/5 space-y-5">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Teacher Specialization</p>
+                        
                         <FormField
                             control={form.control}
-                            name="hourlyRateGroup"
+                            name="teachingMode"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Hourly Rate (Group)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" {...field} />
-                                </FormControl>
-                                <FormMessage />
+                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Teaching Mode</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="rounded-xl border-none bg-white shadow-sm h-10 font-medium">
+                                                <SelectValue placeholder="Select teaching mode" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent className="rounded-xl border-none shadow-xl">
+                                            <SelectItem value="group">Group Mode Only</SelectItem>
+                                            <SelectItem value="one to one">One-to-One Only</SelectItem>
+                                            <SelectItem value="both">Both (Flexible)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="hourlyRateGroup"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rate (Group)</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">₹</span>
+                                            <Input type="number" {...field} className="pl-6 h-10 rounded-xl bg-white border-none shadow-sm font-bold" />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="hourlyRateOneToOne"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rate (1-1)</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-bold">₹</span>
+                                            <Input type="number" {...field} className="pl-6 h-10 rounded-xl bg-white border-none shadow-sm font-bold" />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        
+                        <div className="space-y-4 pt-1">
+                            <FormField
+                                control={form.control}
+                                name="assignedClasses"
+                                render={({ field }) => {
+                                    const selectedCount = field.value?.length || 0;
+                                    return (
+                                        <FormItem>
+                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Class Assignment</FormLabel>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <FormControl>
+                                                        <Button variant="outline" className="w-full justify-between h-10 rounded-xl border-dashed bg-transparent hover:bg-white text-xs font-bold transition-all">
+                                                            {selectedCount > 0 ? `${selectedCount} Assigned` : 'Select classes'}
+                                                            <div className="h-5 w-5 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px]">
+                                                                {selectedCount}
+                                                            </div>
+                                                        </Button>
+                                                    </FormControl>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] rounded-2xl border-none shadow-2xl p-2 max-h-[300px] overflow-y-auto">
+                                                    <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground px-2 py-1">Available Classes</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator className="bg-muted/50" />
+                                                    {classes.map(c => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={c}
+                                                            className="rounded-lg"
+                                                            checked={field.value?.includes(c)}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentValues = field.value || [];
+                                                                const newValues = checked
+                                                                    ? [...currentValues, c]
+                                                                    : currentValues.filter(val => val !== c);
+                                                                field.onChange(newValues);
+                                                            }}
+                                                        >
+                                                            {c}
+                                                        </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="assignedCompetitiveExams"
+                                render={({ field }) => {
+                                    const selectedCount = field.value?.length || 0;
+                                    return (
+                                        <FormItem>
+                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Competitive Exams</FormLabel>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <FormControl>
+                                                        <Button variant="outline" className="w-full justify-between h-10 rounded-xl border-dashed bg-transparent hover:bg-white text-xs font-bold transition-all">
+                                                            {selectedCount > 0 ? `${selectedCount} Exams` : 'Select exams'}
+                                                            <div className="h-5 w-5 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px]">
+                                                                {selectedCount}
+                                                            </div>
+                                                        </Button>
+                                                    </FormControl>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] rounded-2xl border-none shadow-2xl p-2 max-h-[300px] overflow-y-auto">
+                                                    <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground px-2 py-1">Exam List</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator className="bg-muted/50" />
+                                                    {competitiveExams.map(c => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={c}
+                                                            className="rounded-lg"
+                                                            checked={field.value?.includes(c)}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentValues = field.value || [];
+                                                                const newValues = checked
+                                                                    ? [...currentValues, c]
+                                                                    : currentValues.filter(val => val !== c);
+                                                                field.onChange(newValues);
+                                                            }}
+                                                        >
+                                                            {c}
+                                                        </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="assignedTwenty20Levels"
+                                render={({ field }) => {
+                                    const selectedCount = field.value?.length || 0;
+                                    return (
+                                        <FormItem>
+                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Twenty-20 Levels</FormLabel>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <FormControl>
+                                                        <Button variant="outline" className="w-full justify-between h-10 rounded-xl border-dashed bg-transparent hover:bg-white text-xs font-bold transition-all">
+                                                            {selectedCount > 0 ? `${selectedCount} Levels` : 'Select levels'}
+                                                            <div className="h-5 w-5 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px]">
+                                                                {selectedCount}
+                                                            </div>
+                                                        </Button>
+                                                    </FormControl>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] rounded-2xl border-none shadow-2xl p-2 max-h-[300px] overflow-y-auto">
+                                                    <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground px-2 py-1">Platform Levels</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator className="bg-muted/50" />
+                                                    {twenty20Levels.map(l => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={l.value}
+                                                            className="rounded-lg"
+                                                            checked={field.value?.includes(l.value)}
+                                                            onCheckedChange={(checked) => {
+                                                                const currentValues = field.value || [];
+                                                                const newValues = checked
+                                                                    ? [...currentValues, l.value]
+                                                                    : currentValues.filter(val => val !== l.value);
+                                                                field.onChange(newValues);
+                                                            }}
+                                                        >
+                                                            {l.label}
+                                                        </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+                
+                {role === 'promoter' && (
+                    <div className="p-5 rounded-[2rem] bg-amber-500/[0.03] border border-amber-500/10 space-y-1">
                         <FormField
                             control={form.control}
-                            name="hourlyRateOneToOne"
+                            name="rewardPercentage"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Hourly Rate (1-1)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" {...field} />
-                                </FormControl>
-                                <FormMessage />
+                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reward Structure (%)</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-amber-600 font-bold">%</span>
+                                            <Input type="number" {...field} className="h-11 rounded-xl bg-white border-amber-200 focus-visible:ring-amber-500 font-bold" />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
-                    <FormField
-                        control={form.control}
-                        name="assignedClasses"
-                        render={({ field }) => {
-                            const selectedCount = field.value?.length || 0;
-                            return (
-                                <FormItem>
-                                    <FormLabel>Assigned Regular Classes</FormLabel>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <FormControl>
-                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select classes'}
-                                                </Button>
-                                            </FormControl>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                            <DropdownMenuLabel>Available Classes</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {classes.map(c => (
-                                                <DropdownMenuCheckboxItem
-                                                    key={c}
-                                                    checked={field.value?.includes(c)}
-                                                    onCheckedChange={(checked) => {
-                                                        const currentValues = field.value || [];
-                                                        const newValues = checked
-                                                            ? [...currentValues, c]
-                                                            : currentValues.filter(val => val !== c);
-                                                        field.onChange(newValues);
-                                                    }}
-                                                >
-                                                    {c}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <FormMessage />
-                                </FormItem>
-                            )
-                        }}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="assignedCompetitiveExams"
-                        render={({ field }) => {
-                            const selectedCount = field.value?.length || 0;
-                            return (
-                                <FormItem>
-                                    <FormLabel>Assigned Competitive Exams</FormLabel>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <FormControl>
-                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select exams'}
-                                                </Button>
-                                            </FormControl>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                            <DropdownMenuLabel>Available Exams</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {competitiveExams.map(c => (
-                                                <DropdownMenuCheckboxItem
-                                                    key={c}
-                                                    checked={field.value?.includes(c)}
-                                                    onCheckedChange={(checked) => {
-                                                        const currentValues = field.value || [];
-                                                        const newValues = checked
-                                                            ? [...currentValues, c]
-                                                            : currentValues.filter(val => val !== c);
-                                                        field.onChange(newValues);
-                                                    }}
-                                                >
-                                                    {c}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <FormMessage />
-                                </FormItem>
-                            )
-                        }}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="assignedTwenty20Levels"
-                        render={({ field }) => {
-                            const selectedCount = field.value?.length || 0;
-                            return (
-                                <FormItem>
-                                    <FormLabel>Assigned Twenty 20 Levels</FormLabel>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <FormControl>
-                                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                                    {selectedCount > 0 ? `${selectedCount} selected` : 'Select levels'}
-                                                </Button>
-                                            </FormControl>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                            <DropdownMenuLabel>Available Levels</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {twenty20Levels.map(l => (
-                                                <DropdownMenuCheckboxItem
-                                                    key={l.value}
-                                                    checked={field.value?.includes(l.value)}
-                                                    onCheckedChange={(checked) => {
-                                                        const currentValues = field.value || [];
-                                                        const newValues = checked
-                                                            ? [...currentValues, l.value]
-                                                            : currentValues.filter(val => val !== l.value);
-                                                        field.onChange(newValues);
-                                                    }}
-                                                >
-                                                    {l.label}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <FormMessage />
-                                </FormItem>
-                            )
-                        }}
-                    />
-                </div>
-            )}
-            
-            {role === 'promoter' && (
-                <FormField
-                control={form.control}
-                name="rewardPercentage"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Reward Percentage (%)</FormLabel>
-                    <FormControl>
-                        <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
                 )}
-                />
-            )}
 
-            {error && (
-                <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+                {error && (
+                    <Alert variant="destructive" className="rounded-2xl border-none shadow-md bg-red-50 text-red-700">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle className="font-bold">Execution Failed</AlertTitle>
+                      <AlertDescription className="text-xs">{error}</AlertDescription>
+                    </Alert>
+                )}
 
-            <DialogFooter>
-                <DialogClose asChild>
-                <Button variant="ghost" type="button">Cancel</Button>
-                </DialogClose>
-                <Button type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : 'Save Changes'}
-                </Button>
-            </DialogFooter>
-            </form>
-        </Form>
+                <div className="flex justify-end gap-3 pt-4 font-headline">
+                    <DialogClose asChild>
+                        <Button variant="ghost" type="button" className="rounded-2xl h-11 px-6 font-bold">Discard</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={loading} className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white h-11 px-10 font-black shadow-lg shadow-slate-200">
+                        {loading ? <Loader2 className="animate-spin" /> : 'Confirm Changes'}
+                    </Button>
+                </div>
+                </form>
+            </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

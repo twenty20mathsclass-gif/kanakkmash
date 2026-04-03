@@ -83,29 +83,42 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
         return () => unsubscribe && unsubscribe();
     }, [firestore, schedule]);
     
+    const displayDate = (schedule.date || schedule.startDate || schedule.createdAt)?.toDate();
 
     return (
-        <Card className="rounded-3xl border-muted/20 shadow-xl overflow-hidden">
-            <CardHeader className="bg-primary/5 border-b border-muted/10 p-6 flex flex-row items-center justify-between">
+        <Card className="rounded-[3rem] border-muted/20 shadow-2xl overflow-hidden bg-white/50 backdrop-blur-xl">
+            <CardHeader className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-white p-8 flex flex-row items-center justify-between">
                 <div>
-                   <CardTitle className="text-xl font-bold font-headline">{schedule.title}</CardTitle>
-                   <CardDescription className="capitalize">
-                       {schedule.subject} {schedule.type} on {schedule.date ? format(schedule.date.toDate(), 'PPP') : 'N/A'}
+                   <CardTitle className="text-2xl font-black font-headline tracking-tight text-slate-900">{schedule.title}</CardTitle>
+                   <CardDescription className="capitalize font-medium flex items-center gap-2 mt-1">
+                       <span className="text-primary font-bold">{schedule.subject}</span>
+                       <span className="h-1 w-1 rounded-full bg-slate-300" />
+                       <span>{schedule.type} on {displayDate ? format(displayDate, 'PPP') : 'N/A'}</span>
                    </CardDescription>
                 </div>
-                <Badge variant="outline" className="rounded-full bg-white px-4 py-1 text-xs font-bold uppercase tracking-wider">{schedule.type}</Badge>
+                <Badge className="rounded-2xl bg-white shadow-sm border border-slate-100 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-primary">{schedule.type}</Badge>
             </CardHeader>
             <CardContent className="p-0">
                 {loading ? (
-                    <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                    <div className="flex justify-center items-center h-64">
+                         <div className="relative">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <div className="absolute inset-0 blur-lg bg-primary/20 animate-pulse rounded-full" />
+                        </div>
+                    </div>
                 ) : details?.type === 'class' ? (
-                    <div className="p-6"><ClassAttendance attendees={details.attendees} /></div>
+                    <div className="p-8"><ClassAttendance attendees={details.attendees} /></div>
                 ) : details?.type === 'exam' ? (
-                    <div className="p-6"><ExamSubmissions submissions={details.submissions} exam={details.exam} /></div>
+                    <div className="p-8"><ExamSubmissions submissions={details.submissions} exam={details.exam} /></div>
                 ) : details?.type === 'homework' ? (
-                    <div className="p-6"><HomeworkSubmissions submissions={details.submissions} homework={details.homework} /></div>
+                    <div className="p-8"><HomeworkSubmissions submissions={details.submissions} homework={details.homework} /></div>
                 ) : (
-                    <p className="text-muted-foreground text-center py-16">No details found for this item.</p>
+                    <div className="p-20 text-center">
+                        <div className="h-20 w-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                            <FileText className="h-10 w-10 text-slate-200" />
+                        </div>
+                        <p className="text-slate-400 font-bold">No details found for this item.</p>
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -113,37 +126,50 @@ export function AttendanceDetails({ schedule }: { schedule: Schedule }) {
 }
 
 function HomeworkSubmissions({ submissions, homework }: { submissions: any[], homework: any }) {
+    const [viewingResults, setViewingResults] = useState<any>(null);
+
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center bg-muted/30 p-4 rounded-2xl">
+        <div className="space-y-6">
+            <div className="flex justify-between items-center bg-primary/[0.03] p-6 rounded-[2rem] border border-primary/5">
                 <div>
-                    <h4 className="font-bold">Submissions Progress</h4>
-                    <p className="text-sm text-muted-foreground">{submissions.length} students have submitted</p>
+                    <h4 className="font-black text-lg font-headline leading-tight">Submission Flow</h4>
+                    <p className="text-xs text-muted-foreground font-medium">{submissions.length} students have checked in</p>
                 </div>
-                <div className="text-right">
+                <div className="h-14 w-14 rounded-2xl bg-white shadow-sm border border-primary/10 flex items-center justify-center">
                     <p className="text-2xl font-black text-primary">{submissions.length}</p>
                 </div>
             </div>
             {submissions.length > 0 ? (
-                <ul className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                <ul className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                     {submissions.map(sub => (
-                        <li key={sub.id} className="flex items-center gap-4 p-4 rounded-2xl border border-muted/20 hover:bg-muted/5 transition-colors">
-                            <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                                <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center">
-                                    <UserIcon className="h-2/3 w-2/3" />
-                                </AvatarFallback>
-                            </Avatar>
+                        <li key={sub.id} className="flex items-center gap-5 p-5 rounded-[2rem] border-2 border-transparent bg-slate-50/50 hover:bg-white hover:border-primary/10 hover:shadow-xl transition-all duration-300 group">
+                            <div className="h-14 w-14 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:border-primary/20 transition-colors">
+                                {sub.studentAvatar ? <img src={sub.studentAvatar} className="h-full w-full object-cover rounded-2xl"/> : sub.studentName?.charAt(0) || 'S'}
+                            </div>
                             <div className="flex-1">
-                                <p className="font-bold">{sub.studentName}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    Submitted {format(sub.submittedAt.toDate(), 'PPP p')}
-                                </p>
+                                <p className="font-black text-slate-800 text-sm leading-none mb-1.5">{sub.studentName}</p>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="h-4 w-4 bg-emerald-100 rounded-full flex items-center justify-center">
+                                        <CheckCircle className="h-2.5 w-2.5 text-emerald-600" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-slate-400 tracking-tight">
+                                        Submitted {format(sub.submittedAt.toDate(), 'MMM dd, p')}
+                                    </p>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                {sub.homeworkType === 'mcq' && <Badge variant="secondary" className="rounded-full bg-green-50 text-green-700 border-none">MCQ</Badge>}
+                                {sub.homeworkType === 'mcq' && (
+                                    <Button 
+                                        onClick={() => setViewingResults(sub)}
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="rounded-xl border-emerald-200 bg-emerald-50/50 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-4 transition-all"
+                                    >
+                                        View Results
+                                    </Button>
+                                )}
                                 {sub.homeworkType === 'descriptive' && (
-                                    <Button asChild size="sm" variant="outline" className="rounded-xl border-primary/20 hover:bg-primary/5 text-primary text-xs">
+                                    <Button asChild size="sm" variant="outline" className="rounded-xl border-primary/20 bg-primary/5 hover:bg-primary hover:text-white text-primary text-[10px] font-black uppercase tracking-wider px-4 transition-all">
                                         <a href={sub.answerFileUrl} target="_blank" rel="noopener noreferrer">View Answer</a>
                                     </Button>
                                 )}
@@ -152,9 +178,74 @@ function HomeworkSubmissions({ submissions, homework }: { submissions: any[], ho
                     ))}
                 </ul>
             ) : (
-                <div className="py-12 text-center text-muted-foreground border-2 border-dashed rounded-3xl">
-                   <p>No students have submitted yet.</p>
+                <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
+                    <UserIcon className="h-12 w-12 mx-auto text-slate-200 mb-4" />
+                    <p className="text-slate-400 font-bold">No students have submitted yet.</p>
                 </div>
+            )}
+
+            {viewingResults && homework && (
+                <Dialog open={!!viewingResults} onOpenChange={(open) => !open && setViewingResults(null)}>
+                    <DialogContent className="sm:max-w-2xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+                        <div className="bg-gradient-to-br from-primary/10 via-white to-white p-8 border-b border-slate-100">
+                            <DialogHeader>
+                                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                                    <CheckCircle className="h-6 w-6 text-primary" />
+                                </div>
+                                <DialogTitle className="text-2xl font-black font-headline text-slate-900">MCQ Results: {viewingResults.studentName}</DialogTitle>
+                                <DialogDescription className="font-medium text-slate-500">{homework.title}</DialogDescription>
+                            </DialogHeader>
+                        </div>
+                        <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                            <div className="space-y-6">
+                                {homework.questions?.map((q: any, idx: number) => {
+                                    const studentAnswerIndex = viewingResults.answers?.[idx];
+                                    const isCorrect = studentAnswerIndex === q.correctAnswerIndex;
+                                    return (
+                                        <div key={idx} className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                                            <div className="flex gap-4 mb-4">
+                                                <div className="h-8 w-8 min-w-[32px] rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-xs font-black text-slate-400">
+                                                    {idx + 1}
+                                                </div>
+                                                <p className="font-bold text-slate-800 leading-relaxed">{q.questionText}</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-12">
+                                                {q.options.map((opt: any, optIdx: number) => {
+                                                    const isSelected = studentAnswerIndex === optIdx;
+                                                    const isTrueCorrect = q.correctAnswerIndex === optIdx;
+                                                    return (
+                                                        <div 
+                                                            key={optIdx} 
+                                                            className={cn(
+                                                                "p-3 rounded-xl text-xs font-bold transition-all border-2",
+                                                                isTrueCorrect 
+                                                                    ? "bg-emerald-100 border-emerald-200 text-emerald-800" 
+                                                                    : isSelected 
+                                                                        ? "bg-rose-100 border-rose-200 text-rose-800"
+                                                                        : "bg-white border-transparent text-slate-500"
+                                                            )}
+                                                        >
+                                                            {opt.text}
+                                                            {isTrueCorrect && <CheckCircle className="h-3 w-3 inline-block ml-2 mb-0.5" />}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            {!isCorrect && (
+                                                <div className="mt-4 pl-12 flex items-center gap-2">
+                                                    <Badge variant="outline" className="text-[10px] font-black uppercase text-rose-600 border-rose-200 bg-rose-50">Wrong Answer</Badge>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <DialogFooter className="p-6 bg-slate-50/50 border-t border-slate-100">
+                            <Button onClick={() => setViewingResults(null)} className="rounded-2xl px-10 font-black h-12">Close Review</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

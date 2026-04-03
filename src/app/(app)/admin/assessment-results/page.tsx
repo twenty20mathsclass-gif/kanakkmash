@@ -55,9 +55,8 @@ interface AssessmentSubmission {
   percentage?: number;
 }
 
-export default function TeacherAssessmentResultsPage() {
+export default function AdminAssessmentResultsPage() {
   const { firestore } = useFirebase();
-  const { user: authUser } = useUser();
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<AssessmentSubmission | null>(null);
@@ -65,7 +64,7 @@ export default function TeacherAssessmentResultsPage() {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('completed');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
@@ -125,10 +124,10 @@ export default function TeacherAssessmentResultsPage() {
           <div>
             <div className="flex items-center gap-2 text-primary mb-1">
                 <ClipboardCheck size={20} />
-                <span className="text-xs font-bold uppercase tracking-widest">Teacher Panel</span>
+                <span className="text-xs font-bold uppercase tracking-widest">Administrative Panel</span>
             </div>
             <h1 className="text-3xl font-bold font-headline tracking-tight">Assessment Results</h1>
-            <p className="text-muted-foreground mt-1">Review student performance and initial assessment inquiries.</p>
+            <p className="text-muted-foreground mt-1">Comprehensive overview of all student assessments and leads.</p>
           </div>
           <div className="flex items-center gap-4">
              <div className="hidden sm:flex items-center gap-3 bg-card border px-5 py-2.5 rounded-3xl shadow-sm">
@@ -150,7 +149,7 @@ export default function TeacherAssessmentResultsPage() {
             <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                 <Input 
-                    placeholder="Search by name, email or whatsapp..." 
+                    placeholder="Search by name, email, whatsapp or invoice..." 
                     className="pl-12 rounded-2xl border-none bg-muted/30 focus-visible:ring-2 focus-visible:ring-primary/20 h-12"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -241,7 +240,7 @@ export default function TeacherAssessmentResultsPage() {
                             </Badge>
                         )}
                         {item.invoiceId && (
-                            <p className="text-[9px] text-muted-foreground mt-1 font-mono">{item.invoiceId.slice(0, 8)}...</p>
+                            <p className="text-[9px] text-muted-foreground mt-1 font-mono tracking-tighter">{item.invoiceId.slice(0, 10)}</p>
                         )}
                       </TableCell>
                       <TableCell>
@@ -305,10 +304,10 @@ export default function TeacherAssessmentResultsPage() {
         </Card>
       </Reveal>
 
-      {/* Details Modal (Same as Admin but with score details) */}
+      {/* Details Modal */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-y-auto max-h-[90vh] border-none shadow-2xl rounded-[3rem] gap-0 custom-scrollbar scrollbar-hide">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 pt-10 text-white relative">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 pt-10 text-white relative">
              <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-black font-headline leading-tight">Assessment Record</h2>
@@ -321,7 +320,7 @@ export default function TeacherAssessmentResultsPage() {
              
              <div className="flex flex-wrap gap-2 mt-8">
                 <Badge className="bg-white/10 hover:bg-white/20 border-white/20 text-white backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold">
-                    ID: {selectedItem?.id.slice(0, 8)}
+                    ID: {selectedItem?.id.slice(0, 12)}
                 </Badge>
                 {selectedItem?.isLoggedIn ? (
                     <Badge className="bg-green-500/20 hover:bg-green-500/30 border-green-500/30 text-green-200 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold flex gap-1.5 items-center">
@@ -332,13 +331,18 @@ export default function TeacherAssessmentResultsPage() {
                         <XCircle size={14} /> Guest Lead
                     </Badge>
                 )}
+                {selectedItem?.assessmentType === 'paid' && (
+                    <Badge className="bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-200 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold">
+                        Paid Enrollment
+                    </Badge>
+                )}
              </div>
           </div>
 
           <div className="p-8 bg-background">
              {selectedItem?.status === 'completed' && (
                  <div className="mb-10 p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col md:flex-row items-center gap-8 shadow-inner">
-                    <div className="relative w-32 h-32 flex items-center justify-center">
+                    <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
                             <circle
                                 className="text-muted-foreground/10"
@@ -370,7 +374,7 @@ export default function TeacherAssessmentResultsPage() {
                     <div className="flex-1 text-center md:text-left space-y-1">
                         <h4 className="text-xl font-black font-headline">Test Performance</h4>
                         <p className="text-muted-foreground text-sm font-medium">
-                            Correctly answered <span className="text-foreground font-bold">{selectedItem.score}</span> out of <span className="text-foreground font-bold">{selectedItem.totalQuestions}</span> questions.
+                            Correctly answered <span className="text-foreground font-bold">{selectedItem.score}</span> out of <span className="text-foreground font-bold">{selectedItem.totalQuestions}</span> questions in the <span className="text-primary font-bold">{selectedItem.class}</span> assessment.
                         </p>
                     </div>
                  </div>
@@ -380,7 +384,7 @@ export default function TeacherAssessmentResultsPage() {
                 <div className="space-y-6">
                     <div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Student Name</p>
-                        <p className="text-lg font-black text-foreground/90 font-headline leading-none">{selectedItem?.name}</p>
+                        <p className="text-lg font-black text-foreground/90 font-headline leading-none">{selectedItem?.name || 'Full Name Missing'}</p>
                     </div>
                     <div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">WhatsApp Contact</p>
@@ -400,7 +404,7 @@ export default function TeacherAssessmentResultsPage() {
 
                 <div className="space-y-6">
                     <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Academic Class</p>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Academic Category</p>
                         <p className="text-lg font-black text-primary font-headline flex items-center gap-2 leading-none">
                             <GraduationCap size={22} />
                             {selectedItem?.class}
@@ -414,7 +418,7 @@ export default function TeacherAssessmentResultsPage() {
                         </p>
                     </div>
                     <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Category Status</p>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Registration Status</p>
                         <Badge className="bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider">
                             {selectedItem?.status}
                         </Badge>
@@ -422,7 +426,24 @@ export default function TeacherAssessmentResultsPage() {
                 </div>
              </div>
              
-             <div className="flex justify-end gap-3 pt-6 border-t">
+             {selectedItem?.invoiceId && (
+                <div className="mb-8 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                         <div className="bg-amber-100 p-2 rounded-xl">
+                            <ClipboardCheck className="h-4 w-4 text-amber-700" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Linked Invoice</p>
+                            <p className="text-sm font-mono font-bold text-amber-900">{selectedItem.invoiceId}</p>
+                         </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-amber-700 hover:bg-amber-100 rounded-xl font-bold text-xs">
+                        View Payment details
+                    </Button>
+                </div>
+             )}
+             
+             <div className="flex justify-end gap-3 pt-6 border-t font-headline">
                 <Button 
                     variant="ghost"
                     onClick={() => setSelectedItem(null)} 
@@ -437,7 +458,7 @@ export default function TeacherAssessmentResultsPage() {
                     className="rounded-2xl px-8 h-12 font-black transition-all shadow-lg hover:shadow-primary/25 bg-green-600 hover:bg-green-700 text-white flex gap-2"
                 >
                     <Phone size={18} />
-                    WhatsApp Student
+                    WhatsApp Lead
                 </Button>
              </div>
           </div>

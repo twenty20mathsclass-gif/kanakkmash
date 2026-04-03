@@ -28,8 +28,12 @@ export default function AttendancePage() {
         );
 
         const unsubscribe = onSnapshot(schedulesQuery, (snapshot) => {
-            const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
-            schedulesList.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+            const schedulesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule))
+                .sort((a, b) => {
+                    const timeA = (a.date || a.startDate || a.createdAt)?.toMillis() || 0;
+                    const timeB = (b.date || b.startDate || b.createdAt)?.toMillis() || 0;
+                    return timeB - timeA;
+                });
             setSchedules(schedulesList);
             setLoading(false);
         }, (serverError: any) => {
@@ -66,17 +70,24 @@ export default function AttendancePage() {
                             </div>
                         ) : schedules.length > 0 ? (
                             <ul className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                                {schedules.map(schedule => (
-                                    <li key={schedule.id}>
-                                        <button 
-                                            className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedSchedule?.id === schedule.id ? 'bg-accent border-primary' : 'hover:bg-accent/50'}`}
-                                            onClick={() => setSelectedSchedule(schedule)}
-                                        >
-                                            <p className="font-semibold">{schedule.title}</p>
-                                            <p className="text-sm text-muted-foreground capitalize">{schedule.date.toDate().toLocaleDateString()} - {schedule.type}</p>
-                                        </button>
-                                    </li>
-                                ))}
+                                    {schedules.map(schedule => {
+                                        const displayDate = (schedule.date || schedule.startDate || schedule.createdAt)?.toDate();
+                                        return (
+                                            <li key={schedule.id}>
+                                                <button 
+                                                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-300 ${selectedSchedule?.id === schedule.id ? 'bg-primary/5 border-primary shadow-sm' : 'border-black/5 hover:border-black/10 hover:bg-muted/30'}`}
+                                                    onClick={() => setSelectedSchedule(schedule)}
+                                                >
+                                                    <p className="font-bold text-slate-800">{schedule.title}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <p className="text-xs font-black uppercase text-primary tracking-wider">{schedule.type}</p>
+                                                        <div className="h-1 w-1 rounded-full bg-slate-300" />
+                                                        <p className="text-xs font-medium text-slate-500">{displayDate?.toLocaleDateString() || 'No Date'}</p>
+                                                    </div>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
                             </ul>
                         ) : (
                             <p className="text-center text-muted-foreground py-10">You have not scheduled any items yet.</p>

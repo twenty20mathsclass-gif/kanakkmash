@@ -356,6 +356,7 @@ export function CreateHomeworkForm() {
                 endDate: Timestamp.fromDate(data.endDate),
                 learningMode: data.learningMode,
                 courseModel: data.courseModel,
+                homeworkType: data.homeworkType,
                 createdAt: serverTimestamp(),
                 ...selectedVisuals,
             };
