@@ -149,7 +149,8 @@ service cloud.firestore {
       allow create: if isRole('teacher') || isAdmin();
       allow read, update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
       match /submissions/{userId} {
-        allow create, update: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid);
         allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/exams/$(examId)).data.teacherId == request.auth.uid);
       }
     }
@@ -160,7 +161,8 @@ service cloud.firestore {
       allow create: if isRole('teacher') || isAdmin();
       allow read, update, delete: if isAdmin() || (isRole('teacher') && resource.data.teacherId == request.auth.uid);
       match /submissions/{userId} {
-        allow create, update: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/homeworks/$(homeworkId)).data.teacherId == request.auth.uid);
         allow read: if isOwner(userId) || isAdmin() || (isRole('teacher') && get(/databases/$(database)/documents/homeworks/$(homeworkId)).data.teacherId == request.auth.uid);
       }
     }

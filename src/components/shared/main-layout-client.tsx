@@ -244,7 +244,6 @@ export default function MainLayoutClient({
     { href: "/teacher/assessment-results", label: "Assessment Results", icon: ClipboardCheck },
     { href: "/my-referrals", label: "My Referrals", icon: Share2 },
     { href: "/teacher/blog/create", label: "Blog Creation", icon: PenSquare },
-    { href: "/teacher/course-cart", label: "Course Cart", icon: ShoppingBag },
   ];
 
   const promoterNav = [
