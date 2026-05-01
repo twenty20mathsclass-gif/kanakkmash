@@ -67,15 +67,16 @@ export function ScheduledItemsList({ schedules, title, description }: { schedule
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <>
+    <Card className="flex-1 flex flex-col rounded-none border-0 shadow-none">
+      <CardHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden p-0">
         {schedules.length > 0 ? (
-          <ScrollArea className="h-[600px] pr-4">
-            <div className="space-y-4">
+          <ScrollArea className="h-full px-6 py-4">
+            <div className="space-y-4 pb-4">
               {schedules.map((schedule) => {
                   const IconComponent = iconMap[schedule.icon] || BookOpen;
                   return (
@@ -131,28 +132,31 @@ export function ScheduledItemsList({ schedules, title, description }: { schedule
             </div>
           </ScrollArea>
         ) : (
-          <div className="text-center text-muted-foreground py-16">
-            No items scheduled yet.
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg mx-6 w-full">
+              No items scheduled yet.
+            </div>
           </div>
         )}
       </CardContent>
-
-      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete this {itemToDelete?.type}. This action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
     </Card>
+
+    <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently delete this {itemToDelete?.type}. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

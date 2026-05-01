@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, Clock, BookOpen, User, Award, Users as UsersIcon, Loader2, Video, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, BookOpen, User, Award, Users as UsersIcon, Loader2, Video, ExternalLink, Timer } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useState, useEffect, useMemo } from 'react';
 import { getDocs, query, collection } from 'firebase/firestore';
@@ -30,6 +30,35 @@ const getFormattedTime = (time: string) => {
     } catch {
       return '';
     }
+}
+
+/** Returns a human-readable duration label for a schedule.
+ *  Prefers actual meetReleasedAt → meetEndedAt (real time held).
+ *  Falls back to scheduled startTime → endTime. */
+function getDurationLabel(schedule: Schedule): { label: string; isReal: boolean } | null {
+    // Real duration from timestamps
+    if ((schedule as any).meetReleasedAt && (schedule as any).meetEndedAt) {
+        const diffMs = (schedule as any).meetEndedAt.toMillis() - (schedule as any).meetReleasedAt.toMillis();
+        const totalMins = Math.max(0, Math.round(diffMs / 60000));
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        const label = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        return { label, isReal: true };
+    }
+    // Scheduled duration fallback
+    if (schedule.startTime && schedule.endTime) {
+        try {
+            const start = parse(schedule.startTime, 'HH:mm', new Date());
+            const end = parse(schedule.endTime, 'HH:mm', new Date());
+            const totalMins = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+            if (totalMins <= 0) return null;
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            const label = h > 0 ? `${h}h ${m}m` : `${m}m`;
+            return { label, isReal: false };
+        } catch { return null; }
+    }
+    return null;
 }
 
 /** Determines the session status based on date + start/end times */
@@ -104,6 +133,7 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
     }, [firestore, schedule]);
 
     const IconComponent = iconMap[schedule.icon] || BookOpen;
+    const durationInfo = useMemo(() => getDurationLabel(schedule), [schedule]);
 
     const handleStartMeeting = () => {
         // Navigate to the in-app meeting page where teacher joins as moderator
@@ -151,7 +181,7 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
 
                         <p className="text-xs text-muted-foreground">{schedule.subject}</p>
 
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 flex-wrap">
                             <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 <span>{schedule.date ? format(schedule.date.toDate(), 'MMM d, yyyy') : '—'}</span>
@@ -161,6 +191,31 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
                                 <span>{getFormattedTime(schedule.startTime)}{schedule.endTime ? ` – ${getFormattedTime(schedule.endTime)}` : ''}</span>
                             </div>
                         </div>
+
+                        {/* Duration badge — real or scheduled */}
+                        {durationInfo && (
+                            <div className="flex items-center gap-1.5 pt-0.5">
+                                {durationInfo.isReal ? (
+                                    <Badge
+                                        className="gap-1 text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 hover:bg-emerald-100"
+                                        variant="outline"
+                                    >
+                                        <Timer className="h-2.5 w-2.5" />
+                                        {durationInfo.label}
+                                        <span className="opacity-60 ml-0.5">actual</span>
+                                    </Badge>
+                                ) : (
+                                    <Badge
+                                        variant="outline"
+                                        className="gap-1 text-[10px] px-1.5 py-0 opacity-60"
+                                    >
+                                        <Timer className="h-2.5 w-2.5" />
+                                        {durationInfo.label}
+                                        <span className="opacity-60 ml-0.5">scheduled</span>
+                                    </Badge>
+                                )}
+                            </div>
+                        )}
 
                         <div className="flex flex-wrap gap-1 pt-1">
                             {schedule.classes?.map(c => <Badge key={c} variant="secondary" className="text-[10px] px-1.5 py-0">{c}</Badge>)}
@@ -221,23 +276,25 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
 
 export function RecentClassesList({ schedules }: { schedules: Schedule[] }) {
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <Card className="flex-1 flex flex-col rounded-none border-0 border-l-0 shadow-none">
+      <CardHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
         <CardTitle>Recent Classes</CardTitle>
         <CardDescription>Start your meeting or view session details and student attendance.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden p-0">
         {schedules.length > 0 ? (
-          <ScrollArea className="h-[600px] pr-4">
-            <div className="space-y-4">
+          <ScrollArea className="h-full px-6 py-4">
+            <div className="space-y-4 pb-4">
               {schedules.map((schedule) => (
                   <ScheduleListItem key={schedule.id} schedule={schedule} />
               ))}
             </div>
           </ScrollArea>
         ) : (
-          <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
-            No classes scheduled yet.
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg mx-6 w-full">
+              No classes scheduled yet.
+            </div>
           </div>
         )}
       </CardContent>

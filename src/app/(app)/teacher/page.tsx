@@ -18,7 +18,11 @@ import {
   User as UserIcon,
   Award,
   CalendarPlus,
+  Video,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { addMinutes } from 'date-fns';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs, Timestamp, documentId } from 'firebase/firestore';
 import { useEffect, useState, type ReactNode, type ReactElement } from 'react';
@@ -34,6 +38,20 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOnlineStatus } from '@/hooks/use-online-status';
+
+function getSessionStatus(item: Schedule): 'live' | 'upcoming' {
+    if (!item.date || !item.startTime || !item.endTime) return 'upcoming';
+    try {
+        const classDate = item.date.toDate();
+        const [startH, startM] = (item.startTime || '00:00').split(':').map(Number);
+        const [endH, endM] = (item.endTime || '23:59').split(':').map(Number);
+        const startDt = new Date(classDate); startDt.setHours(startH, startM, 0, 0);
+        const endDt = new Date(classDate); endDt.setHours(endH, endM, 0, 0);
+        const now = new Date();
+        if (now >= addMinutes(startDt, -15) && now <= endDt) return 'live';
+    } catch {}
+    return 'upcoming';
+}
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText: BookOpen,
@@ -104,6 +122,7 @@ function StudentAvatar({ contact }: { contact: User }) {
 export default function TeacherDashboardPage() {
   const { firestore } = useFirebase();
   const { user } = useUser();
+  const router = useRouter();
   const [stats, setStats] = useState({
     students: 0,
     classes: 0,
@@ -323,39 +342,58 @@ export default function TeacherDashboardPage() {
             </div>
             ) : upcomingSchedules.length > 0 ? (
                 <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
-                    {upcomingSchedules.map((item, index) => {
+                    {upcomingSchedules.map((item) => {
                         const IconComponent = iconMap[item.icon] || BookOpen;
+                        const status = getSessionStatus(item);
                         return (
-                            <div key={item.id} className="min-w-[320px] w-[320px] flex-shrink-0">
-                                <Link href="/teacher/attendance" className="block h-full">
-                                    <Card style={{ backgroundColor: item.color }} className={cn("text-primary-foreground shadow-lg h-full border-none hover:scale-[1.02] transition-transform")}>
-                                        <CardContent className="p-8 flex flex-col justify-between h-full">
+                            <div key={item.id} className={cn(
+                                'min-w-[320px] w-[320px] flex-shrink-0 rounded-2xl overflow-hidden shadow-lg transition-all duration-200',
+                                status === 'live' && 'ring-2 ring-green-400/80 shadow-green-200/40'
+                            )}>
+                                <div style={{ backgroundColor: item.color }} className="p-6 flex flex-col gap-4 h-full">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-background/20 rounded-xl p-2.5">
+                                                <IconComponent className="h-5 w-5" style={{ color: item.textColor }} />
+                                            </div>
                                             <div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="bg-background/20 rounded-xl p-3 flex items-center justify-center">
-                                                        <IconComponent className="h-6 w-6" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm opacity-80 font-semibold tracking-wide uppercase">{item.subject}</p>
-                                                        <h3 className="font-bold font-headline text-xl leading-tight mt-1">{item.title}</h3>
-                                                    </div>
-                                                </div>
+                                                <p className="text-xs font-semibold uppercase tracking-wide opacity-75" style={{ color: item.textColor }}>{item.subject}</p>
+                                                <h3 className="font-bold text-lg leading-tight" style={{ color: item.textColor }}>{item.title}</h3>
                                             </div>
-                                            <div className="flex justify-between items-end mt-10">
-                                                <div>
-                                                    <p className="text-base font-bold">{format(item.date.toDate(), 'MMMM d, yyyy')}</p>
-                                                    <div className="flex items-center gap-2 text-sm opacity-90 mt-1">
-                                                        <Clock className="h-4 w-4" />
-                                                        <span>{format(parse(item.startTime, 'HH:mm', new Date()), 'h:mm a')}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="bg-primary-foreground/20 rounded-full p-3 shadow-inner">
-                                                    <ArrowRight className="h-6 w-6 text-primary-foreground" />
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
+                                        </div>
+                                        {status === 'live' ? (
+                                            <Badge className="shrink-0 bg-green-500 text-white border-none animate-pulse text-[10px]">LIVE</Badge>
+                                        ) : (
+                                            <Badge className="shrink-0 bg-background/20 text-[10px] border-none" style={{ color: item.textColor }}>Upcoming</Badge>
+                                        )}
+                                    </div>
+
+                                    {/* Date + Time */}
+                                    <div className="flex items-center gap-3 text-sm opacity-90" style={{ color: item.textColor }}>
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="h-3.5 w-3.5" />
+                                            <span>{format(item.date.toDate(), 'MMM d')} · {format(parse(item.startTime, 'HH:mm', new Date()), 'h:mm a')}{item.endTime ? ` – ${format(parse(item.endTime, 'HH:mm', new Date()), 'h:mm a')}` : ''}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Start Meeting button */}
+                                    {item.meetLink && (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => router.push(`/teacher/meeting/${item.id}`)}
+                                            className={cn(
+                                                'w-full gap-2 font-semibold mt-auto',
+                                                status === 'live'
+                                                    ? 'bg-green-600 hover:bg-green-700 text-white border-none'
+                                                    : 'bg-background/20 hover:bg-background/30 border-none text-white'
+                                            )}
+                                        >
+                                            <Video className="h-4 w-4" />
+                                            {status === 'live' ? 'Start Meeting' : 'Open Meeting Room'}
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         )
                     })}

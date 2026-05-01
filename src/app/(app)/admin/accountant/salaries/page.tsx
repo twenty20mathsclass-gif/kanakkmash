@@ -498,68 +498,101 @@ export default function AccountantSalariesPage() {
     const { user: currentUser } = useUser();
     const [teachers, setTeachers] = useState<TeacherWithHours[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         if (!firestore || !currentUser) return;
 
         const fetchTeachers = async () => {
             setLoading(true);
+            setFetchError(null);
             try {
+                console.log('[Salaries] Fetching teachers, currentUser role:', currentUser?.role);
                 const q = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
                 const querySnapshot = await getDocs(q);
+                console.log('[Salaries] Teachers found:', querySnapshot.size);
+
+                if (querySnapshot.empty) {
+                    console.warn('[Salaries] No teacher documents returned. Check if role field is exactly "teacher" in Firestore.');
+                    setTeachers([]);
+                    setLoading(false);
+                    return;
+                }
+
                 const teachersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
                 const monthStart = startOfMonth(new Date());
                 const monthEnd = endOfMonth(new Date());
 
                 const teachersWithDetails = await Promise.all(teachersList.map(async (teacher) => {
-                    // Fetch payment details
-                    const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
-                    const detailsSnap = await getDoc(detailsRef);
-                    const paymentDetails = detailsSnap.exists() ? (detailsSnap.data() as TeacherPrivateDetails) : {};
+                    try {
+                        // Fetch payment details
+                        const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
+                        const detailsSnap = await getDoc(detailsRef);
+                        const paymentDetails = detailsSnap.exists() ? (detailsSnap.data() as TeacherPrivateDetails) : {};
 
-                    // Fetch this month's schedules for hour calculation
-                    const schedulesSnap = await getDocs(
-                        query(
-                            collection(firestore, 'schedules'),
-                            where('teacherId', '==', teacher.id),
-                            where('date', '>=', Timestamp.fromDate(monthStart)),
-                            where('date', '<=', Timestamp.fromDate(monthEnd))
-                        )
-                    );
+                        // Fetch this month's schedules for hour calculation
+                        const schedulesSnap = await getDocs(
+                            query(
+                                collection(firestore, 'schedules'),
+                                where('teacherId', '==', teacher.id),
+                                where('date', '>=', Timestamp.fromDate(monthStart)),
+                                where('date', '<=', Timestamp.fromDate(monthEnd))
+                            )
+                        );
 
-                    let groupMinutes = 0;
-                    let oneToOneMinutes = 0;
-                    const sessions = schedulesSnap.docs.length;
+                        let groupMinutes = 0;
+                        let oneToOneMinutes = 0;
+                        const sessions = schedulesSnap.docs.length;
 
-                    schedulesSnap.docs.forEach(d => {
-                        const s = d.data() as Schedule;
-                        if (s.type && s.type !== 'class') return;
-                        const mins = getDurationMinutes(s.startTime, s.endTime);
-                        if (s.learningMode === 'one to one' || s.studentId) {
-                            oneToOneMinutes += mins;
-                        } else {
-                            groupMinutes += mins;
-                        }
-                    });
+                        schedulesSnap.docs.forEach(d => {
+                            const s = d.data() as Schedule;
+                            if (s.type && s.type !== 'class') return;
+                            // Prefer actual timestamps; fall back to scheduled times
+                            let mins = 0;
+                            if ((s as any).meetReleasedAt && (s as any).meetEndedAt) {
+                                const diffMs = (s as any).meetEndedAt.toMillis() - (s as any).meetReleasedAt.toMillis();
+                                mins = Math.max(0, Math.round(diffMs / 60000));
+                            } else {
+                                mins = getDurationMinutes(s.startTime, s.endTime);
+                            }
+                            if (s.learningMode === 'one to one' || s.studentId) {
+                                oneToOneMinutes += mins;
+                            } else {
+                                groupMinutes += mins;
+                            }
+                        });
 
-                    return {
-                        ...teacher,
-                        ...paymentDetails,
-                        currentMonthGroupHours: Math.round((groupMinutes / 60) * 100) / 100,
-                        currentMonthOneToOneHours: Math.round((oneToOneMinutes / 60) * 100) / 100,
-                        currentMonthSessions: sessions,
-                    } as TeacherWithHours;
+                        return {
+                            ...teacher,
+                            ...paymentDetails,
+                            currentMonthGroupHours: Math.round((groupMinutes / 60) * 100) / 100,
+                            currentMonthOneToOneHours: Math.round((oneToOneMinutes / 60) * 100) / 100,
+                            currentMonthSessions: sessions,
+                        } as TeacherWithHours;
+                    } catch (innerErr: any) {
+                        console.warn(`[Salaries] Error fetching details for teacher ${teacher.id}:`, innerErr);
+                        return {
+                            ...teacher,
+                            currentMonthGroupHours: 0,
+                            currentMonthOneToOneHours: 0,
+                            currentMonthSessions: 0,
+                        } as TeacherWithHours;
+                    }
                 }));
 
                 setTeachers(teachersWithDetails);
             } catch (serverError: any) {
+                console.error('[Salaries] Top-level fetch error:', serverError.code, serverError.message, serverError);
+                const msg = serverError.code === 'permission-denied'
+                    ? 'Permission denied. Your account may not have admin access to list users.'
+                    : `Failed to load teachers: ${serverError.message || serverError.code || 'Unknown error'}`;
+                setFetchError(msg);
                 if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: 'users or users/{userId}/teacher_details/payment', operation: 'list' }, { cause: serverError });
+                    const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });
                     errorEmitter.emit('permission-error', permissionError);
-                } else {
-                    console.warn("Error fetching teachers: ", serverError);
                 }
             } finally {
                 setLoading(false);
@@ -567,7 +600,7 @@ export default function AccountantSalariesPage() {
         };
 
         fetchTeachers();
-    }, [firestore, currentUser]);
+    }, [firestore, currentUser, refreshKey]);
 
     return (
         <div className="space-y-8">
@@ -581,6 +614,18 @@ export default function AccountantSalariesPage() {
             {loading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            ) : fetchError ? (
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+                    <AlertCircle className="h-12 w-12 text-destructive" />
+                    <div>
+                        <p className="font-semibold text-destructive">Failed to load teachers</p>
+                        <p className="text-sm text-muted-foreground mt-1 max-w-sm">{fetchError}</p>
+                        <p className="text-xs text-muted-foreground mt-2">Check the browser console for details.</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setRefreshKey(k => k + 1)}>
+                        <Loader2 className="mr-2 h-4 w-4" /> Retry
+                    </Button>
                 </div>
             ) : teachers.length > 0 ? (
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
