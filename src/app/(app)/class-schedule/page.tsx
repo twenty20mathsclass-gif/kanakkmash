@@ -26,7 +26,9 @@ import {
   Award, 
   BookOpen,
   Search,
-  Plus
+  Plus,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/shared/reveal';
@@ -314,6 +316,14 @@ export default function ClassSchedulePage() {
           });
     }
 
+    if (selectedEvent.meetLinkReleased === false) {
+        toast({
+            title: '🔒 Link Not Released Yet',
+            description: 'The teacher has not released the meeting link yet. Please wait.',
+        });
+        return;
+    }
+
     if (selectedEvent.meetLink) {
         window.open(selectedEvent.meetLink, '_blank', 'noopener,noreferrer');
     }
@@ -482,18 +492,31 @@ export default function ClassSchedulePage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>{selectedEvent?.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Click 'Join Meet' to enter the class and automatically mark your attendance.
+                    {selectedEvent?.meetLinkReleased === false
+                        ? 'The teacher has not released the meeting link yet. Please wait until the teacher is ready.'
+                        : "Click 'Join Meet' to enter the class and automatically mark your attendance."
+                    }
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 text-sm">
                 <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
                 <p><strong>Time:</strong> {selectedEvent ? `${getFormattedTime(selectedEvent.startTime)} - ${getFormattedTime(selectedEvent.endTime)}` : ''}</p>
+                {selectedEvent?.meetLinkReleased === false && (
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300">
+                        <Lock className="h-4 w-4 shrink-0" />
+                        <span className="text-xs font-medium">Waiting for teacher to release the link…</span>
+                    </div>
+                )}
             </div>
             <AlertDialogFooter>
                 <AlertDialogCancel>Close</AlertDialogCancel>
-                <Button onClick={handleJoinMeet}>
-                    Join Meet
-                </Button>
+                {selectedEvent?.meetLinkReleased !== false ? (
+                    <Button onClick={handleJoinMeet}>Join Meet</Button>
+                ) : (
+                    <Button disabled className="gap-1.5">
+                        <Lock className="h-4 w-4" /> Locked
+                    </Button>
+                )}
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

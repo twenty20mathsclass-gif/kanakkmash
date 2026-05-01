@@ -13,6 +13,7 @@ import { getDocs, query, collection } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 const iconMap: { [key: string]: React.ElementType } = {
   BookText: BookOpen,
@@ -61,6 +62,7 @@ function getSessionStatus(schedule: Schedule): 'upcoming' | 'live' | 'ended' {
 
 const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
     const { firestore } = useFirebase();
+    const router = useRouter();
     const [attendance, setAttendance] = useState<{count: number, total: number} | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -104,9 +106,8 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
     const IconComponent = iconMap[schedule.icon] || BookOpen;
 
     const handleStartMeeting = () => {
-        if (schedule.meetLink) {
-            window.open(schedule.meetLink, '_blank', 'noopener,noreferrer');
-        }
+        // Navigate to the in-app meeting page where teacher joins as moderator
+        router.push(`/teacher/meeting/${schedule.id}`);
     };
 
     return (

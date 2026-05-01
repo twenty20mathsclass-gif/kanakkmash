@@ -137,6 +137,7 @@ export type Schedule = {
   startTime?: string;
   endTime?: string;
   meetLink: string;
+  meetLinkReleased?: boolean;
   teacherId: string;
   teacherName?: string;
   teacherAvatarUrl?: string;
