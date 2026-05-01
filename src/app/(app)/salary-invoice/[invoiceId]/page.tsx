@@ -82,27 +82,65 @@ function SalaryInvoicePageContents() {
         <div className="max-w-4xl mx-auto">
              <style jsx global>{`
                 @media print {
-                    body {
-                        background-color: white !important;
+                    /* Hide everything on page by default */
+                    body * {
+                        visibility: hidden !important;
                     }
+
+                    /* Show only the invoice area */
+                    .print-area,
+                    .print-area * {
+                        visibility: visible !important;
+                    }
+
+                    /* Hide sidebar, nav, header, topbar, buttons */
+                    nav, aside, 
+                    header:not(.print-area header), 
+                    footer:not(.print-area footer),
+                    [data-sidebar], [data-nav],
                     .print-hide {
-                        display: none;
+                        display: none !important;
+                        visibility: hidden !important;
                     }
-                    .print-area, .print-area * {
-                        visibility: visible;
+
+                    .print-area header {
+                        display: flex !important;
                     }
+                    .print-area footer {
+                        display: block !important;
+                    }
+
+                    /* Reset position so invoice fills page */
                     .print-area {
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        background-color: white !important;
+                        position: fixed !important;
+                        inset: 0 !important;
+                        width: 210mm !important;
+                        min-height: 297mm !important;
+                        margin: 0 auto !important;
+                        padding: 16mm 14mm !important;
+                        background: white !important;
                         box-shadow: none !important;
                         border: none !important;
+                        border-radius: 0 !important;
+                        font-size: 11pt !important;
+                        color: #000 !important;
+                        overflow: visible !important;
                     }
+
+                    /* A4 page setup */
                     @page {
-                      size: auto;
-                      margin: 0mm;
+                        size: A4 portrait;
+                        margin: 0;
+                    }
+
+                    /* Prevent page breaks inside rows */
+                    tr, td, th {
+                        page-break-inside: avoid;
+                    }
+
+                    /* Ensure images print */
+                    img {
+                        max-width: 180px !important;
                     }
                 }
             `}</style>

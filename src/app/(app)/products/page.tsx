@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+
 import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { IndianRupee, PlayCircle, Star, Loader2, Search, Filter, SlidersHorizontal, ShoppingCart, ArrowRight, Zap, Trophy, Flame, Play, History, MoveLeft } from 'lucide-react';
+import { IndianRupee, PlayCircle, Star, Loader2, Search, Filter, SlidersHorizontal, ShoppingCart, ArrowRight, Zap, Trophy, Flame, Play, History, MoveLeft, ArrowLeft } from 'lucide-react';
 import { courses } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Reveal } from '@/components/shared/reveal';
@@ -80,10 +81,20 @@ export default function ProductsPage() {
   return (
     <div className="space-y-12 pb-20 mt-12">
       <Reveal>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tighter uppercase">ALL PRODUCTS</h1>
-            <p className="text-slate-400 font-medium">Explore our complete world-class curriculum of {courses.length} modules.</p>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 px-4">
+          <div className="space-y-4">
+            <Button 
+                variant="ghost" 
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 rounded-full font-bold px-4 h-10 transition-colors w-fit -ml-4"
+            >
+                <ArrowLeft className="h-4 w-4" /> 
+                Back
+            </Button>
+            <div>
+                <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tighter uppercase">ALL PRODUCTS</h1>
+                <p className="text-slate-400 font-medium">Explore our complete world-class curriculum of {courses.length} modules.</p>
+            </div>
           </div>
         </div>
       </Reveal>

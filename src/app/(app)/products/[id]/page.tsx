@@ -66,16 +66,15 @@ export default function ProductDetailsPage() {
   return (
     <div className="pb-24 mt-12 bg-white">
       {/* 1. Header Breadcrumbs */}
-      <div className="px-4 mb-8 sm:mb-12 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-          <button
+      <div className="px-4 mb-6 sm:mb-10">
+        <Button 
+            variant="ghost" 
             onClick={() => router.back()}
-            className="hover:text-black flex items-center justify-center gap-2 transition-colors uppercase"
-          >
-            <MoveLeft className="h-3 w-3" />
-            back
-          </button>
-        </div>
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full font-bold px-4 h-10 transition-colors w-fit -ml-4"
+        >
+            <MoveLeft className="h-4 w-4" /> 
+            Back
+        </Button>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4">

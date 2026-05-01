@@ -38,6 +38,7 @@ import {
   Megaphone,
   LayoutGrid,
   ClipboardCheck,
+  Calculator,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -286,6 +287,7 @@ export default function MainLayoutClient({
     { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
     { href: "/admin/blog/create", label: "Blog Creator", icon: PenSquare },
     { href: "/admin/fees", label: "Fee Management", icon: IndianRupee },
+    { href: "/admin/accountant", label: "Accountant", icon: Calculator },
     {
       href: "/admin/accountant/salaries",
       label: "Teacher Salaries",

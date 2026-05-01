@@ -3,9 +3,10 @@
 import { Reveal } from '@/components/shared/reveal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingBag, Plus, MoreVertical, Edit, Trash2, Eye, IndianRupee, Search, Filter, Loader2 } from 'lucide-react';
+import { ShoppingBag, Plus, MoreVertical, Edit, Trash2, Eye, IndianRupee, Search, Filter, Loader2, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { firestore as db } from '@/firebase';
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
@@ -15,6 +16,7 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,7 +53,15 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <div className="p-6 space-y-10">
+    <div className="p-6 space-y-6">
+      <Button 
+          variant="ghost" 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 rounded-full font-bold px-4 h-10 transition-colors w-fit -ml-2"
+      >
+          <ArrowLeft className="h-4 w-4" /> 
+          Back
+      </Button>
       {/* Header sections */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="space-y-1">

@@ -524,7 +524,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     )
 }
 
-type TeacherWithHours = User & { currentMonthGroupHours: number; currentMonthOneToOneHours: number; currentMonthSessions: number };
+type TeacherWithHours = User & { 
+    currentMonthGroupHours: number; 
+    currentMonthOneToOneHours: number; 
+    currentMonthSessions: number;
+    isPaidThisMonth: boolean;
+};
 
 function getDurationMinutes(startTime: string, endTime: string): number {
     if (!startTime || !endTime) return 0;
@@ -575,23 +580,26 @@ export default function AccountantSalariesPage() {
                         const detailsSnap = await getDoc(detailsRef);
                         const paymentDetails = detailsSnap.exists() ? (detailsSnap.data() as TeacherPrivateDetails) : {};
 
-                        // Fetch this month's schedules for hour calculation
+                        // Fetch ALL schedules for the teacher to filter in memory (avoids missing index error)
                         const schedulesSnap = await getDocs(
-                            query(
-                                collection(firestore, 'schedules'),
-                                where('teacherId', '==', teacher.id),
-                                where('date', '>=', Timestamp.fromDate(monthStart)),
-                                where('date', '<=', Timestamp.fromDate(monthEnd))
-                            )
+                            query(collection(firestore, 'schedules'), where('teacherId', '==', teacher.id))
                         );
 
                         let groupMinutes = 0;
                         let oneToOneMinutes = 0;
-                        const sessions = schedulesSnap.docs.length;
+                        let sessions = 0;
 
                         schedulesSnap.docs.forEach(d => {
                             const s = d.data() as Schedule;
                             if (s.type && s.type !== 'class') return;
+                            
+                            // Check if it's in the current month
+                            if (!s.date) return;
+                            const scheduleDate = s.date.toDate();
+                            if (scheduleDate < monthStart || scheduleDate > monthEnd) return;
+
+                            sessions++;
+
                             // Prefer actual timestamps; fall back to scheduled times
                             let mins = 0;
                             if ((s as any).meetReleasedAt && (s as any).meetEndedAt) {
@@ -607,12 +615,20 @@ export default function AccountantSalariesPage() {
                             }
                         });
 
+                        // Check if paid this month
+                        const currentMonthStr = format(new Date(), 'yyyy-MM');
+                        const paymentsSnap = await getDocs(
+                            query(collection(firestore, 'users', teacher.id, 'salaryPayments'), where('paymentMonth', '==', currentMonthStr))
+                        );
+                        const isPaidThisMonth = !paymentsSnap.empty;
+
                         return {
                             ...teacher,
                             ...paymentDetails,
                             currentMonthGroupHours: Math.round((groupMinutes / 60) * 100) / 100,
                             currentMonthOneToOneHours: Math.round((oneToOneMinutes / 60) * 100) / 100,
                             currentMonthSessions: sessions,
+                            isPaidThisMonth
                         } as TeacherWithHours;
                     } catch (innerErr: any) {
                         console.warn(`[Salaries] Error fetching details for teacher ${teacher.id}:`, innerErr);
@@ -621,6 +637,7 @@ export default function AccountantSalariesPage() {
                             currentMonthGroupHours: 0,
                             currentMonthOneToOneHours: 0,
                             currentMonthSessions: 0,
+                            isPaidThisMonth: false
                         } as TeacherWithHours;
                     }
                 }));
@@ -678,8 +695,13 @@ export default function AccountantSalariesPage() {
                                     <AvatarImage src={teacher.avatarUrl} alt={teacher.name} />
                                     <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="grid gap-1 overflow-hidden">
-                                    <CardTitle className="truncate text-lg">{teacher.name}</CardTitle>
+                                <div className="grid gap-1 overflow-hidden flex-grow">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="truncate text-lg">{teacher.name}</CardTitle>
+                                        {teacher.isPaidThisMonth && (
+                                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0 h-5 text-[10px] uppercase tracking-wider font-black shrink-0">Paid</Badge>
+                                        )}
+                                    </div>
                                     <CardDescription className="truncate text-xs">{teacher.email}</CardDescription>
                                 </div>
                             </CardHeader>

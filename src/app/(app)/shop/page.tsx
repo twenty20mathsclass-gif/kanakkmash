@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { IndianRupee, PlayCircle, Star, Loader2, Search, Filter, SlidersHorizontal, ShoppingCart, ArrowRight, Zap, Trophy, Flame, Play, History } from 'lucide-react';
+import { IndianRupee, PlayCircle, Star, Loader2, Search, Filter, SlidersHorizontal, ShoppingCart, ArrowRight, Zap, Trophy, Flame, Play, History, ArrowLeft } from 'lucide-react';
 import { courses } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Reveal } from '@/components/shared/reveal';
@@ -86,7 +86,17 @@ export default function ShopPage() {
   });
 
   return (
-    <div className="space-y-16 pb-20 overflow-x-hidden">
+    <div className="space-y-16 pb-20 overflow-x-hidden pt-8">
+      <div className="px-4 md:px-8 max-w-[2000px] mx-auto">
+        <Button 
+            variant="ghost" 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 rounded-full font-bold px-4 h-10 transition-colors w-fit -ml-2 mb-4"
+        >
+            <ArrowLeft className="h-4 w-4" /> 
+            Back
+        </Button>
+      </div>
       {/* 1. Introduction Section: High-End Hero */}
       <Reveal>
         <div className="relative h-[20rem] sm:h-[25rem] md:h-[30rem] rounded-[2rem] sm:rounded-[3rem] overflow-hidden group">
@@ -212,26 +222,38 @@ export default function ShopPage() {
         {/* 4. Secondary Offer / Upsell */}
         {offer && (
            <Reveal>
-             <div className="bg-slate-900 rounded-[4rem] p-12 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 h-full w-1/2 bg-primary/20 blur-[120px] opacity-20 pointer-events-none" />
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                   <div className="max-w-xl space-y-6">
-                      <h3 className="text-white text-4xl md:text-5xl font-black font-headline leading-[0.9]">{offer.title}</h3>
-                      <p className="text-white/60 text-lg leading-relaxed">{offer.description}</p>
-                      <Button size="lg" className="rounded-full px-10 h-14 bg-primary text-white hover:bg-primary/90 font-black gap-2 shadow-2xl shadow-primary/20">
-                         {offer.buttonText}
-                         <ArrowRight className="h-4 w-4" />
-                      </Button>
+             <div className="relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden">
+               {/* Background Image */}
+               <div className="absolute inset-0">
+                 <Image 
+                   src="https://images.unsplash.com/photo-1523240715632-603126be8dc0?auto=format&fit=crop&q=80&w=1600"
+                   alt="Join Academy"
+                   fill
+                   className="object-cover"
+                 />
+                 {/* Strong dark overlay for readability */}
+                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-900/50" />
+                 {/* Accent glow */}
+                 <div className="absolute bottom-0 left-0 h-40 w-80 bg-primary/30 blur-[80px] pointer-events-none" />
+               </div>
+
+               {/* Content */}
+               <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 p-8 sm:p-12 md:p-16">
+                 <div className="max-w-xl space-y-4 sm:space-y-6">
+                   <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-sm">
+                     🔥 Limited Time Offer
                    </div>
-                   <div className="relative h-64 w-64 md:h-80 md:w-80">
-                      <Image 
-                        src="https://images.unsplash.com/photo-1523240715632-603126be8dc0?auto=format&fit=crop&q=80&w=800"
-                        alt="Join Academy"
-                        fill
-                        className="rounded-3xl object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
-                      />
-                   </div>
-                </div>
+                   <h3 className="text-white text-3xl sm:text-4xl md:text-5xl font-black font-headline leading-tight">{offer.title}</h3>
+                   <p className="text-white/70 text-sm sm:text-base md:text-lg leading-relaxed">{offer.description}</p>
+                   <Button 
+                     size="lg" 
+                     className="rounded-full px-8 sm:px-10 h-12 sm:h-14 bg-primary text-white hover:bg-primary/90 font-black gap-2 shadow-2xl shadow-primary/30 text-sm sm:text-base"
+                   >
+                     {offer.buttonText}
+                     <ArrowRight className="h-4 w-4" />
+                   </Button>
+                 </div>
+               </div>
              </div>
            </Reveal>
         )}
