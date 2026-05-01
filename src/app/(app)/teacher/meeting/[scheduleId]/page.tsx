@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useFirebase, useUser } from '@/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Schedule } from '@/lib/definitions';
 import Script from 'next/script';
-import { Loader2, ArrowLeft, Video, Lock, Unlock, CheckCircle2, Users } from 'lucide-react';
+import { Loader2, ArrowLeft, Video, Lock, Unlock, CheckCircle2, Users, PhoneOff, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -33,37 +33,44 @@ export default function TeacherMeetingPage() {
     const [error, setError] = useState<string | null>(null);
     const [releasing, setReleasing] = useState(false);
     const [isReleased, setIsReleased] = useState(false);
+    const [ending, setEnding] = useState(false);
+    const [isEnded, setIsEnded] = useState(false);
+
+    // Live session timer (starts when link is released)
+    const [sessionSeconds, setSessionSeconds] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const scheduleId = params?.scheduleId as string;
 
-    // Step 1: Fetch the schedule from Firestore
     useEffect(() => {
         if (!firestore || !scheduleId) return;
         const fetchSchedule = async () => {
             try {
                 const snap = await getDoc(doc(firestore, 'schedules', scheduleId));
-                if (!snap.exists()) {
-                    setError('Class not found.');
-                    return;
-                }
+                if (!snap.exists()) { setError('Class not found.'); return; }
                 const data = { id: snap.id, ...snap.data() } as Schedule;
                 setSchedule(data);
                 setIsReleased(data.meetLinkReleased === true);
-            } catch (e) {
-                setError('Failed to load class details.');
-            } finally {
-                setLoading(false);
-            }
+                setIsEnded(data.meetEnded === true);
+            } catch { setError('Failed to load class details.'); }
+            finally { setLoading(false); }
         };
         fetchSchedule();
     }, [firestore, scheduleId]);
 
-    // Step 2: Once both the schedule and Jitsi script are ready, init the meeting
+    // Start live timer when link is released
+    useEffect(() => {
+        if (isReleased && !isEnded) {
+            timerRef.current = setInterval(() => setSessionSeconds(s => s + 1), 1000);
+        }
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [isReleased, isEnded]);
+
+    // Jitsi init
     useEffect(() => {
         if (!scriptReady || !schedule?.meetLink || !user || !jitsiContainerRef.current) return;
-        if (apiRef.current) return; // already initialized
+        if (apiRef.current) return;
 
-        // Extract the room name from the meetLink URL
         const url = new URL(schedule.meetLink);
         const roomName = url.pathname.replace('/', '');
         const domain = url.hostname;
@@ -101,6 +108,7 @@ export default function TeacherMeetingPage() {
                 },
             });
 
+            // When Jitsi's built-in hang-up is clicked, also end for all
             apiRef.current.addEventListener('readyToClose', () => {
                 router.push('/teacher/create-schedule');
             });
@@ -110,35 +118,56 @@ export default function TeacherMeetingPage() {
         }
 
         return () => {
-            if (apiRef.current) {
-                apiRef.current.dispose();
-                apiRef.current = null;
-            }
+            if (apiRef.current) { apiRef.current.dispose(); apiRef.current = null; }
         };
     }, [scriptReady, schedule, user, router]);
 
-    /** Release the meeting link so students can join */
+    /** Release the link: save timestamp + set meetLinkReleased = true */
     const handleReleaseLink = async () => {
         if (!firestore || !scheduleId || isReleased) return;
         setReleasing(true);
         try {
             await updateDoc(doc(firestore, 'schedules', scheduleId), {
                 meetLinkReleased: true,
+                meetReleasedAt: serverTimestamp(),  // <-- session start timestamp
             });
             setIsReleased(true);
-            toast({
-                title: '🔓 Link Released!',
-                description: 'Students can now see and join this meeting.',
-            });
+            toast({ title: '🔓 Link Released!', description: 'Students can now see and join this meeting.' });
         } catch (e: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Failed to release link',
-                description: e.message || 'Please try again.',
+            toast({ variant: 'destructive', title: 'Failed to release link', description: e.message });
+        } finally { setReleasing(false); }
+    };
+
+    /** End meeting for ALL participants: Jitsi endConference + Firestore timestamp */
+    const handleEndForAll = async () => {
+        if (!firestore || !scheduleId || isEnded) return;
+        setEnding(true);
+        try {
+            // 1. Kick everyone via Jitsi External API (moderator only)
+            if (apiRef.current) {
+                apiRef.current.executeCommand('endConference');
+            }
+
+            // 2. Write end timestamp + lock Firestore so no one can re-join
+            await updateDoc(doc(firestore, 'schedules', scheduleId), {
+                meetEnded: true,
+                meetEndedAt: serverTimestamp(),     // <-- session end timestamp
+                meetLinkReleased: false,             // re-lock the link
             });
-        } finally {
-            setReleasing(false);
-        }
+
+            setIsEnded(true);
+            if (timerRef.current) clearInterval(timerRef.current);
+
+            toast({
+                title: '📴 Meeting Ended',
+                description: `Session closed for all participants. Duration: ${formatDuration(sessionSeconds)}.`,
+            });
+
+            // Navigate back after 2s
+            setTimeout(() => router.push('/teacher/create-schedule'), 2000);
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Failed to end meeting', description: e.message });
+        } finally { setEnding(false); }
     };
 
     if (loading) {
@@ -176,39 +205,64 @@ export default function TeacherMeetingPage() {
             />
 
             <div className="fixed inset-0 z-50 bg-black flex flex-col">
-                {/* Header bar */}
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-900 shrink-0 gap-3">
-                    {/* Left: title */}
+                {/* ── Header bar ─────────────────────────────────────────── */}
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-900 shrink-0 gap-2">
+                    {/* Left: title + badge */}
                     <div className="flex items-center gap-2 text-white min-w-0">
                         <Video className="h-4 w-4 text-green-400 shrink-0" />
                         <span className="font-semibold text-sm truncate">{schedule?.title}</span>
-                        <Badge className="shrink-0 bg-green-600 text-white text-[10px] px-1.5 py-0 border-none">
+                        <Badge className="shrink-0 bg-green-700 text-white text-[10px] px-1.5 py-0 border-none">
                             Moderator
                         </Badge>
+                        {/* Live session timer */}
+                        {isReleased && !isEnded && (
+                            <span className="flex items-center gap-1 text-xs text-amber-300 font-mono ml-1">
+                                <Timer className="h-3 w-3" />
+                                {formatDuration(sessionSeconds)}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Right: Release link + back */}
+                    {/* Right: action buttons */}
                     <div className="flex items-center gap-2 shrink-0">
-                        {/* Release Link Button */}
-                        <Button
-                            size="sm"
-                            onClick={handleReleaseLink}
-                            disabled={releasing || isReleased}
-                            className={cn(
-                                'h-8 text-xs gap-1.5 font-semibold transition-all',
-                                isReleased
-                                    ? 'bg-green-700 hover:bg-green-700 text-white cursor-default'
-                                    : 'bg-amber-500 hover:bg-amber-400 text-black'
-                            )}
-                        >
-                            {releasing ? (
-                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Releasing…</>
-                            ) : isReleased ? (
-                                <><CheckCircle2 className="h-3.5 w-3.5" /> Link Released to Students</>
-                            ) : (
-                                <><Unlock className="h-3.5 w-3.5" /> Release Link to Students</>
-                            )}
-                        </Button>
+                        {/* Release Link */}
+                        {!isEnded && (
+                            <Button
+                                size="sm"
+                                onClick={handleReleaseLink}
+                                disabled={releasing || isReleased}
+                                className={cn(
+                                    'h-8 text-xs gap-1.5 font-semibold',
+                                    isReleased
+                                        ? 'bg-green-700 hover:bg-green-700 text-white cursor-default'
+                                        : 'bg-amber-500 hover:bg-amber-400 text-black'
+                                )}
+                            >
+                                {releasing ? (
+                                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Releasing…</>
+                                ) : isReleased ? (
+                                    <><CheckCircle2 className="h-3.5 w-3.5" /> Released</>
+                                ) : (
+                                    <><Unlock className="h-3.5 w-3.5" /> Release Link</>
+                                )}
+                            </Button>
+                        )}
+
+                        {/* End for All — visible only after link is released */}
+                        {isReleased && !isEnded && (
+                            <Button
+                                size="sm"
+                                onClick={handleEndForAll}
+                                disabled={ending}
+                                className="h-8 text-xs gap-1.5 bg-red-600 hover:bg-red-500 text-white font-semibold"
+                            >
+                                {ending ? (
+                                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Ending…</>
+                                ) : (
+                                    <><PhoneOff className="h-3.5 w-3.5" /> End for All</>
+                                )}
+                            </Button>
+                        )}
 
                         <Button
                             size="sm"
@@ -221,21 +275,27 @@ export default function TeacherMeetingPage() {
                     </div>
                 </div>
 
-                {/* Meeting status indicator below header */}
-                {!isReleased && (
+                {/* ── Status bar below header ─────────────────────────── */}
+                {!isReleased && !isEnded && (
                     <div className="flex items-center justify-center gap-2 py-1.5 bg-amber-900/60 text-amber-200 text-xs font-medium shrink-0">
                         <Lock className="h-3 w-3" />
-                        <span>Students cannot join yet — click <strong>"Release Link to Students"</strong> when you&apos;re ready</span>
+                        <span>Students cannot join yet — click <strong>Release Link</strong> when ready</span>
                     </div>
                 )}
-                {isReleased && (
+                {isReleased && !isEnded && (
                     <div className="flex items-center justify-center gap-2 py-1.5 bg-green-900/60 text-green-200 text-xs font-medium shrink-0">
                         <Users className="h-3 w-3" />
-                        <span>Students can now see and join this meeting</span>
+                        <span>Students can now join · Click <strong>End for All</strong> to close the session for everyone</span>
+                    </div>
+                )}
+                {isEnded && (
+                    <div className="flex items-center justify-center gap-2 py-1.5 bg-red-900/60 text-red-200 text-xs font-medium shrink-0">
+                        <PhoneOff className="h-3 w-3" />
+                        <span>Meeting ended · Session duration saved · Returning to dashboard…</span>
                     </div>
                 )}
 
-                {/* Jitsi mount point */}
+                {/* ── Jitsi mount point ──────────────────────────────── */}
                 <div ref={jitsiContainerRef} className="flex-1 w-full" />
 
                 {!scriptReady && (
@@ -249,4 +309,13 @@ export default function TeacherMeetingPage() {
             </div>
         </>
     );
+}
+
+function formatDuration(totalSeconds: number): string {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
 }

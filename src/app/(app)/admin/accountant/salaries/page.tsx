@@ -86,7 +86,9 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         let oneToOneMinutes = 0;
 
         monthlySchedules.forEach(item => {
-            const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
+            const duration = item.type === 'class'
+                ? getDurationInMinutes(item.startTime, item.endTime, item)  // pass full item for timestamp check
+                : (item.duration || 0);
             if (item.learningMode === 'one to one' || item.studentId) {
                 oneToOneMinutes += duration;
             } else {
@@ -101,7 +103,18 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         return { groupHours, oneToOneHours, totalAmount };
     }, [monthlySchedules, rateGroup, rateOneToOne]);
 
-    function getDurationInMinutes(startTime: string, endTime: string): number {
+    /**
+     * Returns actual session duration in minutes.
+     * Prefers meetReleasedAt → meetEndedAt (real recorded time) when available.
+     * Falls back to scheduled startTime → endTime strings.
+     */
+    function getDurationInMinutes(startTime: string | undefined, endTime: string | undefined, schedule?: Schedule): number {
+        // If we have actual timestamps from the meeting, use them for precision
+        if (schedule?.meetReleasedAt && schedule?.meetEndedAt) {
+            const diffMs = schedule.meetEndedAt.toMillis() - schedule.meetReleasedAt.toMillis();
+            return Math.max(0, Math.round(diffMs / (1000 * 60)));
+        }
+        // Fall back to scheduled times
         if (!startTime || !endTime) return 0;
         try {
             const start = parse(startTime, 'HH:mm', new Date());

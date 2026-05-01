@@ -316,6 +316,15 @@ export default function ClassSchedulePage() {
           });
     }
 
+    if (selectedEvent.meetEnded) {
+        toast({
+            title: '📴 Session Ended',
+            description: 'The teacher has ended this class for everyone.',
+        });
+        setSelectedEvent(null);
+        return;
+    }
+
     if (selectedEvent.meetLinkReleased === false) {
         toast({
             title: '🔒 Link Not Released Yet',
@@ -501,7 +510,11 @@ export default function ClassSchedulePage() {
             <div className="space-y-2 text-sm">
                 <p><strong>Subject:</strong> {selectedEvent?.subject}</p>
                 <p><strong>Time:</strong> {selectedEvent ? `${getFormattedTime(selectedEvent.startTime)} - ${getFormattedTime(selectedEvent.endTime)}` : ''}</p>
-                {selectedEvent?.meetLinkReleased === false && (
+                {selectedEvent?.meetEnded ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300">
+                        <span className="text-xs font-medium">📴 This session has ended. The teacher closed the meeting for everyone.</span>
+                    </div>
+                ) : selectedEvent?.meetLinkReleased === false && (
                     <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300">
                         <Lock className="h-4 w-4 shrink-0" />
                         <span className="text-xs font-medium">Waiting for teacher to release the link…</span>
@@ -510,7 +523,11 @@ export default function ClassSchedulePage() {
             </div>
             <AlertDialogFooter>
                 <AlertDialogCancel>Close</AlertDialogCancel>
-                {selectedEvent?.meetLinkReleased !== false ? (
+                {selectedEvent?.meetEnded ? (
+                    <Button disabled className="gap-1.5 bg-red-100 text-red-700">
+                        📴 Session Ended
+                    </Button>
+                ) : selectedEvent?.meetLinkReleased !== false ? (
                     <Button onClick={handleJoinMeet}>Join Meet</Button>
                 ) : (
                     <Button disabled className="gap-1.5">
