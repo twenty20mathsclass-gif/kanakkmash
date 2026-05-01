@@ -36,7 +36,7 @@ export default function Home() {
               />
             </h1>
             <p className="mx-auto mt-4 sm:mt-6 max-w-3xl text-sm sm:text-lg lg:text-xl text-foreground/80 leading-relaxed px-2">
-              An online platform offering quality mathematics classes for students from Class 1 to degree level under Kerala State, CBSE, and ICSE syllabuses, along with coaching for competitive exams such as LSS, NuMaTs, USS, NMMS, PSC, CSAT, MAT, JEE Maths, KTET, SET, and NET.
+              An online platform offering quality mathematics classes from Class 1 to degree level across Kerala State, CBSE, and ICSE syllabuses, along with coaching for major competitive exams and Twenty20 Basic Mathematics courses (Level 1–5) to build strong fundamentals.
             </p>
           </div>
         </Reveal>
