@@ -17,7 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle, Video, CheckCircle2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { RecentClassesList } from '@/components/teacher/recent-classes-list';
@@ -41,7 +42,7 @@ const scheduleSchema = z.object({
     date: z.date({ required_error: 'A date is required.' }),
     startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
     endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format. Use HH:MM.'),
-    meetLink: z.string().url('Please enter a valid URL.'),
+    meetLink: z.string().url('Please enter a valid URL.').optional(),
     classes: z.array(z.string()).optional(),
     levels: z.array(z.string()).optional(),
     syllabus: z.string().optional(),
@@ -96,7 +97,7 @@ export default function CreateSchedulePage() {
             date: new Date(),
             startTime: '',
             endTime: '',
-            meetLink: 'https://meet.google.com/',
+            meetLink: undefined,
             classes: [],
             levels: [],
             syllabus: '',
@@ -178,6 +179,14 @@ export default function CreateSchedulePage() {
         setError(null);
 
         try {
+            // Generate meet link on submit
+            const meetRes = await fetch('/api/create-meet', { method: 'POST' });
+            const meetData = await meetRes.json();
+            if (!meetRes.ok || !meetData.meetingUri) {
+                throw new Error(meetData.error || 'Failed to generate Google Meet link. Please try again.');
+            }
+            const meetLink = meetData.meetingUri;
+
             const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
             const scheduleData: any = {
                 type: 'class',
@@ -187,7 +196,7 @@ export default function CreateSchedulePage() {
                 date: Timestamp.fromDate(data.date),
                 startTime: data.startTime,
                 endTime: data.endTime,
-                meetLink: data.meetLink,
+                meetLink,
                 teacherId: user.id,
                 createdAt: serverTimestamp(),
                 ...selectedVisuals,
@@ -220,11 +229,16 @@ export default function CreateSchedulePage() {
                 learningMode: data.learningMode,
                 courseModel: '',
                 title: '',
-                meetLink: 'https://meet.google.com/',
             });
         } catch (serverError: any) {
-            setError('Failed to create schedule. Please try again.');
-            console.error(serverError);
+            const msg = serverError.message || 'Failed to create schedule. Please try again.';
+            setError(msg);
+            toast({
+                variant: 'destructive',
+                title: 'Error creating schedule',
+                description: msg,
+            });
+            console.error('[CreateSchedule] Error:', serverError);
         } finally {
             setLoading(false);
         }
@@ -235,7 +249,7 @@ export default function CreateSchedulePage() {
             <div className="space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold font-headline">Create a New Schedule</h1>
-                    <p className="text-muted-foreground">Add a new class to the schedule.</p>
+                    <p className="text-muted-foreground">Fill in the details below. A Google Meet link will be generated automatically when you submit.</p>
                 </div>
 
                 <Card>
@@ -351,10 +365,14 @@ export default function CreateSchedulePage() {
                                     <FormField name="endTime" control={form.control} render={({ field }) => (<FormItem><FormLabel>End Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 </div>
 
-                                <FormField name="meetLink" control={form.control} render={({ field }) => (<FormItem><FormLabel>Meeting Link</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
 
                                 {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-                                <Button type="submit" disabled={loading} className="w-full">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" /> } Create Schedule</Button>
+                                <Button type="submit" disabled={loading} className="w-full">
+                                    {loading
+                                        ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Schedule…</>
+                                        : <><Video className="mr-2 h-4 w-4" /> Create Schedule with Meet</>
+                                    }
+                                </Button>
                             </form>
                         </Form>
                     </CardContent>

@@ -10,11 +10,12 @@ import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info, Lock, Unlock, ShieldCheck } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format, startOfMonth, endOfMonth, parse } from 'date-fns';
+import { format, startOfMonth, endOfMonth, parse, isThisMonth } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -201,6 +202,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             const monthEnd = endOfMonth(monthStart);
 
             const schedulesInMonth = allSchedules.filter(s => {
+                if (!s.date) return false;
                 const scheduleDate = s.date.toDate();
                 return scheduleDate >= monthStart && scheduleDate <= monthEnd;
             });
@@ -467,10 +469,21 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     )
 }
 
+type TeacherWithHours = User & { currentMonthGroupHours: number; currentMonthOneToOneHours: number; currentMonthSessions: number };
+
+function getDurationMinutes(startTime: string, endTime: string): number {
+    if (!startTime || !endTime) return 0;
+    try {
+        const start = parse(startTime, 'HH:mm', new Date());
+        const end = parse(endTime, 'HH:mm', new Date());
+        return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+    } catch { return 0; }
+}
+
 export default function AccountantSalariesPage() {
     const { firestore } = useFirebase();
     const { user: currentUser } = useUser();
-    const [teachers, setTeachers] = useState<User[]>([]);
+    const [teachers, setTeachers] = useState<TeacherWithHours[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
 
@@ -484,13 +497,47 @@ export default function AccountantSalariesPage() {
                 const querySnapshot = await getDocs(q);
                 const teachersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
+                const monthStart = startOfMonth(new Date());
+                const monthEnd = endOfMonth(new Date());
+
                 const teachersWithDetails = await Promise.all(teachersList.map(async (teacher) => {
+                    // Fetch payment details
                     const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
                     const detailsSnap = await getDoc(detailsRef);
-                    if (detailsSnap.exists()) {
-                        return { ...teacher, ...(detailsSnap.data() as TeacherPrivateDetails) };
-                    }
-                    return teacher;
+                    const paymentDetails = detailsSnap.exists() ? (detailsSnap.data() as TeacherPrivateDetails) : {};
+
+                    // Fetch this month's schedules for hour calculation
+                    const schedulesSnap = await getDocs(
+                        query(
+                            collection(firestore, 'schedules'),
+                            where('teacherId', '==', teacher.id),
+                            where('date', '>=', Timestamp.fromDate(monthStart)),
+                            where('date', '<=', Timestamp.fromDate(monthEnd))
+                        )
+                    );
+
+                    let groupMinutes = 0;
+                    let oneToOneMinutes = 0;
+                    const sessions = schedulesSnap.docs.length;
+
+                    schedulesSnap.docs.forEach(d => {
+                        const s = d.data() as Schedule;
+                        if (s.type && s.type !== 'class') return;
+                        const mins = getDurationMinutes(s.startTime, s.endTime);
+                        if (s.learningMode === 'one to one' || s.studentId) {
+                            oneToOneMinutes += mins;
+                        } else {
+                            groupMinutes += mins;
+                        }
+                    });
+
+                    return {
+                        ...teacher,
+                        ...paymentDetails,
+                        currentMonthGroupHours: Math.round((groupMinutes / 60) * 100) / 100,
+                        currentMonthOneToOneHours: Math.round((oneToOneMinutes / 60) * 100) / 100,
+                        currentMonthSessions: sessions,
+                    } as TeacherWithHours;
                 }));
 
                 setTeachers(teachersWithDetails);
@@ -537,6 +584,38 @@ export default function AccountantSalariesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
+                                {/* Current Month Hours Summary */}
+                                <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                                    <p className="text-[10px] text-primary uppercase font-bold mb-1.5 flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {format(new Date(), 'MMMM')} Work Hours
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-1 text-center">
+                                        <div>
+                                            <p className="text-[9px] text-muted-foreground uppercase">Group</p>
+                                            <p className="font-bold text-sm text-foreground">{teacher.currentMonthGroupHours}h</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] text-muted-foreground uppercase">1-1</p>
+                                            <p className="font-bold text-sm text-foreground">{teacher.currentMonthOneToOneHours}h</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] text-muted-foreground uppercase">Sessions</p>
+                                            <p className="font-bold text-sm text-foreground">{teacher.currentMonthSessions}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-1.5 pt-1.5 border-t border-primary/10 flex items-center justify-between">
+                                        <p className="text-[9px] text-muted-foreground">Total est. salary</p>
+                                        <p className="text-xs font-bold text-primary flex items-center gap-0.5">
+                                            <IndianRupee className="h-3 w-3" />
+                                            {(
+                                                teacher.currentMonthGroupHours * (teacher.hourlyRateGroup || teacher.hourlyRate || 0) +
+                                                teacher.currentMonthOneToOneHours * (teacher.hourlyRateOneToOne || teacher.hourlyRate || 0)
+                                            ).toLocaleString('en-IN')}
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="flex justify-between items-center px-4 py-2 bg-muted rounded-md mb-2">
                                     <div className="text-center">
                                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Rate</p>
