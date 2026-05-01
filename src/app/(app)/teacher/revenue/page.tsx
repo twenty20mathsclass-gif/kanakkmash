@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, X, IndianRupee, FileText, Lock, Info, Headset } from 'lucide-react';
+import { Loader2, Save, X, IndianRupee, FileText, Lock, Info, Headset, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -334,6 +334,66 @@ export default function TeacherRevenuePage() {
                 </div>
             </Reveal>
             
+            <Reveal delay={0.1}>
+                <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 via-background to-emerald-50/30">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <div className="p-2 rounded-xl bg-primary/10">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                            </div>
+                            Your Hourly Rate
+                        </CardTitle>
+                        <CardDescription>Rates set by the admin based on your experience and course type.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Group Rate */}
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white border shadow-sm">
+                                <div className="p-3 rounded-xl bg-blue-50 shrink-0">
+                                    <IndianRupee className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Group Classes</p>
+                                    {(user?.hourlyRateGroup || user?.hourlyRate) ? (
+                                        <p className="text-2xl font-black text-foreground flex items-baseline gap-1">
+                                            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                                            {(user?.hourlyRateGroup || user?.hourlyRate)?.toLocaleString('en-IN')}
+                                            <span className="text-xs font-medium text-muted-foreground">/hr</span>
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">Not set yet</p>
+                                    )}
+                                </div>
+                            </div>
+                            {/* One-to-One Rate */}
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white border shadow-sm">
+                                <div className="p-3 rounded-xl bg-emerald-50 shrink-0">
+                                    <IndianRupee className="h-5 w-5 text-emerald-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">One-to-One Classes</p>
+                                    {(user?.hourlyRateOneToOne || user?.hourlyRate) ? (
+                                        <p className="text-2xl font-black text-foreground flex items-baseline gap-1">
+                                            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                                            {(user?.hourlyRateOneToOne || user?.hourlyRate)?.toLocaleString('en-IN')}
+                                            <span className="text-xs font-medium text-muted-foreground">/hr</span>
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">Not set yet</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        {!(user?.hourlyRateGroup || user?.hourlyRateOneToOne || user?.hourlyRate) && (
+                            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+                                <Info className="h-3.5 w-3.5" />
+                                Your hourly rate will appear here once the admin has configured it in User Management.
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
+            </Reveal>
+
             <Card className={isLocked ? "bg-muted/30" : ""}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div className="space-y-1.5">

@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase, useUser } from '@/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { User, Schedule, SalaryPayment, Invoice, ReferredStudent, Reward, TeacherPrivateDetails, PromoterPrivateDetails } from '@/lib/definitions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -91,8 +91,8 @@ export default function UserProfilePage() {
             // Fetch related data based on role
             if (userData.role === 'teacher') {
                 const schedulesQuery = query(collection(firestore, 'schedules'), where('teacherId', '==', userId));
-                const salaryQuery = query(collection(firestore, 'users', userId, 'salaryPayments'), orderBy('paymentDate', 'desc'));
-                const referralsQuery = query(collection(firestore, 'users', userId, 'referrals'), orderBy('referredAt', 'desc'));
+                const salaryQuery = query(collection(firestore, 'users', userId, 'salaryPayments'));
+                const referralsQuery = query(collection(firestore, 'users', userId, 'referrals'));
 
                 const [schedulesSnap, salarySnap, referralsSnap] = await Promise.all([
                     getDocs(schedulesQuery),
@@ -101,43 +101,80 @@ export default function UserProfilePage() {
                 ]);
 
                 const schedulesList = schedulesSnap.docs.map(d => ({id: d.id, ...d.data()} as Schedule));
-                schedulesList.sort((a,b) => b.date.toMillis() - a.date.toMillis());
+                schedulesList.sort((a, b) => {
+                    if (!a.date && !b.date) return 0;
+                    if (!a.date) return 1;
+                    if (!b.date) return -1;
+                    return b.date.toMillis() - a.date.toMillis();
+                });
+
+                const salaryList = salarySnap.docs.map(d => ({id: d.id, ...d.data()} as SalaryPayment));
+                salaryList.sort((a, b) => {
+                    if (!a.paymentDate && !b.paymentDate) return 0;
+                    if (!a.paymentDate) return -1;
+                    if (!b.paymentDate) return 1;
+                    return b.paymentDate.toMillis() - a.paymentDate.toMillis();
+                });
+
+                const referralsList = referralsSnap.docs.map(d => d.data() as ReferredStudent);
+                referralsList.sort((a, b) => {
+                    if (!a.referredAt && !b.referredAt) return 0;
+                    if (!a.referredAt) return 1;
+                    if (!b.referredAt) return -1;
+                    return b.referredAt.toMillis() - a.referredAt.toMillis();
+                });
 
                 setSchedules(schedulesList);
-                setSalaryPayments(salarySnap.docs.map(d => ({id: d.id, ...d.data()} as SalaryPayment)));
-                setReferrals(referralsSnap.docs.map(d => d.data() as ReferredStudent));
+                setSalaryPayments(salaryList);
+                setReferrals(referralsList);
             } else if (userData.role === 'student') {
                 const invoicesQuery = query(collection(firestore, 'invoices'), where('studentId', '==', userId));
                 const invoicesSnap = await getDocs(invoicesQuery);
                 const invoicesList = invoicesSnap.docs.map(d => ({id: d.id, ...d.data()} as Invoice));
-                invoicesList.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                invoicesList.sort((a, b) => {
+                    if (!a.createdAt && !b.createdAt) return 0;
+                    if (!a.createdAt) return 1;
+                    if (!b.createdAt) return -1;
+                    return b.createdAt.toMillis() - a.createdAt.toMillis();
+                });
                 setInvoices(invoicesList);
             } else if (userData.role === 'promoter') {
-                const referralsQuery = query(collection(firestore, 'users', userId, 'referrals'), orderBy('referredAt', 'desc'));
-                const rewardsQuery = query(collection(firestore, 'users', userId, 'rewards'), orderBy('createdAt', 'desc'));
-                 const [referralsSnap, rewardsSnap] = await Promise.all([
-                    getDocs(referralsQuery),
+                const referralsQuery2 = query(collection(firestore, 'users', userId, 'referrals'));
+                const rewardsQuery = query(collection(firestore, 'users', userId, 'rewards'));
+                 const [referralsSnap2, rewardsSnap] = await Promise.all([
+                    getDocs(referralsQuery2),
                     getDocs(rewardsQuery),
                 ]);
-                setReferrals(referralsSnap.docs.map(d => d.data() as ReferredStudent));
+                const referralsList2 = referralsSnap2.docs.map(d => d.data() as ReferredStudent);
+                referralsList2.sort((a, b) => {
+                    if (!a.referredAt && !b.referredAt) return 0;
+                    if (!a.referredAt) return 1;
+                    if (!b.referredAt) return -1;
+                    return b.referredAt.toMillis() - a.referredAt.toMillis();
+                });
+                setReferrals(referralsList2);
                 setRewards(rewardsSnap.docs.map(d => ({id: d.id, ...d.data()} as Reward)));
             }
 
         } catch (e: any) {
+            console.error("Error fetching user data:", e);
             if (e.code === 'permission-denied') {
                 errorEmitter.emit('permission-error', new FirestorePermissionError({path: `users/${userId} or related subcollections`, operation: 'get'}, {cause: e}));
+                setError("Permission denied. You may not have access to this user's data.");
             } else {
-                console.error("Error fetching user data:", e);
+                setError("Failed to load user details. " + (e.message || ''));
             }
-            setError("Failed to load user details.");
         } finally {
             setLoading(false);
         }
     }, [firestore, userId]);
     
     useEffect(() => {
-        if (!authLoading && currentUser && currentUser.role === 'admin') {
+        if (!authLoading && currentUser && (currentUser.role === 'admin' || currentUser.role === 'oga')) {
             fetchUserData();
+        } else if (!authLoading && currentUser && currentUser.role !== 'admin' && currentUser.role !== 'oga') {
+            setError('You do not have permission to view this page.');
+            setLoading(false);
         }
     }, [authLoading, currentUser, fetchUserData]);
 
@@ -296,7 +333,7 @@ export default function UserProfilePage() {
                 <TabsContent value="schedules">
                     <Card><CardHeader><CardTitle>Schedules Created</CardTitle></CardHeader><CardContent><Table>
                         <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Date</TableHead><TableHead>Time</TableHead></TableRow></TableHeader>
-                        <TableBody>{schedules.map(s => (<TableRow key={s.id}><TableCell>{s.title}</TableCell><TableCell><Badge variant={s.type === 'exam' ? 'destructive' : 'default'} className="capitalize">{s.type}</Badge></TableCell><TableCell>{format(s.date.toDate(), 'PPP')}</TableCell><TableCell>{s.startTime}</TableCell></TableRow>))}</TableBody>
+                        <TableBody>{schedules.map(s => (<TableRow key={s.id}><TableCell>{s.title}</TableCell><TableCell><Badge variant={s.type === 'exam' ? 'destructive' : 'default'} className="capitalize">{s.type}</Badge></TableCell><TableCell>{s.date ? format(s.date.toDate(), 'PPP') : '-'}</TableCell><TableCell>{s.startTime}</TableCell></TableRow>))}</TableBody>
                     </Table></CardContent></Card>
                 </TabsContent>
                 <TabsContent value="salary">

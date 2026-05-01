@@ -404,15 +404,51 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                     />
                                     <FormField name="hourlyRateGroup" control={form.control} render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>Group Hourly Rate (INR)</FormLabel>
-                                            <FormControl><Input type="number" {...field}/></FormControl>
+                                            <FormLabel className="flex items-center gap-2">
+                                                Group Hourly Rate (INR)
+                                                {(teacher.hourlyRateGroup || teacher.hourlyRate) ? (
+                                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                        Auto-filled
+                                                    </Badge>
+                                                ) : null}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    {...field}
+                                                    className={(teacher.hourlyRateGroup || teacher.hourlyRate) ? 'border-emerald-200 bg-emerald-50/30 focus-visible:ring-emerald-300' : ''}
+                                                />
+                                            </FormControl>
+                                            {(teacher.hourlyRateGroup || teacher.hourlyRate) && (
+                                                <FormDescription className="text-[11px] text-emerald-700">
+                                                    ₹{(teacher.hourlyRateGroup || teacher.hourlyRate)?.toLocaleString('en-IN')}/hr from teacher profile
+                                                </FormDescription>
+                                            )}
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
                                     <FormField name="hourlyRateOneToOne" control={form.control} render={({field}) => (
                                         <FormItem>
-                                            <FormLabel>One-to-One Hourly Rate (INR)</FormLabel>
-                                            <FormControl><Input type="number" {...field}/></FormControl>
+                                            <FormLabel className="flex items-center gap-2">
+                                                One-to-One Hourly Rate (INR)
+                                                {(teacher.hourlyRateOneToOne || teacher.hourlyRate) ? (
+                                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                        Auto-filled
+                                                    </Badge>
+                                                ) : null}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    {...field}
+                                                    className={(teacher.hourlyRateOneToOne || teacher.hourlyRate) ? 'border-emerald-200 bg-emerald-50/30 focus-visible:ring-emerald-300' : ''}
+                                                />
+                                            </FormControl>
+                                            {(teacher.hourlyRateOneToOne || teacher.hourlyRate) && (
+                                                <FormDescription className="text-[11px] text-emerald-700">
+                                                    ₹{(teacher.hourlyRateOneToOne || teacher.hourlyRate)?.toLocaleString('en-IN')}/hr from teacher profile
+                                                </FormDescription>
+                                            )}
                                             <FormMessage/>
                                         </FormItem>
                                     )} />
