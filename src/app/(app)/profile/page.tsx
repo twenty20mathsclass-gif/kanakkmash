@@ -177,7 +177,9 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
                         <Avatar className="w-32 h-32 border-4 border-white shadow-xl">
-                            <AvatarImage src={user.avatarUrl} alt={user.name} />
+                            {user.avatarUrl && !user.avatarUrl.includes('688z9X5/user.png') && (
+                                <AvatarImage src={user.avatarUrl} alt={user.name} className="object-cover" />
+                            )}
                             <AvatarFallback className="bg-orange-50 text-orange-600">
                                 <UserIcon className="h-16 w-16" />
                             </AvatarFallback>

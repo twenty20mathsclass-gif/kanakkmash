@@ -55,8 +55,8 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
         defaultValues: {
-            hourlyRateGroup: 0,
-            hourlyRateOneToOne: 0,
+            hourlyRateGroup: teacher?.hourlyRateGroup || teacher?.hourlyRate || 0,
+            hourlyRateOneToOne: teacher?.hourlyRateOneToOne || teacher?.hourlyRate || 0,
         },
     });
 
@@ -136,6 +136,12 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             return;
         };
         setLoadingHistory(true);
+        
+        form.reset({
+            paymentMonth: form.getValues('paymentMonth') || '',
+            hourlyRateGroup: teacher.hourlyRateGroup || teacher.hourlyRate || 0,
+            hourlyRateOneToOne: teacher.hourlyRateOneToOne || teacher.hourlyRate || 0,
+        });
 
         const paymentsQuery = query(collection(firestore, 'users', teacher.id, 'salaryPayments'));
         const unsubscribePayments = onSnapshot(paymentsQuery, (snapshot) => {

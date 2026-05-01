@@ -25,12 +25,14 @@ import { useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/context/cart-context";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useUser();
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   const course = courses.find((c) => c.id === id);
 
@@ -52,19 +54,11 @@ export default function ProductDetailsPage() {
     "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=2000";
 
   const handleAddToCart = () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to add items to your cart.",
-        variant: "destructive",
-      });
-      router.push("/sign-in");
-    } else {
-      toast({
-        title: "Success!",
-        description: `${course.title} has been added to your cart.`,
-      });
-    }
+    addToCart({ ...course, price: 2250 }); // Fallback price from UI
+    toast({
+      title: "Added to Cart",
+      description: `${course.title} has been added to your cart.`,
+    });
   };
 
   const otherCourses = courses.filter((c) => c.id !== course.id).slice(0, 4);

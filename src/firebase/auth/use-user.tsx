@@ -32,7 +32,31 @@ export function useUser() {
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
-            setUser({ id: userDoc.id, ...userDoc.data() } as User);
+            let userData = { id: userDoc.id, ...userDoc.data() } as User;
+            
+            if (userData.role === 'teacher') {
+                try {
+                    const detailsRef = doc(firestore, 'users', uid, 'teacher_details', 'payment');
+                    const detailsSnap = await getDoc(detailsRef);
+                    if (detailsSnap.exists()) {
+                        userData = { ...userData, ...detailsSnap.data() };
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch teacher details", e);
+                }
+            } else if (userData.role === 'promoter') {
+                try {
+                    const detailsRef = doc(firestore, 'users', uid, 'promoter_details', 'payment');
+                    const detailsSnap = await getDoc(detailsRef);
+                    if (detailsSnap.exists()) {
+                        userData = { ...userData, ...detailsSnap.data() };
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch promoter details", e);
+                }
+            }
+
+            setUser(userData);
             return true;
           }
           return false;

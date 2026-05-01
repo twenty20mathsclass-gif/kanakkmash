@@ -130,6 +130,7 @@ export default function MainLayoutClient({
       "/fee-structure",
       "/assessment-form",
       "/assessment-test",
+      "/cart",
     ];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible =
@@ -139,6 +140,7 @@ export default function MainLayoutClient({
       pathname.startsWith("/exam-schedule") ||
       pathname.startsWith("/class-schedule") ||
       pathname.startsWith("/invoice") ||
+      pathname.startsWith("/cart") ||
       isPublicBlogPost;
 
     if (loading || authPages.some((p) => pathname.startsWith(p))) {

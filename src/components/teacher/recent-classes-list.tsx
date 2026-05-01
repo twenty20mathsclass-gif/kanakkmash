@@ -16,19 +16,19 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 const iconMap: { [key: string]: React.ElementType } = {
-  BookText: BookOpen,
-  User: User,
-  Award: Award,
-  BookOpen: BookOpen,
+    BookText: BookOpen,
+    User: User,
+    Award: Award,
+    BookOpen: BookOpen,
 };
 
 const getFormattedTime = (time: string) => {
     if (!time) return '';
     try {
-      const date = parse(time, 'HH:mm', new Date());
-      return format(date, 'h:mm a');
+        const date = parse(time, 'HH:mm', new Date());
+        return format(date, 'h:mm a');
     } catch {
-      return '';
+        return '';
     }
 }
 
@@ -92,7 +92,7 @@ function getSessionStatus(schedule: Schedule): 'upcoming' | 'live' | 'ended' {
 const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
     const { firestore } = useFirebase();
     const router = useRouter();
-    const [attendance, setAttendance] = useState<{count: number, total: number} | null>(null);
+    const [attendance, setAttendance] = useState<{ count: number, total: number } | null>(null);
     const [loading, setLoading] = useState(true);
 
     const status = useMemo(() => getSessionStatus(schedule), [schedule]);
@@ -275,29 +275,27 @@ const ScheduleListItem = ({ schedule }: { schedule: Schedule }) => {
 };
 
 export function RecentClassesList({ schedules }: { schedules: Schedule[] }) {
-  return (
-    <Card className="flex-1 flex flex-col rounded-none border-0 border-l-0 shadow-none">
-      <CardHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
-        <CardTitle>Recent Classes</CardTitle>
-        <CardDescription>Start your meeting or view session details and student attendance.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
-        {schedules.length > 0 ? (
-          <ScrollArea className="h-full px-6 py-4">
-            <div className="space-y-4 pb-4">
-              {schedules.map((schedule) => (
-                  <ScheduleListItem key={schedule.id} schedule={schedule} />
-              ))}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg mx-6 w-full">
-              No classes scheduled yet.
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+    return (
+        <Card className="rounded-none border-0 border-l-0 shadow-none">
+            <CardHeader className="px-6 pt-6 pb-4 border-b">
+                <CardTitle>Recent Classes</CardTitle>
+                <CardDescription>Start your meeting or view session details and student attendance.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+                {schedules.length > 0 ? (
+                    <div className="px-6 py-4 space-y-4 pb-4">
+                        {schedules.map((schedule) => (
+                            <ScheduleListItem key={schedule.id} schedule={schedule} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg mx-6 w-full">
+                            No classes scheduled yet.
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
 }

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { IndianRupee, PlayCircle, Star, Loader2, Search, Filter, SlidersHorizontal, ShoppingCart, ArrowRight, Zap, Trophy, Flame, Play, History, MoveLeft } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function ProductsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { firestore } = useFirebase();
+  const { addToCart } = useCart();
 
   const [categories, setCategories] = useState<CourseCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,20 +63,12 @@ export default function ProductsPage() {
     };
   }, [firestore]);
 
-  const handleAddToCart = (courseTitle: string) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to add items to your cart.',
-        variant: 'destructive',
-      });
-      router.push('/sign-in');
-    } else {
-      toast({
-        title: 'Success!',
-        description: `${courseTitle} has been added to your cart.`,
-      });
-    }
+  const handleAddToCart = (product: any) => {
+    addToCart(product);
+    toast({
+      title: 'Added to Cart',
+      description: `${product.title} has been added to your cart.`,
+    });
   };
 
   const filteredProducts = products.filter(p => {
@@ -171,6 +165,18 @@ export default function ProductsPage() {
                       <IndianRupee className="h-4 w-4" strokeWidth={3} />
                       {p.price}
                     </div>
+                    <Button 
+                      size="sm" 
+                      className="rounded-full bg-slate-900 hover:bg-primary text-white font-bold shadow-md hover:shadow-xl transition-all h-9 px-4 gap-1.5 z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddToCart(p);
+                      }}
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      Add
+                    </Button>
                   </div>
                 </div>
               </Link>

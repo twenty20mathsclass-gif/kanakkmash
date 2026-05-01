@@ -15,7 +15,7 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +41,6 @@ export default function SignInPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
-      <Button variant="ghost" onClick={() => router.back()} className="absolute top-4 left-4">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
       <div className="mb-8">
         <Link href="/">
             <Image
@@ -75,6 +71,14 @@ export default function SignInPage() {
           </div>
         </CardContent>
       </Card>
+      <div className="mt-4">
+        <Button variant="outline" asChild className="text-muted-foreground hover:text-foreground">
+          <Link href="/">
+            <Home className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
