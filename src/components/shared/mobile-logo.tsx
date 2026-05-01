@@ -65,16 +65,6 @@ export function MobileLogo({ user, onSignOut }: { user: User | null; onSignOut?:
                     </span>
                 )}
             </Link>
-        ) : !user ? (
-            <Link
-                href="https://wa.me/917994875893"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Chat on WhatsApp"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1DA851] shrink-0"
-            >
-                <WhatsAppIcon className="h-6 w-6" />
-            </Link>
         ) : null}
       </div>
     </div>
