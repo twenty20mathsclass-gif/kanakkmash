@@ -143,6 +143,7 @@ export default function MainLayoutClient({
       pathname.startsWith("/exam-schedule") ||
       pathname.startsWith("/class-schedule") ||
       pathname.startsWith("/invoice") ||
+      pathname.startsWith("/salary-invoice") ||
       pathname.startsWith("/cart") ||
       isPublicBlogPost;
 
@@ -152,11 +153,6 @@ export default function MainLayoutClient({
 
     if (!user) {
       if (!isPubliclyAccessible) {
-        toast({
-          title: "Access Denied",
-          description: "Please sign in to access this page.",
-          variant: "destructive",
-        });
         if (window.history.length > 2) {
           router.back();
         } else {
@@ -176,9 +172,9 @@ export default function MainLayoutClient({
     let isUnauthorized = false;
 
     if (user.role === "admin") {
-      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room"));
+      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/salary-invoice"));
     } else if (user.role === "teacher") {
-      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals"));
+      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals") || pathname.startsWith("/salary-invoice"));
     } else if (user.role === "promoter") {
       isUnauthorized = !(pathname.startsWith("/promoter") || pathname.startsWith("/my-referrals"));
     } else if (user.role === "oga") {
@@ -193,11 +189,6 @@ export default function MainLayoutClient({
     }
 
     if (isUnauthorized) {
-      toast({
-        title: "Access Denied",
-        description: "You do not have permission to view this page.",
-        variant: "destructive",
-      });
       if (window.history.length > 2) {
         router.back();
       } else {

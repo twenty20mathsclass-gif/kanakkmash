@@ -107,53 +107,55 @@ function SalaryHistory() {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : payments.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Payment Date</TableHead>
-                                <TableHead>Group Rate</TableHead>
-                                <TableHead>1-1 Rate</TableHead>
-                                <TableHead>Total Hours</TableHead>
-                                <TableHead className="text-right">Amount Paid</TableHead>
-                                <TableHead className="text-right">Invoice</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {payments.map(payment => (
-                                <TableRow key={payment.id}>
-                                    <TableCell className="whitespace-nowrap">{payment.paymentDate ? format(payment.paymentDate.toDate(), 'PPP') : 'Processing...'}</TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        <div className="flex items-center gap-1">
-                                            <IndianRupee className="h-3 w-3" />
-                                            {(payment.hourlyRateGroup || payment.hourlyRate || 0).toLocaleString('en-IN')}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        <div className="flex items-center gap-1">
-                                            <IndianRupee className="h-3 w-3" />
-                                            {(payment.hourlyRateOneToOne || payment.hourlyRate || 0).toLocaleString('en-IN')}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {payment.totalHours}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium whitespace-nowrap">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <IndianRupee className="h-4 w-4" />
-                                            {payment.amount.toLocaleString('en-IN')}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {payment.invoiceId && (
-                                            <Button asChild variant="ghost" size="icon">
-                                                <Link href={`/salary-invoice/${payment.invoiceId}`} target="_blank"><FileText className="h-4 w-4"/></Link>
-                                            </Button>
-                                        )}
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Payment Date</TableHead>
+                                    <TableHead>Group Rate</TableHead>
+                                    <TableHead>1-1 Rate</TableHead>
+                                    <TableHead>Total Hours</TableHead>
+                                    <TableHead className="text-right">Amount Paid</TableHead>
+                                    <TableHead className="text-right">Invoice</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {payments.map(payment => (
+                                    <TableRow key={payment.id}>
+                                        <TableCell className="whitespace-nowrap">{payment.paymentDate ? format(payment.paymentDate.toDate(), 'PPP') : 'Processing...'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex items-center gap-1">
+                                                <IndianRupee className="h-3 w-3" />
+                                                {(payment.hourlyRateGroup || payment.hourlyRate || 0).toLocaleString('en-IN')}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex items-center gap-1">
+                                                <IndianRupee className="h-3 w-3" />
+                                                {(payment.hourlyRateOneToOne || payment.hourlyRate || 0).toLocaleString('en-IN')}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {payment.totalHours}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium whitespace-nowrap">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <IndianRupee className="h-4 w-4" />
+                                                {payment.amount.toLocaleString('en-IN')}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {payment.invoiceId && (
+                                                <Button asChild variant="ghost" size="icon">
+                                                    <Link href={`/salary-invoice/${payment.invoiceId}`} target="_blank"><FileText className="h-4 w-4"/></Link>
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 ) : (
                     <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
                         <p>No salary payment records found.</p>
@@ -493,7 +495,7 @@ export default function TeacherRevenuePage() {
                                 />
 
                                 {paymentMethod === 'bank' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white border rounded-[2rem] shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 sm:p-6 bg-white border rounded-[2rem] shadow-sm">
                                         <FormField control={form.control} name="accountHolderName" render={({ field }) => (
                                             <FormItem><FormLabel className="font-bold">Account Holder Name</FormLabel><FormControl><Input placeholder="Full Name" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                         )}/>
@@ -510,7 +512,7 @@ export default function TeacherRevenuePage() {
                                 )}
 
                                 {paymentMethod === 'upi' && (
-                                    <div className="space-y-6 p-6 bg-white border rounded-[2rem] shadow-sm">
+                                    <div className="space-y-6 p-4 sm:p-6 bg-white border rounded-[2rem] shadow-sm">
                                         <FormField control={form.control} name="upiId" render={({ field }) => (
                                             <FormItem><FormLabel className="font-bold">UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@bank" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
                                         )}/>

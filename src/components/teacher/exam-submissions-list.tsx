@@ -121,8 +121,8 @@ export function ExamSubmissionsList() {
 
     return (
         <Card className="rounded-3xl border-muted/20 shadow-xl overflow-hidden backdrop-blur-sm bg-white/50">
-            <CardHeader className="bg-primary/5 border-b border-muted/10 p-8">
-                <CardTitle className="text-2xl font-bold font-headline">Student Answer Submissions</CardTitle>
+            <CardHeader className="bg-primary/5 border-b border-muted/10 p-4 sm:p-6 lg:p-8">
+                <CardTitle className="text-xl sm:text-2xl font-bold font-headline">Student Answer Submissions</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 <div className="overflow-x-auto">

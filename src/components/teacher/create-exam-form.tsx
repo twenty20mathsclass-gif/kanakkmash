@@ -424,8 +424,8 @@ export function CreateExamForm() {
     };
 
     return (
-        <div className="grid md:grid-cols-2 gap-0 -mx-4 md:-mx-8 -my-4 md:-my-8 min-h-[calc(100vh-4rem)] items-stretch">
-            <div className="overflow-y-auto p-6 md:p-8 border-r">
+        <div className="grid lg:grid-cols-2 gap-0 md:-mx-8 md:-my-8 min-h-[calc(100vh-4rem)] items-stretch">
+            <div className="lg:sticky top-0 lg:h-[calc(100vh-4rem)] overflow-y-auto p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold font-headline">Create Exam</h1>
                 <p className="text-muted-foreground">Build and schedule custom exams for students.</p>
@@ -695,7 +695,7 @@ export function CreateExamForm() {
                 </form>
             </Form>
             </div>
-            <div className="hidden md:flex flex-col sticky top-0 h-[calc(100vh-4rem)] bg-background">
+            <div className="flex flex-col lg:sticky lg:top-0 lg:h-[calc(100vh-4rem)] overflow-y-auto bg-background p-4 sm:p-6 lg:p-0">
                 <ScheduledItemsList schedules={scheduledExams} title="Exams List" description="A record of your created exams." />
             </div>
         </div>

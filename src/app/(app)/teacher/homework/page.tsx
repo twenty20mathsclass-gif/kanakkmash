@@ -115,13 +115,13 @@ export default function HomeworkManagementPage() {
 
             <Tabs defaultValue="overview" className="space-y-8">
                 <Reveal>
-                    <TabsList className="bg-slate-100/50 border border-slate-200/50 p-1 rounded-2xl h-14 inline-flex">
-                        <TabsTrigger value="overview" className="gap-2 rounded-xl px-8 h-12 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all font-bold">
-                            <History className="h-4 w-4" />
+                    <TabsList className="bg-slate-100/50 border border-slate-200/50 p-1 rounded-2xl h-auto md:h-14 grid grid-cols-2 w-full md:w-auto md:inline-flex">
+                        <TabsTrigger value="overview" className="gap-1 sm:gap-2 rounded-xl px-2 sm:px-8 h-12 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all font-bold text-xs sm:text-sm">
+                            <History className="h-3 w-3 sm:h-4 sm:w-4" />
                             Live Management
                         </TabsTrigger>
-                        <TabsTrigger value="submissions" className="gap-2 rounded-xl px-8 h-12 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all font-bold">
-                            <Inbox className="h-4 w-4" />
+                        <TabsTrigger value="submissions" className="gap-1 sm:gap-2 rounded-xl px-2 sm:px-8 h-12 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all font-bold text-xs sm:text-sm">
+                            <Inbox className="h-3 w-3 sm:h-4 sm:w-4" />
                             Global Status
                         </TabsTrigger>
                     </TabsList>
@@ -286,7 +286,7 @@ export default function HomeworkManagementPage() {
                                     </div>
                                 </div>
 
-                                <div className="lg:col-span-7 sticky top-8">
+                                <div className="lg:col-span-7 lg:sticky lg:top-8">
                                     {selectedSchedule ? (
                                         <AttendanceDetails schedule={selectedSchedule} />
                                     ) : (

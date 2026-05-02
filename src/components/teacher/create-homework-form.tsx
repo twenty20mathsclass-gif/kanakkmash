@@ -413,7 +413,7 @@ export function CreateHomeworkForm() {
     };
 
     return (
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <Card>
@@ -738,7 +738,7 @@ export function CreateHomeworkForm() {
                     <Button type="submit" disabled={loading} className="w-full" size="lg">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Homework</Button>
                 </form>
             </Form>
-            <div className="hidden md:block sticky top-20">
+            <div className="flex flex-col lg:sticky lg:top-20">
                 <ScheduledItemsList schedules={scheduledHomework} title="Homework List" description="A record of your created homework tasks." />
             </div>
         </div>

@@ -246,8 +246,8 @@ export default function CreateSchedulePage() {
     };
 
     return (
-        <div className="grid md:grid-cols-2 gap-0 -mx-4 md:-mx-8 -my-4 md:-my-8 min-h-[calc(100vh-4rem)] items-stretch">
-        <div className="sticky top-0 h-[calc(100vh-4rem)] overflow-y-auto p-6 md:p-8 border-r space-y-8">
+        <div className="grid lg:grid-cols-2 gap-0 md:-mx-8 md:-my-8 min-h-[calc(100vh-4rem)] items-stretch">
+            <div className="lg:sticky top-0 lg:h-[calc(100vh-4rem)] overflow-y-auto p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r space-y-6 md:space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold font-headline">Create a New Schedule</h1>
                     <p className="text-muted-foreground">Fill in the details below. A Google Meet link will be generated automatically when you submit.</p>
@@ -379,7 +379,7 @@ export default function CreateSchedulePage() {
                     </CardContent>
                 </Card>
         </div>
-            <div className="hidden md:flex flex-col bg-background">
+            <div className="flex flex-col bg-background p-4 sm:p-6 lg:p-0">
                 <RecentClassesList schedules={scheduledClasses} />
             </div>
         </div>
