@@ -173,11 +173,24 @@ export default function MainLayoutClient({
     else if (user.role === "oga") targetPath = "/oga";
     else targetPath = "/dashboard";
 
-    const isUnauthorized = 
-      (pathname.startsWith("/admin") && user.role !== "admin") ||
-      (pathname.startsWith("/teacher") && user.role !== "teacher") ||
-      (pathname.startsWith("/promoter") && user.role !== "promoter") ||
-      (pathname.startsWith("/oga") && user.role !== "oga");
+    let isUnauthorized = false;
+
+    if (user.role === "admin") {
+      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room"));
+    } else if (user.role === "teacher") {
+      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals"));
+    } else if (user.role === "promoter") {
+      isUnauthorized = !(pathname.startsWith("/promoter") || pathname.startsWith("/my-referrals"));
+    } else if (user.role === "oga") {
+      isUnauthorized = !pathname.startsWith("/oga");
+    } else {
+      // Student or unassigned role
+      isUnauthorized = 
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/teacher") ||
+        pathname.startsWith("/promoter") ||
+        pathname.startsWith("/oga");
+    }
 
     if (isUnauthorized) {
       toast({
