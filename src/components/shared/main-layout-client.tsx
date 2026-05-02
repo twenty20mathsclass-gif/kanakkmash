@@ -7,6 +7,7 @@ import { signOut as firebaseSignOut } from "firebase/auth";
 import { collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { PageLoader } from "@/components/shared/page-loader";
 import { usePresence } from "@/hooks/use-presence";
+import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
 
 import {
@@ -67,6 +68,7 @@ export default function MainLayoutClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { firestore } = useFirebase();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user || !firestore) return;
@@ -150,7 +152,16 @@ export default function MainLayoutClient({
 
     if (!user) {
       if (!isPubliclyAccessible) {
-        router.push("/sign-in");
+        toast({
+          title: "Access Denied",
+          description: "Please sign in to access this page.",
+          variant: "destructive",
+        });
+        if (window.history.length > 2) {
+          router.back();
+        } else {
+          router.replace("/");
+        }
       }
       return;
     }
@@ -162,6 +173,7 @@ export default function MainLayoutClient({
     else if (user.role === "oga") targetPath = "/oga";
     else targetPath = "/dashboard";
 
+    // Standard redirect for exact base paths
     if (
       pathname === "/dashboard" ||
       pathname === "/teacher" ||
@@ -169,19 +181,30 @@ export default function MainLayoutClient({
       pathname === "/promoter" ||
       pathname === "/oga"
     ) {
-      router.replace(targetPath);
+      if (pathname !== targetPath) {
+        router.replace(targetPath);
+      }
     }
 
-    if (pathname.startsWith("/admin") && user.role !== "admin") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/teacher") && user.role !== "teacher") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/promoter") && user.role !== "promoter") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/oga") && user.role !== "oga") {
-      router.replace("/dashboard");
+    const isUnauthorized = 
+      (pathname.startsWith("/admin") && user.role !== "admin") ||
+      (pathname.startsWith("/teacher") && user.role !== "teacher") ||
+      (pathname.startsWith("/promoter") && user.role !== "promoter") ||
+      (pathname.startsWith("/oga") && user.role !== "oga");
+
+    if (isUnauthorized) {
+      toast({
+        title: "Access Denied",
+        description: "You do not have permission to view this page.",
+        variant: "destructive",
+      });
+      if (window.history.length > 2) {
+        router.back();
+      } else {
+        router.replace(targetPath);
+      }
     }
-  }, [loading, user, router, pathname]);
+  }, [loading, user, router, pathname, toast]);
 
   const handleSignOut = async () => {
     if (auth) {
