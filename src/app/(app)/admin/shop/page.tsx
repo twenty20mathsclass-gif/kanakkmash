@@ -2,7 +2,7 @@
 
 import { Reveal } from '@/components/shared/reveal';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Plus, BookPlus, IndianRupee, History, Package, TrendingUp, Users, Loader2 } from 'lucide-react';
+import { ShoppingBag, Plus, BookPlus, IndianRupee, History, Package, TrendingUp, Users, Loader2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { firestore as db } from '@/firebase';
@@ -132,44 +132,65 @@ export default function AdminShopDashboard() {
       </div>
 
       {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Reveal delay={0.4}>
-          <Link href="/admin/shop/products" className="group relative bg-white border border-slate-100 p-10 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-primary/20">
-            <div className="absolute top-10 right-10 opacity-10 group-hover:opacity-20 transition-opacity">
-              <ShoppingBag className="h-24 w-24 text-primary" />
+          <Link href="/admin/shop/products" className="group relative bg-white border border-slate-100 p-8 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-primary/20 h-full">
+            <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <ShoppingBag className="h-20 w-20 text-primary" />
             </div>
             <div className="space-y-6">
-              <div className="h-16 w-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:rotate-12">
-                <BookPlus className="h-8 w-8" />
+              <div className="h-14 w-14 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:rotate-12">
+                <BookPlus className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-black font-headline uppercase">Product Management</h3>
-                <p className="text-slate-500 font-medium leading-relaxed max-w-sm">List, edit, and create your world-class curriculum modules and educational products.</p>
+                <h3 className="text-xl font-black font-headline uppercase">Products</h3>
+                <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-[200px]">List, edit, and create your world-class curriculum modules.</p>
               </div>
               <div className="flex items-center gap-2 text-primary font-black uppercase text-[10px] tracking-widest pt-4">
                 Manage Collection
-                <MoveLeft className="h-4 w-4 rotate-180" />
+                <MoveLeft className="h-3 w-3 rotate-180" />
               </div>
             </div>
           </Link>
         </Reveal>
 
         <Reveal delay={0.5}>
-          <Link href="/admin/shop/orders" className="group relative bg-slate-900 border border-slate-800 p-10 rounded-[3rem] shadow-2xl shadow-slate-900/10 block transition-all hover:bg-slate-800">
-            <div className="absolute top-10 right-10 opacity-10 group-hover:opacity-20 transition-opacity">
-              <History className="h-24 w-24 text-white" />
+          <Link href="/admin/shop/orders" className="group relative bg-slate-900 border border-slate-800 p-8 rounded-[3rem] shadow-2xl shadow-slate-900/10 block transition-all hover:bg-slate-800 h-full">
+            <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <History className="h-20 w-20 text-white" />
             </div>
             <div className="space-y-6">
-              <div className="h-16 w-16 rounded-[1.5rem] bg-white/10 flex items-center justify-center text-white transition-transform group-hover:rotate-12">
-                <IndianRupee className="h-8 w-8" />
+              <div className="h-14 w-14 rounded-[1.5rem] bg-white/10 flex items-center justify-center text-white transition-transform group-hover:rotate-12">
+                <IndianRupee className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-black font-headline uppercase text-white">Order Tracking</h3>
-                <p className="text-slate-400 font-medium leading-relaxed max-w-sm">Monitor student enrollments, check transaction statuses, and track revenue metrics in real-time.</p>
+                <h3 className="text-xl font-black font-headline uppercase text-white">Orders</h3>
+                <p className="text-slate-400 font-medium text-sm leading-relaxed max-w-[200px]">Monitor student enrollments and track revenue metrics in real-time.</p>
               </div>
               <div className="flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest pt-4">
                 View All Orders
-                <MoveLeft className="h-4 w-4 rotate-180" />
+                <MoveLeft className="h-3 w-3 rotate-180" />
+              </div>
+            </div>
+          </Link>
+        </Reveal>
+
+        <Reveal delay={0.6}>
+          <Link href="/admin/shop/reviews" className="group relative bg-white border border-slate-100 p-8 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-yellow-400/30 h-full">
+            <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Star className="h-20 w-20 text-yellow-400 fill-yellow-400" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-14 w-14 rounded-[1.5rem] bg-yellow-50 flex items-center justify-center text-yellow-500 transition-transform group-hover:rotate-12">
+                <Star className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black font-headline uppercase text-slate-900">Reviews</h3>
+                <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-[200px]">Monitor and moderate customer feedback across your catalog.</p>
+              </div>
+              <div className="flex items-center gap-2 text-yellow-500 font-black uppercase text-[10px] tracking-widest pt-4">
+                Moderate Reviews
+                <MoveLeft className="h-3 w-3 rotate-180" />
               </div>
             </div>
           </Link>

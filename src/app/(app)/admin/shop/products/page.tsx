@@ -115,9 +115,9 @@ export default function AdminProductsPage() {
                   <div className="relative h-56 w-full rounded-[1.8rem] overflow-hidden mb-6">
                      <Image src={courseImage} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                      <div className="absolute top-4 right-4 z-10 flex gap-2">
-                         <div className="bg-white/90 backdrop-blur-md rounded-full p-2 h-10 w-10 flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-xl">
+                         <Link href={`/admin/shop/products/edit/${p.id}`} className="bg-white/90 backdrop-blur-md rounded-full p-2 h-10 w-10 flex items-center justify-center text-slate-600 hover:text-primary transition-colors cursor-pointer shadow-xl">
                             <Edit className="h-4 w-4" />
-                         </div>
+                         </Link>
                          <div 
                            onClick={() => handleDelete(p.id, p.title)}
                            className="bg-white/90 backdrop-blur-md rounded-full p-2 h-10 w-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors cursor-pointer shadow-xl"

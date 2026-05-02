@@ -254,10 +254,10 @@ export default function CartPaymentPage() {
                 {/* Page Title */}
                 <Reveal>
                     <div className="text-center mb-10">
-                        <h1 className="text-4xl sm:text-5xl font-black font-headline tracking-tighter uppercase mb-3">Secure Checkout</h1>
-                        <p className="text-slate-500 font-medium flex items-center justify-center gap-2 text-sm">
-                            <ShieldCheck className="h-4 w-4 text-green-500" />
-                            256-bit SSL encrypted &bull; Powered by Razorpay
+                        <h1 className="text-3xl sm:text-5xl font-black font-headline tracking-tighter uppercase mb-3 break-words">Secure Checkout</h1>
+                        <p className="text-slate-500 font-medium flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+                            <ShieldCheck className="h-4 w-4 text-green-500 shrink-0" />
+                            <span>256-bit SSL encrypted &bull; Powered by Razorpay</span>
                         </p>
                     </div>
                 </Reveal>
@@ -358,9 +358,9 @@ export default function CartPaymentPage() {
                             )}
                         </Button>
 
-                        <div className="flex items-center justify-center gap-3 mt-4 text-slate-400">
-                            <ShieldCheck className="h-4 w-4 text-green-500" />
-                            <p className="text-xs font-medium">Safe & Secure &bull; 100% Encrypted &bull; Powered by Razorpay</p>
+                        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 text-slate-400 text-center">
+                            <ShieldCheck className="h-4 w-4 text-green-500 shrink-0" />
+                            <p className="text-[10px] sm:text-xs font-medium">Safe & Secure &bull; 100% Encrypted &bull; Powered by Razorpay</p>
                         </div>
                     </Reveal>
                 </div>

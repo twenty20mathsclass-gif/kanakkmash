@@ -136,18 +136,38 @@ function SalaryInvoicePageContents() {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-b">
-                                    <td className="p-3 font-bold">Group Classes</td>
-                                    <td className="p-3 text-right">{invoice.totalHoursGroup}</td>
-                                    <td className="p-3 text-right">₹{Number(invoice.hourlyRateGroup).toFixed(2)}</td>
-                                    <td className="p-3 text-right font-mono">₹{Number(invoice.totalHoursGroup * invoice.hourlyRateGroup).toFixed(2)}</td>
-                                </tr>
-                                <tr className="border-b">
-                                    <td className="p-3 font-bold">One-to-One Classes</td>
-                                    <td className="p-3 text-right">{invoice.totalHoursOneToOne}</td>
-                                    <td className="p-3 text-right">₹{Number(invoice.hourlyRateOneToOne).toFixed(2)}</td>
-                                    <td className="p-3 text-right font-mono">₹{Number(invoice.totalHoursOneToOne * invoice.hourlyRateOneToOne).toFixed(2)}</td>
-                                </tr>
+                                {invoice.totalHoursGroup > 0 || invoice.hourlyRateGroup > 0 ? (
+                                    <tr className="border-b">
+                                        <td className="p-3 font-bold">Group Classes</td>
+                                        <td className="p-3 text-right">{invoice.totalHoursGroup || 0}</td>
+                                        <td className="p-3 text-right">₹{Number(invoice.hourlyRateGroup || 0).toFixed(2)}</td>
+                                        <td className="p-3 text-right font-mono">₹{Number((invoice.totalHoursGroup || 0) * (invoice.hourlyRateGroup || 0)).toFixed(2)}</td>
+                                    </tr>
+                                ) : null}
+                                {invoice.totalHoursOneToOne > 0 || invoice.hourlyRateOneToOne > 0 ? (
+                                    <tr className="border-b">
+                                        <td className="p-3 font-bold">One-to-One Classes</td>
+                                        <td className="p-3 text-right">{invoice.totalHoursOneToOne || 0}</td>
+                                        <td className="p-3 text-right">₹{Number(invoice.hourlyRateOneToOne || 0).toFixed(2)}</td>
+                                        <td className="p-3 text-right font-mono">₹{Number((invoice.totalHoursOneToOne || 0) * (invoice.hourlyRateOneToOne || 0)).toFixed(2)}</td>
+                                    </tr>
+                                ) : null}
+                                {invoice.fixedAmount > 0 && (
+                                    <tr className="border-b">
+                                        <td className="p-3 font-bold">Fixed Amount / Base Salary</td>
+                                        <td className="p-3 text-right">-</td>
+                                        <td className="p-3 text-right">-</td>
+                                        <td className="p-3 text-right font-mono">₹{Number(invoice.fixedAmount).toFixed(2)}</td>
+                                    </tr>
+                                )}
+                                {invoice.incentives > 0 && (
+                                    <tr className="border-b">
+                                        <td className="p-3 font-bold">Incentives / Bonus</td>
+                                        <td className="p-3 text-right">-</td>
+                                        <td className="p-3 text-right">-</td>
+                                        <td className="p-3 text-right font-mono">₹{Number(invoice.incentives).toFixed(2)}</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

@@ -55,7 +55,7 @@ service cloud.firestore {
       }
       
       match /teacher_details/{detailsDoc} {
-        allow read, write: if (isOwner(userId) && isRole('teacher')) || isAdmin();
+        allow read, write: if (isOwner(userId) && (isRole('teacher') || isRole('oga') || isRole('promoter'))) || isAdmin();
       }
 
       match /promoter_details/{detailsDoc} {
@@ -223,6 +223,12 @@ service cloud.firestore {
     match /shop_products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
+      
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      }
     }
     match /shop_orders/{orderId} {
       allow read, create: if true;

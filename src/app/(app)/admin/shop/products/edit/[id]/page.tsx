@@ -4,19 +4,21 @@ import { Reveal } from '@/components/shared/reveal';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { IndianRupee, Image as ImageIcon, Plus, Trash2, Save, X, MoveLeft, BookOpen, Layers, Info, PenSquare, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { firestore as db } from '@/firebase';
-import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import { uploadImage } from '@/lib/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function AddProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const { id } = useParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   
   // Local state for the fields
@@ -25,13 +27,46 @@ export default function AddProductPage() {
   const [price, setPrice] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([null, null, null, null]);
-  
+
   const categories = [
     { id: 'books', name: 'Books' },
     { id: 'courses', name: 'Courses' },
     { id: 'materials', name: 'Materials' },
     { id: 'maths-products', name: 'Maths Products' }
   ];
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!db || !id) return;
+      try {
+        const docSnap = await getDoc(doc(db, 'shop_products', id as string));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTitle(data.title || '');
+          setDescription(data.description || '');
+          setPrice(data.price ? data.price.toString() : '');
+          setSelectedCategory(data.category || '');
+          
+          const fetchedImages = data.images || [];
+          const paddedImages = [...fetchedImages, null, null, null, null].slice(0, 4);
+          setImageUrls(paddedImages);
+        } else {
+          toast({
+            title: "Not Found",
+            description: "The requested product does not exist.",
+            variant: "destructive"
+          });
+          router.push('/admin/shop/products');
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setFetching(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [db, id, router, toast]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
@@ -75,33 +110,40 @@ export default function AddProductPage() {
 
     setLoading(true);
     try {
-      await addDoc(collection(db!, 'shop_products'), {
+      await updateDoc(doc(db!, 'shop_products', id as string), {
         title,
         description,
         price: Number(price),
         category: selectedCategory,
-        status: 'active',
         images: imageUrls.filter(url => url !== null),
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
       toast({
-        title: "Module Created",
-        description: "Successfully added the new product to your marketplace catalog.",
+        title: "Module Updated",
+        description: "Successfully updated the product in your marketplace catalog.",
       });
       router.push('/admin/shop/products');
     } catch (error) {
       console.error("Save error:", error);
       toast({
         title: "Operation Failed",
-        description: "There was an error committing this module to the database. Please try again.",
+        description: "There was an error updating this module. Please try again.",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetching) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+           <Loader2 className="h-10 w-10 animate-spin text-primary" />
+           <p className="text-sm font-bold text-slate-400 tracking-widest uppercase animate-pulse">Loading Details...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-12">
@@ -113,10 +155,10 @@ export default function AddProductPage() {
                 Products
              </button>
              <span>/</span>
-             <span className="text-slate-400 uppercase">ADD NEW</span>
+             <span className="text-slate-400 uppercase">EDIT MODULE</span>
           </div>
-          <h1 className="text-3xl font-black font-headline tracking-tighter uppercase leading-none">Add New Product</h1>
-          <p className="text-slate-500 font-medium font-sm max-w-lg">Define a new masterpiece module. Upload professional imagery and map out your syllabus.</p>
+          <h1 className="text-3xl font-black font-headline tracking-tighter uppercase leading-none">Edit Product</h1>
+          <p className="text-slate-500 font-medium font-sm max-w-lg">Update the details and visuals of your existing curriculum module.</p>
         </div>
         <div className="flex items-center gap-3">
            <Button variant="outline" onClick={() => router.back()} className="rounded-2xl h-14 px-8 border-slate-100 flex gap-2 font-black uppercase text-[10px] tracking-widest text-slate-500 hover:bg-slate-50">

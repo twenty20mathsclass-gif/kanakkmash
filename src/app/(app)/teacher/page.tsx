@@ -148,19 +148,44 @@ export default function TeacherDashboardPage() {
           collection(firestore, 'users', user.id, 'salaryPayments')
         );
 
-        const [schedulesSnapshot, salaryPaymentsSnapshot] =
-          await Promise.all([
-            getDocs(schedulesQuery),
-            getDocs(salaryPaymentsQuery),
-          ]);
+        let schedulesSnapshot;
+        try {
+            schedulesSnapshot = await getDocs(schedulesQuery);
+        } catch (e: any) {
+            console.error("Schedules query failed:", e);
+            if (e.code === 'permission-denied') {
+               errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'schedules', operation: 'list' }, { cause: e }));
+            }
+            throw e;
+        }
+
+        let salaryPaymentsSnapshot;
+        try {
+            salaryPaymentsSnapshot = await getDocs(salaryPaymentsQuery);
+        } catch (e: any) {
+            console.error("Salary Payments query failed:", e);
+            if (e.code === 'permission-denied') {
+               errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `users/${user.id}/salaryPayments`, operation: 'list' }, { cause: e }));
+            }
+            throw e;
+        }
         
         let allStudents: User[] = [];
         if (user.assignedClasses && user.assignedClasses.length > 0) {
-            const studentPromises = user.assignedClasses.map(assignedItem => {
+            const studentPromises = user.assignedClasses.map(async (assignedItem) => {
                 const q1 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('class', '==', assignedItem));
                 const q2 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('competitiveExam', '==', assignedItem));
                 const q3 = query(collection(firestore, 'users'), where('role', '==', 'student'), where('level', '==', assignedItem));
-                return Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
+                
+                try {
+                    return await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
+                } catch (e: any) {
+                    console.error(`Students query failed for ${assignedItem}:`, e);
+                     if (e.code === 'permission-denied') {
+                         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: e }));
+                     }
+                     throw e;
+                }
             });
 
             const studentSnapshotsArray = await Promise.all(studentPromises);
@@ -222,15 +247,8 @@ export default function TeacherDashboardPage() {
         
         setContacts(allStudents);
 
-
       } catch (error: any) {
-        if (error.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError(
-            { path: 'users, schedules, or salaryPayments', operation: 'list' },
-            { cause: error }
-          );
-          errorEmitter.emit('permission-error', permissionError);
-        }
+        console.error("Dashboard fetch error:", error);
       } finally {
         setLoading(false);
       }

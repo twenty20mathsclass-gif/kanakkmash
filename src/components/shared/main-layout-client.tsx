@@ -283,6 +283,7 @@ export default function MainLayoutClient({
       icon: FilePenLine,
     },
     { href: "/oga/settings", label: "Test Settings", icon: Settings },
+    { href: "/oga/revenue", label: "My Revenue", icon: Banknote },
   ];
 
   const adminNav = [
@@ -310,7 +311,7 @@ export default function MainLayoutClient({
     { href: "/admin/accountant", label: "Accountant", icon: Calculator },
     {
       href: "/admin/accountant/salaries",
-      label: "Teacher Salaries",
+      label: "Payroll",
       icon: Banknote,
     },
     {
