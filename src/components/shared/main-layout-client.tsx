@@ -173,19 +173,6 @@ export default function MainLayoutClient({
     else if (user.role === "oga") targetPath = "/oga";
     else targetPath = "/dashboard";
 
-    // Standard redirect for exact base paths
-    if (
-      pathname === "/dashboard" ||
-      pathname === "/teacher" ||
-      pathname === "/admin" ||
-      pathname === "/promoter" ||
-      pathname === "/oga"
-    ) {
-      if (pathname !== targetPath) {
-        router.replace(targetPath);
-      }
-    }
-
     const isUnauthorized = 
       (pathname.startsWith("/admin") && user.role !== "admin") ||
       (pathname.startsWith("/teacher") && user.role !== "teacher") ||
@@ -203,6 +190,12 @@ export default function MainLayoutClient({
       } else {
         router.replace(targetPath);
       }
+      return;
+    }
+
+    // Auto-redirect to specific role dashboard if they land on generic /dashboard
+    if (pathname === "/dashboard" && pathname !== targetPath) {
+      router.replace(targetPath);
     }
   }, [loading, user, router, pathname, toast]);
 
