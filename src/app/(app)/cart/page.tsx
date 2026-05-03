@@ -23,7 +23,12 @@ export default function CartPage() {
 
     const [phone, setPhone] = useState('');
     const [name, setName] = useState('');
-    const [address, setAddress] = useState('');
+    const [pincode, setPincode] = useState('');
+    const [houseNo, setHouseNo] = useState('');
+    const [area, setArea] = useState('');
+    const [landmark, setLandmark] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
     
     const [orders, setOrders] = useState<any[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
@@ -44,17 +49,25 @@ export default function CartPage() {
         try {
             const q = query(
                 collection(firestore, 'shop_orders'),
-                where('phone', '==', phone),
-                orderBy('createdAt', 'desc')
+                where('phone', '==', phone)
             );
             
             const snapshot = await getDocs(q);
             const pastOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Sort in memory to avoid needing a Firestore composite index
+            pastOrders.sort((a: any, b: any) => {
+                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                return timeB - timeA;
+            });
+            
             setOrders(pastOrders);
             
             if (pastOrders.length > 0) {
                 setName(pastOrders[0].name || '');
-                setAddress(pastOrders[0].address || '');
+                // Autofill past address into houseNo to allow user to review/edit
+                setHouseNo(pastOrders[0].address || '');
                 toast({
                     title: "History Found",
                     description: "We've fetched your past orders and autofilled your details."
@@ -79,19 +92,21 @@ export default function CartPage() {
 
     const handleCheckout = () => {
         if (items.length === 0) return;
-        if (!name || !phone || !address) {
+        if (!name || !phone || !pincode || !houseNo || !area || !city || !state) {
             toast({
                 title: "Missing Information",
-                description: "Please fill in your Name, Phone Number, and Address.",
+                description: "Please fill in your Name, Phone Number, and all required Address fields.",
                 variant: "destructive"
             });
             return;
         }
 
+        const fullAddress = `${houseNo}, ${area}, ${landmark ? landmark + ', ' : ''}${city}, ${state} - ${pincode}`;
+
         localStorage.setItem('pending_checkout', JSON.stringify({
             name,
             phone,
-            address,
+            address: fullAddress,
             items,
             total: cartTotal
         }));
@@ -251,14 +266,65 @@ export default function CartPage() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2 pl-1">
-                                        <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Full Address</label>
-                                        <Textarea 
-                                            placeholder="Enter your complete shipping address" 
-                                            value={address}
-                                            onChange={(e) => setAddress(e.target.value)}
-                                            className="min-h-[100px] sm:min-h-[120px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold p-4 sm:p-5 resize-none text-sm sm:text-base"
-                                        />
+                                    <div className="space-y-4 pt-2">
+                                        <h3 className="text-slate-900 font-black text-sm uppercase tracking-widest border-b border-slate-100 pb-2">Shipping Address</h3>
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">Pincode</label>
+                                            <Input 
+                                                placeholder="6 digits [0-9] PIN code" 
+                                                value={pincode}
+                                                onChange={(e) => setPincode(e.target.value)}
+                                                className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">Flat, House no., Building, Company, Apartment</label>
+                                            <Input 
+                                                placeholder="Enter House No., Building Name" 
+                                                value={houseNo}
+                                                onChange={(e) => setHouseNo(e.target.value)}
+                                                className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">Area, Street, Sector, Village</label>
+                                            <Input 
+                                                placeholder="Enter Area, Street name" 
+                                                value={area}
+                                                onChange={(e) => setArea(e.target.value)}
+                                                className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">Landmark (Optional)</label>
+                                            <Input 
+                                                placeholder="E.g. near apollo hospital" 
+                                                value={landmark}
+                                                onChange={(e) => setLandmark(e.target.value)}
+                                                className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">Town/City</label>
+                                                <Input 
+                                                    placeholder="Enter City" 
+                                                    value={city}
+                                                    onChange={(e) => setCity(e.target.value)}
+                                                    className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-slate-500 text-[10px] font-black uppercase tracking-widest pl-1">State</label>
+                                                <Input 
+                                                    placeholder="Enter State" 
+                                                    value={state}
+                                                    onChange={(e) => setState(e.target.value)}
+                                                    className="h-12 sm:h-14 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl sm:rounded-2xl focus-visible:ring-primary focus-visible:bg-white font-bold px-4 sm:px-5 text-sm sm:text-base"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-slate-100">

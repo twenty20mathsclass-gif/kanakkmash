@@ -132,7 +132,7 @@ export default function AdminShopDashboard() {
       </div>
 
       {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <Reveal delay={0.4}>
           <Link href="/admin/shop/products" className="group relative bg-white border border-slate-100 p-8 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-primary/20 h-full">
             <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -176,6 +176,27 @@ export default function AdminShopDashboard() {
         </Reveal>
 
         <Reveal delay={0.6}>
+          <Link href="/admin/shop/customers" className="group relative bg-white border border-slate-100 p-8 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-purple-500/30 h-full">
+            <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Users className="h-20 w-20 text-purple-500" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-14 w-14 rounded-[1.5rem] bg-purple-50 flex items-center justify-center text-purple-500 transition-transform group-hover:rotate-12">
+                <Users className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black font-headline uppercase text-slate-900">Customers</h3>
+                <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-[200px]">View user details, purchase history, and export customer data.</p>
+              </div>
+              <div className="flex items-center gap-2 text-purple-500 font-black uppercase text-[10px] tracking-widest pt-4">
+                View Customers
+                <MoveLeft className="h-3 w-3 rotate-180" />
+              </div>
+            </div>
+          </Link>
+        </Reveal>
+
+        <Reveal delay={0.7}>
           <Link href="/admin/shop/reviews" className="group relative bg-white border border-slate-100 p-8 rounded-[3rem] shadow-2xl shadow-black/5 block transition-all hover:border-yellow-400/30 h-full">
             <div className="absolute top-8 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
               <Star className="h-20 w-20 text-yellow-400 fill-yellow-400" />

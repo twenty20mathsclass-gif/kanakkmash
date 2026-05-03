@@ -144,18 +144,19 @@ export default function CartPaymentPage() {
                             }),
                         });
 
-                        const { verified } = await verifyRes.json();
+                        const data = await verifyRes.json();
 
-                        if (verified) {
+                        if (verifyRes.ok && data.verified) {
                             // 4. Save order to Firestore on success
                             await handleSaveOrder(response.razorpay_payment_id, response.razorpay_order_id);
                         } else {
-                            throw new Error('Payment signature verification failed');
+                            throw new Error(data.error || 'Payment signature verification failed');
                         }
-                    } catch (err) {
+                    } catch (err: any) {
+                        console.error('Verification Error:', err);
                         toast({
                             title: 'Verification Failed',
-                            description: 'Payment was received but could not be verified. Please contact support.',
+                            description: err.message || 'Payment was received but could not be verified. Please contact support.',
                             variant: 'destructive',
                         });
                     }
