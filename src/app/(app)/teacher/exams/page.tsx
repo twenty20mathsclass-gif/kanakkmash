@@ -51,13 +51,13 @@ export default function ExamManagementPage() {
 
             <Tabs defaultValue="overview" className="space-y-6">
                 <Reveal delay={0.1}>
-                    <TabsList className="bg-muted/50 p-1">
-                        <TabsTrigger value="overview" className="gap-2">
-                            <History className="h-4 w-4" />
+                    <TabsList className="bg-muted/50 p-1 grid grid-cols-2 w-full md:w-auto md:inline-grid">
+                        <TabsTrigger value="overview" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                            <History className="h-3 w-3 sm:h-4 sm:w-4" />
                             Recent Exams
                         </TabsTrigger>
-                        <TabsTrigger value="submissions" className="gap-2">
-                            <Inbox className="h-4 w-4" />
+                        <TabsTrigger value="submissions" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                            <Inbox className="h-3 w-3 sm:h-4 sm:w-4" />
                             Submissions
                         </TabsTrigger>
                     </TabsList>

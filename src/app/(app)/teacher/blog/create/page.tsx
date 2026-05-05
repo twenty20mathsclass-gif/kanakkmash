@@ -10,8 +10,8 @@ export default function TeacherBlogCreatePage() {
     <div className="space-y-8">
         <Reveal>
             <div>
-                <h1 className="text-3xl font-bold font-headline">Blog Creation</h1>
-                <p className="text-muted-foreground">Write and publish new blog posts.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold font-headline">Blog Creation</h1>
+                <p className="text-sm sm:text-base text-muted-foreground">Write and publish new blog posts.</p>
             </div>
         </Reveal>
         <Reveal delay={0.2}>

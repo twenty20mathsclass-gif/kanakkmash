@@ -90,8 +90,8 @@ export default function TeacherAddAssessmentQuestionPage() {
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold font-headline">New Question</h1>
-                        <p className="text-muted-foreground">Adding to <span className="font-semibold text-primary">{className}</span></p>
+                        <h1 className="text-2xl sm:text-3xl font-bold font-headline">New Question</h1>
+                        <p className="text-sm sm:text-base text-muted-foreground">Adding to <span className="font-semibold text-primary">{className}</span></p>
                     </div>
                 </div>
             </Reveal>
@@ -102,7 +102,7 @@ export default function TeacherAddAssessmentQuestionPage() {
                         <CardTitle>Question Details</CardTitle>
                         <CardDescription>Enter the question text and define possible answers.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8">
+                    <CardContent className="p-4 sm:p-8">
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div className="space-y-4">
                                 <Label htmlFor="question" className="text-lg">Question Text</Label>
@@ -151,11 +151,11 @@ export default function TeacherAddAssessmentQuestionPage() {
                                                     required
                                                 />
                                                 {correctIndex === idx && (
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary px-1.5 py-0.5 border-2 border-primary rounded leading-none uppercase">Correct</span>
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary px-1.5 py-0.5 border-2 border-primary rounded leading-none uppercase hidden sm:block">Correct</span>
                                                 )}
                                             </div>
                                             {options.length > 2 && (
-                                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveOption(idx)} className="opacity-0 group-hover:opacity-100 text-destructive-foreground bg-destructive/10 hover:bg-destructive/20 h-10 w-10">
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveOption(idx)} className="sm:opacity-0 group-hover:opacity-100 text-destructive-foreground bg-destructive/10 hover:bg-destructive/20 h-10 w-10 shrink-0">
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             )}

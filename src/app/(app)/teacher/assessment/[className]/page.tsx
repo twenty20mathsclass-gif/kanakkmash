@@ -73,17 +73,17 @@ export default function TeacherClassQuestionListPage() {
     return (
         <div className="space-y-8">
             <Reveal>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button onClick={() => router.back()} variant="ghost" size="icon">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-4">
+                        <Button onClick={() => router.back()} variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold font-headline">{className}</h1>
-                            <p className="text-muted-foreground">Manage assessment questions for this class.</p>
+                            <h1 className="text-2xl sm:text-3xl font-bold font-headline">{className}</h1>
+                            <p className="text-sm sm:text-base text-muted-foreground">Manage assessment questions for this class.</p>
                         </div>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                         <Link href={`/teacher/assessment/${encodeURIComponent(className)}/add`}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Question
                         </Link>
@@ -117,7 +117,7 @@ export default function TeacherClassQuestionListPage() {
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="bg-muted/20 flex flex-col items-center justify-center p-4 border-l border-r border-dashed border-muted">
+                                        <div className="bg-muted/20 flex flex-col items-center justify-center p-4 border-y md:border-y-0 md:border-x border-dashed border-muted">
                                             {q.imageUrl ? (
                                                 <div className="relative w-full h-32 rounded-lg overflow-hidden border bg-white mb-2">
                                                     <Image src={q.imageUrl} alt="Q-Image" fill className="object-contain p-2" unoptimized />
@@ -126,7 +126,7 @@ export default function TeacherClassQuestionListPage() {
                                                 <p className="text-xs text-muted-foreground italic">No accompanying image.</p>
                                             )}
                                         </div>
-                                        <div className="p-4 flex flex-col md:flex-row md:items-center gap-2">
+                                        <div className="p-4 flex flex-row md:flex-col md:items-center justify-end md:justify-center gap-2">
                                             <Button asChild variant="outline" size="icon" className="text-primary border-primary/20 hover:bg-primary/10">
                                                 <Link href={`/teacher/assessment/${encodeURIComponent(className)}/edit/${q.id}`}>
                                                     <Edit className="h-4 w-4" />

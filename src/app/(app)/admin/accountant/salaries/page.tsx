@@ -9,12 +9,13 @@ import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp,
 import type { User, SalaryPayment, Schedule, TeacherPrivateDetails } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info, Lock, Unlock, ShieldCheck } from 'lucide-react';
+import { Loader2, University, Hash, Landmark, User as UserIcon, IndianRupee, PlusCircle, QrCode, Calendar as CalendarIcon, Clock, Users as UsersIconComponent, FileText, Info, Lock, Unlock, ShieldCheck, Briefcase, Trash2 } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format, startOfMonth, endOfMonth, parse } from 'date-fns';
+import { format, startOfMonth, endOfMonth, parse, isThisMonth } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,8 +32,11 @@ type ScheduleWithAttendance = Schedule & { attendance: number };
 
 const addPaymentSchema = z.object({
     paymentMonth: z.string().min(1, 'Please select a month.'),
+    paymentType: z.enum(['both', 'fixed', 'incentive']).default('both'),
     hourlyRateGroup: z.coerce.number().min(0, "Rate cannot be negative."),
     hourlyRateOneToOne: z.coerce.number().min(0, "Rate cannot be negative."),
+    fixedAmount: z.coerce.number().min(0).default(0),
+    incentives: z.coerce.number().min(0).default(0),
 });
 type AddPaymentValues = z.infer<typeof addPaymentSchema>;
 
@@ -45,6 +49,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const [monthlySchedules, setMonthlySchedules] = useState<ScheduleWithAttendance[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [loadingSchedules, setLoadingSchedules] = useState(false);
+    const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
     const [formError, setFormError] = useState<string|null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<string | undefined>();
@@ -54,8 +59,10 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     const form = useForm<AddPaymentValues>({
         resolver: zodResolver(addPaymentSchema),
         defaultValues: {
-            hourlyRateGroup: 0,
-            hourlyRateOneToOne: 0,
+            hourlyRateGroup: teacher?.hourlyRateGroup || teacher?.hourlyRate || 0,
+            hourlyRateOneToOne: teacher?.hourlyRateOneToOne || teacher?.hourlyRate || 0,
+            fixedAmount: (teacher as any)?.fixedSalary || 0,
+            incentives: (teacher as any)?.incentives || 0,
         },
     });
 
@@ -79,13 +86,18 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
     const rateGroup = form.watch('hourlyRateGroup');
     const rateOneToOne = form.watch('hourlyRateOneToOne');
+    const fixedAmount = form.watch('fixedAmount');
+    const incentives = form.watch('incentives');
+    const paymentType = form.watch('paymentType');
 
     const monthlyStats = useMemo(() => {
         let groupMinutes = 0;
         let oneToOneMinutes = 0;
 
         monthlySchedules.forEach(item => {
-            const duration = item.type === 'class' ? getDurationInMinutes(item.startTime, item.endTime) : (item.duration || 0);
+            const duration = item.type === 'class'
+                ? getDurationInMinutes(item.startTime, item.endTime, item)  // pass full item for timestamp check
+                : (item.duration || 0);
             if (item.learningMode === 'one to one' || item.studentId) {
                 oneToOneMinutes += duration;
             } else {
@@ -95,12 +107,27 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
 
         const groupHours = Math.round((groupMinutes / 60) * 100) / 100;
         const oneToOneHours = Math.round((oneToOneMinutes / 60) * 100) / 100;
-        const totalAmount = (groupHours * rateGroup) + (oneToOneHours * rateOneToOne);
+
+        const actualFixed = paymentType === 'incentive' ? 0 : (fixedAmount || 0);
+        const actualIncentives = paymentType === 'fixed' ? 0 : (incentives || 0);
+
+        const totalAmount = (groupHours * rateGroup) + (oneToOneHours * rateOneToOne) + actualFixed + actualIncentives;
 
         return { groupHours, oneToOneHours, totalAmount };
-    }, [monthlySchedules, rateGroup, rateOneToOne]);
+    }, [monthlySchedules, rateGroup, rateOneToOne, fixedAmount, incentives, paymentType]);
 
-    function getDurationInMinutes(startTime: string, endTime: string): number {
+    /**
+     * Returns actual session duration in minutes.
+     * Prefers meetReleasedAt → meetEndedAt (real recorded time) when available.
+     * Falls back to scheduled startTime → endTime strings.
+     */
+    function getDurationInMinutes(startTime: string | undefined, endTime: string | undefined, schedule?: Schedule): number {
+        // If we have actual timestamps from the meeting, use them for precision
+        if (schedule?.meetReleasedAt && schedule?.meetEndedAt) {
+            const diffMs = schedule.meetEndedAt.toMillis() - schedule.meetReleasedAt.toMillis();
+            return Math.max(0, Math.round(diffMs / (1000 * 60)));
+        }
+        // Fall back to scheduled times
         if (!startTime || !endTime) return 0;
         try {
             const start = parse(startTime, 'HH:mm', new Date());
@@ -122,6 +149,14 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             return;
         };
         setLoadingHistory(true);
+        
+        form.reset({
+            paymentMonth: form.getValues('paymentMonth') || '',
+            hourlyRateGroup: teacher.hourlyRateGroup || teacher.hourlyRate || 0,
+            hourlyRateOneToOne: teacher.hourlyRateOneToOne || teacher.hourlyRate || 0,
+            fixedAmount: (teacher as any).fixedSalary || 0,
+            incentives: (teacher as any).incentives || 0,
+        });
 
         const paymentsQuery = query(collection(firestore, 'users', teacher.id, 'salaryPayments'));
         const unsubscribePayments = onSnapshot(paymentsQuery, (snapshot) => {
@@ -153,7 +188,10 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             form.reset({
                 hourlyRateGroup: teacher.hourlyRateGroup || teacher.hourlyRate || 0,
                 hourlyRateOneToOne: teacher.hourlyRateOneToOne || teacher.hourlyRate || 0,
+                fixedAmount: (teacher as any).fixedSalary || 0,
+                incentives: (teacher as any).incentives || 0,
                 paymentMonth: undefined,
+                paymentType: 'both',
             });
             setSelectedMonth(undefined);
             setMonthlySchedules([]);
@@ -201,6 +239,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             const monthEnd = endOfMonth(monthStart);
 
             const schedulesInMonth = allSchedules.filter(s => {
+                if (!s.date) return false;
                 const scheduleDate = s.date.toDate();
                 return scheduleDate >= monthStart && scheduleDate <= monthEnd;
             });
@@ -228,7 +267,18 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
         setFormError(null);
 
         // Overlap check
-        const hasOverlap = payments.some(p => p.paymentMonth === data.paymentMonth);
+        const hasOverlap = payments.some(p => {
+            if (p.paymentMonth !== data.paymentMonth) return false;
+            if (teacher.role === 'teacher') return true;
+
+            const existingType = (p as any).paymentType || 'both';
+            
+            if (data.paymentType === 'both') return true;
+            if (existingType === 'both') return true;
+            if (existingType === data.paymentType) return true;
+            
+            return false;
+        });
 
         if (hasOverlap) {
             setFormError("A payment for this month has already been recorded. Please check the payment history.");
@@ -251,6 +301,9 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             endDate: endDate,
             hourlyRateGroup: data.hourlyRateGroup,
             hourlyRateOneToOne: data.hourlyRateOneToOne,
+            fixedAmount: data.paymentType === 'incentive' ? 0 : (data.fixedAmount || 0),
+            incentives: data.paymentType === 'fixed' ? 0 : (data.incentives || 0),
+            paymentType: teacher.role === 'teacher' ? 'hourly' : data.paymentType,
             totalHoursGroup: monthlyStats.groupHours,
             totalHoursOneToOne: monthlyStats.oneToOneHours,
             totalHours: monthlyStats.groupHours + monthlyStats.oneToOneHours,
@@ -263,6 +316,9 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             teacherId: teacher.id,
             hourlyRateGroup: data.hourlyRateGroup,
             hourlyRateOneToOne: data.hourlyRateOneToOne,
+            fixedAmount: data.paymentType === 'incentive' ? 0 : (data.fixedAmount || 0),
+            incentives: data.paymentType === 'fixed' ? 0 : (data.incentives || 0),
+            paymentType: teacher.role === 'teacher' ? 'hourly' : data.paymentType,
             totalHoursGroup: monthlyStats.groupHours,
             totalHoursOneToOne: monthlyStats.oneToOneHours,
             totalHours: monthlyStats.groupHours + monthlyStats.oneToOneHours,
@@ -294,6 +350,32 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
             setIsSubmitting(false);
         }
     };
+
+    const handleDeletePayment = async (paymentId: string, invoiceId?: string) => {
+        if (!firestore || !teacher) return;
+        if (!window.confirm("Are you sure you want to delete this payment record? This action cannot be undone.")) return;
+
+        setDeletingPaymentId(paymentId);
+        try {
+            const batch = writeBatch(firestore);
+            batch.delete(doc(firestore, 'users', teacher.id, 'salaryPayments', paymentId));
+            if (invoiceId) {
+                batch.delete(doc(firestore, 'salaryInvoices', invoiceId));
+            }
+            await batch.commit();
+            toast({ title: "Deleted", description: "Payment record has been deleted." });
+        } catch (error: any) {
+            console.error("Error deleting payment:", error);
+            if (error.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `salaryPayments or salaryInvoices`, operation: 'delete' }, { cause: error }));
+                toast({ variant: "destructive", title: "Permission Denied", description: "You don't have permission to delete this record." });
+            } else {
+                toast({ variant: "destructive", title: "Error", description: "Failed to delete payment record." });
+            }
+        } finally {
+            setDeletingPaymentId(null);
+        }
+    };
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -302,7 +384,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <DialogTitle className="text-2xl font-bold font-headline">Salary Details for {teacher.name}</DialogTitle>
-                            <DialogDescription>View payment history and record new salary payments based on Group and One-to-One hours.</DialogDescription>
+                            <DialogDescription>View payment history and record new salary payments.</DialogDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2 shrink-0">
                              <Badge variant={isLocked ? "secondary" : "destructive"} className="px-3 py-1 flex gap-1.5 items-center">
@@ -317,7 +399,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                 className="h-8 rounded-lg text-[11px] font-bold"
                              >
                                 {paymentLockLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : (isLocked ? <ShieldCheck className="mr-2 h-3 w-3" /> : <Lock className="mr-2 h-3 w-3" />)}
-                                {isLocked ? "Allow Teacher Update" : "Disable Teacher Update"}
+                                {isLocked ? "Allow Employee Update" : "Disable Employee Update"}
                              </Button>
                         </div>
                     </div>
@@ -331,7 +413,27 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                              payments.length > 0 ? (
                                 <div className="overflow-x-auto border rounded-lg">
                                     <Table>
-                                        <TableHeader><TableRow><TableHead>Payment Month</TableHead><TableHead>Payment Date</TableHead><TableHead>Group Rate</TableHead><TableHead>1-1 Rate</TableHead><TableHead>Total Hours</TableHead><TableHead className="text-right">Amount Paid</TableHead><TableHead className="text-right">Invoice</TableHead></TableRow></TableHeader>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Payment Month</TableHead>
+                                                <TableHead>Payment Date</TableHead>
+                                                {teacher?.role === 'teacher' ? (
+                                                    <>
+                                                        <TableHead>Group Rate</TableHead>
+                                                        <TableHead>1-1 Rate</TableHead>
+                                                        <TableHead>Total Hours</TableHead>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <TableHead>Fixed Salary</TableHead>
+                                                        <TableHead>Incentives</TableHead>
+                                                    </>
+                                                )}
+                                                <TableHead className="text-right">Amount Paid</TableHead>
+                                                <TableHead className="text-right">Invoice</TableHead>
+                                                <TableHead className="w-10"></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
                                         <TableBody>
                                             {payments.map(p => (
                                                 <TableRow key={p.id}>
@@ -342,11 +444,34 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                                         }
                                                     </TableCell>
                                                     <TableCell className="whitespace-nowrap">{p.paymentDate ? format(p.paymentDate.toDate(), 'PPP') : 'Processing'}</TableCell>
-                                                    <TableCell className="whitespace-nowrap flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateGroup || p.hourlyRate || 0).toLocaleString('en-IN')}</TableCell>
-                                                    <TableCell className="whitespace-nowrap">
-                                                        <div className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateOneToOne || p.hourlyRate || 0).toLocaleString('en-IN')}</div>
-                                                    </TableCell>
-                                                    <TableCell>{p.totalHours}</TableCell>
+                                                    
+                                                    {teacher?.role === 'teacher' ? (
+                                                        <>
+                                                            <TableCell className="whitespace-nowrap flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateGroup || p.hourlyRate || 0).toLocaleString('en-IN')}</TableCell>
+                                                            <TableCell className="whitespace-nowrap">
+                                                                <div className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{(p.hourlyRateOneToOne || p.hourlyRate || 0).toLocaleString('en-IN')}</div>
+                                                            </TableCell>
+                                                            <TableCell>{p.totalHours}</TableCell>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <TableCell className="whitespace-nowrap">
+                                                                <div className="flex items-center gap-1">
+                                                                    <IndianRupee className="h-3 w-3" />
+                                                                    {((p as any).fixedAmount || 0).toLocaleString('en-IN')}
+                                                                    {((p as any).paymentType === 'incentive') && <Badge variant="outline" className="ml-2 text-[10px] h-4 leading-none">N/A</Badge>}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="whitespace-nowrap">
+                                                                <div className="flex items-center gap-1">
+                                                                    <IndianRupee className="h-3 w-3" />
+                                                                    {((p as any).incentives || 0).toLocaleString('en-IN')}
+                                                                    {((p as any).paymentType === 'fixed') && <Badge variant="outline" className="ml-2 text-[10px] h-4 leading-none">N/A</Badge>}
+                                                                </div>
+                                                            </TableCell>
+                                                        </>
+                                                    )}
+
                                                     <TableCell className="text-right font-medium whitespace-nowrap"><div className="flex items-center justify-end gap-1"><IndianRupee className="h-4 w-4" />{p.amount.toLocaleString('en-IN')}</div></TableCell>
                                                     <TableCell className="text-right">
                                                         {p.invoiceId && (
@@ -354,6 +479,17 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                                                 <Link href={`/salary-invoice/${p.invoiceId}`} target="_blank"><FileText className="h-4 w-4" /></Link>
                                                             </Button>
                                                         )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                            onClick={() => handleDeletePayment(p.id, p.invoiceId)}
+                                                            disabled={deletingPaymentId === p.id}
+                                                        >
+                                                            {deletingPaymentId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -370,7 +506,7 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                         <CardContent>
                            <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleAddPayment)} className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                                      <FormField
                                         control={form.control}
                                         name="paymentMonth"
@@ -387,34 +523,140 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField name="hourlyRateGroup" control={form.control} render={({field}) => (
-                                        <FormItem>
-                                            <FormLabel>Group Hourly Rate (INR)</FormLabel>
-                                            <FormControl><Input type="number" {...field}/></FormControl>
-                                            <FormMessage/>
-                                        </FormItem>
-                                    )} />
-                                    <FormField name="hourlyRateOneToOne" control={form.control} render={({field}) => (
-                                        <FormItem>
-                                            <FormLabel>One-to-One Hourly Rate (INR)</FormLabel>
-                                            <FormControl><Input type="number" {...field}/></FormControl>
-                                            <FormMessage/>
-                                        </FormItem>
-                                    )} />
+                                    {teacher.role === 'teacher' && (
+                                        <>
+                                            <FormField name="hourlyRateGroup" control={form.control} render={({field}) => (
+                                                <FormItem>
+                                                    <FormLabel className="flex items-center gap-2">
+                                                        Group Hourly Rate (INR)
+                                                        {(teacher.hourlyRateGroup || teacher.hourlyRate) ? (
+                                                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                                Auto-filled
+                                                            </Badge>
+                                                        ) : null}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            className={(teacher.hourlyRateGroup || teacher.hourlyRate) ? 'border-emerald-200 bg-emerald-50/30 focus-visible:ring-emerald-300' : ''}
+                                                        />
+                                                    </FormControl>
+                                                    {(teacher.hourlyRateGroup || teacher.hourlyRate) && (
+                                                        <FormDescription className="text-[11px] text-emerald-700">
+                                                            ₹{(teacher.hourlyRateGroup || teacher.hourlyRate)?.toLocaleString('en-IN')}/hr from profile
+                                                        </FormDescription>
+                                                    )}
+                                                    <FormMessage/>
+                                                </FormItem>
+                                            )} />
+                                            <FormField name="hourlyRateOneToOne" control={form.control} render={({field}) => (
+                                                <FormItem>
+                                                    <FormLabel className="flex items-center gap-2">
+                                                        1-1 Hourly Rate (INR)
+                                                        {(teacher.hourlyRateOneToOne || teacher.hourlyRate) ? (
+                                                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                                Auto-filled
+                                                            </Badge>
+                                                        ) : null}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            className={(teacher.hourlyRateOneToOne || teacher.hourlyRate) ? 'border-emerald-200 bg-emerald-50/30 focus-visible:ring-emerald-300' : ''}
+                                                        />
+                                                    </FormControl>
+                                                    {(teacher.hourlyRateOneToOne || teacher.hourlyRate) && (
+                                                        <FormDescription className="text-[11px] text-emerald-700">
+                                                            ₹{(teacher.hourlyRateOneToOne || teacher.hourlyRate)?.toLocaleString('en-IN')}/hr from profile
+                                                        </FormDescription>
+                                                    )}
+                                                    <FormMessage/>
+                                                </FormItem>
+                                            )} />
+                                        </>
+                                    )}
+                                    {teacher.role !== 'teacher' && (
+                                        <FormField
+                                            control={form.control}
+                                            name="paymentType"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Payment Type</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="both">Both Fixed & Incentives</SelectItem>
+                                                            <SelectItem value="fixed">Fixed Salary Only</SelectItem>
+                                                            <SelectItem value="incentive">Incentives Only</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+                                    {form.watch('paymentType') !== 'incentive' && (
+                                        <FormField name="fixedAmount" control={form.control} render={({field}) => (
+                                            <FormItem>
+                                                <FormLabel className="flex items-center gap-2">
+                                                    {teacher.role === 'teacher' ? 'Fixed Amount (INR)' : 'Fixed Salary (INR)'}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" {...field} />
+                                                </FormControl>
+                                                <FormDescription className="text-[11px]">
+                                                    {teacher.role === 'teacher' ? 'E.g. fixed salary, bonus, etc.' : 'Base salary for the month'}
+                                                </FormDescription>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )} />
+                                    )}
+                                    {teacher.role !== 'teacher' && form.watch('paymentType') !== 'fixed' && (
+                                        <FormField name="incentives" control={form.control} render={({field}) => (
+                                            <FormItem>
+                                                <FormLabel className="flex items-center gap-2">
+                                                    Incentives / Bonus (INR)
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" {...field} />
+                                                </FormControl>
+                                                <FormDescription className="text-[11px]">
+                                                    Performance incentives or commissions
+                                                </FormDescription>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )} />
+                                    )}
                                 </div>
                                 {loadingSchedules ? (
                                     <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>
                                 ) : monthlySchedules.length > 0 ? (
                                      <div className="space-y-4">
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                            <div className="p-3 border rounded-md bg-muted/30">
-                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Hours</p>
-                                                <p className="text-lg font-bold">{monthlyStats.groupHours}</p>
+                                            {teacher.role === 'teacher' && (
+                                                <>
+                                                    <div className="p-3 border rounded-md bg-muted/30">
+                                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Hours</p>
+                                                        <p className="text-lg font-bold">{monthlyStats.groupHours}</p>
+                                                    </div>
+                                                    <div className="p-3 border rounded-md bg-muted/30">
+                                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Hours</p>
+                                                        <p className="text-lg font-bold">{monthlyStats.oneToOneHours}</p>
+                                                    </div>
+                                                </>
+                                            )}
+                                            <div className="p-3 border rounded-md bg-muted/30 col-span-2 sm:col-span-1">
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">{teacher.role === 'teacher' ? 'Fixed' : 'Base'}</p>
+                                                <p className="text-lg font-bold flex items-center"><IndianRupee className="h-4 w-4 mr-1" />{fixedAmount || 0}</p>
                                             </div>
-                                            <div className="p-3 border rounded-md bg-muted/30">
-                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Hours</p>
-                                                <p className="text-lg font-bold">{monthlyStats.oneToOneHours}</p>
-                                            </div>
+                                            {teacher.role !== 'teacher' && (
+                                                <div className="p-3 border rounded-md bg-muted/30 col-span-2 sm:col-span-1">
+                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Incentives</p>
+                                                    <p className="text-lg font-bold flex items-center"><IndianRupee className="h-4 w-4 mr-1" />{incentives || 0}</p>
+                                                </div>
+                                            )}
                                             <div className="p-3 border rounded-md bg-primary/10 col-span-2 sm:col-span-1">
                                                 <p className="text-[10px] text-primary uppercase font-bold">Total Amount</p>
                                                 <p className="text-lg font-bold flex items-center"><IndianRupee className="h-4 w-4 mr-1" />{monthlyStats.totalAmount.toLocaleString('en-IN')}</p>
@@ -467,39 +709,134 @@ function SalaryDetailsModal({ teacher, isOpen, onOpenChange }: { teacher: User |
     )
 }
 
+type TeacherWithHours = User & { 
+    currentMonthGroupHours: number; 
+    currentMonthOneToOneHours: number; 
+    currentMonthSessions: number;
+    isPaidThisMonth: boolean;
+};
+
+function getDurationMinutes(startTime: string, endTime: string): number {
+    if (!startTime || !endTime) return 0;
+    try {
+        const start = parse(startTime, 'HH:mm', new Date());
+        const end = parse(endTime, 'HH:mm', new Date());
+        return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+    } catch { return 0; }
+}
+
 export default function AccountantSalariesPage() {
     const { firestore } = useFirebase();
     const { user: currentUser } = useUser();
-    const [teachers, setTeachers] = useState<User[]>([]);
+    const [teachers, setTeachers] = useState<TeacherWithHours[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         if (!firestore || !currentUser) return;
 
         const fetchTeachers = async () => {
             setLoading(true);
+            setFetchError(null);
             try {
-                const q = query(collection(firestore, 'users'), where('role', '==', 'teacher'));
+                console.log('[Salaries] Fetching staff, currentUser role:', currentUser?.role);
+                const q = query(collection(firestore, 'users'), where('role', 'in', ['teacher', 'promoter', 'oga']));
                 const querySnapshot = await getDocs(q);
+                console.log('[Salaries] Staff found:', querySnapshot.size);
+
+                if (querySnapshot.empty) {
+                    console.warn('[Salaries] No staff documents returned.');
+                    setTeachers([]);
+                    setLoading(false);
+                    return;
+                }
+
                 const teachersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
+                const monthStart = startOfMonth(new Date());
+                const monthEnd = endOfMonth(new Date());
+
                 const teachersWithDetails = await Promise.all(teachersList.map(async (teacher) => {
-                    const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
-                    const detailsSnap = await getDoc(detailsRef);
-                    if (detailsSnap.exists()) {
-                        return { ...teacher, ...(detailsSnap.data() as TeacherPrivateDetails) };
+                    try {
+                        // Fetch payment details
+                        const detailsRef = doc(firestore, 'users', teacher.id, 'teacher_details', 'payment');
+                        const detailsSnap = await getDoc(detailsRef);
+                        const paymentDetails = detailsSnap.exists() ? (detailsSnap.data() as TeacherPrivateDetails) : {};
+
+                        // Fetch ALL schedules for the teacher to filter in memory (avoids missing index error)
+                        const schedulesSnap = await getDocs(
+                            query(collection(firestore, 'schedules'), where('teacherId', '==', teacher.id))
+                        );
+
+                        let groupMinutes = 0;
+                        let oneToOneMinutes = 0;
+                        let sessions = 0;
+
+                        schedulesSnap.docs.forEach(d => {
+                            const s = d.data() as Schedule;
+                            if (s.type && s.type !== 'class') return;
+                            
+                            // Check if it's in the current month
+                            if (!s.date) return;
+                            const scheduleDate = s.date.toDate();
+                            if (scheduleDate < monthStart || scheduleDate > monthEnd) return;
+
+                            sessions++;
+
+                            // Prefer actual timestamps; fall back to scheduled times
+                            let mins = 0;
+                            if ((s as any).meetReleasedAt && (s as any).meetEndedAt) {
+                                const diffMs = (s as any).meetEndedAt.toMillis() - (s as any).meetReleasedAt.toMillis();
+                                mins = Math.max(0, Math.round(diffMs / 60000));
+                            } else {
+                                mins = getDurationMinutes(s.startTime, s.endTime);
+                            }
+                            if (s.learningMode === 'one to one' || s.studentId) {
+                                oneToOneMinutes += mins;
+                            } else {
+                                groupMinutes += mins;
+                            }
+                        });
+
+                        // Check if paid this month
+                        const currentMonthStr = format(new Date(), 'yyyy-MM');
+                        const paymentsSnap = await getDocs(
+                            query(collection(firestore, 'users', teacher.id, 'salaryPayments'), where('paymentMonth', '==', currentMonthStr))
+                        );
+                        const isPaidThisMonth = !paymentsSnap.empty;
+
+                        return {
+                            ...teacher,
+                            ...paymentDetails,
+                            currentMonthGroupHours: Math.round((groupMinutes / 60) * 100) / 100,
+                            currentMonthOneToOneHours: Math.round((oneToOneMinutes / 60) * 100) / 100,
+                            currentMonthSessions: sessions,
+                            isPaidThisMonth
+                        } as TeacherWithHours;
+                    } catch (innerErr: any) {
+                        console.warn(`[Salaries] Error fetching details for teacher ${teacher.id}:`, innerErr);
+                        return {
+                            ...teacher,
+                            currentMonthGroupHours: 0,
+                            currentMonthOneToOneHours: 0,
+                            currentMonthSessions: 0,
+                            isPaidThisMonth: false
+                        } as TeacherWithHours;
                     }
-                    return teacher;
                 }));
 
                 setTeachers(teachersWithDetails);
             } catch (serverError: any) {
+                console.error('[Salaries] Top-level fetch error:', serverError.code, serverError.message, serverError);
+                const msg = serverError.code === 'permission-denied'
+                    ? 'Permission denied. Your account may not have admin access to list users.'
+                    : `Failed to load teachers: ${serverError.message || serverError.code || 'Unknown error'}`;
+                setFetchError(msg);
                 if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({ path: 'users or users/{userId}/teacher_details/payment', operation: 'list' }, { cause: serverError });
+                    const permissionError = new FirestorePermissionError({ path: 'users', operation: 'list' }, { cause: serverError });
                     errorEmitter.emit('permission-error', permissionError);
-                } else {
-                    console.warn("Error fetching teachers: ", serverError);
                 }
             } finally {
                 setLoading(false);
@@ -507,20 +844,32 @@ export default function AccountantSalariesPage() {
         };
 
         fetchTeachers();
-    }, [firestore, currentUser]);
+    }, [firestore, currentUser, refreshKey]);
 
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold font-headline">Teacher Salaries</h1>
-                    <p className="text-muted-foreground">Manage and process salary payments for teachers.</p>
+                    <h1 className="text-3xl font-bold font-headline">Payroll</h1>
+                    <p className="text-muted-foreground">Manage and process salary payments for all staff.</p>
                 </div>
             </div>
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            ) : fetchError ? (
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+                    <AlertCircle className="h-12 w-12 text-destructive" />
+                    <div>
+                        <p className="font-semibold text-destructive">Failed to load teachers</p>
+                        <p className="text-sm text-muted-foreground mt-1 max-w-sm">{fetchError}</p>
+                        <p className="text-xs text-muted-foreground mt-2">Check the browser console for details.</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setRefreshKey(k => k + 1)}>
+                        <Loader2 className="mr-2 h-4 w-4" /> Retry
+                    </Button>
                 </div>
             ) : teachers.length > 0 ? (
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
@@ -531,22 +880,93 @@ export default function AccountantSalariesPage() {
                                     <AvatarImage src={teacher.avatarUrl} alt={teacher.name} />
                                     <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="grid gap-1 overflow-hidden">
-                                    <CardTitle className="truncate text-lg">{teacher.name}</CardTitle>
-                                    <CardDescription className="truncate text-xs">{teacher.email}</CardDescription>
+                                <div className="grid gap-1 overflow-hidden flex-grow">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="truncate text-lg">{teacher.name}</CardTitle>
+                                        {teacher.isPaidThisMonth && (
+                                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0 h-5 text-[10px] uppercase tracking-wider font-black shrink-0">Paid</Badge>
+                                        )}
+                                    </div>
+                                    <CardDescription className="truncate text-xs capitalize">{teacher.role || 'Staff'} • {teacher.email}</CardDescription>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
-                                <div className="flex justify-between items-center px-4 py-2 bg-muted rounded-md mb-2">
-                                    <div className="text-center">
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Rate</p>
-                                        <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateGroup || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                {teacher.role === 'teacher' ? (
+                                    <>
+                                        {/* Current Month Hours Summary */}
+                                        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                                            <p className="text-[10px] text-primary uppercase font-bold mb-1.5 flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                {format(new Date(), 'MMMM')} Work Hours
+                                            </p>
+                                            <div className="grid grid-cols-3 gap-1 text-center">
+                                                <div>
+                                                    <p className="text-[9px] text-muted-foreground uppercase">Group</p>
+                                                    <p className="font-bold text-sm text-foreground">{teacher.currentMonthGroupHours}h</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-muted-foreground uppercase">1-1</p>
+                                                    <p className="font-bold text-sm text-foreground">{teacher.currentMonthOneToOneHours}h</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-muted-foreground uppercase">Sessions</p>
+                                                    <p className="font-bold text-sm text-foreground">{teacher.currentMonthSessions}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-1.5 pt-1.5 border-t border-primary/10 flex items-center justify-between">
+                                                <p className="text-[9px] text-muted-foreground">Total est. salary</p>
+                                                <p className="text-xs font-bold text-primary flex items-center gap-0.5">
+                                                    <IndianRupee className="h-3 w-3" />
+                                                    {(
+                                                        teacher.currentMonthGroupHours * (teacher.hourlyRateGroup || teacher.hourlyRate || 0) +
+                                                        teacher.currentMonthOneToOneHours * (teacher.hourlyRateOneToOne || teacher.hourlyRate || 0)
+                                                    ).toLocaleString('en-IN')}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center px-4 py-2 bg-muted rounded-md mb-2">
+                                            <div className="text-center">
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">Group Rate</p>
+                                                <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateGroup || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Rate</p>
+                                                <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateOneToOne || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 mb-2">
+                                        <p className="text-[10px] text-primary uppercase font-bold mb-1.5 flex items-center gap-1">
+                                            <Briefcase className="h-3 w-3" />
+                                            Compensation Plan
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-1 text-center">
+                                            <div>
+                                                <p className="text-[9px] text-muted-foreground uppercase">Fixed Salary</p>
+                                                <p className="font-bold text-sm text-foreground flex items-center justify-center gap-0.5">
+                                                    <IndianRupee className="h-3 w-3" />
+                                                    {((teacher as any).fixedSalary || 0).toLocaleString('en-IN')}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] text-muted-foreground uppercase">Est. Incentives</p>
+                                                <p className="font-bold text-sm text-foreground flex items-center justify-center gap-0.5">
+                                                    <IndianRupee className="h-3 w-3" />
+                                                    {((teacher as any).incentives || 0).toLocaleString('en-IN')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-1.5 pt-1.5 border-t border-primary/10 flex items-center justify-between">
+                                            <p className="text-[9px] text-muted-foreground">Total est. salary</p>
+                                            <p className="text-xs font-bold text-primary flex items-center gap-0.5">
+                                                <IndianRupee className="h-3 w-3" />
+                                                {(((teacher as any).fixedSalary || 0) + ((teacher as any).incentives || 0)).toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="text-center">
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">1-1 Rate</p>
-                                        <p className="font-bold text-sm flex items-center justify-center gap-0.5"><IndianRupee className="h-3 w-3" />{(teacher.hourlyRateOneToOne || teacher.hourlyRate || 0).toLocaleString('en-IN')}</p>
-                                    </div>
-                                </div>
+                                )}
 
                                 {teacher.paymentMethod === 'upi' ? (
                                     <div className="space-y-3 rounded-md border p-4 text-sm bg-muted/30">
@@ -594,7 +1014,7 @@ export default function AccountantSalariesPage() {
                 </div>
             ) : (
                 <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>No teachers found in the system.</p>
+                    <p>No staff found in the system.</p>
                 </div>
             )}
             <SalaryDetailsModal teacher={selectedTeacher} isOpen={!!selectedTeacher} onOpenChange={(open) => { if (!open) setSelectedTeacher(null) }} />

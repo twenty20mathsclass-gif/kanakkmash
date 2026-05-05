@@ -51,6 +51,7 @@
     "lucide-react": "^0.475.0",
     "next": "14.2.35",
     "next-themes": "^0.4.0",
+    "razorpay": "^2.9.6",
     "react": "^18.3.1",
     "react-day-picker": "^9.11.3",
     "react-dom": "^18.3.1",

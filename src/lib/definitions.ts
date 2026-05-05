@@ -137,6 +137,10 @@ export type Schedule = {
   startTime?: string;
   endTime?: string;
   meetLink: string;
+  meetLinkReleased?: boolean;
+  meetReleasedAt?: Timestamp;  // when teacher released link (session start)
+  meetEndedAt?: Timestamp;     // when teacher ended for all (session end)
+  meetEnded?: boolean;         // true once teacher ends for all
   teacherId: string;
   teacherName?: string;
   teacherAvatarUrl?: string;

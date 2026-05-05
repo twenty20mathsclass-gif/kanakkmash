@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { IndianRupee, Image as ImageIcon, Plus, Trash2, Save, X, MoveLeft, BookOpen, Layers, Info, PenSquare, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { firestore as db } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { uploadImage } from '@/lib/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -22,7 +23,15 @@ export default function AddProductPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([null, null, null, null]);
+  
+  const categories = [
+    { id: 'books', name: 'Books' },
+    { id: 'courses', name: 'Courses' },
+    { id: 'materials', name: 'Materials' },
+    { id: 'maths-products', name: 'Maths Products' }
+  ];
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
@@ -70,6 +79,7 @@ export default function AddProductPage() {
         title,
         description,
         price: Number(price),
+        category: selectedCategory,
         status: 'active',
         images: imageUrls.filter(url => url !== null),
         createdAt: serverTimestamp(),
@@ -171,6 +181,22 @@ export default function AddProductPage() {
                             onChange={(e) => setPrice(e.target.value)}
                             className="w-full h-16 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 pl-16 pr-8 focus:ring-2 focus:ring-primary/10 transition-all outline-none font-bold text-slate-800" 
                            />
+                        </div>
+                     </div>
+                     <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Module Category</label>
+                        <div className="relative">
+                           <Layers className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 z-10" />
+                           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                             <SelectTrigger className="w-full h-16 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 pl-16 pr-8 focus:ring-2 focus:ring-primary/10 transition-all outline-none font-bold text-slate-800">
+                               <SelectValue placeholder="Select a category" />
+                             </SelectTrigger>
+                             <SelectContent className="rounded-2xl border-none shadow-2xl">
+                               {categories.map(cat => (
+                                 <SelectItem key={cat.id} value={cat.id} className="font-semibold">{cat.name}</SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
                         </div>
                      </div>
                   </div>

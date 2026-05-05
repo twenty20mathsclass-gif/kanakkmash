@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 import type { User, Schedule } from '@/lib/definitions';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -87,9 +87,16 @@ export default function AdminDashboardPage() {
         setStats({ students: students.length, teachers: teachers.length, courses: courses.length });
         
         // 2. Fetch all schedules
-        const schedulesQuery = query(collection(firestore, 'schedules'), orderBy('date', 'desc'));
+        const schedulesQuery = query(collection(firestore, 'schedules'));
         const schedulesSnapshot = await getDocs(schedulesQuery);
         const allSchedulesList = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule));
+        // Sort by date descending client-side, nulls last
+        allSchedulesList.sort((a, b) => {
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return b.date.toMillis() - a.date.toMillis();
+        });
         setAllSchedules(allSchedulesList);
 
         // 3. Process 5 most recent schedules for the table

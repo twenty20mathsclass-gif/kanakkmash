@@ -424,7 +424,12 @@ export function CreateExamForm() {
     };
 
     return (
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid lg:grid-cols-2 gap-0 md:-mx-8 md:-my-8 min-h-[calc(100vh-4rem)] items-stretch">
+            <div className="lg:sticky top-0 lg:h-[calc(100vh-4rem)] overflow-y-auto p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold font-headline">Create Exam</h1>
+                <p className="text-muted-foreground">Build and schedule custom exams for students.</p>
+            </div>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <Card>
@@ -689,7 +694,8 @@ export function CreateExamForm() {
                     <Button type="submit" disabled={loading} className="w-full" size="lg">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Exam</Button>
                 </form>
             </Form>
-            <div className="hidden md:block sticky top-20">
+            </div>
+            <div className="flex flex-col lg:sticky lg:top-0 lg:h-[calc(100vh-4rem)] overflow-y-auto bg-background p-4 sm:p-6 lg:p-0">
                 <ScheduledItemsList schedules={scheduledExams} title="Exams List" description="A record of your created exams." />
             </div>
         </div>

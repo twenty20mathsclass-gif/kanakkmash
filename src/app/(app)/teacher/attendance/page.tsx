@@ -57,7 +57,7 @@ export default function AttendancePage() {
                 <p className="text-muted-foreground">Select a class or exam to view attendance details.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 items-start">
+            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
                 <Card>
                     <CardHeader>
                         <CardTitle>My Scheduled Items</CardTitle>
@@ -69,7 +69,7 @@ export default function AttendancePage() {
                                 <Loader2 className="h-8 w-8 animate-spin" />
                             </div>
                         ) : schedules.length > 0 ? (
-                            <ul className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                            <ul className="space-y-2 max-h-[400px] lg:max-h-[600px] overflow-y-auto pr-2">
                                     {schedules.map(schedule => {
                                         const displayDate = (schedule.date || schedule.startDate || schedule.createdAt)?.toDate();
                                         return (
@@ -94,7 +94,7 @@ export default function AttendancePage() {
                         )}
                     </CardContent>
                 </Card>
-                <div className="sticky top-20">
+                <div className="lg:sticky lg:top-20">
                     {selectedSchedule ? (
                         <AttendanceDetails schedule={selectedSchedule} />
                     ) : (

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import type { User } from '@/lib/definitions';
+import { useCart } from '@/context/cart-context';
+import { ShoppingCart } from 'lucide-react';
 import { UserNav } from './user-nav';
 
 
@@ -32,6 +34,7 @@ type NavItem = {
 
 export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[], user?: User | null; onSignOut?: () => void }) {
   const pathname = usePathname();
+  const { cartCount } = useCart();
   const logoLink = '/';
 
   const isActive = (href: string) => {
@@ -43,6 +46,7 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
   }
 
   const isHome = pathname === '/';
+  const isShopPage = pathname.startsWith('/shop') || pathname.startsWith('/products') || pathname.startsWith('/cart');
 
   return (
     <header className={cn(
@@ -87,12 +91,26 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
             })}
             </nav>
 
-            <div className="flex items-center justify-end">
-                {user && onSignOut ? (
-                    <div className="h-12 w-12">
+            <div className="flex items-center justify-end gap-3">
+                {user && onSignOut && (
+                    <div className="h-12 w-12 hidden md:block">
                       <UserNav user={user} onSignOut={onSignOut} />
                     </div>
-                ) : (
+                )}
+                
+                {isShopPage ? (
+                    <Link
+                        href="/cart"
+                        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-slate-800 shrink-0"
+                    >
+                        <ShoppingCart className="h-4 w-4" />
+                        {cartCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white border-2 border-white shadow-sm">
+                                {cartCount}
+                            </span>
+                        )}
+                    </Link>
+                ) : !user ? (
                     <Link
                         href="https://wa.me/917994875893"
                         target="_blank"
@@ -102,7 +120,7 @@ export function PublicHeader({ navItems, user, onSignOut }: { navItems: NavItem[
                     >
                         <WhatsAppIcon className="h-6 w-6" />
                     </Link>
-                )}
+                ) : null}
             </div>
         </div>
     </header>

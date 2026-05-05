@@ -14,6 +14,7 @@ export function SchedulingActivityChart({ schedules }: { schedules: Schedule[] }
         const fourWeeksAgo = new Date(new Date().setDate(now.getDate() - 28));
 
         schedules.forEach(schedule => {
+            if (!schedule.date) return;
             const scheduleDate = schedule.date.toDate();
             if (scheduleDate >= fourWeeksAgo) {
                 const weekStart = startOfWeek(scheduleDate, { weekStartsOn: 1 }); // Monday

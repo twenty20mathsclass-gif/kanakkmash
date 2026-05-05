@@ -11,7 +11,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award } from "lucide-react";
+import { ArrowRight, BookOpen, Clock, Loader2, User as UserIcon, Award, Lock } from "lucide-react";
 import { Reveal } from "@/components/shared/reveal";
 import { Badge } from '@/components/ui/badge';
 
@@ -157,41 +157,77 @@ export function UpcomingClasses() {
                     const IconComponent = iconMap[item.icon] || BookOpen;
                     return (
                         <Reveal key={item.id} delay={0.2 + index * 0.1} className="min-w-[280px] w-[280px] flex-shrink-0">
-                            <a href={item.meetLink} target="_blank" rel="noopener noreferrer" className="block h-full">
-                                <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
-                                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
-                                                    <IconComponent className="h-5 w-5" />
+                            {item.meetLinkReleased !== false ? (
+                                <a href={item.meetLink} target="_blank" rel="noopener noreferrer" className="block h-full">
+                                    <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full">
+                                        <CardContent className="p-6 flex flex-col justify-between h-full">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
+                                                        <IconComponent className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs opacity-80">{item.subject}</p>
+                                                        <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
+                                                        <p className="text-xs opacity-80 font-medium">by {item.teacherName}</p>
+                                                    </div>
                                                 </div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {item.classes?.map(c => <Badge key={c} variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{c}</Badge>)}
+                                                    {item.syllabus && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.syllabus}</Badge>}
+                                                    {item.competitiveExam && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.competitiveExam}</Badge>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-4">
                                                 <div>
-                                                    <p className="text-xs opacity-80">{item.subject}</p>
-                                                    <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
-                                                    <p className="text-xs opacity-80 font-medium">by {item.teacherName}</p>
+                                                    <p className="text-sm font-medium">{format(item.date.toDate(), 'MMM d, yyyy')}</p>
+                                                    <div className="flex items-center gap-1 text-sm opacity-80">
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>{format(parse(item.startTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-primary-foreground/20 rounded-full p-3">
+                                                    <ArrowRight className="h-6 w-6 text-primary-foreground" />
                                                 </div>
                                             </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {item.classes?.map(c => <Badge key={c} variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{c}</Badge>)}
-                                                {item.syllabus && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.syllabus}</Badge>}
-                                                {item.competitiveExam && <Badge variant="secondary" className="bg-primary-foreground/20 border-none text-xs font-normal text-primary-foreground">{item.competitiveExam}</Badge>}
-                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </a>
+                            ) : (
+                                /* Locked state — teacher hasn't released the link yet */
+                                <div className="block h-full cursor-not-allowed">
+                                    <Card style={{ backgroundColor: item.color }} className="text-primary-foreground shadow-lg h-full opacity-80 relative overflow-hidden">
+                                        {/* Lock overlay */}
+                                        <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center gap-1 z-10">
+                                            <Lock className="h-7 w-7 text-white/90" />
+                                            <span className="text-white/90 text-xs font-semibold">Waiting for teacher…</span>
                                         </div>
-                                        <div className="flex justify-between items-end mt-4">
-                                            <div>
-                                                <p className="text-sm font-medium">{format(item.date.toDate(), 'MMM d, yyyy')}</p>
-                                                <div className="flex items-center gap-1 text-sm opacity-80">
-                                                    <Clock className="h-3 w-3" />
-                                                    <span>{format(parse(item.startTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                        <CardContent className="p-6 flex flex-col justify-between h-full">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="bg-background/20 rounded-lg p-2.5 flex items-center justify-center">
+                                                        <IconComponent className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs opacity-80">{item.subject}</p>
+                                                        <h3 className="font-bold font-headline text-lg leading-tight">{item.title}</h3>
+                                                        <p className="text-xs opacity-80 font-medium">by {item.teacherName}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="bg-primary-foreground/20 rounded-full p-3">
-                                                <ArrowRight className="h-6 w-6 text-primary-foreground" />
+                                            <div className="flex justify-between items-end mt-4">
+                                                <div>
+                                                    <p className="text-sm font-medium">{format(item.date.toDate(), 'MMM d, yyyy')}</p>
+                                                    <div className="flex items-center gap-1 text-sm opacity-80">
+                                                        <Clock className="h-3 w-3" />
+                                                        <span>{format(parse(item.startTime, 'HH:mm', new Date()), 'h:mm a')}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </a>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )}
                         </Reveal>
                     )
                 })}

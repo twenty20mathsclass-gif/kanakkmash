@@ -156,9 +156,9 @@ export default function TeacherAssessmentResultsPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4">
                 <Select value={classFilter} onValueChange={setClassFilter}>
-                    <SelectTrigger className="w-[160px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
+                    <SelectTrigger className="w-full sm:w-[160px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
                         <Filter size={14} className="text-muted-foreground" />
                         <SelectValue placeholder="All Classes" />
                     </SelectTrigger>
@@ -171,7 +171,7 @@ export default function TeacherAssessmentResultsPage() {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[160px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
+                    <SelectTrigger className="w-full sm:w-[160px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
                         <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-none shadow-xl">
@@ -183,7 +183,7 @@ export default function TeacherAssessmentResultsPage() {
                 </Select>
 
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[120px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
+                    <SelectTrigger className="w-full sm:w-[120px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
                         <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-none shadow-xl">
@@ -199,8 +199,8 @@ export default function TeacherAssessmentResultsPage() {
       <Reveal delay={0.2}>
         <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white">
           {filteredSubmissions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto custom-scrollbar">
+              <Table className="min-w-[800px]">
                 <TableHeader className="bg-muted/30 border-none">
                   <TableRow className="border-none hover:bg-transparent">
                     <TableHead className="font-bold py-5 pl-8">Student</TableHead>
@@ -309,12 +309,12 @@ export default function TeacherAssessmentResultsPage() {
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-y-auto max-h-[90vh] border-none shadow-2xl rounded-[3rem] gap-0 custom-scrollbar scrollbar-hide">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 pt-10 text-white relative">
-             <div className="flex items-center justify-between">
+             <div className="flex items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black font-headline leading-tight">Assessment Record</h2>
+                    <h2 className="text-2xl sm:text-3xl font-black font-headline leading-tight">Assessment Record</h2>
                     <p className="text-white/50 font-medium text-sm mt-1">Detailed performance and contact data</p>
                 </div>
-                <div className="bg-white/10 p-4 rounded-[2rem] backdrop-blur-md shrink-0 border border-white/10">
+                <div className="bg-white/10 p-4 rounded-[2rem] backdrop-blur-md shrink-0 border border-white/10 hidden sm:block">
                    <User size={32} className="text-white" />
                 </div>
              </div>
@@ -422,11 +422,11 @@ export default function TeacherAssessmentResultsPage() {
                 </div>
              </div>
              
-             <div className="flex justify-end gap-3 pt-6 border-t">
+             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t">
                 <Button 
                     variant="ghost"
                     onClick={() => setSelectedItem(null)} 
-                    className="rounded-2xl px-6 h-12 font-bold"
+                    className="rounded-2xl px-6 h-12 font-bold w-full sm:w-auto"
                 >
                     Dismiss
                 </Button>
@@ -434,7 +434,7 @@ export default function TeacherAssessmentResultsPage() {
                     onClick={() => {
                         window.open(`https://wa.me/${selectedItem?.whatsapp?.replace(/[^\d]/g, '')}`, '_blank');
                     }} 
-                    className="rounded-2xl px-8 h-12 font-black transition-all shadow-lg hover:shadow-primary/25 bg-green-600 hover:bg-green-700 text-white flex gap-2"
+                    className="rounded-2xl px-8 h-12 font-black transition-all shadow-lg hover:shadow-primary/25 bg-green-600 hover:bg-green-700 text-white flex gap-2 w-full sm:w-auto"
                 >
                     <Phone size={18} />
                     WhatsApp Student

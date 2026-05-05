@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { Loader2, MoreHorizontal, IndianRupee, Mail, User as UserIcon, Edit } from 'lucide-react';
+import { Loader2, MoreHorizontal, IndianRupee, Mail, User as UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
     AlertDialog, 
@@ -36,7 +36,7 @@ import {
     AlertDialogTitle 
 } from '../ui/alert-dialog';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { EditUserDialog } from './edit-user-dialog';
+
 
 
 interface UsersTableProps {
@@ -51,9 +51,6 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
 
     const [userToReset, setUserToReset] = useState<User | null>(null);
     const [isResetting, setIsResetting] = useState(false);
-    
-    const [userToEdit, setUserToEdit] = useState<User | null>(null);
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     
     const handleSendResetEmail = async () => {
         if (!userToReset || !auth) return;
@@ -79,10 +76,6 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
         }
     };
 
-    const openEditDialog = (user: User) => {
-        setUserToEdit(user);
-        setIsEditDialogOpen(true);
-    };
   
   return (
     <>
@@ -166,17 +159,6 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                                 onSelect={(e) => {
                                     e.preventDefault();
                                     setTimeout(() => {
-                                        setUserToEdit(user);
-                                        setIsEditDialogOpen(true);
-                                    }, 0);
-                                }}
-                            >
-                                <Edit className="mr-2 h-4 w-4" />Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                                onSelect={(e) => {
-                                    e.preventDefault();
-                                    setTimeout(() => {
                                         setUserToReset(user);
                                     }, 0);
                                 }}
@@ -206,18 +188,6 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-
-        {userToEdit && (
-            <EditUserDialog
-                user={userToEdit}
-                isOpen={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                onUserUpdated={() => {
-                    setIsEditDialogOpen(false);
-                    onUserUpdated();
-                }}
-            />
-        )}
     </>
   );
 }

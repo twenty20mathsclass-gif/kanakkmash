@@ -7,6 +7,7 @@ import { signOut as firebaseSignOut } from "firebase/auth";
 import { collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { PageLoader } from "@/components/shared/page-loader";
 import { usePresence } from "@/hooks/use-presence";
+import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
 
 import {
@@ -38,6 +39,7 @@ import {
   Megaphone,
   LayoutGrid,
   ClipboardCheck,
+  Calculator,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -66,6 +68,7 @@ export default function MainLayoutClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { firestore } = useFirebase();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user || !firestore) return;
@@ -130,6 +133,7 @@ export default function MainLayoutClient({
       "/fee-structure",
       "/assessment-form",
       "/assessment-test",
+      "/cart",
     ];
     const isPublicBlogPost = /^\/blog\/[^/]+$/.test(pathname);
     const isPubliclyAccessible =
@@ -139,6 +143,8 @@ export default function MainLayoutClient({
       pathname.startsWith("/exam-schedule") ||
       pathname.startsWith("/class-schedule") ||
       pathname.startsWith("/invoice") ||
+      pathname.startsWith("/salary-invoice") ||
+      pathname.startsWith("/cart") ||
       isPublicBlogPost;
 
     if (loading || authPages.some((p) => pathname.startsWith(p))) {
@@ -147,7 +153,11 @@ export default function MainLayoutClient({
 
     if (!user) {
       if (!isPubliclyAccessible) {
-        router.push("/sign-in");
+        if (window.history.length > 2) {
+          router.back();
+        } else {
+          router.replace("/");
+        }
       }
       return;
     }
@@ -159,26 +169,39 @@ export default function MainLayoutClient({
     else if (user.role === "oga") targetPath = "/oga";
     else targetPath = "/dashboard";
 
-    if (
-      pathname === "/dashboard" ||
-      pathname === "/teacher" ||
-      pathname === "/admin" ||
-      pathname === "/promoter" ||
-      pathname === "/oga"
-    ) {
-      router.replace(targetPath);
+    let isUnauthorized = false;
+
+    if (user.role === "admin") {
+      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/salary-invoice"));
+    } else if (user.role === "teacher") {
+      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals") || pathname.startsWith("/salary-invoice"));
+    } else if (user.role === "promoter") {
+      isUnauthorized = !(pathname.startsWith("/promoter") || pathname.startsWith("/my-referrals"));
+    } else if (user.role === "oga") {
+      isUnauthorized = !pathname.startsWith("/oga");
+    } else {
+      // Student or unassigned role
+      isUnauthorized = 
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/teacher") ||
+        pathname.startsWith("/promoter") ||
+        pathname.startsWith("/oga");
     }
 
-    if (pathname.startsWith("/admin") && user.role !== "admin") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/teacher") && user.role !== "teacher") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/promoter") && user.role !== "promoter") {
-      router.replace("/dashboard");
-    } else if (pathname.startsWith("/oga") && user.role !== "oga") {
-      router.replace("/dashboard");
+    if (isUnauthorized) {
+      if (window.history.length > 2) {
+        router.back();
+      } else {
+        router.replace(targetPath);
+      }
+      return;
     }
-  }, [loading, user, router, pathname]);
+
+    // Auto-redirect to specific role dashboard if they land on generic /dashboard
+    if (pathname === "/dashboard" && pathname !== targetPath) {
+      router.replace(targetPath);
+    }
+  }, [loading, user, router, pathname, toast]);
 
   const handleSignOut = async () => {
     if (auth) {
@@ -260,6 +283,7 @@ export default function MainLayoutClient({
       icon: FilePenLine,
     },
     { href: "/oga/settings", label: "Test Settings", icon: Settings },
+    { href: "/oga/revenue", label: "My Revenue", icon: Banknote },
   ];
 
   const adminNav = [
@@ -284,9 +308,10 @@ export default function MainLayoutClient({
     { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
     { href: "/admin/blog/create", label: "Blog Creator", icon: PenSquare },
     { href: "/admin/fees", label: "Fee Management", icon: IndianRupee },
+    { href: "/admin/accountant", label: "Accountant", icon: Calculator },
     {
       href: "/admin/accountant/salaries",
-      label: "Teacher Salaries",
+      label: "Payroll",
       icon: Banknote,
     },
     {

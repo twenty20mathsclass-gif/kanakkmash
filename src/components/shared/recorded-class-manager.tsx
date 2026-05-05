@@ -267,10 +267,10 @@ export function RecordedClassManager({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-10">
-      <div className="flex justify-between items-center bg-card p-6 rounded-2xl border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-card p-4 sm:p-6 rounded-2xl border shadow-sm">
         <div>
-            <h2 className="text-xl font-bold font-headline">Session Library</h2>
-            <p className="text-sm text-muted-foreground">Manage your collection of video lessons.</p>
+            <h2 className="text-xl sm:text-2xl font-bold font-headline">Session Library</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">Manage your collection of video lessons.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
