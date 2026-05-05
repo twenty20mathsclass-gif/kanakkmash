@@ -84,11 +84,6 @@ export default function AssessmentTestPage() {
         if (fetched.length === 0) {
           // If no questions found for this specific class/level
           setQuestions([]);
-          if (invoiceId) {
-             // Paid students can skip if no questions exist for their level yet
-             router.replace(`/invoice/${invoiceId}?success=true`);
-             return;
-          }
         } else {
           setQuestions(fetched);
           setAnswers(Array(fetched.length).fill(null));
@@ -367,8 +362,11 @@ export default function AssessmentTestPage() {
                    We haven't added assessment questions for the category <b>"{user?.class}"</b> yet.
                 </p>
              </div>
-             <Link href="/sign-up" className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold text-sm">
-                Proceed to Enrollment
+             <Link 
+               href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/sign-up"} 
+               className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold text-sm"
+             >
+                {invoiceId ? 'Skip and View My Invoice' : 'Proceed to Enrollment'}
              </Link>
           </div>
         )}

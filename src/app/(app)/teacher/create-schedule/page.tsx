@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { RecentClassesList } from '@/components/teacher/recent-classes-list';
@@ -47,6 +47,8 @@ const scheduleSchema = z.object({
     syllabus: z.string().optional(),
     studentId: z.string().optional(),
     competitiveExam: z.string().optional(),
+    meetEventId: z.string().optional(),
+    teacherGoogleEmail: z.string().email("Must be a valid email").optional().or(z.literal('')),
 });
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -102,6 +104,8 @@ export default function CreateSchedulePage() {
             syllabus: '',
             studentId: '',
             competitiveExam: '',
+            meetEventId: '',
+            teacherGoogleEmail: user?.email || '',
         },
     });
 
@@ -188,6 +192,7 @@ export default function CreateSchedulePage() {
                 startTime: data.startTime,
                 endTime: data.endTime,
                 meetLink: data.meetLink,
+                meetEventId: data.meetEventId || '',
                 teacherId: user.id,
                 createdAt: serverTimestamp(),
                 ...selectedVisuals,
@@ -221,6 +226,7 @@ export default function CreateSchedulePage() {
                 courseModel: '',
                 title: '',
                 meetLink: 'https://meet.google.com/',
+                meetEventId: '',
             });
         } catch (serverError: any) {
             setError('Failed to create schedule. Please try again.');
@@ -351,7 +357,126 @@ export default function CreateSchedulePage() {
                                     <FormField name="endTime" control={form.control} render={({ field }) => (<FormItem><FormLabel>End Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 </div>
 
-                                <FormField name="meetLink" control={form.control} render={({ field }) => (<FormItem><FormLabel>Meeting Link</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100/50 my-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="teacherGoogleEmail"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="flex items-center text-orange-900 font-semibold gap-2">
+                                                    Teacher's Exact Gmail Address <span className="px-2 py-0.5 bg-green-100 text-green-700 font-bold tracking-wider uppercase text-[9px] rounded-full">Auto-Admit Config</span>
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. your.name@gmail.com" {...field} className="bg-white border-orange-200 focus-visible:ring-orange-500/30 font-medium" />
+                                                </FormControl>
+                                                <p className="text-xs text-orange-700/80 mt-1.5 leading-tight">Must match the exact Google account you use to sign into Meet! If you log into the platform with Yahoo/Apple, but use a standard Gmail for Video calls, put the Gmail address here. It permanently overrides the "Ask to join" waiting room.</p>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    name="meetLink"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <FormLabel className="text-sm font-medium">Meeting Link</FormLabel>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-8 text-[11px] px-2.5 font-bold uppercase tracking-wider text-[#FF8C00] hover:text-[#E67E00] flex items-center bg-[#FF8C00]/5 hover:bg-[#FF8C00]/10 border border-[#FF8C00]/20 rounded-lg transition-all shadow-sm active:scale-95"
+                                                    onClick={async () => {
+                                                        try {
+                                                            setLoading(true);
+                                                                    const currentMode = form.getValues('learningMode');
+                                                                    const currentStudentId = form.getValues('studentId');
+                                                                    const currentClasses = form.getValues('classes') || [];
+                                                                    const currentLevels = form.getValues('levels') || [];
+                                                                    const currentExam = form.getValues('competitiveExam');
+                                                                    
+                                                                    let targetEmails: string[] = [];
+                                                                    
+                                                                    if (currentMode === 'one to one') {
+                                                                        const s = allStudents.find(x => x.id === currentStudentId);
+                                                                        if (s && s.email) targetEmails.push(s.email);
+                                                                    } else {
+                                                                        allStudents.forEach(s => {
+                                                                            if (s.email) {
+                                                                                if (s.class && currentClasses.includes(s.class)) targetEmails.push(s.email);
+                                                                                else if (s.level && currentLevels.includes(s.level)) targetEmails.push(s.email);
+                                                                                else if (currentExam && s.competitiveExam === currentExam) targetEmails.push(s.email);
+                                                                            }
+                                                                        });
+                                                                    }
+
+                                                                    const response = await fetch('/api/google/create-meeting', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({
+                                                                            title: form.getValues('title'),
+                                                                            date: form.getValues('date'),
+                                                                            startTime: form.getValues('startTime'),
+                                                                            endTime: form.getValues('endTime'),
+                                                                            teacherEmail: form.getValues('teacherGoogleEmail') || user?.email,
+                                                                            studentEmails: targetEmails,
+                                                                        })
+                                                                    });
+
+                                                            if (response.ok) {
+                                                                const { meetLink, eventId } = await response.json();
+                                                                field.onChange(meetLink);
+                                                                form.setValue('meetEventId', eventId);
+                                                                toast({ 
+                                                                    title: 'Meet Link Generated!', 
+                                                                    description: 'A unique code has been created from the Admin account.' 
+                                                                });
+                                                            } else {
+                                                                throw new Error('Failed API call');
+                                                            }
+                                                        } catch (e) {
+                                                            // Fallback to random generation if the backend is not yet setup 
+                                                            const chars = 'abcdefghijklmnopqrstuvwxyz';
+                                                            const p1 = Array.from({length:3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+                                                            const p2 = Array.from({length:4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+                                                            const p3 = Array.from({length:3}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+                                                            const newLink = `https://meet.google.com/${p1}-${p2}-${p3}`;
+                                                            
+                                                            field.onChange(newLink);
+                                                            toast({ 
+                                                                title: 'Meet Link Generated (Offline)!', 
+                                                                description: 'A unique code was created locally since the API is not yet fully configured.' 
+                                                            });
+                                                        } finally {
+                                                            setLoading(false);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Video className="mr-1.5 h-3.5 w-3.5" />
+                                                    Create Meet Link
+                                                </Button>
+                                            </div>
+                                            <FormControl>
+                                                <div className="relative group">
+                                                    <Input 
+                                                        className="h-11 px-4 bg-muted/20 border-muted-foreground/10 focus:border-[#FF8C00]/30 transition-all rounded-xl placeholder:text-muted-foreground/30 font-medium" 
+                                                        placeholder="https://meet.google.com/xxx-yyyy-zzz" 
+                                                        {...field} 
+                                                    />
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 group-hover:text-[#FF8C00]/40 transition-colors pointer-events-none">
+                                                        <Video className="h-4 w-4" />
+                                                    </div>
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                            <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                                                * For full duration & attendance tracking, ensure GOOGLE_CLIENT_ID and REFRESH_TOKEN are set in Admin config.
+                                            </p>
+                                        </FormItem>
+                                    )}
+                                />
 
                                 {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
                                 <Button type="submit" disabled={loading} className="w-full">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" /> } Create Schedule</Button>

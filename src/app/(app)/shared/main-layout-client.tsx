@@ -37,6 +37,7 @@ import {
   Megaphone,
   LayoutGrid,
   ClipboardCheck,
+  Activity,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -189,6 +190,7 @@ export default function MainLayoutClient({
 
   const adminNav = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/class-tracking", label: "Class Tracking", icon: Activity },
     {
       href: "/admin/course-model-controller",
       label: "Course Model Controller",
