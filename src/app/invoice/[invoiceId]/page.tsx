@@ -26,7 +26,7 @@ function InvoicePageContents() {
         const searchParams = new URLSearchParams(window.location.search);
         setIsSuccess(searchParams.get('success') === 'true');
     }, []);
-
+ 
     const invoiceId = params.invoiceId as string;
     
     const [invoice, setInvoice] = useState<Invoice | null>(null);

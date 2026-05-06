@@ -207,7 +207,7 @@ export default function MainLayoutClient({
     if (auth) {
       await firebaseSignOut(auth);
     }
-    router.push("/sign-in");
+    router.push("/");
   };
 
   if (loading) {
