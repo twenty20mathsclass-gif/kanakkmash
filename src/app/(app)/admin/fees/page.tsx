@@ -32,7 +32,7 @@ import {
 
 const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('DEGREE');
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
-const competitiveExams = ['LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
+const competitiveExams = ['JEE', 'NEET', 'Olympiad', 'LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 const twenty20Levels = [
     { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
     { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },

@@ -55,11 +55,11 @@ const classes = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat('D
 const syllabuses = ['Kerala State syllabus', 'CBSE kerala', 'CBSE UAE', 'CBSE KSA', 'ICSE'];
 const competitiveExams = ['JEE', 'NEET', 'Olympiad', 'LSS', 'NuMATs', 'USS', 'NMMS', 'NTSE', 'PSC', 'MAT', 'KTET', 'CTET', 'NET', 'CSAT'];
 const twenty20Levels = [
-    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1 (Class 1 & 2)' },
-    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2 (Class 3 & 4)' },
-    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3 (Class 5, 6, 7)' },
-    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4 (Class 8, 9, 10)' },
-    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5 (Class +1 & +2)' },
+    { label: 'Level 1 (Class 1 & 2)', value: 'Level 1' },
+    { label: 'Level 2 (Class 3 & 4)', value: 'Level 2' },
+    { label: 'Level 3 (Class 5, 6, 7)', value: 'Level 3' },
+    { label: 'Level 4 (Class 8, 9, 10)', value: 'Level 4' },
+    { label: 'Level 5 (Class +1 & +2)', value: 'Level 5' },
 ];
 
 const DEFAULT_FEE = 99;
@@ -70,7 +70,7 @@ export function SignUpForm() {
   const { auth, firestore } = useFirebase();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [fee, setFee] = useState<number | null>(DEFAULT_FEE);
+  const [fee, setFee] = useState<number | null>(null);
   const [loadingFee, setLoadingFee] = useState(false);
   const [courseModels, setCourseModels] = useState<CourseModel[]>([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -499,6 +499,27 @@ export function SignUpForm() {
             />
           </div>
         </div>
+
+        {courseModelName && (
+          <div className="rounded-lg bg-primary/5 p-4 border border-primary/20">
+            <div className="flex justify-between items-center">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Registration Fee</p>
+                <p className="text-xs text-muted-foreground">For {courseModelName} ({currentLearningMode} mode)</p>
+              </div>
+              <div className="text-right">
+                {loadingFee ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary ml-auto" />
+                ) : (
+                  <div className="flex items-center text-xl font-bold text-primary">
+                    <span className="text-base mr-1">₹</span>
+                    {fee !== null ? fee.toLocaleString('en-IN') : DEFAULT_FEE}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="pt-2 text-center text-sm text-muted-foreground">
           By continuing you agree to all our{' '}

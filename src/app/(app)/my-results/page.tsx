@@ -57,7 +57,8 @@ export default function MyResultsPage() {
     const { user, loading: userLoading } = useUser();
     const router = useRouter();
     const [submissions, setSubmissions] = useState<ExamSubmission[]>([]);
-    const [assessments, setAssessments] = useState<any[]>([]);
+    const [preAssessments, setPreAssessments] = useState<any[]>([]);
+    const [postAssessments, setPostAssessments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
@@ -103,16 +104,23 @@ export default function MyResultsPage() {
         
         const fetchAssessments = async () => {
             try {
-                // Link assessments by user email or userId
-                const q = query(
-                    collection(firestore, 'assessment'),
-                    where('userId', '==', user.id)
-                );
-                const snap = await getDocs(q);
-                const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setAssessments(list.filter((a: any) => a.assessmentType === 'paid'));
+                // Fetch Pre-Assessments (by userId or email)
+                const qPreUser = query(collection(firestore, 'pre_assessment'), where('userId', '==', user.id));
+                const qPreEmail = query(collection(firestore, 'pre_assessment'), where('email', '==', user.email));
+                
+                const [snapPreUser, snapPreEmail] = await Promise.all([getDocs(qPreUser), getDocs(qPreEmail)]);
+                const preList = [...snapPreUser.docs, ...snapPreEmail.docs].map(doc => ({ id: doc.id, ...doc.data() }));
+                // Remove duplicates by ID
+                const uniquePre = Array.from(new Map(preList.map(item => [item.id, item])).values());
+                setPreAssessments(uniquePre);
+
+                // Fetch Post-Assessments (by userId)
+                const qPost = query(collection(firestore, 'assessment'), where('userId', '==', user.id));
+                const snapPost = await getDocs(qPost);
+                const postList = snapPost.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setPostAssessments(postList.filter((a: any) => a.assessmentType === 'paid' || a.status === 'completed'));
             } catch (err) {
-                console.warn("Error fetching initial assessments:", err);
+                console.warn("Error fetching assessments:", err);
             }
         };
         fetchAssessments();
@@ -138,21 +146,55 @@ export default function MyResultsPage() {
         const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
         const topScore = scores.length > 0 ? Math.max(...scores) : 0;
         
-        const latestSubmissions = submissions.slice(0, 10).reverse();
-        const chartData = latestSubmissions.map(s => {
+        const chartData = [];
+
+        // 1. Add Pre-Assessments
+        preAssessments.forEach(a => {
+            chartData.push({
+                name: "Pre-Asmt",
+                fullName: "Pre Assessment: " + a.class,
+                score: a.percentage || 0,
+                type: "pre",
+                date: a.submittedAt?.toMillis() || 0
+            });
+        });
+
+        // 2. Add Post-Assessments
+        postAssessments.forEach(a => {
+            chartData.push({
+                name: "Post-Asmt",
+                fullName: "Post Assessment: " + a.class,
+                score: a.percentage || 0,
+                type: "post",
+                date: a.submittedAt?.toMillis() || 0
+            });
+        });
+
+        // 3. Add regular exam submissions
+        submissions.forEach(s => {
             let percentage = 0;
             if (s.examType === 'mcq' && s.score !== undefined && s.totalQuestions) {
                 percentage = Math.round((s.score / s.totalQuestions) * 100);
             } else if (s.examType === 'descriptive' && s.score !== undefined && s.totalMarks) {
                 percentage = Math.round((s.score / s.totalMarks) * 100);
             }
-            return {
-                name: s.examTitle.length > 15 ? s.examTitle.substring(0, 12) + '...' : s.examTitle,
-                fullName: s.examTitle,
-                score: percentage,
-                type: s.examType
-            };
+            
+            if (s.examType === 'mcq' || (s.examType === 'descriptive' && s.status === 'reviewed')) {
+                chartData.push({
+                    name: s.examTitle.length > 10 ? s.examTitle.substring(0, 8) + '...' : s.examTitle,
+                    fullName: s.examTitle,
+                    score: percentage,
+                    type: s.examType,
+                    date: s.submittedAt?.toMillis() || 0
+                });
+            }
         });
+
+        // Sort by date to show progress
+        chartData.sort((a, b) => a.date - b.date);
+
+        // Limit to last 12 points for readability
+        const finalChartData = chartData.slice(-12);
 
         let performanceLevel = "Not Assessed";
         if (scores.length > 0) {
@@ -167,10 +209,10 @@ export default function MyResultsPage() {
             averageScore,
             totalExamsTaken,
             topScore,
-            chartData,
+            chartData: finalChartData,
             performanceLevel
         };
-    }, [submissions]);
+    }, [submissions, preAssessments, postAssessments]);
 
     if (loading || userLoading) {
         return (
@@ -281,6 +323,8 @@ export default function MyResultsPage() {
                                                     key={`cell-${index}`} 
                                                     fill={
                                                         entry.score >= 80 ? "#22C55E" : 
+                                                        entry.type === 'pre' ? "#F59E0B" :
+                                                        entry.type === 'post' ? "#D946EF" :
                                                         entry.score >= 50 ? "#4F46E5" : 
                                                         "#EF4444"
                                                     } 
@@ -393,20 +437,20 @@ export default function MyResultsPage() {
                 </div>
              </Reveal>
 
-             {/* Initial Assessment Section */}
-             {assessments.length > 0 && (
-                <Reveal delay={0.8}>
+             {/* Pre Assessment Section */}
+             {preAssessments.length > 0 && (
+                <Reveal delay={0.75}>
                     <div className="pt-10 space-y-4">
                         <div className="flex items-center gap-2 px-1">
-                            <Sparkles className="h-5 w-5 text-amber-500" />
-                            <h2 className="font-headline font-bold text-slate-700">Initial Assessment</h2>
+                            <Trophy className="h-5 w-5 text-amber-500" />
+                            <h2 className="font-headline font-bold text-slate-700">Pre Assessment (Foundational)</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {assessments.map(item => (
+                            {preAssessments.map(item => (
                                 <Card 
                                     key={item.id} 
                                     className="border border-slate-100 shadow-sm rounded-3xl bg-white hover:border-amber-200 transition-all group cursor-pointer overflow-hidden relative"
-                                    onClick={() => setSelectedAssessment(item)}
+                                    onClick={() => setSelectedAssessment({ ...item, typeTitle: 'Pre Assessment' })}
                                 >
                                     <div className="absolute top-0 right-0 p-4">
                                         <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-amber-500 transition-colors" />
@@ -414,7 +458,7 @@ export default function MyResultsPage() {
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className="h-10 w-10 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
-                                                <Trophy className="h-5 w-5 text-amber-600" />
+                                                <Target className="h-5 w-5 text-amber-600" />
                                             </div>
                                             <div>
                                                 <CardTitle className="text-sm font-bold truncate leading-tight">Entrance Test</CardTitle>
@@ -449,13 +493,69 @@ export default function MyResultsPage() {
                 </Reveal>
              )}
 
+             {/* Post Assessment Section */}
+             {postAssessments.length > 0 && (
+                <Reveal delay={0.8}>
+                    <div className="pt-10 space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <Sparkles className="h-5 w-5 text-fuchsia-500" />
+                            <h2 className="font-headline font-bold text-slate-700">Post Assessment (Enrolled)</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {postAssessments.map(item => (
+                                <Card 
+                                    key={item.id} 
+                                    className="border border-slate-100 shadow-sm rounded-3xl bg-white hover:border-fuchsia-200 transition-all group cursor-pointer overflow-hidden relative"
+                                    onClick={() => setSelectedAssessment({ ...item, typeTitle: 'Post Assessment' })}
+                                >
+                                    <div className="absolute top-0 right-0 p-4">
+                                        <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-fuchsia-500 transition-colors" />
+                                    </div>
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="h-10 w-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center shrink-0">
+                                                <Trophy className="h-5 w-5 text-fuchsia-600" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-sm font-bold truncate leading-tight">Advanced Test</CardTitle>
+                                                <CardDescription className="text-[10px] font-bold uppercase tracking-wider">{item.class}</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pb-6">
+                                        <div className="flex items-end justify-between">
+                                            <div>
+                                                <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Score Result</p>
+                                                <p className="text-2xl font-black text-slate-800">
+                                                    {item.score}<span className="text-sm text-slate-300">/{item.totalQuestions}</span>
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Precision</p>
+                                                <p className="text-lg font-black text-fuchsia-600">{item.percentage}%</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-50 h-1.5 rounded-full mt-4 overflow-hidden border border-slate-100">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-fuchsia-400 to-fuchsia-600 rounded-full" 
+                                                style={{ width: `${item.percentage}%` }}
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                </Reveal>
+             )}
+
              {/* Assessment Detail Modal */}
              <Dialog open={!!selectedAssessment} onOpenChange={(open) => !open && setSelectedAssessment(null)}>
                 <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl rounded-[3rem] gap-0">
-                    <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 p-8 pt-10 text-white relative">
+                    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-black p-8 pt-10 text-white relative">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-3xl font-black font-headline leading-tight">Initial Assessment</h2>
+                                <h2 className="text-3xl font-black font-headline leading-tight">{selectedAssessment?.typeTitle || 'Assessment Report'}</h2>
                                 <p className="text-white/70 font-medium text-sm mt-1">Foundational performance report</p>
                             </div>
                             <div className="bg-white/10 p-4 rounded-[2rem] backdrop-blur-md shrink-0 border border-white/10">

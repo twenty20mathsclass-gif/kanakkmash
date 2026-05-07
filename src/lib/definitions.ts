@@ -373,6 +373,8 @@ export type CourseFee = {
 export type Invoice = {
   id: string;
   studentId: string;
+  studentName?: string;
+  studentEmail?: string;
   amount: number;
   status: 'paid' | 'unpaid' | 'overdue';
   type: 'fee' | 'cart';
@@ -408,16 +410,22 @@ export type Announcement = {
   createdAt: Timestamp;
 };
 
-export type AssessmentQuestion = {
+export type PreAssessmentQuestion = {
   id: string;
   question: string;
   options: string[];
   correctAnswerIndex: number;
   class: string;
+  subject?: string;
+  type?: 'mcq' | 'descriptive';
+  difficulty?: 'easy' | 'medium' | 'hard';
   imageUrl?: string;
+  durationSeconds?: number;
   createdAt: Timestamp;
   createdBy: string;
 };
+
+export type AssessmentQuestion = PreAssessmentQuestion;
 
 export type AssessmentConfig = {
   durationMinutes: number;

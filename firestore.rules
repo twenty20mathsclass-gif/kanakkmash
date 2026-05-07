@@ -45,7 +45,8 @@ service cloud.firestore {
     // --- User Profiles & Details ---
 
     match /users/{userId} {
-      allow get, list: if request.auth != null;
+      allow get: if request.auth != null || (resource != null && resource.data.role == 'student');
+      allow list: if request.auth != null;
       allow create: if isOwner(userId) || isAdmin();
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
       allow delete: if isAdmin();
@@ -189,7 +190,7 @@ service cloud.firestore {
     match /testimonials/{testimonialId} { allow get, list: if true; allow write: if isAdmin(); }
     match /invoices/{invoiceId} { 
       allow create: if request.auth != null; 
-      allow get: if isAdmin() || (resource != null && isOwner(resource.data.studentId)); 
+      allow get: if true; 
       allow list: if isAdmin(); 
     }
     match /salaryInvoices/{invoiceId} { 
@@ -198,7 +199,28 @@ service cloud.firestore {
     }
     match /blogPosts/{postId} { allow get, list: if true; allow create: if isRole('admin') || isRole('teacher'); allow update: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])); allow delete: if isAdmin() || (isRole('teacher') && resource.data.authorId == request.auth.uid); match /comments/{commentId} { allow read, list: if true; allow create: if request.auth != null; allow delete: if request.auth != null && (isAdmin() || resource.data.authorId == request.auth.uid); } }
 
-    // --- Assessment Test ---
+    // --- Pre Assessment Test ---
+    match /pre_assessment_questions/{questionId} {
+      // Public can read (for the live pre assessment test, no login required)
+      allow get, list: if true;
+      // Only OGA, teacher and admin can create, update, delete
+      allow create, update, delete: if isRole('oga') || isRole('teacher') || isAdmin();
+    }
+
+    match /pre_assessment_config/{configId} {
+      // Public can read config (duration, isActive)
+      allow get, list: if true;
+      // Only OGA and admin can write
+      allow write: if isRole('oga') || isAdmin();
+    }
+
+    match /pre_assessment/{docId} {
+      allow create: if true;
+      allow read: if isAdmin() || isRole('oga') || isRole('teacher') || (request.auth != null && resource.data.email == request.auth.token.email);
+      allow update: if isAdmin() || (request.auth != null && resource.data.email == request.auth.token.email);
+    }
+
+    // --- Post Assessment Test (Legacy or Secondary) ---
     match /assessment_questions/{questionId} {
       // Public can read (for the live assessment test, no login required)
       allow get, list: if true;

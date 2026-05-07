@@ -127,7 +127,7 @@ export default function TeacherAssessmentResultsPage() {
                 <ClipboardCheck size={20} />
                 <span className="text-xs font-bold uppercase tracking-widest">Teacher Panel</span>
             </div>
-            <h1 className="text-3xl font-bold font-headline tracking-tight">Assessment Results</h1>
+            <h1 className="text-3xl font-bold font-headline tracking-tight">Post Assessment Results</h1>
             <p className="text-muted-foreground mt-1">Review student performance and initial assessment inquiries.</p>
           </div>
           <div className="flex items-center gap-4">

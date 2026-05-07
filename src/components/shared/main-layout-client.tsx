@@ -40,6 +40,7 @@ import {
   LayoutGrid,
   ClipboardCheck,
   Calculator,
+  BarChart3,
 } from "lucide-react";
 
 const AdminPromoterTeacherLayout = dynamic(
@@ -76,7 +77,7 @@ export default function MainLayoutClient({
     const reconcileLeads = async () => {
       // Get all unlinked assessments matching the current user's email
       const q = query(
-        collection(firestore, 'assessment'),
+        collection(firestore, 'pre_assessment'),
         where('email', '==', user.email.toLowerCase()),
         where('isLoggedIn', '==', false)
       );
@@ -172,13 +173,13 @@ export default function MainLayoutClient({
     let isUnauthorized = false;
 
     if (user.role === "admin") {
-      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/salary-invoice"));
+      isUnauthorized = !(pathname.startsWith("/admin") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/salary-invoice") || pathname.startsWith("/profile") || pathname.startsWith("/oga/settings") || pathname.startsWith("/admin/post-assessment-results"));
     } else if (user.role === "teacher") {
-      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals") || pathname.startsWith("/salary-invoice"));
+      isUnauthorized = !(pathname.startsWith("/teacher") || pathname.startsWith("/my-chat-room") || pathname.startsWith("/my-referrals") || pathname.startsWith("/salary-invoice") || pathname.startsWith("/profile"));
     } else if (user.role === "promoter") {
-      isUnauthorized = !(pathname.startsWith("/promoter") || pathname.startsWith("/my-referrals"));
+      isUnauthorized = !(pathname.startsWith("/promoter") || pathname.startsWith("/my-referrals") || pathname.startsWith("/profile"));
     } else if (user.role === "oga") {
-      isUnauthorized = !pathname.startsWith("/oga");
+      isUnauthorized = !(pathname.startsWith("/oga") || pathname.startsWith("/profile"));
     } else {
       // Student or unassigned role
       isUnauthorized = 
@@ -263,8 +264,8 @@ export default function MainLayoutClient({
     },
     { href: "/my-chat-room", label: "My Chat Room", icon: MessagesSquare },
     { href: "/teacher/revenue", label: "My Revenue", icon: Banknote },
-    { href: "/teacher/assessment", label: "Assessment", icon: LayoutGrid },
-    { href: "/teacher/assessment-results", label: "Assessment Results", icon: ClipboardCheck },
+    { href: "/teacher/assessment", label: "Post Assessment", icon: Award },
+    { href: "/teacher/assessment-results", label: "Post Assessment Results", icon: ClipboardCheck },
     { href: "/my-referrals", label: "My Referrals", icon: Share2 },
     { href: "/teacher/blog/create", label: "Blog Creation", icon: PenSquare },
   ];
@@ -279,7 +280,7 @@ export default function MainLayoutClient({
     { href: "/oga", label: "Dashboard", icon: LayoutDashboard },
     {
       href: "/oga/questions",
-      label: "Assessment Questions",
+      label: "Pre Assessment Questions",
       icon: FilePenLine,
     },
     { href: "/oga/settings", label: "Test Settings", icon: Settings },
@@ -319,8 +320,10 @@ export default function MainLayoutClient({
       label: "Student Invoices",
       icon: Receipt,
     },
-    { href: "/admin/assessment", label: "Assessment Questions", icon: LayoutGrid },
-    { href: "/admin/assessment-results", label: "Assessment Results", icon: ClipboardCheck },
+    { href: "/admin/assessment", label: "Pre Assessment Questions", icon: Award },
+    { href: "/admin/assessment-results", label: "Pre Assessment Results", icon: ClipboardCheck },
+    { href: "/admin/post-assessment-results", label: "Post Assessment Results", icon: BarChart3 },
+    { href: "/oga/settings", label: "Assessment Settings", icon: Settings },
   ];
 
   let layout;

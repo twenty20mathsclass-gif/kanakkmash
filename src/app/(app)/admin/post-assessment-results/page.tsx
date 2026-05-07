@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, onSnapshot, Timestamp, where } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
+import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -16,14 +16,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { 
   Loader2, Mail, Phone, User, GraduationCap, Calendar, 
-  CheckCircle2, XCircle, LayoutGrid, Eye, Search, Info, ShieldCheck,
-  Trophy, ClipboardCheck, ArrowUpRight, Filter
+  Search, ShieldCheck, XCircle, ClipboardCheck, ArrowUpRight, Filter, Trophy
 } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 import { Button } from '@/components/ui/button';
@@ -55,7 +53,7 @@ interface AssessmentSubmission {
   percentage?: number;
 }
 
-export default function AdminAssessmentResultsPage() {
+export default function AdminPostAssessmentResultsPage() {
   const { firestore } = useFirebase();
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,11 +66,11 @@ export default function AdminAssessmentResultsPage() {
   const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
-    if (!firestore || !user?.email) return;
+    if (!firestore) return;
 
-    // Fetch all assessments first, we'll filter client-side for better UX with search
+    // Fetch all assessments from the 'assessment' collection (Post Assessment)
     const q = query(
-      collection(firestore, 'pre_assessment'),
+      collection(firestore, 'assessment'),
       orderBy('submittedAt', 'desc')
     );
 
@@ -81,10 +79,10 @@ export default function AdminAssessmentResultsPage() {
         id: doc.id,
         ...doc.data()
       })) as AssessmentSubmission[];
-      setSubmissions(docs.filter(d => d.submittedAt)); // Ensure we only have docs with timestamps
+      setSubmissions(docs.filter(d => d.submittedAt));
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching assessments:", error);
+      console.error("Error fetching post-assessments:", error);
       setLoading(false);
     });
 
@@ -96,8 +94,7 @@ export default function AdminAssessmentResultsPage() {
     const matchesSearch = 
       (item.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (item.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (item.whatsapp || '').includes(searchQuery) ||
-      (item.invoiceId || '').includes(searchQuery);
+      (item.whatsapp || '').includes(searchQuery);
     
     const matchesClass = classFilter === 'all' || item.class === classFilter;
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -112,7 +109,7 @@ export default function AdminAssessmentResultsPage() {
     return (
       <div className="flex flex-col items-center justify-center p-20 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground font-medium">Loading assessment reports...</p>
+        <p className="text-muted-foreground font-medium">Loading post assessment reports...</p>
       </div>
     );
   }
@@ -126,8 +123,8 @@ export default function AdminAssessmentResultsPage() {
                 <ClipboardCheck size={20} />
                 <span className="text-xs font-bold uppercase tracking-widest">Administrative Panel</span>
             </div>
-            <h1 className="text-3xl font-bold font-headline tracking-tight">Pre Assessment Results</h1>
-            <p className="text-muted-foreground mt-1">Comprehensive overview of all student assessments and leads.</p>
+            <h1 className="text-3xl font-bold font-headline tracking-tight">Post Assessment Results</h1>
+            <p className="text-muted-foreground mt-1">Review performance for enrolled students' assessments.</p>
           </div>
           <div className="flex items-center gap-4">
              <div className="hidden sm:flex items-center gap-3 bg-card border px-5 py-2.5 rounded-3xl shadow-sm">
@@ -149,7 +146,7 @@ export default function AdminAssessmentResultsPage() {
             <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                 <Input 
-                    placeholder="Search by name, email, whatsapp or invoice..." 
+                    placeholder="Search by name, email or whatsapp..." 
                     className="pl-12 rounded-2xl border-none bg-muted/30 focus-visible:ring-2 focus-visible:ring-primary/20 h-12"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -177,18 +174,6 @@ export default function AdminAssessmentResultsPage() {
                         <SelectItem value="all">All Status</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="started">Started</SelectItem>
-                        <SelectItem value="registered">Registered</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[120px] rounded-2xl border-none bg-muted/30 h-12 px-4 font-medium flex gap-2">
-                        <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-xl">
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="free">Free</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -203,8 +188,7 @@ export default function AdminAssessmentResultsPage() {
                 <TableHeader className="bg-muted/30 border-none">
                   <TableRow className="border-none hover:bg-transparent">
                     <TableHead className="font-bold py-5 pl-8">Student</TableHead>
-                    <TableHead className="font-bold">Type/Fee</TableHead>
-                    <TableHead className="font-bold">Class</TableHead>
+                    <TableHead className="font-bold">Category</TableHead>
                     <TableHead className="font-bold">Score</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Date</TableHead>
@@ -225,23 +209,9 @@ export default function AdminAssessmentResultsPage() {
                            </div>
                            <div className="flex flex-col">
                                 <span className="font-bold text-foreground/90">{item.name || 'Anonymous'}</span>
-                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{item.whatsapp}</span>
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{item.email}</span>
                            </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {item.assessmentType === 'paid' ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 border-none rounded-xl font-black text-[10px] uppercase shadow-sm">
-                                Paid
-                            </Badge>
-                        ) : (
-                            <Badge className="bg-slate-100 text-slate-500 border-none rounded-xl font-bold text-[10px] uppercase">
-                                Free
-                            </Badge>
-                        )}
-                        {item.invoiceId && (
-                            <p className="text-[9px] text-muted-foreground mt-1 font-mono tracking-tighter">{item.invoiceId.slice(0, 10)}</p>
-                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary px-3 rounded-full font-bold text-[10px]">
@@ -269,9 +239,7 @@ export default function AdminAssessmentResultsPage() {
                         <Badge 
                             variant="secondary" 
                             className={`capitalize rounded-lg px-2.5 py-0.5 font-bold border-none ${
-                                item.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                item.status === 'registered' ? 'bg-blue-100 text-blue-700' :
-                                'bg-orange-100 text-orange-700'
+                                item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                             }`}
                         >
                             {item.status}
@@ -297,7 +265,7 @@ export default function AdminAssessmentResultsPage() {
                </div>
                <div className="text-center">
                   <p className="text-xl font-black text-foreground/40 font-headline">No matching results</p>
-                  <p className="text-muted-foreground font-medium max-w-[280px] mt-1 mx-auto text-sm">Try adjusting your filters or search query to find students.</p>
+                  <p className="text-muted-foreground font-medium max-w-[280px] mt-1 mx-auto text-sm">Try adjusting your filters to find students.</p>
                </div>
             </div>
           )}
@@ -310,7 +278,7 @@ export default function AdminAssessmentResultsPage() {
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 pt-10 text-white relative">
              <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-black font-headline leading-tight">Assessment Record</h2>
+                    <h2 className="text-3xl font-black font-headline leading-tight">Post Assessment</h2>
                     <p className="text-white/50 font-medium text-sm mt-1">Detailed performance and contact data</p>
                 </div>
                 <div className="bg-white/10 p-4 rounded-[2rem] backdrop-blur-md shrink-0 border border-white/10">
@@ -328,12 +296,7 @@ export default function AdminAssessmentResultsPage() {
                     </Badge>
                 ) : (
                     <Badge className="bg-slate-500/20 hover:bg-slate-500/30 border-slate-500/30 text-slate-200 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold flex gap-1.5 items-center">
-                        <XCircle size={14} /> Guest Lead
-                    </Badge>
-                )}
-                {selectedItem?.assessmentType === 'paid' && (
-                    <Badge className="bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-200 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold">
-                        Paid Enrollment
+                        <XCircle size={14} /> Guest
                     </Badge>
                 )}
              </div>
@@ -372,9 +335,9 @@ export default function AdminAssessmentResultsPage() {
                         </div>
                     </div>
                     <div className="flex-1 text-center md:text-left space-y-1">
-                        <h4 className="text-xl font-black font-headline">Test Performance</h4>
+                        <h4 className="text-xl font-black font-headline">Performance Analysis</h4>
                         <p className="text-muted-foreground text-sm font-medium">
-                            Correctly answered <span className="text-foreground font-bold">{selectedItem.score}</span> out of <span className="text-foreground font-bold">{selectedItem.totalQuestions}</span> questions in the <span className="text-primary font-bold">{selectedItem.class}</span> assessment.
+                            Correctly answered <span className="text-foreground font-bold">{selectedItem.score}</span> out of <span className="text-foreground font-bold">{selectedItem.totalQuestions}</span> questions in the <span className="text-primary font-bold">{selectedItem.class}</span> module.
                         </p>
                     </div>
                  </div>
@@ -384,7 +347,7 @@ export default function AdminAssessmentResultsPage() {
                 <div className="space-y-6">
                     <div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Student Name</p>
-                        <p className="text-lg font-black text-foreground/90 font-headline leading-none">{selectedItem?.name || 'Full Name Missing'}</p>
+                        <p className="text-lg font-black text-foreground/90 font-headline leading-none">{selectedItem?.name || 'Anonymous'}</p>
                     </div>
                     <div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">WhatsApp Contact</p>
@@ -393,55 +356,25 @@ export default function AdminAssessmentResultsPage() {
                             {selectedItem?.whatsapp}
                         </p>
                     </div>
-                    <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Email Address</p>
-                        <p className="text-sm font-medium text-foreground flex items-center gap-2 leading-none bg-muted/20 p-2 rounded-xl border truncate">
-                            <Mail size={16} className="text-primary shrink-0" />
-                            {selectedItem?.email}
-                        </p>
-                    </div>
                 </div>
 
                 <div className="space-y-6">
                     <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Academic Category</p>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Academic Class</p>
                         <p className="text-lg font-black text-primary font-headline flex items-center gap-2 leading-none">
                             <GraduationCap size={22} />
                             {selectedItem?.class}
                         </p>
                     </div>
                     <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Submitted On</p>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Date Submitted</p>
                         <p className="text-sm font-medium text-foreground/80 flex items-center gap-2 leading-none">
                             <Calendar size={18} className="text-muted-foreground" />
                             {selectedItem?.submittedAt ? format(selectedItem.submittedAt.toDate(), "MMMM dd, yyyy · hh:mm a") : "N/A"}
                         </p>
                     </div>
-                    <div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-2 leading-none">Registration Status</p>
-                        <Badge className="bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-                            {selectedItem?.status}
-                        </Badge>
-                    </div>
                 </div>
              </div>
-             
-             {selectedItem?.invoiceId && (
-                <div className="mb-8 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                         <div className="bg-amber-100 p-2 rounded-xl">
-                            <ClipboardCheck className="h-4 w-4 text-amber-700" />
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Linked Invoice</p>
-                            <p className="text-sm font-mono font-bold text-amber-900">{selectedItem.invoiceId}</p>
-                         </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-amber-700 hover:bg-amber-100 rounded-xl font-bold text-xs">
-                        View Payment details
-                    </Button>
-                </div>
-             )}
              
              <div className="flex justify-end gap-3 pt-6 border-t font-headline">
                 <Button 
@@ -458,7 +391,7 @@ export default function AdminAssessmentResultsPage() {
                     className="rounded-2xl px-8 h-12 font-black transition-all shadow-lg hover:shadow-primary/25 bg-green-600 hover:bg-green-700 text-white flex gap-2"
                 >
                     <Phone size={18} />
-                    WhatsApp Lead
+                    WhatsApp Student
                 </Button>
              </div>
           </div>

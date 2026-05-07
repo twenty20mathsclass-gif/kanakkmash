@@ -61,18 +61,27 @@ function InvoicePageContents() {
                 setInvoice(invoiceData);
 
                 const userRef = doc(firestore, 'users', invoiceData.studentId);
-                const userSnap = await getDoc(userRef);
+                const userSnap = await getDoc(userRef).catch(() => null);
 
-                if (userSnap.exists()) {
+                if (userSnap && userSnap.exists()) {
                     setStudent(userSnap.data() as User);
+                } else if (invoiceData.studentName && invoiceData.studentEmail) {
+                    // Fallback to data stored in invoice if user doc is inaccessible
+                    setStudent({
+                        id: invoiceData.studentId,
+                        name: invoiceData.studentName,
+                        email: invoiceData.studentEmail,
+                        role: 'student',
+                        courseModel: invoiceData.type === 'fee' ? 'Student Registration' : ''
+                    } as User);
                 } else {
                     setError('Student details not found for this invoice.');
                 }
             } catch (err: any) {
-                console.error("Error fetching invoice:", err);
+                console.error("Error fetching invoice details:", err);
                 if (err.code === 'permission-denied') {
                     const permissionError = new FirestorePermissionError({
-                        path: `invoices/${invoiceId}`,
+                        path: err.path || `invoices/${invoiceId}`,
                         operation: 'get'
                     }, { cause: err });
                     errorEmitter.emit('permission-error', permissionError);

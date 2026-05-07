@@ -25,11 +25,11 @@ const CLASSES = [
 ];
 
 const LEVELS = [
-    { id: 'level-1', name: 'Level 1 (Class 1 & 2)', category: 'Basic Maths' },
-    { id: 'level-2', name: 'Level 2 (Class 3 & 4)', category: 'Basic Maths' },
-    { id: 'level-3', name: 'Level 3 (Class 5, 6, 7)', category: 'Basic Maths' },
-    { id: 'level-4', name: 'Level 4 (Class 8, 9, 10)', category: 'Basic Maths' },
-    { id: 'level-5', name: 'Level 5 (Class +1 & +2)', category: 'Basic Maths' },
+    { id: 'level-1', name: 'Level 1', category: 'Basic Maths' },
+    { id: 'level-2', name: 'Level 2', category: 'Basic Maths' },
+    { id: 'level-3', name: 'Level 3', category: 'Basic Maths' },
+    { id: 'level-4', name: 'Level 4', category: 'Basic Maths' },
+    { id: 'level-5', name: 'Level 5', category: 'Basic Maths' },
 ];
 
 const COMPETITIVE_EXAMS = [
@@ -39,6 +39,14 @@ const COMPETITIVE_EXAMS = [
     { id: 'exam-lss', name: 'LSS', category: 'Competitive' },
     { id: 'exam-numats', name: 'NuMATs', category: 'Competitive' },
     { id: 'exam-uss', name: 'USS', category: 'Competitive' },
+    { id: 'exam-nmms', name: 'NMMS', category: 'Competitive' },
+    { id: 'exam-ntse', name: 'NTSE', category: 'Competitive' },
+    { id: 'exam-psc', name: 'PSC', category: 'Competitive' },
+    { id: 'exam-mat', name: 'MAT', category: 'Competitive' },
+    { id: 'exam-ktet', name: 'KTET', category: 'Competitive' },
+    { id: 'exam-ctet', name: 'CTET', category: 'Competitive' },
+    { id: 'exam-net', name: 'NET', category: 'Competitive' },
+    { id: 'exam-csat', name: 'CSAT', category: 'Competitive' },
 ];
 
 export default function AdminAssessmentManagementPage() {
@@ -50,7 +58,7 @@ export default function AdminAssessmentManagementPage() {
         const fetchCounts = async () => {
             if (!firestore) return;
             try {
-                const q = query(collection(firestore, 'assessment_questions'));
+                const q = query(collection(firestore, 'pre_assessment_questions'));
                 const snap = await getDocs(q);
                 const countsMap: Record<string, number> = {};
                 snap.docs.forEach(doc => {
@@ -112,7 +120,7 @@ export default function AdminAssessmentManagementPage() {
             <Reveal>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h1 className="text-4xl font-black font-headline tracking-tight">Assessment Bank</h1>
+                        <h1 className="text-4xl font-black font-headline tracking-tight">Pre Assessment Questions</h1>
                         <p className="text-muted-foreground mt-2 text-lg">Manage the global question repository for initial student assessments.</p>
                     </div>
                     <Button variant="outline" className="rounded-2xl h-12 px-6 font-bold" asChild>

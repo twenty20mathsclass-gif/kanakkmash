@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { collection, getDocs, doc, getDoc, orderBy, where, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase, useUser } from '@/firebase';
 import Image from 'next/image';
-import { ArrowLeft, Clock, BookOpen, CheckCircle, Trophy, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock, BookOpen, CheckCircle, Trophy, Sparkles, Loader2, Award, Zap, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserData {
   name: string;
@@ -21,6 +22,7 @@ interface Question {
   options: string[];
   correctAnswerIndex: number;
   imageUrl?: string;
+  durationSeconds?: number;
 }
 
 // Fallback if Firestore is empty
@@ -69,7 +71,7 @@ export default function AssessmentTestPage() {
         // Fetch questions filtered by the student's category
         const qSnap = await getDocs(
           query(
-            collection(firestore, 'assessment_questions'),
+            collection(firestore, 'pre_assessment_questions'),
             where('class', '==', studentClass)
           )
         );
@@ -88,11 +90,21 @@ export default function AssessmentTestPage() {
           setQuestions(fetched);
           setAnswers(Array(fetched.length).fill(null));
           
-          // Config — duration
-          const cfgSnap = await getDoc(doc(firestore, 'assessment_config', 'settings'));
-          const duration = cfgSnap.exists() ? (cfgSnap.data().durationMinutes ?? 5) : 5;
-          setDurationSeconds(duration * 60);
-          setTimeLeft(duration * 60);
+          // Determine total duration
+          // If questions have individual durations, sum them up. 
+          // Otherwise, fall back to global config.
+          const summedSeconds = fetched.reduce((acc, q) => acc + (Number(q.durationSeconds) || 0), 0);
+          
+          if (summedSeconds > 0) {
+            setDurationSeconds(summedSeconds);
+            setTimeLeft(summedSeconds);
+          } else {
+            // Config — duration fallback
+            const cfgSnap = await getDoc(doc(firestore, 'pre_assessment_config', 'settings'));
+            const duration = cfgSnap.exists() ? (cfgSnap.data().durationMinutes ?? 5) : 5;
+            setDurationSeconds(duration * 60);
+            setTimeLeft(duration * 60);
+          }
         }
       } catch (error) {
         console.error("Error fetching assessment questions:", error);
@@ -129,7 +141,7 @@ export default function AssessmentTestPage() {
             : 0;
           const percentage = questions.length > 0 ? Math.round((finalScore / questions.length) * 100) : 0;
           
-          await addDoc(collection(firestore, 'assessment'), {
+          await addDoc(collection(firestore, 'pre_assessment'), {
             // Fields at root for easier querying & reconciliation
             name: user.name,
             email: user.email.toLowerCase(),
@@ -214,10 +226,22 @@ export default function AssessmentTestPage() {
         <div className="absolute top-[-10%] right-[-5%] w-72 h-72 bg-primary/10 rounded-full blur-3xl -z-10" />
 
         <div className="bg-card border border-border rounded-3xl p-8 shadow-lg w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#F59E0B] shadow-md mb-4">
-            <Trophy size={36} className="text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground font-headline mb-1">Test Completed!</h2>
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 12 }}
+            className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-orange-400 shadow-xl shadow-primary/20 mb-6"
+          >
+            <Trophy size={48} className="text-white" />
+          </motion.div>
+          <motion.h2 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl font-bold text-foreground font-headline mb-2"
+          >
+            Pre Assessment Completed!
+          </motion.h2>
           {user && (
             <p className="text-muted-foreground text-sm mb-6">
               Great effort, <span className="text-foreground font-semibold">{user.name}</span>!
@@ -244,23 +268,30 @@ export default function AssessmentTestPage() {
               : '📚 Keep it up! Regular practice will help you improve.'}
           </p>
 
-          <div className="flex gap-3">
-            <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-sm font-medium">
-              {invoiceId ? 'Skip and View Invoice' : 'Back to Home'}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="flex gap-3"
+          >
+            <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="flex-1 py-3.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-sm font-medium flex items-center justify-center">
+              {invoiceId ? 'Skip test' : 'Back to Home'}
             </Link>
             <Link 
               href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/sign-up"} 
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold hover:from-[#ea6c0a] hover:to-[#e08f08] transition-all text-sm shadow-md"
+              className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold hover:shadow-lg hover:shadow-primary/30 transition-all text-sm shadow-md flex items-center justify-center gap-2"
             >
-              {invoiceId ? 'View My Invoice' : 'Enroll Now'}
+              {invoiceId ? 'Get Invoice' : 'Enroll Now'}
+              <ChevronRight size={16} />
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   const q = questions[currentQ];
+  const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 relative overflow-hidden">
@@ -270,16 +301,21 @@ export default function AssessmentTestPage() {
 
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group">
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> {invoiceId ? 'Skip test & View Invoice' : 'Exit'}
-          </Link>
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm border ${
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-xl font-bold font-headline flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Award size={18} className="text-primary" />
+              </span>
+              Pre Assessment
+            </h1>
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm border shadow-sm transition-all duration-300 ${
             (timeLeft ?? 0) < 60
-              ? 'bg-destructive/10 text-destructive border-destructive/30'
-              : 'bg-secondary text-foreground border-border'
+              ? 'bg-destructive/10 text-destructive border-destructive/30 animate-pulse'
+              : 'bg-card text-foreground border-border'
           }`}>
-            <Clock size={14} />
+            <Clock size={14} className={(timeLeft ?? 0) < 60 ? "animate-spin-slow" : ""} />
             {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
           </div>
         </div>
@@ -302,57 +338,96 @@ export default function AssessmentTestPage() {
         )}
 
         {/* Progress bar */}
-        <div className="flex gap-1.5 mb-6">
-          {questions.map((_, i) => (
-            <div
-              key={i}
-              onClick={() => { setCurrentQ(i); setSelected(answers[i]); }}
-              className={`flex-1 h-1.5 rounded-full cursor-pointer transition-all ${
-                i === currentQ ? 'bg-primary' : answers[i] !== null ? 'bg-primary/40' : 'bg-border'
-              }`}
+        <div className="mb-8 space-y-2">
+          <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
+            <span>Question {currentQ + 1} of {questions.length}</span>
+            <span>{Math.round(progress)}% Complete</span>
+          </div>
+          <div className="h-2 w-full bg-border rounded-full overflow-hidden p-0.5 shadow-inner">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="h-full bg-gradient-to-r from-primary to-orange-400 rounded-full"
             />
-          ))}
+          </div>
         </div>
 
         {/* Question card */}
-        {questions.length > 0 ? (
-          <div className="bg-card border border-border rounded-3xl p-7 shadow-md mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
-                Q{currentQ + 1} of {questions.length}
-              </span>
-              <Sparkles size={14} className="text-accent" />
-            </div>
-            {q?.imageUrl && (
-              <div className="relative w-full max-w-sm h-44 mx-auto rounded-xl overflow-hidden border border-border bg-muted/20 mb-4">
-                <Image src={q.imageUrl} alt="Question image" fill className="object-contain" unoptimized />
-              </div>
-            )}
-            <h2 className="text-foreground font-semibold text-lg leading-relaxed mb-6">{q?.question}</h2>
-
-            <div className="space-y-3">
-              {q?.options.map((opt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSelect(idx)}
-                  className={`w-full text-left px-5 py-3.5 rounded-xl border transition-all text-sm font-medium flex items-center gap-3 ${
-                    selected === idx
-                      ? 'bg-primary/10 border-primary text-foreground'
-                      : 'bg-background border-border text-foreground/70 hover:bg-secondary hover:text-foreground hover:border-primary/40'
-                  }`}
-                >
-                  <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    selected === idx ? 'border-primary bg-primary text-white' : 'border-border text-muted-foreground'
-                  }`}>
-                    {String.fromCharCode(65 + idx)}
+        <AnimatePresence mode="wait">
+          {questions.length > 0 ? (
+            <motion.div
+              key={currentQ}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="bg-card border border-border rounded-3xl p-8 shadow-xl mb-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10" />
+              
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+                    Question {currentQ + 1}
                   </span>
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="bg-card border border-border rounded-3xl p-10 shadow-md mb-4 text-center space-y-6">
+                  <Sparkles size={14} className="text-orange-400" />
+                </div>
+                {answers[currentQ] !== null && (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-success">
+                    <CheckCircle size={14} />
+                    Answered
+                  </div>
+                )}
+              </div>
+
+              {q?.imageUrl && (
+                <div className="relative w-full aspect-video max-w-sm mx-auto rounded-2xl overflow-hidden border-4 border-muted bg-muted/20 mb-8 shadow-inner">
+                  <Image src={q.imageUrl} alt="Question image" fill className="object-contain" unoptimized />
+                </div>
+              )}
+
+              <h2 className="text-foreground font-bold text-xl leading-snug mb-8">{q?.question}</h2>
+
+              <div className="grid gap-3">
+                {q?.options.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSelect(idx)}
+                    className={`group w-full text-left px-6 py-4 rounded-2xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                      selected === idx
+                        ? 'bg-primary/10 border-primary text-foreground shadow-md ring-4 ring-primary/5'
+                        : 'bg-card border-border text-foreground/70 hover:border-primary/40 hover:bg-muted/50'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center text-sm font-black transition-all ${
+                      selected === idx 
+                        ? 'border-primary bg-primary text-white scale-110' 
+                        : 'border-border text-muted-foreground group-hover:border-primary/40'
+                    }`}>
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                    <span className="font-medium">{opt}</span>
+                    {selected === idx && (
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="ml-auto"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <CheckCircle size={12} className="text-white" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-card border border-border rounded-3xl p-10 shadow-md mb-4 text-center space-y-6"
+            >
              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
                 <BookOpen size={24} className="text-muted-foreground" />
              </div>
@@ -368,8 +443,9 @@ export default function AssessmentTestPage() {
              >
                 {invoiceId ? 'Skip and View My Invoice' : 'Proceed to Enrollment'}
              </Link>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Navigation */}
         {questions.length > 0 && (

@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Reveal } from '@/components/shared/reveal';
-import { PlusCircle, Trash2, Edit, ArrowLeft, Loader2, CheckCircle2, ChevronRight, LayoutGrid, Info } from 'lucide-react';
+import { PlusCircle, Trash2, Edit, ArrowLeft, Loader2, CheckCircle2, ChevronRight, LayoutGrid, Info, BookOpen, BarChart, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -29,6 +29,9 @@ interface Question {
   correctAnswerIndex: number;
   imageUrl?: string;
   class: string;
+  subject?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  durationSeconds?: number;
 }
 
 export default function AdminClassQuestionListPage() {
@@ -47,7 +50,7 @@ export default function AdminClassQuestionListPage() {
         if (!firestore || !className) return;
         setLoading(true);
 
-        const q = query(collection(firestore, 'assessment_questions'), where('class', '==', className));
+        const q = query(collection(firestore, 'pre_assessment_questions'), where('class', '==', className));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
             setQuestions(list);
@@ -60,7 +63,7 @@ export default function AdminClassQuestionListPage() {
         if (!firestore || !questionToDelete) return;
         setIsDeleting(true);
         try {
-            await deleteDoc(doc(firestore, 'assessment_questions', questionToDelete.id));
+            await deleteDoc(doc(firestore, 'pre_assessment_questions', questionToDelete.id));
             toast({ title: 'Question Removed', description: 'The item has been deleted from the global bank.' });
         } catch (error) {
             toast({ variant: 'destructive', title: 'Action Failed', description: 'Failed to delete question. Check permissions.' });
@@ -114,11 +117,34 @@ export default function AdminClassQuestionListPage() {
                                 <CardContent className="p-0">
                                     <div className="grid md:grid-cols-[1fr_300px_auto] gap-0">
                                         <div className="p-8 space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="bg-primary h-8 w-8 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-lg shadow-primary/20">
-                                                    #{idx + 1}
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {q.subject && (
+                                                        <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-1 rounded-lg border border-orange-100 flex items-center gap-1 uppercase tracking-tighter">
+                                                            <BookOpen size={10} /> {q.subject}
+                                                        </span>
+                                                    )}
+                                                    {q.difficulty && (
+                                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border flex items-center gap-1 uppercase tracking-tighter ${
+                                                            q.difficulty === 'hard' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                            q.difficulty === 'medium' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            'bg-green-50 text-green-600 border-green-100'
+                                                        }`}>
+                                                            <BarChart size={10} /> {q.difficulty}
+                                                        </span>
+                                                    )}
+                                                    {q.durationSeconds && (
+                                                        <span className="bg-slate-50 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1 uppercase tracking-tighter">
+                                                            <Clock size={10} /> {q.durationSeconds}s
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <h3 className="font-black text-xl text-slate-800 leading-tight">{q.question}</h3>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-primary h-8 w-8 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-lg shadow-primary/20">
+                                                        #{idx + 1}
+                                                    </div>
+                                                    <h3 className="font-black text-xl text-slate-800 leading-tight">{q.question}</h3>
+                                                </div>
                                             </div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 {q.options.map((opt, oIdx) => (

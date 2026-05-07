@@ -29,6 +29,9 @@ interface Question {
   correctAnswerIndex: number;
   imageUrl?: string;
   class: string;
+  subject?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  durationSeconds?: number;
 }
 
 export default function TeacherClassQuestionListPage() {
@@ -47,7 +50,7 @@ export default function TeacherClassQuestionListPage() {
         if (!firestore || !className) return;
         setLoading(true);
 
-        const q = query(collection(firestore, 'assessment_questions'), where('class', '==', className));
+        const q = query(collection(firestore, 'pre_assessment_questions'), where('class', '==', className));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
             setQuestions(list);
@@ -60,7 +63,7 @@ export default function TeacherClassQuestionListPage() {
         if (!firestore || !questionToDelete) return;
         setIsDeleting(true);
         try {
-            await deleteDoc(doc(firestore, 'assessment_questions', questionToDelete.id));
+            await deleteDoc(doc(firestore, 'pre_assessment_questions', questionToDelete.id));
             toast({ title: 'Question Deleted', description: 'The question has been removed from the assessment.' });
         } catch (error) {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete question.' });
@@ -101,9 +104,30 @@ export default function TeacherClassQuestionListPage() {
                                 <CardContent className="p-0">
                                     <div className="grid md:grid-cols-[1fr_250px_auto] gap-4">
                                         <div className="p-6 space-y-4">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">Q{idx + 1}</span>
                                                 <h3 className="font-semibold text-lg">{q.question}</h3>
+                                                <div className="ml-auto flex items-center gap-2">
+                                                  {q.subject && (
+                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
+                                                      {q.subject}
+                                                    </span>
+                                                  )}
+                                                  {q.difficulty && (
+                                                    <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border uppercase ${
+                                                      q.difficulty === 'hard' ? 'text-red-600 bg-red-50 border-red-100' :
+                                                      q.difficulty === 'medium' ? 'text-blue-600 bg-blue-50 border-blue-100' :
+                                                      'text-green-600 bg-green-50 border-green-100'
+                                                    }`}>
+                                                      {q.difficulty}
+                                                    </span>
+                                                  )}
+                                                  {q.durationSeconds && (
+                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded-lg">
+                                                      <Clock size={10} /> {q.durationSeconds}s
+                                                    </span>
+                                                  )}
+                                                </div>
                                             </div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {q.options.map((opt, oIdx) => (

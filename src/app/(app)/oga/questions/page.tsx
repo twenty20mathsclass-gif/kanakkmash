@@ -15,6 +15,7 @@ import { Reveal } from '@/components/shared/reveal';
 import {
   Loader2, PlusCircle, Trash2, Pencil, Save, X, ArrowLeft,
   CheckCircle, GraduationCap, Filter, ImagePlus, ImageOff,
+  BookOpen, BarChart, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -26,7 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 
-const COLLECTION = 'assessment_questions';
+const COLLECTION = 'pre_assessment_questions';
 const CLASSES = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
 
 const emptyForm = () => ({
@@ -35,6 +36,9 @@ const emptyForm = () => ({
   correctAnswerIndex: 0,
   class: '',
   imageUrl: '',
+  subject: '',
+  difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+  durationSeconds: 30,
 });
 
 export default function OGAQuestionsPage() {
@@ -82,6 +86,9 @@ export default function OGAQuestionsPage() {
       correctAnswerIndex: q.correctAnswerIndex,
       class: q.class || '',
       imageUrl: q.imageUrl || '',
+      subject: q.subject || '',
+      difficulty: q.difficulty || 'medium',
+      durationSeconds: q.durationSeconds || 30,
     });
     setImagePreview(q.imageUrl || '');
     setDialogOpen(true);
@@ -135,6 +142,9 @@ export default function OGAQuestionsPage() {
         options: form.options,
         correctAnswerIndex: form.correctAnswerIndex,
         class: form.class,
+        subject: form.subject || null,
+        difficulty: form.difficulty,
+        durationSeconds: Number(form.durationSeconds) || 30,
       };
       if (form.imageUrl) payload.imageUrl = form.imageUrl;
       else payload.imageUrl = null; // clear it if removed
@@ -193,8 +203,8 @@ export default function OGAQuestionsPage() {
               <Link href="/oga"><ArrowLeft /></Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold font-headline">Assessment Questions</h1>
-              <p className="text-muted-foreground">Manage class-based MCQ questions with optional images.</p>
+              <h1 className="text-3xl font-bold font-headline">Pre Assessment Questions</h1>
+              <p className="text-muted-foreground">Manage class-based MCQ questions with optional images, subjects, and difficulty levels.</p>
             </div>
           </div>
           <Button onClick={openAdd}>
@@ -274,9 +284,30 @@ export default function OGAQuestionsPage() {
                           Q{i + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/20 text-accent-foreground text-[10px] font-semibold mb-1 border border-accent/30">
-                            <GraduationCap className="h-2.5 w-2.5" /> {q.class}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/20 text-accent-foreground text-[10px] font-semibold border border-accent/30">
+                              <GraduationCap className="h-2.5 w-2.5" /> {q.class}
+                            </span>
+                            {q.subject && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 text-[10px] font-semibold border border-orange-100">
+                                <BookOpen className="h-2.5 w-2.5" /> {q.subject}
+                              </span>
+                            )}
+                            {q.difficulty && (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border uppercase ${
+                                q.difficulty === 'hard' ? 'bg-red-50 text-red-600 border-red-100' :
+                                q.difficulty === 'medium' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                'bg-green-50 text-green-600 border-green-100'
+                              }`}>
+                                <BarChart className="h-2.5 w-2.5" /> {q.difficulty}
+                              </span>
+                            )}
+                            {q.durationSeconds && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
+                                <Clock className="h-2.5 w-2.5" /> {q.durationSeconds}s
+                              </span>
+                            )}
+                          </div>
                           {q.imageUrl && (
                             <div className="relative w-full max-w-xs h-32 rounded-lg overflow-hidden border border-border mb-2">
                               <Image src={q.imageUrl} alt="Question image" fill className="object-contain bg-muted/30" unoptimized />
@@ -322,15 +353,53 @@ export default function OGAQuestionsPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
 
-            {/* Class */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5"><GraduationCap className="h-3.5 w-3.5" /> Class</Label>
-              <Select value={form.class} onValueChange={(v) => setForm((prev) => ({ ...prev, class: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
-                <SelectContent>
-                  {CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Class */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><GraduationCap className="h-3.5 w-3.5" /> Class</Label>
+                <Select value={form.class} onValueChange={(v) => setForm((prev) => ({ ...prev, class: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                  <SelectContent>
+                    {CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Subject */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5" /> Subject</Label>
+                <Input
+                  value={form.subject}
+                  onChange={(e) => setForm((prev) => ({ ...prev, subject: e.target.value }))}
+                  placeholder="e.g. Maths"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Difficulty */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><BarChart className="h-3.5 w-3.5" /> Difficulty</Label>
+                <Select value={form.difficulty} onValueChange={(v: any) => setForm((prev) => ({ ...prev, difficulty: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Duration (Sec)</Label>
+                <Input
+                  type="number"
+                  value={form.durationSeconds}
+                  onChange={(e) => setForm((prev) => ({ ...prev, durationSeconds: Number(e.target.value) }))}
+                  placeholder="30"
+                />
+              </div>
             </div>
 
             {/* Question */}

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Image as ImageIcon, Plus, Trash2, Clock, BookOpen, BarChart } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 
 export default function TeacherAddAssessmentQuestionPage() {
@@ -26,6 +26,9 @@ export default function TeacherAddAssessmentQuestionPage() {
     const [options, setOptions] = useState(['', '', '', '']);
     const [correctIndex, setCorrectIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState('');
+    const [durationSeconds, setDurationSeconds] = useState<number>(30);
+    const [subject, setSubject] = useState('');
+    const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
     const handleBack = () => router.back();
 
@@ -63,12 +66,15 @@ export default function TeacherAddAssessmentQuestionPage() {
 
         setIsSubmitting(true);
         try {
-            await addDoc(collection(firestore, 'assessment_questions'), {
+            await addDoc(collection(firestore, 'pre_assessment_questions'), {
                 question,
                 options,
                 correctAnswerIndex: correctIndex,
                 class: className,
+                subject: subject || null,
+                difficulty,
                 imageUrl: imageUrl || null,
+                durationSeconds: Number(durationSeconds) || 30,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
@@ -116,6 +122,37 @@ export default function TeacherAddAssessmentQuestionPage() {
                                 />
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <Label htmlFor="subject" className="flex items-center gap-2">
+                                        <BookOpen className="h-4 w-4 text-primary" /> Subject / Topic
+                                    </Label>
+                                    <Input 
+                                        id="subject" 
+                                        placeholder="e.g. Algebra, Geometry" 
+                                        className="bg-muted/10"
+                                        value={subject}
+                                        onChange={(e) => setSubject(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label htmlFor="difficulty" className="flex items-center gap-2">
+                                        <BarChart className="h-4 w-4 text-primary" /> Difficulty Level
+                                    </Label>
+                                    <select
+                                        id="difficulty"
+                                        className="w-full h-10 px-3 rounded-md bg-muted/10 border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        value={difficulty}
+                                        onChange={(e) => setDifficulty(e.target.value as any)}
+                                    >
+                                        <option value="easy">Easy</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 <Label htmlFor="imageUrl" className="flex items-center gap-2">
                                     <ImageIcon className="h-4 w-4" /> Optional Image URL
@@ -127,6 +164,23 @@ export default function TeacherAddAssessmentQuestionPage() {
                                     value={imageUrl}
                                     onChange={(e) => setImageUrl(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label htmlFor="durationSeconds" className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-primary" /> Question Duration (Seconds)
+                                </Label>
+                                <Input 
+                                    id="durationSeconds" 
+                                    type="number"
+                                    min={1}
+                                    placeholder="30" 
+                                    className="bg-muted/10 w-32"
+                                    value={durationSeconds}
+                                    onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                                    required
+                                />
+                                <p className="text-xs text-muted-foreground">How many seconds should this question add to the total test time?</p>
                             </div>
 
                             <div className="space-y-6 pt-4">

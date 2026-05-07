@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Image as ImageIcon, Plus, Trash2, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Image as ImageIcon, Plus, Trash2, LayoutGrid, CheckCircle2, BookOpen, BarChart, Clock } from 'lucide-react';
 import { Reveal } from '@/components/shared/reveal';
 
 export default function AdminAddAssessmentQuestionPage() {
@@ -26,6 +26,9 @@ export default function AdminAddAssessmentQuestionPage() {
     const [options, setOptions] = useState(['', '', '', '']);
     const [correctIndex, setCorrectIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState('');
+    const [durationSeconds, setDurationSeconds] = useState<number>(30);
+    const [subject, setSubject] = useState('');
+    const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
     const handleBack = () => router.back();
 
@@ -63,12 +66,15 @@ export default function AdminAddAssessmentQuestionPage() {
 
         setIsSubmitting(true);
         try {
-            await addDoc(collection(firestore, 'assessment_questions'), {
+            await addDoc(collection(firestore, 'pre_assessment_questions'), {
                 question: question.trim(),
                 options: options.map(opt => opt.trim()),
                 correctAnswerIndex: correctIndex,
                 class: className,
+                subject: subject.trim() || null,
+                difficulty,
                 imageUrl: imageUrl.trim() || null,
+                durationSeconds: Number(durationSeconds) || 30,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
@@ -128,29 +134,92 @@ export default function AdminAddAssessmentQuestionPage() {
                                 />
                             </div>
 
-                            {/* Image Asset */}
-                            <div className="space-y-6">
-                                <Label htmlFor="imageUrl" className="text-xl font-black font-headline flex items-center gap-2">
-                                   <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xs">2</span>
-                                   Visual Asset URL <span className="text-xs font-bold text-slate-300 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full ml-auto">Optional</span>
-                                </Label>
-                                <div className="relative group">
-                                    <ImageIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
-                                    <Input 
-                                        id="imageUrl" 
-                                        placeholder="https://cdn.kanakkmash.com/assets/initial-assessment-q1.png" 
-                                        className="h-16 pl-16 rounded-2xl bg-slate-50/10 border-2 border-slate-50 font-medium transition-all focus:bg-white"
-                                        value={imageUrl}
-                                        onChange={(e) => setImageUrl(e.target.value)}
-                                    />
+                             {/* Metadata Section */}
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <Label htmlFor="subject" className="text-xl font-black font-headline flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xs">2</span>
+                                        Subject / Topic
+                                    </Label>
+                                    <div className="relative group">
+                                        <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+                                        <Input 
+                                            id="subject" 
+                                            placeholder="e.g. Mathematics" 
+                                            className="h-16 pl-16 rounded-2xl bg-slate-50/10 border-2 border-slate-50 font-medium transition-all focus:bg-white"
+                                            value={subject}
+                                            onChange={(e) => setSubject(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+
+                                <div className="space-y-6">
+                                    <Label htmlFor="difficulty" className="text-xl font-black font-headline flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xs">3</span>
+                                        Difficulty Level
+                                    </Label>
+                                    <div className="relative group">
+                                        <BarChart className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+                                        <select
+                                            id="difficulty"
+                                            className="w-full h-16 pl-16 pr-6 rounded-2xl bg-slate-50/10 border-2 border-slate-50 font-black text-slate-700 transition-all focus:bg-white focus:outline-none appearance-none cursor-pointer"
+                                            value={difficulty}
+                                            onChange={(e) => setDifficulty(e.target.value as any)}
+                                        >
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </div>
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Duration Asset */}
+                                <div className="space-y-6">
+                                    <Label htmlFor="durationSeconds" className="text-xl font-black font-headline flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xs">4</span>
+                                        Duration (Seconds)
+                                    </Label>
+                                    <div className="relative group">
+                                        <Clock className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+                                        <Input 
+                                            id="durationSeconds" 
+                                            type="number"
+                                            min={1}
+                                            placeholder="30" 
+                                            className="h-16 pl-16 rounded-2xl bg-slate-50/10 border-2 border-slate-50 font-medium transition-all focus:bg-white"
+                                            value={durationSeconds}
+                                            onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Image Asset */}
+                                <div className="space-y-6">
+                                    <Label htmlFor="imageUrl" className="text-xl font-black font-headline flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xs">5</span>
+                                        Visual Asset URL
+                                    </Label>
+                                    <div className="relative group">
+                                        <ImageIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+                                        <Input 
+                                            id="imageUrl" 
+                                            placeholder="https://cdn.kanakkmash.com/assets/initial-assessment-q1.png" 
+                                            className="h-16 pl-16 rounded-2xl bg-slate-50/10 border-2 border-slate-50 font-medium transition-all focus:bg-white"
+                                            value={imageUrl}
+                                            onChange={(e) => setImageUrl(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                             </div>
 
                             {/* Options Section */}
                             <div className="space-y-8 pt-4">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xl font-black font-headline flex items-center gap-2">
-                                        <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-white text-xs">3</span>
+                                        <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-white text-xs">6</span>
                                         Response Sets
                                     </Label>
                                     {options.length < 6 && (

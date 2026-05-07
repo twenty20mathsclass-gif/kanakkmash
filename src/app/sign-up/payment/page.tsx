@@ -168,6 +168,8 @@ function PaymentComponent() {
           
           const invoiceData = {
             studentId: authUser.uid,
+            studentName: data.name,
+            studentEmail: data.email,
             amount: Number(registrationAmount),
             status: 'paid',
             type: 'fee',
