@@ -42,9 +42,10 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 interface UsersTableProps {
   users: User[];
   onUserUpdated: () => void;
+  baseHref?: string;
 }
 
-export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
+export function UsersTable({ users, onUserUpdated, baseHref = '/admin/users' }: UsersTableProps) {
     const router = useRouter();
     const { toast } = useToast();
     const { auth } = useFirebase();
@@ -95,7 +96,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                 <TableRow 
                     key={user.id} 
                     className="cursor-pointer hover:bg-muted/50 transition-colors group"
-                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                    onClick={() => router.push(`${baseHref}/${user.id}`)}
                 >
                     <TableCell className="hidden sm:table-cell">
                         <Avatar className="h-10 w-10">
@@ -150,7 +151,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem 
                                 onSelect={() => {
-                                    router.push(`/admin/users/${user.id}`);
+                                    router.push(`${baseHref}/${user.id}`);
                                 }}
                             >
                                 <UserIcon className="mr-2 h-4 w-4"/>View Profile

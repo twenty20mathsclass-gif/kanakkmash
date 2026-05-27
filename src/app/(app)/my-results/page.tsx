@@ -104,21 +104,39 @@ export default function MyResultsPage() {
         
         const fetchAssessments = async () => {
             try {
-                // Fetch Pre-Assessments (by userId or email)
-                const qPreUser = query(collection(firestore, 'pre_assessment'), where('userId', '==', user.id));
-                const qPreEmail = query(collection(firestore, 'pre_assessment'), where('email', '==', user.email));
-                
-                const [snapPreUser, snapPreEmail] = await Promise.all([getDocs(qPreUser), getDocs(qPreEmail)]);
-                const preList = [...snapPreUser.docs, ...snapPreEmail.docs].map(doc => ({ id: doc.id, ...doc.data() }));
-                // Remove duplicates by ID
-                const uniquePre = Array.from(new Map(preList.map(item => [item.id, item])).values());
-                setPreAssessments(uniquePre);
+                // Both pre and post assessments are stored in 'pre_assessment' collection.
+                // The existing Firestore rule allows list queries filtered by email.
+                // Query by email (lowercase — matches how it's saved in assessment-test page)
+                const emailToQuery = (user.email || '').toLowerCase();
+                const qByEmail = query(
+                    collection(firestore, 'pre_assessment'),
+                    where('email', '==', emailToQuery)
+                );
+                const snapByEmail = await getDocs(qByEmail);
+                const byEmail = snapByEmail.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // Fetch Post-Assessments (by userId)
-                const qPost = query(collection(firestore, 'assessment'), where('userId', '==', user.id));
-                const snapPost = await getDocs(qPost);
-                const postList = snapPost.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setPostAssessments(postList.filter((a: any) => a.assessmentType === 'paid' || a.status === 'completed'));
+                // Also try userId query as a fallback (works if Firestore rules updated)
+                let byUserId: any[] = [];
+                try {
+                    const qByUser = query(
+                        collection(firestore, 'pre_assessment'),
+                        where('userId', '==', user.id)
+                    );
+                    const snapByUser = await getDocs(qByUser);
+                    byUserId = snapByUser.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch {
+                    // Rule may not allow userId query yet — silently ignore
+                }
+
+                // Merge and deduplicate by document ID
+                const allList = [...byEmail, ...byUserId];
+                const unique = Array.from(
+                    new Map(allList.map(item => [(item as any).id, item])).values()
+                ) as any[];
+
+                // Split: pre = free / no invoiceId, post = paid / has invoiceId
+                setPreAssessments(unique.filter((a: any) => !a.invoiceId || a.assessmentType === 'free'));
+                setPostAssessments(unique.filter((a: any) => !!(a.invoiceId) && a.assessmentType !== 'free'));
             } catch (err) {
                 console.warn("Error fetching assessments:", err);
             }
@@ -148,27 +166,33 @@ export default function MyResultsPage() {
         
         const chartData = [];
 
-        // 1. Add Pre-Assessments
-        preAssessments.forEach(a => {
+        // 1. Add ONE Pre-Assessment bar — the most recent one
+        if (preAssessments.length > 0) {
+            const latestPre = [...preAssessments].sort((a, b) =>
+                (b.submittedAt?.toMillis() || 0) - (a.submittedAt?.toMillis() || 0)
+            )[0];
             chartData.push({
                 name: "Pre-Asmt",
-                fullName: "Pre Assessment: " + a.class,
-                score: a.percentage || 0,
+                fullName: "Pre Assessment: " + latestPre.class,
+                score: latestPre.percentage || 0,
                 type: "pre",
-                date: a.submittedAt?.toMillis() || 0
+                date: latestPre.submittedAt?.toMillis() || 0
             });
-        });
+        }
 
-        // 2. Add Post-Assessments
-        postAssessments.forEach(a => {
+        // 2. Add ONE Post-Assessment bar — the most recent one
+        if (postAssessments.length > 0) {
+            const latestPost = [...postAssessments].sort((a, b) =>
+                (b.submittedAt?.toMillis() || 0) - (a.submittedAt?.toMillis() || 0)
+            )[0];
             chartData.push({
                 name: "Post-Asmt",
-                fullName: "Post Assessment: " + a.class,
-                score: a.percentage || 0,
+                fullName: "Post Assessment: " + latestPost.class,
+                score: latestPost.percentage || 0,
                 type: "post",
-                date: a.submittedAt?.toMillis() || 0
+                date: latestPost.submittedAt?.toMillis() || 0
             });
-        });
+        }
 
         // 3. Add regular exam submissions
         submissions.forEach(s => {
@@ -446,7 +470,10 @@ export default function MyResultsPage() {
                             <h2 className="font-headline font-bold text-slate-700">Pre Assessment (Foundational)</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {preAssessments.map(item => (
+                            {[...preAssessments]
+                                .sort((a, b) => (b.submittedAt?.toMillis() || 0) - (a.submittedAt?.toMillis() || 0))
+                                .slice(0, 1)
+                                .map(item => (
                                 <Card 
                                     key={item.id} 
                                     className="border border-slate-100 shadow-sm rounded-3xl bg-white hover:border-amber-200 transition-all group cursor-pointer overflow-hidden relative"

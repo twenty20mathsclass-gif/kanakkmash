@@ -216,8 +216,18 @@ service cloud.firestore {
 
     match /pre_assessment/{docId} {
       allow create: if true;
-      allow read: if isAdmin() || isRole('oga') || isRole('teacher') || (request.auth != null && resource.data.email == request.auth.token.email);
-      allow update: if isAdmin() || (request.auth != null && resource.data.email == request.auth.token.email);
+      // Allow list (queries) for any authenticated user so students can query by email/userId
+      allow list: if request.auth != null;
+      // Allow get of a specific doc if admin, oga, teacher, or the owner (by email or userId)
+      allow get: if isAdmin() || isRole('oga') || isRole('teacher') ||
+        (request.auth != null && (
+          resource.data.email == request.auth.token.email ||
+          resource.data.userId == request.auth.uid
+        ));
+      allow update: if isAdmin() || (request.auth != null && (
+        resource.data.email == request.auth.token.email ||
+        resource.data.userId == request.auth.uid
+      ));
     }
 
     // --- Post Assessment Test (Legacy or Secondary) ---

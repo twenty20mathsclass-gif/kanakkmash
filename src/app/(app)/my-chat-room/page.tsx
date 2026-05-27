@@ -584,6 +584,9 @@ export default function MyChatRoomPage() {
         return user.role === 'admin' || group.createdBy === user.id || group.admins?.includes(user.id) || user.role === 'teacher';
     }, [selectedContact, user]);
 
+    // Guard: if user is null (e.g. during sign-out), don't render — avoids crash on user!.id
+    if (!user) return null;
+
     return (
         <div className="flex flex-col h-[calc(100svh-10rem)] md:h-[calc(100dvh-8rem)] overflow-hidden bg-background border-none rounded-3xl shadow-2xl relative mt-2 md:mt-0">
             <div className="flex h-full divide-x-0 md:divide-x border-none">

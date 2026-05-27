@@ -240,7 +240,7 @@ export default function AssessmentTestPage() {
             transition={{ delay: 0.2 }}
             className="text-3xl font-bold text-foreground font-headline mb-2"
           >
-            Pre Assessment Completed!
+            Post Assessment Completed!
           </motion.h2>
           {user && (
             <p className="text-muted-foreground text-sm mb-6">
@@ -274,14 +274,11 @@ export default function AssessmentTestPage() {
             transition={{ delay: 0.6 }}
             className="flex gap-3"
           >
-            <Link href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/"} className="flex-1 py-3.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-sm font-medium flex items-center justify-center">
-              {invoiceId ? 'Skip test' : 'Back to Home'}
-            </Link>
             <Link 
               href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/sign-up"} 
               className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold hover:shadow-lg hover:shadow-primary/30 transition-all text-sm shadow-md flex items-center justify-center gap-2"
             >
-              {invoiceId ? 'Get Invoice' : 'Enroll Now'}
+              {invoiceId ? 'View My Invoice' : 'Enroll Now'}
               <ChevronRight size={16} />
             </Link>
           </motion.div>
@@ -307,7 +304,7 @@ export default function AssessmentTestPage() {
               <span className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Award size={18} className="text-primary" />
               </span>
-              Pre Assessment
+              Post Assessment
             </h1>
           </div>
           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm border shadow-sm transition-all duration-300 ${
@@ -434,15 +431,17 @@ export default function AssessmentTestPage() {
              <div>
                 <h3 className="text-xl font-bold">No questions available</h3>
                 <p className="text-muted-foreground text-sm mt-2">
-                   We haven't added assessment questions for the category <b>"{user?.class}"</b> yet.
+                   Your teacher hasn't added post assessment questions yet.
                 </p>
              </div>
-             <Link 
-               href={invoiceId ? `/invoice/${invoiceId}?success=true` : "/sign-up"} 
-               className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold text-sm"
-             >
-                {invoiceId ? 'Skip and View My Invoice' : 'Proceed to Enrollment'}
-             </Link>
+             {invoiceId && (
+               <Link 
+                 href={`/invoice/${invoiceId}?success=true`} 
+                 className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F59E0B] text-white font-bold text-sm"
+               >
+                 View My Invoice
+               </Link>
+             )}
             </motion.div>
           )}
         </AnimatePresence>
