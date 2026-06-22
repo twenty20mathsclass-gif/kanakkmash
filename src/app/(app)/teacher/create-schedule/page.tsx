@@ -179,13 +179,23 @@ export default function CreateSchedulePage() {
         setError(null);
 
         try {
-            // Generate meet link on submit
-            const meetRes = await fetch('/api/create-meet', { method: 'POST' });
+            // Generate Google Meet link on submit
+            const meetRes = await fetch('/api/google/create-meeting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: data.title,
+                    date: data.date.toISOString(),
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    teacherEmail: user.email || '',
+                }),
+            });
             const meetData = await meetRes.json();
-            if (!meetRes.ok || !meetData.meetingUri) {
+            if (!meetRes.ok || !meetData.meetLink) {
                 throw new Error(meetData.error || 'Failed to generate Google Meet link. Please try again.');
             }
-            const meetLink = meetData.meetingUri;
+            const meetLink = meetData.meetLink;
 
             const selectedVisuals = courseModelVisuals[data.courseModel] || { icon: 'BookOpen', color: 'hsl(var(--primary))', textColor: 'hsl(var(--primary-foreground))', subject: 'General' };
             const scheduleData: any = {
