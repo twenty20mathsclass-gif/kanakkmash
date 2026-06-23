@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/sign-in', priority: 0.5, changeFrequency: 'monthly' },
     { url: '/sign-up', priority: 0.5, changeFrequency: 'monthly' },
     { url: '/terms-and-conditions', priority: 0.3, changeFrequency: 'yearly' },
+    { url: '/privacy-policy', priority: 0.4, changeFrequency: 'yearly' },
   ];
 
   const staticUrls = staticPages.map((page) => ({
